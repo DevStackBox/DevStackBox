@@ -27,69 +27,43 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: `${context.ref.replace(/refs\/tags\//, '')}`,
-              name: `DevStackBox ${context.ref.replace(/refs\/tags\//, '')} - Alpha Release`,
-              body: `🚀 **DevStackBox Alpha Release**
+              name: `DevStackBox ${context.ref.replace(/refs\/tags\//, '')} - Apache 64-bit + Auto-Update`,
+              body: `🚀 **DevStackBox v${context.ref.replace(/refs\/tags\//, '')}**
               
-              A modern, lightweight PHP development environment built with Tauri + React.
+              **🔧 Major Fixes in This Release:**
+              - ✅ **64-bit Apache** - Fixed "Unsupported 16-Bit Application" error
+              - ✅ **Dynamic Configuration** - MSI installer now works with correct paths
+              - ✅ **Enhanced Auto-Updater** - Improved update detection and installation
+              - ✅ **Architecture Detection** - Better error messages for compatibility issues
               
-              **Features:**
-              - ✅ **Modern React UI** with dark/light mode
-              - ✅ **Service Management** for local development servers
-              - ✅ **Configuration Tools** with backup/restore
-              - ✅ **Auto-Updates** via GitHub Releases
-              - ✅ **Multilingual Support** (English + Hindi)
-              - ✅ **Debug Tools** for troubleshooting
-              
-              **Installation:**
-              1. Download the installer below
-              2. Run as administrator
-              3. Launch DevStackBox from Start Menu
-              4. Configure your development environment
-              
-              **System Requirements:**
-              - Windows 10/11 (x64)
-              - 100MB free disk space
-              
-              **Note:** This is an alpha release. Server components (Apache, MySQL, PHP) can be added separately.`,
-              draft: true,
-              prerelease: true
-            });
-            return data.id;
-          script: |
-            const { data } = await github.rest.repos.createRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: `${context.ref.replace(/refs\/tags\//, '')}`,
-              name: `DevStackBox ${context.ref.replace(/refs\/tags\//, '')} - Full XAMPP Alternative`,
-              body: `🚀 **DevStackBox Full Installation Package**
-              
-              This release includes all server components bundled like XAMPP:
-              - ✅ **Apache HTTP Server** (portable)
+              **📦 What's Included:**
+              - ✅ **Apache 2.4.65 (64-bit)** - Compatible with 64-bit Windows
               - ✅ **MySQL 8.0 Database** (embedded)
               - ✅ **PHP 8.2** (with extensions)
               - ✅ **phpMyAdmin** (database management)
-              - ✅ **Modern React UI** (auto-updating)
-              - ✅ **Installs to C:\\\\dsb\\\\** (configurable)
+              - ✅ **Modern React UI** (dark/light mode)
+              - ✅ **Auto-Updates** via GitHub Releases
               
-              **Installation:**
-              1. Download the NSIS installer (DevStackBox_*_x64-setup.exe)  
-              2. Run as administrator
-              3. When prompted, choose C:\\\\dsb\\\\ as installation directory
+              **🚀 Installation:**
+              1. Download the NSIS installer (DevStackBox_*_x64-setup.exe)
+              2. Run as administrator  
+              3. Install to C:\\\\dsb\\\\ (recommended) or custom location
               4. Launch DevStackBox from Start Menu
-              5. Start all services from the UI
+              5. Start Apache/MySQL services from the UI
               6. Access http://localhost for your projects
               7. Access http://localhost/phpmyadmin for database management
               
-              **Command Line Installation:**
-              \`\`\`
-              DevStackBox_0.1.0-1_x64-setup.exe /S /D=C:\\\\dsb
-              \`\`\`
+              **🔄 Auto-Update Testing:**
+              - Install this version to test auto-update functionality
+              - Updates check every 2 hours in this alpha version
+              - Manual update check available via "Check Updates" button
               
-              **What's New:**
-              - Complete server stack bundled in installer
-              - Automatic service detection and management
-              - Professional installation experience
-              - Auto-updates for continuous improvements`,
+              **💡 Troubleshooting:**
+              - If Apache won't start, use the "Debug Installation" feature
+              - All paths are now dynamically resolved based on installation directory
+              - Architecture compatibility is automatically checked
+              
+              **⚠️ Note:** This is an alpha release for testing. Please report any issues on GitHub.`,
               draft: true,
               prerelease: true
             });
