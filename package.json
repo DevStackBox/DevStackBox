@@ -11,6 +11,8 @@
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
     "prepare-binaries": "powershell -ExecutionPolicy Bypass -File scripts/prepare-binaries.ps1",
+    "prepare-binaries-optimized": "powershell -ExecutionPolicy Bypass -File scripts/prepare-binaries-optimized.ps1",
+    "build:optimized": "npm run prepare-binaries-optimized && npm run tauri:build",
     "build:release": "npm run prepare-binaries && npm run tauri:build",
     "release": "npm version patch && git push --tags"
   },

@@ -56,14 +56,13 @@
         "type": "downloadBootstrapper"
       },
       "wix": {
-        "language": "en-US",
-        "template": "templates/main.wxs",
-        "upgradeCode": null
+        "language": "en-US"
       },
       "nsis": {
         "displayLanguageSelector": false,
         "installerIcon": "icons/icon.ico",
-        "languages": ["English"]
+        "languages": ["English"],
+        "template": "templates/installer.nsi"
       }
     }
   },
