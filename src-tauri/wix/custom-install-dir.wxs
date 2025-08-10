@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Fragment>
-    <!-- Set installation directory to C:\dsb -->
+    <!-- Properties to override installation directory -->
     <Property Id="APPLICATIONFOLDER" Value="C:\dsb\" />
+    <Property Id="ARPINSTALLLOCATION" Value="C:\dsb\" />
+    
+    <!-- Custom action to set the folder before directory resolution -->
+    <CustomAction Id="OverrideInstallDir" 
+                  Property="APPLICATIONFOLDER" 
+                  Value="C:\dsb\" 
+                  Execute="immediate" />
+    
+    <CustomAction Id="SetARPLocation" 
+                  Property="ARPINSTALLLOCATION" 
+                  Value="[APPLICATIONFOLDER]" 
+                  Execute="immediate" />
+
+    <!-- Execute the custom actions early in the sequence -->
+    <InstallExecuteSequence>
+      <Custom Action="OverrideInstallDir" After="LaunchConditions">NOT Installed</Custom>
+      <Custom Action="SetARPLocation" After="OverrideInstallDir">NOT Installed</Custom>
+    </InstallExecuteSequence>
+
+    <InstallUISequence>
+      <Custom Action="OverrideInstallDir" After="LaunchConditions">NOT Installed</Custom>
+      <Custom Action="SetARPLocation" After="OverrideInstallDir">NOT Installed</Custom>
+    </InstallUISequence>
   </Fragment>
 </Wix>

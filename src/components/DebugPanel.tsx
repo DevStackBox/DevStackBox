@@ -30,6 +30,15 @@ export function DebugPanel() {
     }
   };
 
+  const testApacheConfig = async () => {
+    try {
+      const result = await invoke<string>('test_apache_config');
+      alert('Apache Config Test Result: ' + result);
+    } catch (error) {
+      alert('Apache Config Test Failed: ' + error);
+    }
+  };
+
   return (
     <div className="p-4 bg-gray-100 rounded-lg">
       <h3 className="text-lg font-bold mb-4">Debug Installation</h3>
@@ -48,6 +57,13 @@ export function DebugPanel() {
           className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
         >
           Stop All Services
+        </button>
+        
+        <button 
+          onClick={testApacheConfig}
+          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+        >
+          Test Apache Config
         </button>
       </div>
 

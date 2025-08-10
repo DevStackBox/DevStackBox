@@ -41,8 +41,21 @@ fn get_installation_path() -> PathBuf {
     // First, try to get the path from the installed location
     if let Ok(exe_path) = env::current_exe() {
         if let Some(parent) = exe_path.parent() {
-            // Check if we're in the installed directory (C:\dsb\)
-            if parent.to_string_lossy().contains("dsb") || parent.to_string_lossy().contains("DevStackBox") {
+            // Check if we're in any installation directory
+            let parent_str = parent.to_string_lossy();
+            
+            // Check for C:\dsb\ installation
+            if parent_str.contains("dsb") {
+                return parent.to_path_buf();
+            }
+            
+            // Check for Program Files installation
+            if parent_str.contains("DevStackBox") {
+                return parent.to_path_buf();
+            }
+            
+            // Check if this directory actually has our server components
+            if parent.join("apache").join("bin").join("httpd.exe").exists() {
                 return parent.to_path_buf();
             }
         }
@@ -63,7 +76,7 @@ fn get_installation_path() -> PathBuf {
         }
     }
     
-    // Final fallback - try common installation paths
+    // Try common installation paths in order of preference
     let possible_paths = [
         PathBuf::from("C:\\dsb"),
         PathBuf::from("C:\\Program Files\\DevStackBox"),
@@ -171,16 +184,40 @@ async fn debug_installation() -> Result<HashMap<String, String>, String> {
     let install_path = get_installation_path();
     debug_info.insert("detected_install_path".to_string(), install_path.display().to_string());
     
-    // Check if server components exist
-    let apache_exists = install_path.join("apache").join("bin").join("httpd.exe").exists();
-    let mysql_exists = install_path.join("mysql").join("bin").join("mysqld.exe").exists();
-    let php_exists = install_path.join("php").join("8.2").join("php.exe").exists();
-    let phpmyadmin_exists = install_path.join("phpmyadmin").join("index.php").exists();
+    // Check if server components exist with detailed paths
+    let apache_bin = install_path.join("apache").join("bin").join("httpd.exe");
+    let mysql_bin = install_path.join("mysql").join("bin").join("mysqld.exe");
+    let php_bin = install_path.join("php").join("8.2").join("php.exe");
+    let phpmyadmin_index = install_path.join("phpmyadmin").join("index.php");
     
-    debug_info.insert("apache_exists".to_string(), apache_exists.to_string());
-    debug_info.insert("mysql_exists".to_string(), mysql_exists.to_string());
-    debug_info.insert("php_exists".to_string(), php_exists.to_string());
-    debug_info.insert("phpmyadmin_exists".to_string(), phpmyadmin_exists.to_string());
+    debug_info.insert("apache_bin_path".to_string(), apache_bin.display().to_string());
+    debug_info.insert("apache_exists".to_string(), apache_bin.exists().to_string());
+    
+    debug_info.insert("mysql_bin_path".to_string(), mysql_bin.display().to_string());
+    debug_info.insert("mysql_exists".to_string(), mysql_bin.exists().to_string());
+    
+    debug_info.insert("php_bin_path".to_string(), php_bin.display().to_string());
+    debug_info.insert("php_exists".to_string(), php_bin.exists().to_string());
+    
+    debug_info.insert("phpmyadmin_path".to_string(), phpmyadmin_index.display().to_string());
+    debug_info.insert("phpmyadmin_exists".to_string(), phpmyadmin_index.exists().to_string());
+    
+    // Check config files
+    let apache_config = install_path.join("config").join("httpd.conf");
+    let mysql_config = install_path.join("config").join("my.cnf");
+    
+    debug_info.insert("apache_config_path".to_string(), apache_config.display().to_string());
+    debug_info.insert("apache_config_exists".to_string(), apache_config.exists().to_string());
+    
+    debug_info.insert("mysql_config_path".to_string(), mysql_config.display().to_string());
+    debug_info.insert("mysql_config_exists".to_string(), mysql_config.exists().to_string());
+    
+    // Check permissions by trying to access directories
+    let apache_dir_readable = install_path.join("apache").exists();
+    let mysql_dir_readable = install_path.join("mysql").exists();
+    
+    debug_info.insert("apache_dir_readable".to_string(), apache_dir_readable.to_string());
+    debug_info.insert("mysql_dir_readable".to_string(), mysql_dir_readable.to_string());
     
     // Check common installation paths
     let common_paths = [
@@ -194,9 +231,14 @@ async fn debug_installation() -> Result<HashMap<String, String>, String> {
         let exists = path_buf.exists();
         let apache_in_path = path_buf.join("apache").join("bin").join("httpd.exe").exists();
         debug_info.insert(
-            format!("path_{}_exists", path.replace("\\", "_").replace(":", "")),
-            format!("dir: {}, apache: {}", exists, apache_in_path)
+            format!("path_{}_status", path.replace("\\", "_").replace(":", "")),
+            format!("dir_exists: {}, apache_exists: {}", exists, apache_in_path)
         );
+    }
+    
+    // Check current working directory
+    if let Ok(cwd) = env::current_dir() {
+        debug_info.insert("current_working_dir".to_string(), cwd.display().to_string());
     }
     
     Ok(debug_info)
@@ -219,6 +261,43 @@ async fn stop_all_services() -> Result<String, String> {
     }
     
     Ok(results.join("; "))
+}
+
+#[tauri::command]
+async fn test_apache_config() -> Result<String, String> {
+    let base_path = get_installation_path();
+    let apache_path = base_path.join("apache").join("bin").join("httpd.exe");
+    let config_path = base_path.join("config").join("httpd.conf");
+    
+    if !apache_path.exists() {
+        return Err(format!("Apache binary not found at: {}", apache_path.display()));
+    }
+    
+    if !config_path.exists() {
+        return Err(format!("Apache config not found at: {}", config_path.display()));
+    }
+    
+    // Test Apache configuration
+    let mut test_cmd = create_hidden_command(&apache_path.to_string_lossy());
+    test_cmd.arg("-f")
+        .arg(&config_path)
+        .arg("-t")
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped());
+
+    match test_cmd.output() {
+        Ok(output) => {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            
+            if output.status.success() {
+                Ok(format!("Apache config test PASSED\nOutput: {}\nPath used: {}", stdout, apache_path.display()))
+            } else {
+                Err(format!("Apache config test FAILED\nError: {}\nOutput: {}\nPath used: {}", stderr, stdout, apache_path.display()))
+            }
+        }
+        Err(e) => Err(format!("Failed to run Apache config test: {}\nPath: {}", e, apache_path.display())),
+    }
 }
 
 #[tauri::command]
@@ -1117,6 +1196,7 @@ pub fn run() {
             debug_paths,
             debug_installation,
             stop_all_services,
+            test_apache_config,
             get_mysql_status,
             get_php_status, 
             get_apache_status,
