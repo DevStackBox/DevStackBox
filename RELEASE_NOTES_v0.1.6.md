@@ -23,8 +23,8 @@
 
 ### 📦 Available Downloads
 
-- **Windows MSI Installer**: `DevStackBox_0.1.6_x64_en-US.msi` (302.9 MB)
-- **Windows NSIS Installer**: `DevStackBox_0.1.6_x64-setup.exe` (Coming soon)
+- **Windows MSI Installer**: `DevStackBox_0.1.6_x64_en-US.msi` (288.9 MB)
+- **Windows NSIS Installer**: `DevStackBox_0.1.6_x64-setup.exe` (147.7 MB)
 
 ### 🚀 What's Next in v0.1.7
 
