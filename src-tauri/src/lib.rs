@@ -10,7 +10,52 @@ use std::env;
 // Service manager module
 mod service_manager;
 
-// Helper function to create a Command with hidden window on Windows
+// Helper function to check if an executable is 32-bit
+#[cfg(windows)]
+fn is_32bit_executable(path: &std::path::Path) -> Result<bool, String> {
+    use std::fs::File;
+    use std::io::{Read, Seek, SeekFrom};
+    
+    let mut file = File::open(path).map_err(|e| format!("Failed to open file: {}", e))?;
+    
+    // Read DOS header
+    let mut dos_header = [0u8; 64];
+    file.read_exact(&mut dos_header).map_err(|e| format!("Failed to read DOS header: {}", e))?;
+    
+    // Check DOS signature
+    if &dos_header[0..2] != b"MZ" {
+        return Err("Invalid DOS signature".to_string());
+    }
+    
+    // Get PE header offset
+    let pe_offset = u32::from_le_bytes([dos_header[60], dos_header[61], dos_header[62], dos_header[63]]);
+    
+    // Seek to PE header
+    file.seek(SeekFrom::Start(pe_offset as u64)).map_err(|e| format!("Failed to seek to PE header: {}", e))?;
+    
+    // Read PE signature and machine type
+    let mut pe_header = [0u8; 24];
+    file.read_exact(&mut pe_header).map_err(|e| format!("Failed to read PE header: {}", e))?;
+    
+    // Check PE signature
+    if &pe_header[0..4] != b"PE\0\0" {
+        return Err("Invalid PE signature".to_string());
+    }
+    
+    // Get machine type (bytes 4-5 after PE signature)
+    let machine = u16::from_le_bytes([pe_header[4], pe_header[5]]);
+    
+    // 0x014c = IMAGE_FILE_MACHINE_I386 (32-bit)
+    // 0x8664 = IMAGE_FILE_MACHINE_AMD64 (64-bit)
+    Ok(machine == 0x014c)
+}
+
+#[cfg(not(windows))]
+fn is_32bit_executable(_path: &std::path::Path) -> Result<bool, String> {
+    Ok(false) // Non-Windows platforms don't have this issue
+}
+
+// Helper function to create a hidden command that doesn't flash a terminal window
 fn create_hidden_command(program: &str) -> Command {
     let mut cmd = Command::new(program);
     
@@ -691,6 +736,23 @@ async fn start_apache() -> Result<bool, String> {
     let apache_path = base_path.join("apache").join("bin").join("httpd.exe");
     if !apache_path.exists() {
         return Err(format!("Apache binary not found at {}. Please ensure Apache is installed.", apache_path.display()));
+    }
+
+    // Check if we're on 64-bit Windows and Apache is 32-bit
+    #[cfg(target_arch = "x86_64")]
+    {
+        // For 64-bit builds, we need to ensure compatibility with 32-bit Apache
+        if is_32bit_executable(&apache_path)? {
+            return Err(format!(
+                "❌ Architecture Mismatch Detected!\n\n\
+                🔍 Issue: Your Apache is 32-bit, but DevStackBox is 64-bit\n\
+                💡 Solution: Download 64-bit Apache from https://www.apachelounge.com/download/\n\
+                📁 Look for: httpd-*-win64-VS17.zip\n\
+                🔄 Replace: Extract Apache24 folder contents to your apache/ directory\n\n\
+                Current Apache: {}", 
+                apache_path.display()
+            ));
+        }
     }
 
     let config_path = base_path.join("config").join("httpd.conf");

@@ -74,11 +74,17 @@ export function AutoUpdater() {
 
   useEffect(() => {
     // Check for updates on app start (silent)
-    checkForUpdates(false);
+    const startupCheck = setTimeout(() => {
+      checkForUpdates(false);
+    }, 2000); // Delay to let app fully load
     
-    // Check for updates every 6 hours
-    const interval = setInterval(() => checkForUpdates(false), 6 * 60 * 60 * 1000);
-    return () => clearInterval(interval);
+    // Check for updates every 2 hours for testing (reduce from 6 hours)
+    const interval = setInterval(() => checkForUpdates(false), 2 * 60 * 60 * 1000);
+    
+    return () => {
+      clearTimeout(startupCheck);
+      clearInterval(interval);
+    };
   }, []);
 
   return (
