@@ -61,8 +61,7 @@
       "nsis": {
         "displayLanguageSelector": false,
         "installerIcon": "icons/icon.ico",
-        "languages": ["English"],
-        "template": "templates/installer.nsi"
+        "languages": ["English"]
       }
     }
   },
