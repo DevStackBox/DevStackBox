@@ -252,6 +252,17 @@ async fn debug_installation() -> Result<HashMap<String, String>, String> {
         }
     }
     
+    // Check if config files exist and show their paths
+    let config_dir = install_path.join("config");
+    let httpd_conf = config_dir.join("httpd.conf");
+    let phpmyadmin_conf = config_dir.join("phpmyadmin.conf");
+    
+    debug_info.insert("config_dir".to_string(), config_dir.display().to_string());
+    debug_info.insert("httpd_conf_path".to_string(), httpd_conf.display().to_string());
+    debug_info.insert("httpd_conf_exists".to_string(), httpd_conf.exists().to_string());
+    debug_info.insert("phpmyadmin_conf_path".to_string(), phpmyadmin_conf.display().to_string());
+    debug_info.insert("phpmyadmin_conf_exists".to_string(), phpmyadmin_conf.exists().to_string());
+    
     debug_info.insert("mysql_bin_path".to_string(), mysql_bin.display().to_string());
     debug_info.insert("mysql_exists".to_string(), mysql_bin.exists().to_string());
     
@@ -744,8 +755,8 @@ async fn get_apache_status() -> Result<ServiceInfo, String> {
 
 #[tauri::command]
 async fn start_apache() -> Result<bool, String> {
-    // Get the project root directory (DevStackBox)
-    let base_path = get_project_root()?;
+    // Get the installation path (works for both dev and installed versions)
+    let base_path = get_installation_path();
     
     let apache_path = base_path.join("apache").join("bin").join("httpd.exe");
     if !apache_path.exists() {
@@ -891,7 +902,7 @@ async fn stop_apache() -> Result<bool, String> {
 }
 
 async fn create_default_apache_config() -> Result<(), String> {
-    let base_path = get_project_root()?;
+    let base_path = get_installation_path(); // Use installation path instead of project root
     
     let apache_root = base_path.join("apache");
     let www_root = base_path.join("www");
@@ -930,11 +941,58 @@ CustomLog "{}/logs/access.log" common
 # Security
 ServerTokens Prod
 ServerSignature Off
+
+# phpMyAdmin Configuration
+Include "{}/config/phpmyadmin.conf"
 "#, 
     apache_root.display().to_string().replace("\\", "/"),
     base_path.display().to_string().replace("\\", "/"),
     www_root.display().to_string().replace("\\", "/"),
     www_root.display().to_string().replace("\\", "/"),
+    base_path.display().to_string().replace("\\", "/"),
+    base_path.display().to_string().replace("\\", "/"),
+    base_path.display().to_string().replace("\\", "/")
+    );
+
+    // Create phpMyAdmin configuration
+    let phpmyadmin_config = format!(r#"# phpMyAdmin Virtual Host Configuration
+
+# Create an alias for phpMyAdmin at /phpmyadmin
+Alias /phpmyadmin "{}/phpmyadmin"
+
+<Directory "{}/phpmyadmin">
+    Options Indexes FollowSymLinks
+    AllowOverride None
+    DirectoryIndex index.php index.html
+    Require ip 127.0.0.1
+    Require ip ::1
+    
+    # Handle PHP files through CGI
+    AddHandler php-script .php
+    Action php-script /php/php-cgi.exe
+    
+    # Security rules
+    <Files "*.php">
+        SetHandler php-script
+    </Files>
+    
+    <Files "config.inc.php">
+        Require all denied
+    </Files>
+    
+    <Files "setup.php">
+        Require all denied
+    </Files>
+</Directory>
+
+# Optional: Create a redirect from root to phpMyAdmin for testing
+# Uncomment the next line if you want http://localhost/ to redirect to phpMyAdmin
+# Redirect /index.html /phpmyadmin/
+
+# Alias for easy access
+Alias /pma "{}/phpmyadmin"
+"#,
+    base_path.display().to_string().replace("\\", "/"),
     base_path.display().to_string().replace("\\", "/"),
     base_path.display().to_string().replace("\\", "/")
     );
@@ -942,6 +1000,8 @@ ServerSignature Off
     let config_dir = base_path.join("config");
     std::fs::create_dir_all(&config_dir).map_err(|e| e.to_string())?;
     std::fs::write(config_dir.join("httpd.conf"), config_content).map_err(|e| e.to_string())?;
+    std::fs::write(config_dir.join("phpmyadmin.conf"), phpmyadmin_config).map_err(|e| e.to_string())?;
+    
     Ok(())
 }
 
