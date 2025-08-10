@@ -27,6 +27,39 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: `${context.ref.replace(/refs\/tags\//, '')}`,
+              name: `DevStackBox ${context.ref.replace(/refs\/tags\//, '')} - Alpha Release`,
+              body: `🚀 **DevStackBox Alpha Release**
+              
+              A modern, lightweight PHP development environment built with Tauri + React.
+              
+              **Features:**
+              - ✅ **Modern React UI** with dark/light mode
+              - ✅ **Service Management** for local development servers
+              - ✅ **Configuration Tools** with backup/restore
+              - ✅ **Auto-Updates** via GitHub Releases
+              - ✅ **Multilingual Support** (English + Hindi)
+              - ✅ **Debug Tools** for troubleshooting
+              
+              **Installation:**
+              1. Download the installer below
+              2. Run as administrator
+              3. Launch DevStackBox from Start Menu
+              4. Configure your development environment
+              
+              **System Requirements:**
+              - Windows 10/11 (x64)
+              - 100MB free disk space
+              
+              **Note:** This is an alpha release. Server components (Apache, MySQL, PHP) can be added separately.`,
+              draft: true,
+              prerelease: true
+            });
+            return data.id;
+          script: |
+            const { data } = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: `${context.ref.replace(/refs\/tags\//, '')}`,
               name: `DevStackBox ${context.ref.replace(/refs\/tags\//, '')} - Full XAMPP Alternative`,
               body: `🚀 **DevStackBox Full Installation Package**
               
@@ -95,10 +128,23 @@ jobs:
       - name: Install frontend dependencies
         run: npm install
 
-      - name: Prepare server binaries for bundling
-        run: npm run prepare-binaries
+      - name: Create minimal structure for build
+        run: |
+          # Create placeholder directories and files to satisfy Tauri build requirements
+          $directories = @("src-tauri/apache", "src-tauri/mysql", "src-tauri/php", "src-tauri/phpmyadmin", "src-tauri/www", "src-tauri/config")
+          
+          foreach ($dir in $directories) {
+            New-Item -ItemType Directory -Force -Path $dir
+            New-Item -ItemType File -Force -Path "$dir/README.txt" -Value "Placeholder for DevStackBox component"
+          }
+          
+          # Create a basic index.html for www
+          New-Item -ItemType File -Force -Path "src-tauri/www/index.html" -Value "<html><body><h1>DevStackBox</h1><p>Ready for your projects!</p></body></html>"
+          
+          Write-Host "✅ Created minimal structure for build"
+        shell: powershell
 
-      - name: Build the app with bundled servers
+      - name: Build the app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
