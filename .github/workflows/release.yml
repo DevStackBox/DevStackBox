@@ -108,7 +108,7 @@ jobs:
 
       - name: Verify server components are ready
         run: |
-          Write-Host "🔍 Verifying server components in src-tauri..." -ForegroundColor Cyan
+          Write-Host "Verifying server components in src-tauri..." -ForegroundColor Cyan
           
           $components = @("apache", "mysql", "php", "phpmyadmin", "www", "config")
           foreach ($component in $components) {
