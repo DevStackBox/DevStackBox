@@ -56,7 +56,8 @@
         "type": "downloadBootstrapper"
       },
       "wix": {
-        "language": "en-US"
+        "language": "en-US",
+        "fragmentPaths": ["wix/custom-install-dir.wxs"]
       },
       "nsis": {
         "displayLanguageSelector": false,

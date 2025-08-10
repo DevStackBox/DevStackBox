@@ -7,6 +7,23 @@ use std::time::Duration;
 use tokio::time::sleep;
 use std::env;
 
+// Service manager module
+mod service_manager;
+
+// Helper function to create a Command with hidden window on Windows
+fn create_hidden_command(program: &str) -> Command {
+    let mut cmd = Command::new(program);
+    
+    // On Windows, hide the terminal window to prevent flashing
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+    
+    cmd
+}
+
 // Helper function to get the project root directory
 fn get_project_root() -> Result<PathBuf, String> {
     let current_dir = std::env::current_dir().map_err(|e| e.to_string())?;
@@ -139,8 +156,69 @@ async fn debug_paths() -> Result<HashMap<String, String>, String> {
 }
 
 #[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
+async fn debug_installation() -> Result<HashMap<String, String>, String> {
+    let mut debug_info = HashMap::new();
+    
+    // Get current executable path
+    if let Ok(exe_path) = env::current_exe() {
+        debug_info.insert("exe_path".to_string(), exe_path.display().to_string());
+        if let Some(parent) = exe_path.parent() {
+            debug_info.insert("exe_parent".to_string(), parent.display().to_string());
+        }
+    }
+    
+    // Get installation path
+    let install_path = get_installation_path();
+    debug_info.insert("detected_install_path".to_string(), install_path.display().to_string());
+    
+    // Check if server components exist
+    let apache_exists = install_path.join("apache").join("bin").join("httpd.exe").exists();
+    let mysql_exists = install_path.join("mysql").join("bin").join("mysqld.exe").exists();
+    let php_exists = install_path.join("php").join("8.2").join("php.exe").exists();
+    let phpmyadmin_exists = install_path.join("phpmyadmin").join("index.php").exists();
+    
+    debug_info.insert("apache_exists".to_string(), apache_exists.to_string());
+    debug_info.insert("mysql_exists".to_string(), mysql_exists.to_string());
+    debug_info.insert("php_exists".to_string(), php_exists.to_string());
+    debug_info.insert("phpmyadmin_exists".to_string(), phpmyadmin_exists.to_string());
+    
+    // Check common installation paths
+    let common_paths = [
+        "C:\\dsb",
+        "C:\\Program Files\\DevStackBox",
+        "C:\\DevStackBox"
+    ];
+    
+    for path in &common_paths {
+        let path_buf = PathBuf::from(path);
+        let exists = path_buf.exists();
+        let apache_in_path = path_buf.join("apache").join("bin").join("httpd.exe").exists();
+        debug_info.insert(
+            format!("path_{}_exists", path.replace("\\", "_").replace(":", "")),
+            format!("dir: {}, apache: {}", exists, apache_in_path)
+        );
+    }
+    
+    Ok(debug_info)
+}
+
+#[tauri::command]
+async fn stop_all_services() -> Result<String, String> {
+    let mut results = Vec::new();
+    
+    // Stop MySQL
+    match stop_mysql().await {
+        Ok(_) => results.push("MySQL stopped".to_string()),
+        Err(e) => results.push(format!("MySQL stop failed: {}", e)),
+    }
+    
+    // Stop Apache
+    match stop_apache().await {
+        Ok(_) => results.push("Apache stopped".to_string()),
+        Err(e) => results.push(format!("Apache stop failed: {}", e)),
+    }
+    
+    Ok(results.join("; "))
 }
 
 #[tauri::command]
@@ -210,7 +288,7 @@ async fn start_mysql() -> Result<bool, String> {
     // Initialize MySQL data directory if needed
     initialize_mysql_data().await?;
 
-    match Command::new(&mysql_path)
+    match create_hidden_command(&mysql_path.to_string_lossy())
         .arg(format!("--defaults-file={}", config_path.display()))
         .arg("--console")
         .spawn()
@@ -545,7 +623,7 @@ async fn start_apache() -> Result<bool, String> {
     std::env::set_current_dir(&base_path).map_err(|e| e.to_string())?;
 
     // Test Apache configuration first
-    match Command::new(&apache_path)
+    match create_hidden_command(&apache_path.to_string_lossy())
         .arg("-f")
         .arg(&config_path)
         .arg("-t")
@@ -561,7 +639,7 @@ async fn start_apache() -> Result<bool, String> {
     }
 
     // Now try to start Apache
-    match Command::new(&apache_path)
+    match create_hidden_command(&apache_path.to_string_lossy())
         .arg("-f")
         .arg(&config_path)
         .arg("-D")
@@ -575,7 +653,7 @@ async fn start_apache() -> Result<bool, String> {
             sleep(Duration::from_secs(3)).await;
             
             // Verify Apache is actually running by checking port 80
-            match std::process::Command::new("netstat")
+            match create_hidden_command("netstat")
                 .arg("-ano")
                 .output()
             {
@@ -1035,9 +1113,10 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
-            greet,
             check_binaries,
             debug_paths,
+            debug_installation,
+            stop_all_services,
             get_mysql_status,
             get_php_status, 
             get_apache_status,
