@@ -1,6 +1,6 @@
 [package]
 name = "devstackbox"
-version = "0.1.0-1"
+version = "0.1.0-alpha.6"
 description = "A lightweight, portable, open-source local development environment for PHP developers"
 authors = ["Nomad Programmer <shiv@srapsware.com>"]
 edition = "2021"
