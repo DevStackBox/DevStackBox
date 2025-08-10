@@ -8,8 +8,7 @@ import {
   Info,
   Server,
   ChevronLeft,
-  ChevronRight,
-  Monitor
+  ChevronRight
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -37,12 +36,6 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
       id: "services", 
       label: t('navigation.services'),
       icon: Database,
-      available: true
-    },
-    {
-      id: "system-tray",
-      label: "System Tray",
-      icon: Monitor,
       available: true
     },
     {
