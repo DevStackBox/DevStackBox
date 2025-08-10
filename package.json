@@ -1,6 +1,6 @@
 {
   "name": "devstackbox",
-  "version": "0.1.0-alpha.6",
+  "version": "0.1.6",
   "description": "A lightweight, portable, open-source local development environment for PHP developers",
   "type": "module",
   "scripts": {
