@@ -102,20 +102,27 @@ jobs:
       - name: Install frontend dependencies
         run: npm install
 
-      - name: Create minimal structure for build
+      - name: Prepare server binaries for bundling
+        run: npm run prepare-binaries
+        shell: powershell
+
+      - name: Verify server components are ready
         run: |
-          # Create placeholder directories and files to satisfy Tauri build requirements
-          $directories = @("src-tauri/apache", "src-tauri/mysql", "src-tauri/php", "src-tauri/phpmyadmin", "src-tauri/www", "src-tauri/config")
+          Write-Host "🔍 Verifying server components in src-tauri..." -ForegroundColor Cyan
           
-          foreach ($dir in $directories) {
-            New-Item -ItemType Directory -Force -Path $dir
-            New-Item -ItemType File -Force -Path "$dir/README.txt" -Value "Placeholder for DevStackBox component"
+          $components = @("apache", "mysql", "php", "phpmyadmin", "www", "config")
+          foreach ($component in $components) {
+            $path = "src-tauri/$component"
+            if (Test-Path $path) {
+              $size = (Get-ChildItem -Path $path -Recurse | Measure-Object -Property Length -Sum).Sum
+              $sizeMB = [math]::Round($size/1MB, 2)
+              Write-Host "✅ $component : $sizeMB MB" -ForegroundColor Green
+            } else {
+              Write-Host "❌ $component : Not found" -ForegroundColor Red
+            }
           }
           
-          # Create a basic index.html for www
-          New-Item -ItemType File -Force -Path "src-tauri/www/index.html" -Value "<html><body><h1>DevStackBox</h1><p>Ready for your projects!</p></body></html>"
-          
-          Write-Host "✅ Created minimal structure for build"
+          Write-Host "🚀 Ready for Tauri build" -ForegroundColor Blue
         shell: powershell
 
       - name: Build the app
