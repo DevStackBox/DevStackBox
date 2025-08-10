@@ -81,7 +81,7 @@ DevStackBox/
 | Build Optimization                            | ✅ Available  | 288.9MB MSI, 147.7MB NSIS installers                            |
 | Crash & Bug Reporting via GitHub              | 🔄 In Progress| Report bugs/crashes via GitHub Issues                            |
 | Logs Viewer                                   | 🔄 In Progress| Real-time log viewing with filter/search                         |
-| System Tray Integration                       | 🔄 In Progress| Minimize to tray/quick actions                                   |
+| System Tray Integration                       | ✅ Available  | Minimize to tray/quick actions                                   |
 | Auto-Update                                   | 🔄 In Progress| Via GitHub Releases                                              |
 | Apache HTTP Server                            | 🕓 Planned    | Portable Apache, vhost & HTTPS                                   |
 | Multiple PHP Versions                         | 🕓 Planned    | Download via in-app installer                                    |

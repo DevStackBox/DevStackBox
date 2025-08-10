@@ -6,6 +6,11 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 use tokio::time::sleep;
 use std::env;
+use tauri::{
+    tray::{TrayIconBuilder, TrayIconEvent},
+    menu::{MenuBuilder, MenuItemBuilder},
+    Manager,
+};
 
 // Service manager module
 mod service_manager;
@@ -1319,6 +1324,30 @@ async fn create_directory_structure() -> Result<String, String> {
     Ok("Directory structure and default web files created successfully".to_string())
 }
 
+// System Tray Commands
+#[tauri::command]
+async fn show_main_window(app_handle: tauri::AppHandle) -> Result<(), String> {
+    if let Some(window) = app_handle.get_webview_window("main") {
+        window.show().map_err(|e| e.to_string())?;
+        window.set_focus().map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+async fn hide_to_tray(app_handle: tauri::AppHandle) -> Result<(), String> {
+    if let Some(window) = app_handle.get_webview_window("main") {
+        window.hide().map_err(|e| e.to_string())?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
+async fn quit_app(app_handle: tauri::AppHandle) -> Result<(), String> {
+    app_handle.exit(0);
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     println!("Starting DevStackBox application...");
@@ -1347,10 +1376,85 @@ pub fn run() {
             toggle_php,
             toggle_apache,
             get_service_logs,
-            create_directory_structure
+            create_directory_structure,
+            show_main_window,
+            hide_to_tray,
+            quit_app
         ])
-        .setup(|_app| {
-            println!("DevStackBox setup complete, window should be opening...");
+        .setup(|app| {
+            println!("DevStackBox setup complete, setting up system tray...");
+            
+            // Create system tray menu
+            let show_item = MenuItemBuilder::new("Show DevStackBox").id("show").build(app)?;
+            let hide_item = MenuItemBuilder::new("Hide to Tray").id("hide").build(app)?;
+            let mysql_item = MenuItemBuilder::new("Toggle MySQL").id("mysql").build(app)?;
+            let apache_item = MenuItemBuilder::new("Toggle Apache").id("apache").build(app)?;
+            let quit_item = MenuItemBuilder::new("Quit").id("quit").build(app)?;
+            
+            let menu = MenuBuilder::new(app)
+                .item(&show_item)
+                .item(&hide_item)
+                .separator()
+                .item(&mysql_item)
+                .item(&apache_item)
+                .separator()
+                .item(&quit_item)
+                .build()?;
+
+            // Create system tray
+            let _tray = TrayIconBuilder::new()
+                .menu(&menu)
+                .tooltip("DevStackBox - PHP Development Environment")
+                .icon(app.default_window_icon().unwrap().clone())
+                .on_menu_event(move |_app, event| {
+                    match event.id().as_ref() {
+                        "show" => {
+                            if let Some(window) = _app.get_webview_window("main") {
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
+                        }
+                        "hide" => {
+                            if let Some(window) = _app.get_webview_window("main") {
+                                let _ = window.hide();
+                            }
+                        }
+                        "mysql" => {
+                            // Toggle MySQL service
+                            println!("Toggle MySQL from tray");
+                        }
+                        "apache" => {
+                            // Toggle Apache service  
+                            println!("Toggle Apache from tray");
+                        }
+                        "quit" => {
+                            _app.exit(0);
+                        }
+                        _ => {}
+                    }
+                })
+                .on_tray_icon_event(|tray, event| {
+                    match event {
+                        TrayIconEvent::Click { button, .. } => {
+                            if button == tauri::tray::MouseButton::Left {
+                                // Left click to show/hide main window
+                                let app = tray.app_handle();
+                                if let Some(window) = app.get_webview_window("main") {
+                                    if window.is_visible().unwrap_or(false) {
+                                        let _ = window.hide();
+                                    } else {
+                                        let _ = window.show();
+                                        let _ = window.set_focus();
+                                    }
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                })
+                .build(app)?;
+
+            println!("System tray initialized successfully!");
             Ok(())
         })
         .run(tauri::generate_context!())
