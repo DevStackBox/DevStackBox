@@ -12,6 +12,8 @@ import { AutoUpdater } from "./components/auto-updater";
 import { Sidebar } from "./components/sidebar";
 import { CommandPalette } from "./components/command-palette";
 import { PHPVersionSelector } from "./components/php-version-selector";
+import { SystemTrayPage } from "./pages/SystemTrayPage";
+import { WindowControls } from "./components/WindowControls";
 import { DashboardPage, ServicesPage } from "./pages";
 import "./lib/i18n";
 
@@ -257,6 +259,9 @@ function App() {
           </div>
         );
       
+      case "system-tray":
+        return <SystemTrayPage />;
+      
       default:
         return (
           <DashboardPage
@@ -295,6 +300,7 @@ function App() {
                 <AutoUpdater />
                 <LanguageSwitcher />
                 <ThemeToggle />
+                <WindowControls />
               </div>
             </div>
           </header>
