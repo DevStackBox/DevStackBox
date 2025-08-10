@@ -1,11 +1,27 @@
-# DevStackBox (Tauri Edition)
+# DevStackBox v0.1.6 (Tauri Edition)
 
 A lightweight, portable, open-source local development environment for PHP developers.
 
 **Author:** Nomad Programmer  
 **Contact:** shiv@srapsware.com  
 **Repository:** [ProgrammerNomad/DevStackBox](https://github.com/ProgrammerNomad/DevStackBox)  
+**Latest Release:** [v0.1.6](https://github.com/ProgrammerNomad/DevStackBox/releases/latest)  
 **Docs & Issues:** Please use [GitHub Issues](https://github.com/ProgrammerNomad/DevStackBox/issues) and [GitHub Wiki](https://github.com/ProgrammerNomad/DevStackBox/wiki) for all documentation, feature requests, and bug reports.
+
+---
+
+## 🎉 Recent Updates (v0.1.6)
+
+### ✅ **What's New:**
+- **✅ MSI Compatibility Fixed:** Clean semantic versioning (v0.1.6) for Windows MSI installer
+- **✅ Complete UI Restoration:** Fixed accidentally deleted CSS and core files
+- **✅ Both Installer Formats:** MSI (288.9 MB) and NSIS (147.7 MB) available
+- **✅ GitHub Actions Fixed:** Resolved emoji encoding issues in CI/CD pipeline
+- **✅ Project Structure Optimized:** Clean codebase following Vite + React + Tauri best practices
+
+### 📦 **Download Now:**
+- **Windows MSI Installer:** [DevStackBox_0.1.6_x64_en-US.msi](https://github.com/ProgrammerNomad/DevStackBox/releases/latest)
+- **Windows NSIS Installer:** [DevStackBox_0.1.6_x64-setup.exe](https://github.com/ProgrammerNomad/DevStackBox/releases/latest)
 
 ---
 
@@ -17,6 +33,9 @@ A lightweight, portable, open-source local development environment for PHP devel
 | **phpMyAdmin Integration**                    | ✅ Available  | Built-in database management interface                             |
 | **Modern UI (Vite+React+Tailwind+shadcn/ui)** | ✅ Available  | Fast, responsive, utility-first design with animations             |
 | **Config Management (Backup/Restore)**        | ✅ Available  | Syntax-highlighting and backup/restore for config files            |
+| **Clean Semantic Versioning**                | ✅ Available  | MSI/NSIS compatible version format (v0.1.6)                       |
+| **Multi-Format Installers**                  | ✅ Available  | Windows MSI (288.9 MB) and NSIS (147.7 MB) installers             |
+| **Multilanguage UI**                          | ✅ Available  | i18next-based internationalization with English and Hindi support  |
 | **Crash & Bug Reporting via GitHub**          | 🔄 In Progress| User-initiated crash/bug reports with pre-filled GitHub Issues     |
 | **Logs Viewer**                               | 🔄 In Progress| View MySQL, phpMyAdmin, Apache, PHP, and app logs with real-time search/filter |
 | **System Tray Integration**                   | 🔄 In Progress| Minimize to tray, quick actions                                    |
