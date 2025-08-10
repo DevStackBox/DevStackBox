@@ -109,3 +109,4 @@ src-tauri/php/
 src-tauri/phpmyadmin/
 src-tauri/www/
 src-tauri/config/
+apache-backup-32bit/*

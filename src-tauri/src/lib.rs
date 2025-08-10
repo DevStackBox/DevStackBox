@@ -238,6 +238,20 @@ async fn debug_installation() -> Result<HashMap<String, String>, String> {
     debug_info.insert("apache_bin_path".to_string(), apache_bin.display().to_string());
     debug_info.insert("apache_exists".to_string(), apache_bin.exists().to_string());
     
+    // Check Apache architecture if it exists
+    if apache_bin.exists() {
+        match is_32bit_executable(&apache_bin) {
+            Ok(is_32bit) => {
+                debug_info.insert("apache_32bit".to_string(), is_32bit.to_string());
+                debug_info.insert("apache_architecture".to_string(), 
+                    if is_32bit { "32-bit".to_string() } else { "64-bit".to_string() });
+            },
+            Err(e) => {
+                debug_info.insert("apache_arch_error".to_string(), e);
+            }
+        }
+    }
+    
     debug_info.insert("mysql_bin_path".to_string(), mysql_bin.display().to_string());
     debug_info.insert("mysql_exists".to_string(), mysql_bin.exists().to_string());
     
