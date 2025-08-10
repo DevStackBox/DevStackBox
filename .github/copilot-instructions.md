@@ -66,7 +66,7 @@ DevStackBox/
 
 ---
 
-## 🗂️ 3. Full Feature/Status Table
+## 🗂️ 3. Full Feature/Status Table (Updated v0.1.6)
 
 | Feature                                      | Status        | Description                                                      |
 |-----------------------------------------------|--------------|------------------------------------------------------------------|
@@ -75,6 +75,10 @@ DevStackBox/
 | Modern Tailwind/shadcn/ui/Framer UI           | ✅ Available  | Responsive, animated, utility-first UI                           |
 | Config Management (Backup/Restore)            | ✅ Available  | Syntax highlighting, backup/restore                              |
 | Multilanguage UI (i18next, EN/HI)             | ✅ Available  | English & Hindi, Unicode correct                                 |
+| Clean Semantic Versioning                     | ✅ Available  | MSI-compatible version format (v0.1.6)                           |
+| GitHub Actions CI/CD                          | ✅ Available  | Automated builds with MSI & NSIS installers                      |
+| Project Structure Cleanup                     | ✅ Available  | Organized codebase with proper file locations                    |
+| Build Optimization                            | ✅ Available  | 288.9MB MSI, 147.7MB NSIS installers                            |
 | Crash & Bug Reporting via GitHub              | 🔄 In Progress| Report bugs/crashes via GitHub Issues                            |
 | Logs Viewer                                   | 🔄 In Progress| Real-time log viewing with filter/search                         |
 | System Tray Integration                       | 🔄 In Progress| Minimize to tray/quick actions                                   |
@@ -202,7 +206,31 @@ DevStackBox/
 
 ---
 
-## 📦 10. Auto-Update & Issue Tracking
+## � 12. Recent Achievements & Lessons Learned (v0.1.6)
+
+**✅ Major Fixes Completed:**
+- **MSI Compatibility**: Fixed version format from `0.1.0-alpha.6` to `0.1.6` for MSI bundler
+- **File Structure**: Resolved accidental deletion of critical files (`globals.css`, `main.tsx`, `index.html`)
+- **GitHub Actions**: Fixed emoji encoding issues causing PowerShell parsing errors
+- **CSS Pipeline**: Restored complete Tailwind CSS compilation (27.60 kB output)
+- **Build System**: Successfully generating both MSI (288.9MB) and NSIS (147.7MB) installers
+
+**🎓 Key Lessons:**
+- Always use clean semantic versioning for MSI compatibility (no hyphens, no text)
+- Avoid emoji characters in PowerShell scripts for GitHub Actions
+- Verify file locations before deletion - check if files are truly duplicates
+- Root-level files may be the correct ones in Vite projects
+- Test build output to ensure CSS is being compiled correctly
+
+**🔧 Technical Improvements:**
+- GitHub Actions workflow is now emoji-free and stable
+- Proper project structure following Vite + React + Tauri best practices
+- All source files correctly organized with proper import paths
+- Build artifacts cleaned up for release preparation
+
+---
+
+## �📦 10. Auto-Update & Issue Tracking
 
 - Releases and all auto-updates are via [GitHub Releases](https://github.com/ProgrammerNomad/DevStackBox/releases).
 - All bug/crash reporting and documentation is managed via [GitHub Issues](https://github.com/ProgrammerNomad/DevStackBox/issues) and [Wiki](https://github.com/ProgrammerNomad/DevStackBox/wiki).
