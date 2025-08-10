@@ -5,6 +5,7 @@ use std::process::Command;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 use tokio::time::sleep;
+use std::env;
 
 // Helper function to get the project root directory
 fn get_project_root() -> Result<PathBuf, String> {
@@ -16,6 +17,50 @@ fn get_project_root() -> Result<PathBuf, String> {
         // If we're already in DevStackBox or elsewhere, use current directory
         Ok(current_dir)
     }
+}
+
+// Helper function to get the installation base path
+fn get_installation_path() -> PathBuf {
+    // First, try to get the path from the installed location
+    if let Ok(exe_path) = env::current_exe() {
+        if let Some(parent) = exe_path.parent() {
+            // Check if we're in the installed directory (C:\dsb\)
+            if parent.to_string_lossy().contains("dsb") || parent.to_string_lossy().contains("DevStackBox") {
+                return parent.to_path_buf();
+            }
+        }
+    }
+    
+    // For development environment, try current directory logic
+    if let Ok(current_dir) = env::current_dir() {
+        if current_dir.file_name().and_then(|name| name.to_str()) == Some("src-tauri") {
+            // If we're in src-tauri directory, go up one level to DevStackBox
+            if let Some(parent) = current_dir.parent() {
+                return parent.to_path_buf();
+            }
+        }
+        
+        // Check if current directory has the server components
+        if current_dir.join("apache").join("bin").join("httpd.exe").exists() {
+            return current_dir;
+        }
+    }
+    
+    // Final fallback - try common installation paths
+    let possible_paths = [
+        PathBuf::from("C:\\dsb"),
+        PathBuf::from("C:\\Program Files\\DevStackBox"),
+        PathBuf::from("C:\\DevStackBox"),
+    ];
+    
+    for path in &possible_paths {
+        if path.join("apache").join("bin").join("httpd.exe").exists() {
+            return path.clone();
+        }
+    }
+    
+    // Ultimate fallback to current directory
+    env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
 }
 
 // Service status and process tracking
@@ -47,15 +92,8 @@ struct PHPVersionInfo {
 async fn check_binaries() -> Result<HashMap<String, bool>, String> {
     let mut binaries = HashMap::new();
     
-    // Get the project root directory (DevStackBox)
-    let current_dir = std::env::current_dir().map_err(|e| e.to_string())?;
-    let base_path = if current_dir.file_name().and_then(|name| name.to_str()) == Some("src-tauri") {
-        // If we're in src-tauri directory, go up one level to DevStackBox
-        current_dir.parent().unwrap_or(&current_dir)
-    } else {
-        // If we're already in DevStackBox or elsewhere, use current directory
-        &current_dir
-    };
+    // Get the installation base path
+    let base_path = get_installation_path();
     
     // Check MySQL
     let mysql_path = base_path.join("mysql").join("bin").join("mysqld.exe");
@@ -76,17 +114,10 @@ async fn check_binaries() -> Result<HashMap<String, bool>, String> {
 async fn debug_paths() -> Result<HashMap<String, String>, String> {
     let mut paths = HashMap::new();
     
-    // Get the project root directory (DevStackBox)
-    let current_dir = std::env::current_dir().map_err(|e| e.to_string())?;
-    let base_path = if current_dir.file_name().and_then(|name| name.to_str()) == Some("src-tauri") {
-        // If we're in src-tauri directory, go up one level to DevStackBox
-        current_dir.parent().unwrap_or(&current_dir)
-    } else {
-        // If we're already in DevStackBox or elsewhere, use current directory
-        &current_dir
-    };
+    // Get the installation base path
+    let base_path = get_installation_path();
     
-    paths.insert("current_dir".to_string(), current_dir.display().to_string());
+    paths.insert("current_dir".to_string(), env::current_dir().unwrap_or_default().display().to_string());
     paths.insert("base_path".to_string(), base_path.display().to_string());
     
     // Check MySQL
@@ -135,14 +166,7 @@ async fn get_mysql_status() -> Result<ServiceInfo, String> {
 }
 
 async fn initialize_mysql_data() -> Result<(), String> {
-    let current_dir = std::env::current_dir().map_err(|e| e.to_string())?;
-    let base_path = if current_dir.file_name().and_then(|name| name.to_str()) == Some("src-tauri") {
-        // If we're in src-tauri directory, go up one level to DevStackBox
-        current_dir.parent().unwrap_or(&current_dir)
-    } else {
-        // If we're already in DevStackBox or elsewhere, use current directory
-        &current_dir
-    };
+    let base_path = get_installation_path();
     
     let data_dir = base_path.join("mysql").join("data");
     let mysql_bin_path = base_path.join("mysql").join("bin").join("mysqld.exe");
@@ -170,15 +194,8 @@ async fn initialize_mysql_data() -> Result<(), String> {
 
 #[tauri::command]
 async fn start_mysql() -> Result<bool, String> {
-    // Get the project root directory (DevStackBox)
-    let current_dir = std::env::current_dir().map_err(|e| e.to_string())?;
-    let base_path = if current_dir.file_name().and_then(|name| name.to_str()) == Some("src-tauri") {
-        // If we're in src-tauri directory, go up one level to DevStackBox
-        current_dir.parent().unwrap_or(&current_dir)
-    } else {
-        // If we're already in DevStackBox or elsewhere, use current directory
-        &current_dir
-    };
+    // Get the installation base path
+    let base_path = get_installation_path();
     
     let mysql_path = base_path.join("mysql").join("bin").join("mysqld.exe");
     if !mysql_path.exists() {

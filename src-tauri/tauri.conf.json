@@ -35,12 +35,37 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": [],
+    "resources": [
+      "apache/**/*",
+      "mysql/**/*",
+      "php/**/*",
+      "phpmyadmin/**/*",
+      "www/**/*",
+      "config/**/*"
+    ],
     "externalBin": [],
     "copyright": "© 2025 Nomad Programmer",
     "category": "DeveloperTool",
     "shortDescription": "Local PHP development environment",
-    "longDescription": "A lightweight, portable, open-source local development environment for PHP developers with Apache, MySQL, phpMyAdmin, and PHP 8.2"
+    "longDescription": "A lightweight, portable, open-source local development environment for PHP developers with Apache, MySQL, phpMyAdmin, and PHP 8.2",
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "",
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      },
+      "wix": {
+        "language": "en-US",
+        "template": "templates/main.wxs",
+        "upgradeCode": null
+      },
+      "nsis": {
+        "displayLanguageSelector": false,
+        "installerIcon": "icons/icon.ico",
+        "languages": ["English"]
+      }
+    }
   },
   "plugins": {
     "updater": {

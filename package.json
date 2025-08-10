@@ -10,8 +10,8 @@
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
-    "prepare-release": "node scripts/prepare-binaries.ts",
-    "build:release": "npm run prepare-release && npm run tauri:build",
+    "prepare-binaries": "powershell -ExecutionPolicy Bypass -File scripts/prepare-binaries.ps1",
+    "build:release": "npm run prepare-binaries && npm run tauri:build",
     "release": "npm version patch && git push --tags"
   },
   "dependencies": {

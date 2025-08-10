@@ -101,3 +101,11 @@ www/*/bootstrap/cache/
 *.temp
 php/sessions/sess_328jk0pnb98gscpr7f150qme75
 release/*
+
+# Temporary build copies (will be created by prepare-binaries script)
+src-tauri/apache/
+src-tauri/mysql/
+src-tauri/php/
+src-tauri/phpmyadmin/
+src-tauri/www/
+src-tauri/config/

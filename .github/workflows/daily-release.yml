@@ -1,0 +1,102 @@
+name: Daily Alpha Release
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  daily-release:
+    permissions:
+      contents: write
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Rust setup
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Sync node version and setup cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+
+      - name: Install frontend dependencies
+        run: npm install
+
+      - name: Prepare server binaries for bundling
+        run: npm run prepare-binaries
+
+      - name: Generate daily tag
+        id: tag
+        run: |
+          $date = Get-Date -Format "yyyy.MM.dd"
+          $tag = "daily-$date"
+          echo "tag=$tag" >> $env:GITHUB_OUTPUT
+          echo "release_name=DevStackBox Daily Alpha - $date" >> $env:GITHUB_OUTPUT
+
+      - name: Create daily release
+        id: create_release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = '${{ steps.tag.outputs.tag }}';
+            const release_name = '${{ steps.tag.outputs.release_name }}';
+            
+            try {
+              const { data } = await github.rest.repos.createRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag_name: tag,
+                name: release_name,
+                body: `🔧 **Daily Alpha Build - ${tag}**
+                
+                This is an automated daily build with the latest features and fixes.
+                
+                **Includes:**
+                - ✅ Complete Apache, MySQL, PHP, phpMyAdmin bundle
+                - ✅ Latest UI improvements and bug fixes
+                - ✅ Auto-updater functionality
+                - ✅ Portable installation (C:\\dsb\\)
+                
+                **⚠️ Alpha Warning:**
+                This is a development build and may contain bugs. Use for testing only.
+                
+                **Installation:**
+                1. Download DevStackBox_*_x64_en-US.msi
+                2. Run as administrator
+                3. Launch from Start Menu
+                
+                **Feedback:**
+                Report issues at: https://github.com/ProgrammerNomad/DevStackBox/issues`,
+                draft: false,
+                prerelease: true
+              });
+              return data.id;
+            } catch (error) {
+              if (error.status === 422) {
+                console.log('Release already exists, skipping...');
+                return null;
+              }
+              throw error;
+            }
+
+      - name: Build the app with bundled servers
+        if: steps.create_release.outputs.result != 'null'
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+        with:
+          releaseId: ${{ steps.create_release.outputs.result }}
+          args: '--target x86_64-pc-windows-msvc'
