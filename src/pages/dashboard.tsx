@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
+import { safeInvoke, isTauri } from "@/lib/tauri";
 import { ServiceManager } from "@/components/services";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,19 +31,39 @@ export function DashboardPage({
   const { t } = useTranslation();
   const [serviceStats, setServiceStats] = useState({
     runningServices: 0,
-    totalServices: 3,
+    totalServices: 2, // Only Apache and MySQL (PHP is not a service)
     uptime: "0m",
     lastCheck: new Date()
   });
 
+  // Real-time service status polling
+  const updateServiceStats = async () => {
+    try {
+      if (!isTauri()) return;
+      
+      const [apache, mysql] = await Promise.all([
+        safeInvoke<{ running: boolean }>("get_apache_status"),
+        safeInvoke<{ running: boolean }>("get_mysql_status"),
+      ]);
+      
+      if (!apache || !mysql) return;
+      
+      // Only count actual services (Apache and MySQL), not PHP
+      const runningCount = [apache.running, mysql.running].filter(Boolean).length;
+      setServiceStats(prev => ({
+        ...prev,
+        runningServices: runningCount,
+        lastCheck: new Date()
+      }));
+    } catch (error) {
+      console.error("Failed to update service stats:", error);
+    }
+  };
+
   const handleServiceToggle = (service: string, status: boolean) => {
-    // Update service statistics
+    // Update service statistics immediately
     console.log(`Service ${service} ${status ? 'started' : 'stopped'}`);
-    setServiceStats(prev => ({
-      ...prev,
-      runningServices: status ? prev.runningServices + 1 : prev.runningServices - 1,
-      lastCheck: new Date()
-    }));
+    updateServiceStats(); // Refresh stats after toggle
   };
 
   const quickActions = [
@@ -81,18 +102,35 @@ export function DashboardPage({
   ];
 
   useEffect(() => {
-    // Update uptime periodically
-    const interval = setInterval(() => {
-      const now = new Date();
-      const diff = Math.floor((now.getTime() - serviceStats.lastCheck.getTime()) / 1000 / 60);
-      setServiceStats(prev => ({
-        ...prev,
-        uptime: `${diff}m`
-      }));
+    // Initial stats update
+    updateServiceStats();
+    
+    // Real-time polling every 5 seconds
+    const statusInterval = setInterval(updateServiceStats, 5000);
+    
+    // Update uptime display every minute (only if services are running)
+    const uptimeInterval = setInterval(() => {
+      if (serviceStats.runningServices > 0) {
+        const now = new Date();
+        const diff = Math.floor((now.getTime() - serviceStats.lastCheck.getTime()) / 1000 / 60);
+        setServiceStats(prev => ({
+          ...prev,
+          uptime: `${diff}m`
+        }));
+      } else {
+        // Reset uptime when no services are running
+        setServiceStats(prev => ({
+          ...prev,
+          uptime: "0m"
+        }));
+      }
     }, 60000);
 
-    return () => clearInterval(interval);
-  }, [serviceStats.lastCheck]);
+    return () => {
+      clearInterval(statusInterval);
+      clearInterval(uptimeInterval);
+    };
+  }, [serviceStats.lastCheck, serviceStats.runningServices]);
 
   return (
     <motion.div
@@ -178,11 +216,19 @@ export function DashboardPage({
           <CardContent>
             <div className="flex items-center space-x-2">
               <Badge 
-                variant={serviceStats.runningServices > 0 ? "default" : "secondary"}
-                className={serviceStats.runningServices > 0 ? "bg-green-500" : "bg-gray-500"}
+                variant={serviceStats.runningServices === 2 ? "default" : serviceStats.runningServices === 1 ? "secondary" : "outline"}
+                className={
+                  serviceStats.runningServices === 2 
+                    ? "bg-green-500 hover:bg-green-600" 
+                    : serviceStats.runningServices === 1
+                    ? "bg-orange-500 hover:bg-orange-600"
+                    : "bg-gray-500 hover:bg-gray-600"
+                }
               >
-                {serviceStats.runningServices > 0 
+                {serviceStats.runningServices === 2
                   ? t("status.operational", "Operational") 
+                  : serviceStats.runningServices === 1
+                  ? t("status.partiallyRunning", "Partially Running")
                   : t("status.offline", "Offline")
                 }
               </Badge>

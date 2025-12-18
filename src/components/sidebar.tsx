@@ -14,6 +14,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { APP_VERSION } from "@/lib/version";
 
 interface SidebarProps {
   currentPage: string;
@@ -85,7 +86,7 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
             </div>
             <div>
               <h2 className="font-semibold text-sm">DevStackBox</h2>
-              <p className="text-xs text-muted-foreground">v1.0.0</p>
+              <p className="text-xs text-muted-foreground">v{APP_VERSION}</p>
             </div>
           </motion.div>
         )}

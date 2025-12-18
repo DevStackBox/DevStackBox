@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import { Server } from "lucide-react";
+import { safeInvoke, isTauri, getMockBinariesStatus } from "@/lib/tauri";
+import { Server, FolderOpen, FileText, Info, Copy, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "./components/language-switcher";
@@ -13,14 +14,30 @@ import { Sidebar } from "./components/sidebar";
 import { CommandPalette } from "./components/command-palette";
 import { PHPVersionSelector } from "./components/php-version-selector";
 import { DashboardPage, ServicesPage } from "./pages";
+import { APP_VERSION } from "@/lib/version";
+import { Toaster } from "@/components/ui/toaster";
+import { useToast } from "@/hooks/use-toast";
 import "./lib/i18n";
 
 function App() {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [phpVersionSelectorOpen, setPhpVersionSelectorOpen] = useState(false);
+  const [copiedPath, setCopiedPath] = useState<string | null>(null);
+
+  // Copy path to clipboard helper
+  const copyToClipboard = (path: string, label: string) => {
+    navigator.clipboard.writeText(path);
+    setCopiedPath(path);
+    toast({
+      title: "Copied!",
+      description: `${label} copied to clipboard`,
+    });
+    setTimeout(() => setCopiedPath(null), 2000);
+  };
   const [currentPhpVersion, setCurrentPhpVersion] = useState("8.2");
   const [configView, setConfigView] = useState<'apache' | 'mysql' | null>(null);
 
@@ -31,7 +48,12 @@ function App() {
 
   const initializeApp = async () => {
     try {
-      const binaries = await invoke('check_binaries') as Record<string, boolean>;
+      if (!isTauri()) {
+        console.log('[Browser Mode] Running in browser - Tauri features disabled');
+        return;
+      }
+      
+      const binaries = await safeInvoke<Record<string, boolean>>('check_binaries') || getMockBinariesStatus();
       console.log('Binary status:', binaries);
       
       if (!binaries.mysql) {
@@ -79,15 +101,15 @@ function App() {
         return (
           <div className="space-y-6">
             <h2 className="text-3xl font-bold">{t('navigation.projects')}</h2>
-            <Card>
-              <CardHeader>
-                <CardTitle>Project Management</CardTitle>
-                <CardDescription>Manage your PHP projects and virtual hosts</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">{t('common.comingSoon')}</p>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={FolderOpen}
+              title="Project Management Coming Soon"
+              description="Create and manage your PHP projects with virtual hosts, SSL certificates, and automatic configuration. This feature is currently under development."
+              action={{
+                label: "View Roadmap",
+                onClick: () => window.open("https://github.com/ProgrammerNomad/DevStackBox/blob/main/ROADMAP.md", "_blank")
+              }}
+            />
           </div>
         );
       
@@ -95,15 +117,11 @@ function App() {
         return (
           <div className="space-y-6">
             <h2 className="text-3xl font-bold">{t('navigation.logs')}</h2>
-            <Card>
-              <CardHeader>
-                <CardTitle>Log Viewer</CardTitle>
-                <CardDescription>View real-time logs from all services</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">{t('common.comingSoon')}</p>
-              </CardContent>
-            </Card>
+            <EmptyState
+              icon={FileText}
+              title="Log Viewer Coming Soon"
+              description="View real-time logs from Apache, MySQL, and PHP with syntax highlighting, search, and filtering capabilities. Currently in development for Phase 1.2."
+            />
           </div>
         );
       
@@ -132,21 +150,43 @@ function App() {
                 <CardContent className="space-y-4">
                   <div>
                     <label className="text-sm font-medium">Configuration File</label>
-                    <p className="text-sm text-muted-foreground mb-2">C:\box\DevStackBox\config\httpd.conf</p>
-                    <Button
-                      onClick={() => alert('Opening Apache config editor (coming soon)')}
-                      variant="outline"
-                    >
-                      Edit Configuration
-                    </Button>
+                    <div className="flex items-center gap-2 mt-2">
+                      <p className="text-sm text-muted-foreground flex-1">config/httpd.conf</p>
+                      <Button
+                        onClick={() => copyToClipboard('config/httpd.conf', 'Apache config path')}
+                        variant="ghost"
+                        size="sm"
+                        className="h-7"
+                      >
+                        {copiedPath === 'config/httpd.conf' ? (
+                          <Check className="h-3 w-3 text-green-500" />
+                        ) : (
+                          <Copy className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium">Document Root</label>
-                    <p className="text-sm text-muted-foreground">C:\box\DevStackBox\www</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <p className="text-sm text-muted-foreground flex-1">www/</p>
+                      <Button
+                        onClick={() => copyToClipboard('www/', 'Document root path')}
+                        variant="ghost"
+                        size="sm"
+                        className="h-7"
+                      >
+                        {copiedPath === 'www/' ? (
+                          <Check className="h-3 w-3 text-green-500" />
+                        ) : (
+                          <Copy className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium">Port</label>
-                    <p className="text-sm text-muted-foreground">80</p>
+                    <p className="text-sm text-muted-foreground mt-2">80</p>
                   </div>
                 </CardContent>
               </Card>
@@ -170,21 +210,43 @@ function App() {
                 <CardContent className="space-y-4">
                   <div>
                     <label className="text-sm font-medium">Configuration File</label>
-                    <p className="text-sm text-muted-foreground mb-2">C:\box\DevStackBox\config\my.cnf</p>
-                    <Button
-                      onClick={() => alert('Opening MySQL config editor (coming soon)')}
-                      variant="outline"
-                    >
-                      Edit Configuration
-                    </Button>
+                    <div className="flex items-center gap-2 mt-2">
+                      <p className="text-sm text-muted-foreground flex-1">config/my.cnf</p>
+                      <Button
+                        onClick={() => copyToClipboard('config/my.cnf', 'MySQL config path')}
+                        variant="ghost"
+                        size="sm"
+                        className="h-7"
+                      >
+                        {copiedPath === 'config/my.cnf' ? (
+                          <Check className="h-3 w-3 text-green-500" />
+                        ) : (
+                          <Copy className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium">Data Directory</label>
-                    <p className="text-sm text-muted-foreground">C:\box\DevStackBox\mysql\data</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <p className="text-sm text-muted-foreground flex-1">mysql/data</p>
+                      <Button
+                        onClick={() => copyToClipboard('mysql/data', 'Data directory path')}
+                        variant="ghost"
+                        size="sm"
+                        className="h-7"
+                      >
+                        {copiedPath === 'mysql/data' ? (
+                          <Check className="h-3 w-3 text-green-500" />
+                        ) : (
+                          <Copy className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium">Port</label>
-                    <p className="text-sm text-muted-foreground">3306</p>
+                    <p className="text-sm text-muted-foreground mt-2">3306</p>
                   </div>
                 </CardContent>
               </Card>
@@ -217,15 +279,11 @@ function App() {
                   </CardContent>
                 </Card>
                 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Application Settings</CardTitle>
-                    <CardDescription>Configure DevStackBox preferences</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">{t('common.comingSoon')}</p>
-                  </CardContent>
-                </Card>
+                <EmptyState
+                  icon={Info}
+                  title="Advanced Settings Coming Soon"
+                  description="Configure application preferences, auto-start options, update channels, and more. Feature planned for Phase 2."
+                />
               </div>
             )}
           </div>
@@ -242,7 +300,7 @@ function App() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <p className="font-semibold">Version: 0.1.0-alpha.1</p>
+                  <p className="font-semibold">Version: {APP_VERSION}</p>
                   <p className="text-sm text-muted-foreground">Built with Tauri, React, and Rust</p>
                 </div>
                 <div>
@@ -288,7 +346,7 @@ function App() {
               <div className="flex items-center gap-2">
                 <Server className="h-5 w-5" />
                 <h1 className="text-lg font-semibold">DevStackBox</h1>
-                <Badge variant="outline" className="text-xs">v0.1.0-alpha.1</Badge>
+                <Badge variant="outline" className="text-xs">v{APP_VERSION}</Badge>
               </div>
               
               <div className="flex items-center gap-2">
@@ -320,6 +378,9 @@ function App() {
           currentVersion={currentPhpVersion}
           onVersionChange={setCurrentPhpVersion}
         />
+        
+        {/* Toast Notifications */}
+        <Toaster />
       </div>
     </ThemeProvider>
   );

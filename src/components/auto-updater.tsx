@@ -1,6 +1,4 @@
 import { useState, useEffect } from "react";
-import { check } from "@tauri-apps/plugin-updater";
-import { relaunch } from "@tauri-apps/plugin-process";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
@@ -8,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Download, RefreshCw, AlertCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
+import { APP_VERSION } from "@/lib/version";
+import { isTauri } from "@/lib/tauri";
 
 export function AutoUpdater() {
   const { t } = useTranslation();
@@ -20,10 +20,16 @@ export function AutoUpdater() {
   const [error, setError] = useState<string | null>(null);
 
   const checkForUpdates = async (showNotification = false) => {
+    if (!isTauri()) {
+      console.log('[Browser Mode] Updates only available in Tauri app');
+      return;
+    }
+    
     setChecking(true);
     setError(null);
     
     try {
+      const { check } = await import("@tauri-apps/plugin-updater");
       const update = await check();
       if (update?.available) {
         setUpdateInfo(update);
@@ -42,12 +48,14 @@ export function AutoUpdater() {
   };
 
   const downloadAndInstall = async () => {
-    if (!updateInfo) return;
+    if (!updateInfo || !isTauri()) return;
     
     setDownloading(true);
     setError(null);
     
     try {
+      const { relaunch } = await import("@tauri-apps/plugin-process");
+      
       await updateInfo.downloadAndInstall((event: any) => {
         switch (event.event) {
           case "Started":
@@ -128,7 +136,7 @@ export function AutoUpdater() {
           <div className="space-y-4">
             {/* Version Badge */}
             <div className="flex items-center gap-2">
-              <Badge variant="secondary">Current: v0.1.0-alpha.1</Badge>
+              <Badge variant="secondary">Current: v{APP_VERSION}</Badge>
               <span>→</span>
               <Badge variant="default">New: {updateInfo?.version}</Badge>
             </div>

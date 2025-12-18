@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { safeInvoke, isTauri, getMockServiceStatus } from "@/lib/tauri";
 import { motion } from "framer-motion";
 import { ApacheService, MySQLService, PHPService, ServiceStatus } from "./index";
+import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 
 interface ServiceManagerProps {
   compact?: boolean;
@@ -20,25 +23,39 @@ export function ServiceManager({
   onOpenPHPVersionSelector,
   currentPhpVersion = "8.2"
 }: ServiceManagerProps) {
+  const { toast } = useToast();
   const [services, setServices] = useState({
     apache: { running: false } as ServiceStatus,
     mysql: { running: false } as ServiceStatus,
     php: { running: false } as ServiceStatus,
   });
   const [loading, setLoading] = useState<string | null>(null);
+  const [initialLoading, setInitialLoading] = useState(true);
 
   // Check service status
   const checkServiceStatus = async () => {
     try {
+      if (!isTauri()) {
+        setInitialLoading(false);
+        return;
+      }
+      
       const [apache, mysql, php] = await Promise.all([
-        invoke<ServiceStatus>("get_apache_status"),
-        invoke<ServiceStatus>("get_mysql_status"),
-        invoke<ServiceStatus>("get_php_status"),
+        safeInvoke<ServiceStatus>("get_apache_status"),
+        safeInvoke<ServiceStatus>("get_mysql_status"),
+        safeInvoke<ServiceStatus>("get_php_status"),
       ]);
       
+      if (!apache || !mysql || !php) {
+        setInitialLoading(false);
+        return;
+      }
+      
       setServices({ apache, mysql, php });
+      setInitialLoading(false);
     } catch (error) {
       console.error("Failed to check service status:", error);
+      setInitialLoading(false);
     }
   };
 
@@ -46,19 +63,50 @@ export function ServiceManager({
   const toggleService = async (service: string) => {
     setLoading(service);
     try {
-      let result: boolean;
+      if (!isTauri()) {
+        toast({
+          variant: "destructive",
+          title: "Browser Mode",
+          description: "Service control requires running in Tauri app",
+        });
+        setLoading(null);
+        return;
+      }
+      
+      let result: boolean | null;
+      const serviceName = service.charAt(0).toUpperCase() + service.slice(1);
+      
       if (service === "apache") {
-        result = await invoke<boolean>("toggle_apache");
+        result = await safeInvoke<boolean>("toggle_apache");
       } else if (service === "mysql") {
-        result = await invoke<boolean>("toggle_mysql");
+        result = await safeInvoke<boolean>("toggle_mysql");
       } else {
-        result = await invoke<boolean>("toggle_php");
+        result = await safeInvoke<boolean>("toggle_php");
+      }
+      
+      if (result === null) {
+        setLoading(null);
+        return;
       }
       
       await checkServiceStatus();
       onServiceToggle?.(service, result);
+      
+      // Show toast notification
+      toast({
+        variant: "success",
+        title: `${serviceName} ${result ? 'Started' : 'Stopped'}`,
+        description: result 
+          ? `${serviceName} service is now running` 
+          : `${serviceName} service has been stopped`,
+      });
     } catch (error) {
       console.error(`Failed to toggle ${service}:`, error);
+      toast({
+        variant: "destructive",
+        title: "Service Error",
+        description: `Failed to ${services[service as keyof typeof services].running ? 'stop' : 'start'} ${service}. Check logs for details.`,
+      });
     } finally {
       setLoading(null);
     }
@@ -78,9 +126,18 @@ export function ServiceManager({
   const handleBackupDatabase = async () => {
     try {
       await invoke("backup_mysql_database");
-      // TODO: Add success notification
+      toast({
+        variant: "success",
+        title: "Backup Created",
+        description: "Database backup completed successfully",
+      });
     } catch (error) {
       console.error("Failed to backup database:", error);
+      toast({
+        variant: "destructive",
+        title: "Backup Failed",
+        description: "Failed to create database backup",
+      });
     }
   };
 
@@ -88,16 +145,25 @@ export function ServiceManager({
   const handleOpenTerminal = async () => {
     try {
       await invoke("open_php_terminal", { version: currentPhpVersion });
+      toast({
+        title: "Terminal Opened",
+        description: `PHP ${currentPhpVersion} terminal launched`,
+      });
     } catch (error) {
       console.error("Failed to open PHP terminal:", error);
+      toast({
+        variant: "destructive",
+        title: "Terminal Error",
+        description: "Failed to open PHP terminal",
+      });
     }
   };
 
   useEffect(() => {
     checkServiceStatus();
     
-    // Set up periodic status checking
-    const interval = setInterval(checkServiceStatus, 10000); // Check every 10 seconds
+    // Set up periodic status checking every 5 seconds for real-time monitoring
+    const interval = setInterval(checkServiceStatus, 5000);
     
     return () => clearInterval(interval);
   }, []);
@@ -105,6 +171,33 @@ export function ServiceManager({
   const containerClassName = compact 
     ? "grid grid-cols-1 md:grid-cols-3 gap-4" 
     : "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6";
+
+  // Service Card Skeleton
+  const ServiceSkeleton = () => (
+    <Card>
+      <CardHeader className="space-y-2">
+        <Skeleton className="h-6 w-32" />
+        <Skeleton className="h-4 w-24" />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <div className="flex gap-2">
+          <Skeleton className="h-8 flex-1" />
+          <Skeleton className="h-8 flex-1" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  if (initialLoading) {
+    return (
+      <div className={containerClassName}>
+        <ServiceSkeleton />
+        <ServiceSkeleton />
+        <ServiceSkeleton />
+      </div>
+    );
+  }
 
   return (
     <motion.div

@@ -54,21 +54,27 @@ export function PHPService({
         <CardHeader className={compact ? "pb-3" : ""}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Code className="h-5 w-5 text-purple-500" />
+              <div className="relative">
+                <Code className="h-5 w-5 text-purple-500" />
+                {/* PHP is not a service, so no running indicator */}
+              </div>
               <CardTitle className={compact ? "text-lg" : "text-xl"}>
-                {t("services.php.title", "PHP")} {currentVersion}
+                {t("services.php.title", "PHP Environment")} {currentVersion}
               </CardTitle>
             </div>
             <Badge 
-              variant={status.running ? "default" : "secondary"}
-              className={status.running ? "bg-green-500" : "bg-gray-500"}
+              variant="secondary"
+              className="bg-blue-500 hover:bg-blue-600 text-white transition-colors"
             >
-              {status.running ? t("status.available", "Available") : t("status.unavailable", "Unavailable")}
+              <div className="flex items-center gap-1.5">
+                {/* No pulsing animation for PHP environment */}
+                {t("status.ready", "Ready")}
+              </div>
             </Badge>
           </div>
           {!compact && (
             <CardDescription>
-              {t("services.php.description", "Server-side scripting language for web development")}
+              {t("services.php.description", "PHP runtime environment (not a service)")}
             </CardDescription>
           )}
         </CardHeader>
@@ -82,7 +88,7 @@ export function PHPService({
             </div>
             <div>
               <span className="text-muted-foreground">{t("common.status", "Status")}:</span>
-              <span className="ml-2">{status.running ? t("status.ready", "Ready") : t("status.inactive", "Inactive")}</span>
+              <span className="ml-2 text-blue-500 font-medium">{t("status.ready", "Ready")}</span>
             </div>
           </div>
 
@@ -112,34 +118,32 @@ export function PHPService({
               </Button>
             )}
 
-            {/* Quick Access Buttons */}
-            {status.running && (
-              <div className="grid grid-cols-2 gap-2">
+            {/* Quick Access Buttons - Always available since PHP is a runtime environment */}
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                onClick={openPhpInfo}
+                variant="outline"
+                size={compact ? "sm" : "default"}
+                className="flex items-center"
+              >
+                <FileText className="mr-1 h-3 w-3" />
+                {t("actions.phpinfo", "PHP Info")}
+              </Button>
+              {onOpenTerminal && (
                 <Button
-                  onClick={openPhpInfo}
+                  onClick={onOpenTerminal}
                   variant="outline"
                   size={compact ? "sm" : "default"}
                   className="flex items-center"
-                >
-                  <FileText className="mr-1 h-3 w-3" />
-                  {t("actions.phpinfo", "PHP Info")}
-                </Button>
-                {onOpenTerminal && (
-                  <Button
-                    onClick={onOpenTerminal}
-                    variant="outline"
-                    size={compact ? "sm" : "default"}
-                    className="flex items-center"
                   >
                     <Terminal className="mr-1 h-3 w-3" />
                     {t("actions.terminal", "Terminal")}
                   </Button>
                 )}
               </div>
-            )}
 
-            {/* Composer Integration */}
-            {status.running && !compact && (
+            {/* Composer Integration - Always available */}
+            {!compact && (
               <Button
                 onClick={openComposer}
                 variant="ghost"

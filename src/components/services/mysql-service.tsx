@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Database, Play, Square, ExternalLink, Settings, Activity, Download } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export interface ServiceStatus {
   running: boolean;
@@ -32,6 +33,7 @@ export function MySQLService({
   compact = false 
 }: MySQLServiceProps) {
   const { t } = useTranslation();
+  const { toast } = useToast();
 
   const openPhpMyAdmin = () => {
     window.open("http://localhost/phpmyadmin", "_blank");
@@ -40,7 +42,10 @@ export function MySQLService({
   const copyConnectionString = () => {
     const connectionString = `mysql://root@localhost:${status.port || 3306}`;
     navigator.clipboard.writeText(connectionString);
-    // TODO: Add toast notification
+    toast({
+      title: "Copied!",
+      description: "MySQL connection string copied to clipboard",
+    });
   };
 
   return (
@@ -53,16 +58,34 @@ export function MySQLService({
         <CardHeader className={compact ? "pb-3" : ""}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Database className="h-5 w-5 text-blue-500" />
+              <div className="relative">
+                <Database className="h-5 w-5 text-blue-500" />
+                {status.running && (
+                  <motion.div
+                    className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-green-500"
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
+                )}
+              </div>
               <CardTitle className={compact ? "text-lg" : "text-xl"}>
                 {t("services.mysql.title", "MySQL Database")}
               </CardTitle>
             </div>
             <Badge 
               variant={status.running ? "default" : "secondary"}
-              className={status.running ? "bg-green-500" : "bg-gray-500"}
+              className={`${status.running ? "bg-green-500 hover:bg-green-600" : "bg-gray-500 hover:bg-gray-600"} transition-colors`}
             >
-              {status.running ? t("status.running", "Running") : t("status.stopped", "Stopped")}
+              <div className="flex items-center gap-1.5">
+                {status.running && (
+                  <motion.div
+                    className="h-2 w-2 rounded-full bg-white"
+                    animate={{ opacity: [1, 0.5, 1] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  />
+                )}
+                {status.running ? t("status.running", "Running") : t("status.stopped", "Stopped")}
+              </div>
             </Badge>
           </div>
           {!compact && (
@@ -75,20 +98,12 @@ export function MySQLService({
         <CardContent className="space-y-4">
           {/* Service Information */}
           <div className="grid grid-cols-2 gap-4 text-sm">
-            {status.pid && (
-              <div>
-                <span className="text-muted-foreground">PID:</span>
-                <span className="ml-2 font-mono">{status.pid}</span>
-              </div>
-            )}
-            {status.port && (
-              <div>
-                <span className="text-muted-foreground">{t("common.port", "Port")}:</span>
-                <span className="ml-2 font-mono">{status.port}</span>
-              </div>
-            )}
+            <div>
+              <span className="text-muted-foreground">{t("common.port", "Port")}:</span>
+              <span className="ml-2 font-mono">{status.port || 3306}</span>
+            </div>
             {status.version && (
-              <div className="col-span-2">
+              <div>
                 <span className="text-muted-foreground">{t("common.version", "Version")}:</span>
                 <span className="ml-2 font-mono">{status.version}</span>
               </div>

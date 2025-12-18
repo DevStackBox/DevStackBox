@@ -95,7 +95,6 @@ fn get_installation_path() -> PathBuf {
         // If in src-tauri, go up one level
         if dir_name == Some("src-tauri") {
             if let Some(parent) = current_dir.parent() {
-                println!("Dev mode detected: Using parent directory: {}", parent.display());
                 return parent.to_path_buf();
             }
         }
@@ -381,17 +380,20 @@ async fn test_apache_config() -> Result<String, String> {
 
 #[tauri::command]
 async fn get_mysql_status() -> Result<ServiceInfo, String> {
-    let running = {
-        let status = SERVICE_STATUS.lock().map_err(|e| e.to_string())?;
-        status.get("mysql").unwrap_or(&false).clone()
-    };
+    // Check if MySQL is actually running by checking for mysqld.exe process
+    let running = is_process_running("mysqld.exe");
     
     let pid = if running {
-        let processes = SERVICE_PROCESSES.lock().map_err(|e| e.to_string())?;
-        processes.get("mysql").cloned()
+        get_process_pid("mysqld.exe")
     } else {
         None
     };
+
+    // Update internal status to match reality
+    if running {
+        let mut status = SERVICE_STATUS.lock().map_err(|e| e.to_string())?;
+        status.insert("mysql".to_string(), true);
+    }
 
     Ok(ServiceInfo {
         running,
@@ -493,21 +495,26 @@ async fn start_mysql() -> Result<bool, String> {
 
 #[tauri::command]
 async fn stop_mysql() -> Result<bool, String> {
-    // Get the PID
-    let pid = {
-        let processes = SERVICE_PROCESSES.lock().map_err(|e| e.to_string())?;
-        processes.get("mysql").cloned()
-    };
+    // Check if MySQL is running
+    if !is_process_running("mysqld.exe") {
+        return Err("MySQL is not running".to_string());
+    }
 
-    if let Some(pid) = pid {
-        // Kill the process on Windows
-        match Command::new("taskkill")
-            .arg("/F")
-            .arg("/PID")
-            .arg(&pid.to_string())
-            .output()
-        {
-            Ok(_) => {
+    // Kill the mysqld.exe process
+    // Use regular Command, not create_hidden_command, for taskkill
+    match Command::new("taskkill")
+        .args(&["/F", "/IM", "mysqld.exe"])
+        .output()
+    {
+        Ok(output) => {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            
+            // Wait for process to terminate
+            std::thread::sleep(Duration::from_millis(1000));
+            
+            // Verify process is actually gone
+            if !is_process_running("mysqld.exe") {
                 // Update service status
                 {
                     let mut status = SERVICE_STATUS.lock().map_err(|e| e.to_string())?;
@@ -521,11 +528,11 @@ async fn stop_mysql() -> Result<bool, String> {
                 }
                 
                 Ok(true)
+            } else {
+                Err(format!("MySQL process still running after kill attempt.\nOutput: {}\nError: {}", stdout, stderr))
             }
-            Err(e) => Err(format!("Failed to stop MySQL: {}", e)),
         }
-    } else {
-        Err("MySQL is not running".to_string())
+        Err(e) => Err(format!("Failed to execute taskkill: {}", e)),
     }
 }
 
@@ -740,19 +747,89 @@ async fn download_php_version(version: String) -> Result<bool, String> {
     Ok(true)
 }
 
+// Helper function to check if a process is running
+#[cfg(windows)]
+fn is_process_running(process_name: &str) -> bool {
+    match create_hidden_command("tasklist")
+        .args(&["/FI", &format!("IMAGENAME eq {}", process_name)])
+        .output()
+    {
+        Ok(output) => {
+            let output_str = String::from_utf8_lossy(&output.stdout);
+            output_str.contains(process_name)
+        }
+        Err(_) => false,
+    }
+}
+
+#[cfg(not(windows))]
+fn is_process_running(process_name: &str) -> bool {
+    match Command::new("pgrep")
+        .arg(process_name)
+        .output()
+    {
+        Ok(output) => output.status.success(),
+        Err(_) => false,
+    }
+}
+
+// Helper function to get process PID
+#[cfg(windows)]
+fn get_process_pid(process_name: &str) -> Option<u32> {
+    match create_hidden_command("tasklist")
+        .args(&["/FI", &format!("IMAGENAME eq {}", process_name), "/FO", "CSV", "/NH"])
+        .output()
+    {
+        Ok(output) => {
+            let output_str = String::from_utf8_lossy(&output.stdout);
+            // Parse CSV format: "httpd.exe","1234","Console","1","12,345 K"
+            for line in output_str.lines() {
+                if line.contains(process_name) {
+                    let parts: Vec<&str> = line.split(',').collect();
+                    if parts.len() >= 2 {
+                        let pid_str = parts[1].trim_matches('"').trim();
+                        if let Ok(pid) = pid_str.parse::<u32>() {
+                            return Some(pid);
+                        }
+                    }
+                }
+            }
+            None
+        }
+        Err(_) => None,
+    }
+}
+
+#[cfg(not(windows))]
+fn get_process_pid(process_name: &str) -> Option<u32> {
+    match Command::new("pgrep")
+        .arg(process_name)
+        .output()
+    {
+        Ok(output) => {
+            let output_str = String::from_utf8_lossy(&output.stdout);
+            output_str.trim().parse::<u32>().ok()
+        }
+        Err(_) => None,
+    }
+}
+
 #[tauri::command]
 async fn get_apache_status() -> Result<ServiceInfo, String> {
-    let running = {
-        let status = SERVICE_STATUS.lock().map_err(|e| e.to_string())?;
-        status.get("apache").unwrap_or(&false).clone()
-    };
+    // Check if Apache is actually running by checking for httpd.exe process
+    let running = is_process_running("httpd.exe");
     
     let pid = if running {
-        let processes = SERVICE_PROCESSES.lock().map_err(|e| e.to_string())?;
-        processes.get("apache").cloned()
+        get_process_pid("httpd.exe")
     } else {
         None
     };
+
+    // Update internal status to match reality
+    if running {
+        let mut status = SERVICE_STATUS.lock().map_err(|e| e.to_string())?;
+        status.insert("apache".to_string(), true);
+    }
 
     Ok(ServiceInfo {
         running,
@@ -873,21 +950,26 @@ async fn start_apache() -> Result<bool, String> {
 
 #[tauri::command]
 async fn stop_apache() -> Result<bool, String> {
-    // Get the PID
-    let pid = {
-        let processes = SERVICE_PROCESSES.lock().map_err(|e| e.to_string())?;
-        processes.get("apache").cloned()
-    };
+    // Check if Apache is running
+    if !is_process_running("httpd.exe") {
+        return Err("Apache is not running".to_string());
+    }
 
-    if let Some(pid) = pid {
-        // Kill the process on Windows
-        match Command::new("taskkill")
-            .arg("/F")
-            .arg("/PID")
-            .arg(&pid.to_string())
-            .output()
-        {
-            Ok(_) => {
+    // Kill all httpd.exe processes (Apache spawns multiple)
+    // Use regular Command, not create_hidden_command, for taskkill
+    match Command::new("taskkill")
+        .args(&["/F", "/IM", "httpd.exe"])
+        .output()
+    {
+        Ok(output) => {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            
+            // Wait for processes to terminate
+            std::thread::sleep(Duration::from_millis(1000));
+            
+            // Verify processes are actually gone
+            if !is_process_running("httpd.exe") {
                 // Update service status
                 {
                     let mut status = SERVICE_STATUS.lock().map_err(|e| e.to_string())?;
@@ -901,11 +983,11 @@ async fn stop_apache() -> Result<bool, String> {
                 }
                 
                 Ok(true)
+            } else {
+                Err(format!("Apache processes still running after kill attempt.\nOutput: {}\nError: {}", stdout, stderr))
             }
-            Err(e) => Err(format!("Failed to stop Apache: {}", e)),
         }
-    } else {
-        Err("Apache is not running".to_string())
+        Err(e) => Err(format!("Failed to execute taskkill: {}", e)),
     }
 }
 
@@ -1014,28 +1096,32 @@ Alias /pma "{}/phpmyadmin"
 }
 
 async fn get_apache_version() -> Option<String> {
-    let current_dir = std::env::current_dir().ok()?;
-    let base_path = current_dir.parent().unwrap_or(&current_dir);
+    let base_path = get_installation_path();
     let apache_path = base_path.join("apache").join("bin").join("httpd.exe");
     
     if !apache_path.exists() {
         return None;
     }
 
-    match Command::new(&apache_path)
+    match create_hidden_command(apache_path.to_str()?)
         .arg("-v")
         .output()
     {
         Ok(output) => {
             let version_str = String::from_utf8_lossy(&output.stdout);
+            // Look for "Apache/2.4.62" pattern
             if let Some(start) = version_str.find("Apache/") {
                 if let Some(end) = version_str[start + 7..].find(" ") {
-                    return Some(version_str[start + 7..start + 7 + end].to_string());
+                    let version = version_str[start + 7..start + 7 + end].to_string();
+                    return Some(version);
                 }
             }
             None
         }
-        Err(_) => None,
+        Err(e) => {
+            println!("Failed to get Apache version: {}", e);
+            None
+        }
     }
 }
 
