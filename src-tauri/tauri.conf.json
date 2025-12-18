@@ -37,12 +37,11 @@
       "icons/icon.ico"
     ],
     "resources": [
-      "apache/**/*",
-      "mysql/**/*",
-      "php/**/*",
-      "phpmyadmin/**/*",
-      "www/**/*",
-      "config/**/*"
+      "../mysql/**/*",
+      "../php/**/*",
+      "../phpmyadmin/**/*",
+      "../www/**/*",
+      "../config/**/*"
     ],
     "externalBin": [],
     "copyright": "© 2025 Nomad Programmer",

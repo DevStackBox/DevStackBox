@@ -88,46 +88,47 @@ fn get_project_root() -> Result<PathBuf, String> {
 
 // Helper function to get the installation base path
 fn get_installation_path() -> PathBuf {
-    // First, try to get the path from the installed location
-    if let Ok(exe_path) = env::current_exe() {
-        if let Some(parent) = exe_path.parent() {
-            // Check if we're in any installation directory
-            let parent_str = parent.to_string_lossy();
-            
-            // Check for C:\dsb\ installation
-            if parent_str.contains("dsb") {
-                return parent.to_path_buf();
-            }
-            
-            // Check for Program Files installation
-            if parent_str.contains("DevStackBox") {
-                return parent.to_path_buf();
-            }
-            
-            // Check if this directory actually has our server components
-            if parent.join("apache").join("bin").join("httpd.exe").exists() {
-                return parent.to_path_buf();
-            }
-        }
-    }
-    
-    // For development environment, try current directory logic
+    // For development environment, check if we're in src-tauri
     if let Ok(current_dir) = env::current_dir() {
-        if current_dir.file_name().and_then(|name| name.to_str()) == Some("src-tauri") {
-            // If we're in src-tauri directory, go up one level to DevStackBox
+        let dir_name = current_dir.file_name().and_then(|name| name.to_str());
+        
+        // If in src-tauri, go up one level
+        if dir_name == Some("src-tauri") {
             if let Some(parent) = current_dir.parent() {
+                println!("Dev mode detected: Using parent directory: {}", parent.display());
                 return parent.to_path_buf();
             }
         }
         
         // Check if current directory has the server components
         if current_dir.join("apache").join("bin").join("httpd.exe").exists() {
+            println!("Found server components in current dir: {}", current_dir.display());
             return current_dir;
+        }
+    }
+    
+    // Try to get the path from the installed location
+    if let Ok(exe_path) = env::current_exe() {
+        if let Some(parent) = exe_path.parent() {
+            // Check if this directory actually has our server components
+            if parent.join("apache").join("bin").join("httpd.exe").exists() {
+                println!("Found server components at exe location: {}", parent.display());
+                return parent.to_path_buf();
+            }
+            
+            // Check if parent of parent has components (for installed apps)
+            if let Some(grandparent) = parent.parent() {
+                if grandparent.join("apache").join("bin").join("httpd.exe").exists() {
+                    println!("Found server components at grandparent: {}", grandparent.display());
+                    return grandparent.to_path_buf();
+                }
+            }
         }
     }
     
     // Try common installation paths in order of preference
     let possible_paths = [
+        PathBuf::from("C:\\xampp\\htdocs\\DevStackBox"),
         PathBuf::from("C:\\dsb"),
         PathBuf::from("C:\\Program Files\\DevStackBox"),
         PathBuf::from("C:\\DevStackBox"),
@@ -135,12 +136,15 @@ fn get_installation_path() -> PathBuf {
     
     for path in &possible_paths {
         if path.join("apache").join("bin").join("httpd.exe").exists() {
+            println!("Found server components at: {}", path.display());
             return path.clone();
         }
     }
     
     // Ultimate fallback to current directory
-    env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
+    let fallback = env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    println!("Using fallback path: {}", fallback.display());
+    fallback
 }
 
 // Service status and process tracking
@@ -444,14 +448,14 @@ async fn start_mysql() -> Result<bool, String> {
 
     match create_hidden_command(&mysql_path.to_string_lossy())
         .arg(format!("--defaults-file={}", config_path.display()))
-        .arg("--console")
         .spawn()
     {
         Ok(child) => {
             let pid = child.id();
+            println!("MySQL started with PID: {}", pid);
             
             // Wait a moment for MySQL to start
-            sleep(Duration::from_secs(5)).await;
+            sleep(Duration::from_secs(2)).await;
             
             // Verify MySQL is actually running by checking port 3306
             match std::process::Command::new("netstat")
@@ -813,15 +817,14 @@ async fn start_apache() -> Result<bool, String> {
     match create_hidden_command(&apache_path.to_string_lossy())
         .arg("-f")
         .arg(&config_path)
-        .arg("-D")
-        .arg("FOREGROUND")
         .spawn()
     {
         Ok(child) => {
             let pid = child.id();
+            println!("Apache started with PID: {}", pid);
             
             // Wait a moment for Apache to start
-            sleep(Duration::from_secs(3)).await;
+            sleep(Duration::from_secs(2)).await;
             
             // Verify Apache is actually running by checking port 80
             match create_hidden_command("netstat")
