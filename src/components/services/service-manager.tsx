@@ -13,6 +13,11 @@ interface ServiceManagerProps {
   onViewLogs?: (service: string) => void;
   onOpenPHPVersionSelector?: () => void;
   currentPhpVersion?: string;
+  onStatusesChange?: (statuses: {
+    apache: ServiceStatus;
+    mysql: ServiceStatus;
+    php: ServiceStatus;
+  }) => void;
 }
 
 export function ServiceManager({
@@ -21,7 +26,8 @@ export function ServiceManager({
   onOpenConfig,
   onViewLogs,
   onOpenPHPVersionSelector,
-  currentPhpVersion = "8.2"
+  currentPhpVersion = "8.2",
+  onStatusesChange
 }: ServiceManagerProps) {
   const { toast } = useToast();
   const [services, setServices] = useState({
@@ -36,6 +42,23 @@ export function ServiceManager({
   const checkServiceStatus = async () => {
     try {
       if (!isTauri()) {
+        const toServiceStatus = (): ServiceStatus => {
+          const mock = getMockServiceStatus();
+          return {
+            running: mock.running,
+            pid: mock.pid ?? undefined,
+            port: mock.port ?? undefined,
+            version: undefined,
+          };
+        };
+
+        const mockStatuses = {
+          apache: toServiceStatus(),
+          mysql: toServiceStatus(),
+          php: toServiceStatus(),
+        };
+        setServices(mockStatuses);
+        onStatusesChange?.(mockStatuses);
         setInitialLoading(false);
         return;
       }
@@ -51,7 +74,9 @@ export function ServiceManager({
         return;
       }
       
-      setServices({ apache, mysql, php });
+      const nextStatuses = { apache, mysql, php };
+      setServices(nextStatuses);
+      onStatusesChange?.(nextStatuses);
       setInitialLoading(false);
     } catch (error) {
       console.error("Failed to check service status:", error);
@@ -125,7 +150,7 @@ export function ServiceManager({
   // Handle database backup
   const handleBackupDatabase = async () => {
     try {
-      await invoke("backup_mysql_database");
+      await safeInvoke("backup_mysql_database");
       toast({
         variant: "success",
         title: "Backup Created",
@@ -144,7 +169,7 @@ export function ServiceManager({
   // Handle PHP terminal opening
   const handleOpenTerminal = async () => {
     try {
-      await invoke("open_php_terminal", { version: currentPhpVersion });
+      await safeInvoke("open_php_terminal", { version: currentPhpVersion });
       toast({
         title: "Terminal Opened",
         description: `PHP ${currentPhpVersion} terminal launched`,

@@ -380,7 +380,7 @@ async fn test_apache_config() -> Result<String, String> {
 
 #[tauri::command]
 async fn get_mysql_status() -> Result<ServiceInfo, String> {
-    // Check if MySQL is actually running by checking for mysqld.exe process
+    // Always check actual running status, don't rely on internal state
     let running = is_process_running("mysqld.exe");
     
     let pid = if running {
@@ -389,12 +389,7 @@ async fn get_mysql_status() -> Result<ServiceInfo, String> {
         None
     };
 
-    // Update internal status to match reality
-    if running {
-        let mut status = SERVICE_STATUS.lock().map_err(|e| e.to_string())?;
-        status.insert("mysql".to_string(), true);
-    }
-
+    // Return immediately - no hashmap updates to avoid race conditions
     Ok(ServiceInfo {
         running,
         pid,
@@ -747,16 +742,19 @@ async fn download_php_version(version: String) -> Result<bool, String> {
     Ok(true)
 }
 
-// Helper function to check if a process is running
+// Helper function to check if a process is running (updated for race condition fix)
 #[cfg(windows)]
 fn is_process_running(process_name: &str) -> bool {
-    match create_hidden_command("tasklist")
-        .args(&["/FI", &format!("IMAGENAME eq {}", process_name)])
+    match Command::new("tasklist")
+        .args(&["/FI", &format!("IMAGENAME eq {}", process_name), "/NH"])
         .output()
     {
         Ok(output) => {
             let output_str = String::from_utf8_lossy(&output.stdout);
-            output_str.contains(process_name)
+            // Check if process exists, but filter out INFO messages from Windows
+            output_str.contains(process_name) 
+                && !output_str.contains("INFO:") 
+                && !output_str.contains("No tasks")
         }
         Err(_) => false,
     }
@@ -776,7 +774,7 @@ fn is_process_running(process_name: &str) -> bool {
 // Helper function to get process PID
 #[cfg(windows)]
 fn get_process_pid(process_name: &str) -> Option<u32> {
-    match create_hidden_command("tasklist")
+    match Command::new("tasklist")
         .args(&["/FI", &format!("IMAGENAME eq {}", process_name), "/FO", "CSV", "/NH"])
         .output()
     {
@@ -784,7 +782,8 @@ fn get_process_pid(process_name: &str) -> Option<u32> {
             let output_str = String::from_utf8_lossy(&output.stdout);
             // Parse CSV format: "httpd.exe","1234","Console","1","12,345 K"
             for line in output_str.lines() {
-                if line.contains(process_name) {
+                // Skip INFO messages and empty lines
+                if line.contains(process_name) && !line.contains("INFO:") && !line.contains("No tasks") {
                     let parts: Vec<&str> = line.split(',').collect();
                     if parts.len() >= 2 {
                         let pid_str = parts[1].trim_matches('"').trim();
@@ -816,7 +815,7 @@ fn get_process_pid(process_name: &str) -> Option<u32> {
 
 #[tauri::command]
 async fn get_apache_status() -> Result<ServiceInfo, String> {
-    // Check if Apache is actually running by checking for httpd.exe process
+    // Always check actual running status, don't rely on internal state
     let running = is_process_running("httpd.exe");
     
     let pid = if running {
@@ -825,17 +824,15 @@ async fn get_apache_status() -> Result<ServiceInfo, String> {
         None
     };
 
-    // Update internal status to match reality
-    if running {
-        let mut status = SERVICE_STATUS.lock().map_err(|e| e.to_string())?;
-        status.insert("apache".to_string(), true);
-    }
-
+    // Get version (Apache doesn't disappear, so we can cache this)
+    let version = get_apache_version().await;
+    
+    // Return immediately - no hashmap updates to avoid race conditions
     Ok(ServiceInfo {
         running,
         pid,
         port: Some(80),
-        version: get_apache_version().await,
+        version,
     })
 }
 
@@ -952,42 +949,80 @@ async fn start_apache() -> Result<bool, String> {
 async fn stop_apache() -> Result<bool, String> {
     // Check if Apache is running
     if !is_process_running("httpd.exe") {
+        // Update status to match reality
+        let mut status = SERVICE_STATUS.lock().map_err(|e| e.to_string())?;
+        status.insert("apache".to_string(), false);
         return Err("Apache is not running".to_string());
     }
 
-    // Kill all httpd.exe processes (Apache spawns multiple)
-    // Use regular Command, not create_hidden_command, for taskkill
-    match Command::new("taskkill")
-        .args(&["/F", "/IM", "httpd.exe"])
-        .output()
-    {
-        Ok(output) => {
-            let stdout = String::from_utf8_lossy(&output.stdout);
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            
-            // Wait for processes to terminate
-            std::thread::sleep(Duration::from_millis(1000));
-            
-            // Verify processes are actually gone
-            if !is_process_running("httpd.exe") {
-                // Update service status
-                {
-                    let mut status = SERVICE_STATUS.lock().map_err(|e| e.to_string())?;
-                    status.insert("apache".to_string(), false);
+    // Try using Apache's own shutdown command first (graceful)
+    let base_path = get_installation_path();
+    let apache_path = base_path.join("apache").join("bin").join("httpd.exe");
+    
+    if apache_path.exists() {
+        let config_path = base_path.join("config").join("httpd.conf");
+        
+        // Try graceful shutdown with -k stop
+        let _ = Command::new(&apache_path)
+            .args(&["-f", config_path.to_str().unwrap_or(""), "-k", "stop"])
+            .output();
+        
+        // Wait for graceful shutdown
+        std::thread::sleep(Duration::from_millis(2000));
+    }
+    
+    // If still running, force kill
+    if is_process_running("httpd.exe") {
+        // Use taskkill with force
+        match Command::new("taskkill")
+            .args(&["/F", "/IM", "httpd.exe", "/T"]) // /T kills child processes too
+            .output()
+        {
+            Ok(output) => {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                
+                // Wait longer for processes to fully terminate
+                std::thread::sleep(Duration::from_millis(1500));
+                
+                // Check multiple times with small delays
+                for attempt in 1..=3 {
+                    if !is_process_running("httpd.exe") {
+                        break;
+                    }
+                    if attempt < 3 {
+                        std::thread::sleep(Duration::from_millis(500));
+                    }
                 }
                 
-                // Remove from process tracking
-                {
-                    let mut processes = SERVICE_PROCESSES.lock().map_err(|e| e.to_string())?;
-                    processes.remove("apache");
+                // Final check
+                if !is_process_running("httpd.exe") {
+                    // Update service status
+                    {
+                        let mut status = SERVICE_STATUS.lock().map_err(|e| e.to_string())?;
+                        status.insert("apache".to_string(), false);
+                    }
+                    
+                    // Remove from process tracking
+                    {
+                        let mut processes = SERVICE_PROCESSES.lock().map_err(|e| e.to_string())?;
+                        processes.remove("apache");
+                    }
+                    
+                    Ok(true)
+                } else {
+                    Err(format!("Apache processes still running after multiple kill attempts.\n\nThis may happen if:\n- Apache is running with administrator privileges\n- The process is locked by another application\n- File handles are still open\n\nTry:\n1. Close any browser tabs accessing localhost\n2. Restart DevStackBox as Administrator\n3. Manually stop Apache from Task Manager\n\nOutput: {}\nError: {}", stdout, stderr))
                 }
-                
-                Ok(true)
-            } else {
-                Err(format!("Apache processes still running after kill attempt.\nOutput: {}\nError: {}", stdout, stderr))
             }
+            Err(e) => Err(format!("Failed to execute taskkill: {}", e)),
         }
-        Err(e) => Err(format!("Failed to execute taskkill: {}", e)),
+    } else {
+        // Already stopped by graceful shutdown
+        let mut status = SERVICE_STATUS.lock().map_err(|e| e.to_string())?;
+        status.insert("apache".to_string(), false);
+        let mut processes = SERVICE_PROCESSES.lock().map_err(|e| e.to_string())?;
+        processes.remove("apache");
+        Ok(true)
     }
 }
 

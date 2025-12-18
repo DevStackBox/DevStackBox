@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { safeInvoke, isTauri } from "@/lib/tauri";
-import { ServiceManager } from "@/components/services";
+import { ServiceManager, type ServiceStatus } from "@/components/services";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,39 +30,55 @@ export function DashboardPage({
   const { t } = useTranslation();
   const [serviceStats, setServiceStats] = useState({
     runningServices: 0,
-    totalServices: 2, // Only Apache and MySQL (PHP is not a service)
-    uptime: "0m",
-    lastCheck: new Date()
+    totalServices: 2,
+    uptime: "0m"
   });
+  const uptimeStartRef = useRef<Date | null>(null);
 
-  // Real-time service status polling
-  const updateServiceStats = async () => {
-    try {
-      if (!isTauri()) return;
-      
-      const [apache, mysql] = await Promise.all([
-        safeInvoke<{ running: boolean }>("get_apache_status"),
-        safeInvoke<{ running: boolean }>("get_mysql_status"),
-      ]);
-      
-      if (!apache || !mysql) return;
-      
-      // Only count actual services (Apache and MySQL), not PHP
-      const runningCount = [apache.running, mysql.running].filter(Boolean).length;
+  const formatUptime = (start: Date, now: Date) => {
+    const diffMs = now.getTime() - start.getTime();
+    const totalMinutes = Math.max(0, Math.floor(diffMs / 60000));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+
+    return `${minutes}m`;
+  };
+
+  const handleStatusesChange = (statuses: {
+    apache: ServiceStatus;
+    mysql: ServiceStatus;
+    php: ServiceStatus;
+  }) => {
+    const runningCount = [statuses.apache.running, statuses.mysql.running].filter(Boolean).length;
+
+    if (runningCount === 0) {
+      uptimeStartRef.current = null;
       setServiceStats(prev => ({
         ...prev,
-        runningServices: runningCount,
-        lastCheck: new Date()
+        runningServices: 0,
+        uptime: "0m"
       }));
-    } catch (error) {
-      console.error("Failed to update service stats:", error);
+      return;
     }
+
+    if (!uptimeStartRef.current) {
+      uptimeStartRef.current = new Date();
+    }
+
+    setServiceStats(prev => ({
+      ...prev,
+      runningServices: runningCount,
+      uptime: uptimeStartRef.current ? formatUptime(uptimeStartRef.current, new Date()) : "0m"
+    }));
   };
 
   const handleServiceToggle = (service: string, status: boolean) => {
-    // Update service statistics immediately
     console.log(`Service ${service} ${status ? 'started' : 'stopped'}`);
-    updateServiceStats(); // Refresh stats after toggle
+    // ServiceManager will trigger handleStatusesChange after toggling
   };
 
   const quickActions = [
@@ -102,35 +117,24 @@ export function DashboardPage({
   ];
 
   useEffect(() => {
-    // Initial stats update
-    updateServiceStats();
-    
-    // Real-time polling every 5 seconds
-    const statusInterval = setInterval(updateServiceStats, 5000);
-    
-    // Update uptime display every minute (only if services are running)
-    const uptimeInterval = setInterval(() => {
-      if (serviceStats.runningServices > 0) {
-        const now = new Date();
-        const diff = Math.floor((now.getTime() - serviceStats.lastCheck.getTime()) / 1000 / 60);
-        setServiceStats(prev => ({
-          ...prev,
-          uptime: `${diff}m`
-        }));
-      } else {
-        // Reset uptime when no services are running
-        setServiceStats(prev => ({
-          ...prev,
-          uptime: "0m"
-        }));
+    if (serviceStats.runningServices === 0 || !uptimeStartRef.current) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const start = uptimeStartRef.current;
+      if (!start) {
+        return;
       }
+
+      setServiceStats(prev => ({
+        ...prev,
+        uptime: formatUptime(start, new Date())
+      }));
     }, 60000);
 
-    return () => {
-      clearInterval(statusInterval);
-      clearInterval(uptimeInterval);
-    };
-  }, [serviceStats.lastCheck, serviceStats.runningServices]);
+    return () => clearInterval(interval);
+  }, [serviceStats.runningServices]);
 
   return (
     <motion.div
@@ -254,6 +258,7 @@ export function DashboardPage({
             onServiceToggle={handleServiceToggle}
             onOpenPHPVersionSelector={onOpenPHPVersionSelector}
             currentPhpVersion={currentPhpVersion}
+            onStatusesChange={handleStatusesChange}
           />
         </CardContent>
       </Card>
