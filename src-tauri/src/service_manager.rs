@@ -4,10 +4,13 @@ use std::sync::{LazyLock, Mutex};
 use tokio::time::{sleep, Duration};
 
 // Global service process tracker
+#[allow(dead_code)]
 static SERVICE_PROCESSES: LazyLock<Mutex<HashMap<String, u32>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
 
+#[allow(dead_code)]
 pub struct ServiceManager;
 
+#[allow(dead_code)]
 impl ServiceManager {
     // Start Apache with proper process management
     pub async fn start_apache(apache_path: &std::path::Path, config_path: &std::path::Path) -> Result<bool, String> {
@@ -51,7 +54,7 @@ impl ServiceManager {
                     Err("Apache started but not listening on port 80".to_string())
                 }
             }
-            Err(e) => Err(format!("Failed to start Apache: {}", e)),
+            Err(e) => Err(format!("Failed to start Apache: {e}")),
         }
     }
 
@@ -95,7 +98,7 @@ impl ServiceManager {
                     Err("MySQL started but not listening on port 3306".to_string())
                 }
             }
-            Err(e) => Err(format!("Failed to start MySQL: {}", e)),
+            Err(e) => Err(format!("Failed to start MySQL: {e}")),
         }
     }
 
@@ -158,7 +161,7 @@ impl ServiceManager {
         match cmd.output() {
             Ok(output) => {
                 let output_str = String::from_utf8_lossy(&output.stdout);
-                output_str.contains(&format!(":{} ", port))
+                output_str.contains(&format!(":{port} "))
             }
             Err(_) => false,
         }
@@ -171,13 +174,13 @@ impl ServiceManager {
         // Stop MySQL
         match Self::stop_service("mysql").await {
             Ok(_) => results.push("MySQL stopped".to_string()),
-            Err(e) => results.push(format!("MySQL stop failed: {}", e)),
+            Err(e) => results.push(format!("MySQL stop failed: {e}")),
         }
 
         // Stop Apache
         match Self::stop_service("apache").await {
             Ok(_) => results.push("Apache stopped".to_string()),
-            Err(e) => results.push(format!("Apache stop failed: {}", e)),
+            Err(e) => results.push(format!("Apache stop failed: {e}")),
         }
 
         Ok(results.join("; "))

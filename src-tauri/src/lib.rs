@@ -12,8 +12,10 @@ use tauri::{
     Manager,
 };
 
-// Service manager module
-mod service_manager;
+// Note: service_manager module exists but is currently UNUSED
+// All service management functionality is implemented directly in this file
+// TODO: Either integrate service_manager.rs or remove it as dead code
+// mod service_manager;
 
 // Helper function to check if an executable is 32-bit
 #[cfg(windows)]
@@ -21,11 +23,11 @@ fn is_32bit_executable(path: &std::path::Path) -> Result<bool, String> {
     use std::fs::File;
     use std::io::{Read, Seek, SeekFrom};
     
-    let mut file = File::open(path).map_err(|e| format!("Failed to open file: {}", e))?;
+    let mut file = File::open(path).map_err(|e| format!("Failed to open file: {e}"))?;
     
     // Read DOS header
     let mut dos_header = [0u8; 64];
-    file.read_exact(&mut dos_header).map_err(|e| format!("Failed to read DOS header: {}", e))?;
+    file.read_exact(&mut dos_header).map_err(|e| format!("Failed to read DOS header: {e}"))?;
     
     // Check DOS signature
     if &dos_header[0..2] != b"MZ" {
@@ -36,11 +38,11 @@ fn is_32bit_executable(path: &std::path::Path) -> Result<bool, String> {
     let pe_offset = u32::from_le_bytes([dos_header[60], dos_header[61], dos_header[62], dos_header[63]]);
     
     // Seek to PE header
-    file.seek(SeekFrom::Start(pe_offset as u64)).map_err(|e| format!("Failed to seek to PE header: {}", e))?;
+    file.seek(SeekFrom::Start(pe_offset as u64)).map_err(|e| format!("Failed to seek to PE header: {e}"))?;
     
     // Read PE signature and machine type
     let mut pe_header = [0u8; 24];
-    file.read_exact(&mut pe_header).map_err(|e| format!("Failed to read PE header: {}", e))?;
+    file.read_exact(&mut pe_header).map_err(|e| format!("Failed to read PE header: {e}"))?;
     
     // Check PE signature
     if &pe_header[0..4] != b"PE\0\0" {
@@ -1193,7 +1195,194 @@ async fn toggle_php() -> Result<bool, String> {
 
 #[tauri::command]
 async fn get_service_logs(service: String) -> Result<String, String> {
-    Ok(format!("Logs for {} service:\n\nService started successfully\nNo errors reported\n\n[This is a placeholder log]", service))
+    let base_path = get_installation_path();
+    let logs_dir = base_path.join("logs");
+    
+    // Map service names to log files
+    let log_file = match service.as_str() {
+        "mysql" => logs_dir.join("mysql.log"),
+        "apache" | "httpd" => logs_dir.join("error.log"),
+        "php" => logs_dir.join("php_error.log"),
+        _ => return Err(format!("Unknown service: {}", service)),
+    };
+    
+    // Check if log file exists
+    if !log_file.exists() {
+        return Ok(format!("Log file for {} not found yet. Start the service to generate logs.", service));
+    }
+    
+    // Read the log file (last 1000 lines to avoid huge files)
+    match std::fs::read_to_string(&log_file) {
+        Ok(content) => {
+            let lines: Vec<&str> = content.lines().collect();
+            let start = if lines.len() > 1000 { lines.len() - 1000 } else { 0 };
+            let last_lines = lines[start..].join("\n");
+            
+            if last_lines.is_empty() {
+                Ok(format!("{} log file is empty", service))
+            } else {
+                Ok(last_lines)
+            }
+        }
+        Err(e) => Err(format!("Failed to read {} logs: {}", service, e)),
+    }
+}
+
+#[tauri::command]
+async fn read_config(service: String) -> Result<String, String> {
+    let base_path = get_installation_path();
+    let config_dir = base_path.join("config");
+    
+    let config_file = match service.as_str() {
+        "mysql" => config_dir.join("my.cnf"),
+        "apache" | "httpd" => config_dir.join("httpd.conf"),
+        "php" => base_path.join("php").join("8.2").join("php.ini"),
+        "phpmyadmin" => config_dir.join("phpmyadmin.conf"),
+        _ => return Err(format!("Unknown service: {}", service)),
+    };
+    
+    if !config_file.exists() {
+        return Err(format!("Config file not found: {}", config_file.display()));
+    }
+    
+    std::fs::read_to_string(&config_file)
+        .map_err(|e| format!("Failed to read config file: {}", e))
+}
+
+#[tauri::command]
+async fn update_config(service: String, content: String) -> Result<String, String> {
+    let base_path = get_installation_path();
+    let config_dir = base_path.join("config");
+    
+    let config_file = match service.as_str() {
+        "mysql" => config_dir.join("my.cnf"),
+        "apache" | "httpd" => config_dir.join("httpd.conf"),
+        "php" => base_path.join("php").join("8.2").join("php.ini"),
+        "phpmyadmin" => config_dir.join("phpmyadmin.conf"),
+        _ => return Err(format!("Unknown service: {}", service)),
+    };
+    
+    // Create backup before updating
+    if config_file.exists() {
+        let backup_dir = base_path.join("config-backups");
+        std::fs::create_dir_all(&backup_dir).map_err(|e| e.to_string())?;
+        
+        let timestamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        
+        let backup_name = format!("{}_{}.bak", 
+            config_file.file_name().unwrap().to_str().unwrap(),
+            timestamp
+        );
+        let backup_path = backup_dir.join(backup_name);
+        
+        std::fs::copy(&config_file, &backup_path)
+            .map_err(|e| format!("Failed to create backup: {}", e))?;
+    }
+    
+    // Write new content
+    std::fs::write(&config_file, content)
+        .map_err(|e| format!("Failed to write config file: {}", e))?;
+    
+    Ok(format!("Config updated successfully: {}", config_file.display()))
+}
+
+#[tauri::command]
+async fn backup_config(service: String) -> Result<String, String> {
+    let base_path = get_installation_path();
+    let config_dir = base_path.join("config");
+    let backup_dir = base_path.join("config-backups");
+    
+    std::fs::create_dir_all(&backup_dir).map_err(|e| e.to_string())?;
+    
+    let config_file = match service.as_str() {
+        "mysql" => config_dir.join("my.cnf"),
+        "apache" | "httpd" => config_dir.join("httpd.conf"),
+        "php" => base_path.join("php").join("8.2").join("php.ini"),
+        "phpmyadmin" => config_dir.join("phpmyadmin.conf"),
+        _ => return Err(format!("Unknown service: {}", service)),
+    };
+    
+    if !config_file.exists() {
+        return Err(format!("Config file not found: {}", config_file.display()));
+    }
+    
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+    
+    let backup_name = format!("{}_{}.bak", 
+        config_file.file_name().unwrap().to_str().unwrap(),
+        timestamp
+    );
+    let backup_path = backup_dir.join(backup_name);
+    
+    std::fs::copy(&config_file, &backup_path)
+        .map_err(|e| format!("Failed to create backup: {}", e))?;
+    
+    Ok(format!("Backup created: {}", backup_path.display()))
+}
+
+#[tauri::command]
+async fn list_config_backups(service: String) -> Result<Vec<String>, String> {
+    let base_path = get_installation_path();
+    let backup_dir = base_path.join("config-backups");
+    
+    if !backup_dir.exists() {
+        return Ok(Vec::new());
+    }
+    
+    let config_prefix = match service.as_str() {
+        "mysql" => "my.cnf",
+        "apache" | "httpd" => "httpd.conf",
+        "php" => "php.ini",
+        "phpmyadmin" => "phpmyadmin.conf",
+        _ => return Err(format!("Unknown service: {}", service)),
+    };
+    
+    let mut backups = Vec::new();
+    
+    if let Ok(entries) = std::fs::read_dir(&backup_dir) {
+        for entry in entries.flatten() {
+            if let Some(filename) = entry.file_name().to_str() {
+                if filename.starts_with(config_prefix) {
+                    backups.push(filename.to_string());
+                }
+            }
+        }
+    }
+    
+    backups.sort_by(|a, b| b.cmp(a)); // Most recent first
+    Ok(backups)
+}
+
+#[tauri::command]
+async fn restore_config_backup(service: String, backup_name: String) -> Result<String, String> {
+    let base_path = get_installation_path();
+    let config_dir = base_path.join("config");
+    let backup_dir = base_path.join("config-backups");
+    
+    let config_file = match service.as_str() {
+        "mysql" => config_dir.join("my.cnf"),
+        "apache" | "httpd" => config_dir.join("httpd.conf"),
+        "php" => base_path.join("php").join("8.2").join("php.ini"),
+        "phpmyadmin" => config_dir.join("phpmyadmin.conf"),
+        _ => return Err(format!("Unknown service: {}", service)),
+    };
+    
+    let backup_path = backup_dir.join(&backup_name);
+    
+    if !backup_path.exists() {
+        return Err(format!("Backup file not found: {}", backup_name));
+    }
+    
+    std::fs::copy(&backup_path, &config_file)
+        .map_err(|e| format!("Failed to restore backup: {}", e))?;
+    
+    Ok(format!("Config restored from: {}", backup_name))
 }
 
 #[tauri::command]
@@ -1500,6 +1689,11 @@ pub fn run() {
             toggle_php,
             toggle_apache,
             get_service_logs,
+            read_config,
+            update_config,
+            backup_config,
+            list_config_backups,
+            restore_config_backup,
             create_directory_structure,
             show_main_window,
             hide_to_tray,

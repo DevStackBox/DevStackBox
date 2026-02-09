@@ -2,46 +2,77 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { ServiceManager } from "@/components/services";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { Settings, Activity, RefreshCw, Trash2 } from "lucide-react";
+import { Settings, Activity, RefreshCw } from "lucide-react";
+import { LogViewer } from "@/components/services";
+import { safeInvoke, isTauri } from "@/lib/tauri";
+import type { ServiceName } from "@/types/services";
 
 interface ServicesPageProps {
   onOpenPHPVersionSelector: () => void;
+  onOpenConfig: (service: ServiceName) => void;
   currentPhpVersion: string;
 }
 
-export function ServicesPage({ onOpenPHPVersionSelector, currentPhpVersion }: ServicesPageProps) {
+export function ServicesPage({
+  onOpenPHPVersionSelector,
+  onOpenConfig,
+  currentPhpVersion,
+}: ServicesPageProps) {
   const { t } = useTranslation();
+  const [selectedService, setSelectedService] = useState<
+    "mysql" | "apache" | "php"
+  >("mysql");
   const [logs, setLogs] = useState<string>("");
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  const handleServiceToggle = (service: string, status: boolean) => {
-    const timestamp = new Date().toLocaleTimeString();
-    const message = `[${timestamp}] ${service} ${status ? 'started' : 'stopped'} successfully\n`;
-    setLogs(prev => prev + message);
+  const handleServiceToggle = (service: string) => {
+    // Auto-refresh logs when service changes
+    if (selectedService === service) {
+      refreshLogs(service);
+    }
+  };
+
+  const refreshLogs = async (service: string) => {
+    setLoading(true);
+    try {
+      if (!isTauri()) {
+        setLogs("Running in browser mode - real logs require Tauri app");
+        setLoading(false);
+        return;
+      }
+
+      const logContent = await safeInvoke<string>("get_service_logs", {
+        service,
+      });
+      setLogs(logContent || `No logs available for ${service}`);
+    } catch (error) {
+      setLogs(`Error reading logs: ${error}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleOpenConfig = (service: string) => {
-    // TODO: Implement config opening
-    console.log(`Opening config for ${service}`);
+    onOpenConfig(service as ServiceName);
   };
 
   const handleViewLogs = (service: string) => {
-    // TODO: Implement log viewing
-    console.log(`Viewing logs for ${service}`);
+    setSelectedService(service as "mysql" | "apache" | "php");
+    refreshLogs(service);
   };
 
   const clearLogs = () => {
     setLogs("");
-  };
-
-  const refreshServices = () => {
-    // The ServiceManager will automatically refresh when this component re-renders
-    const timestamp = new Date().toLocaleTimeString();
-    setLogs(prev => prev + `[${timestamp}] Services refreshed\n`);
   };
 
   return (
@@ -58,7 +89,10 @@ export function ServicesPage({ onOpenPHPVersionSelector, currentPhpVersion }: Se
             {t("pages.services.title", "Services")}
           </h1>
           <p className="text-muted-foreground">
-            {t("pages.services.description", "Manage your development stack services")}
+            {t(
+              "pages.services.description",
+              "Manage your development stack services",
+            )}
           </p>
         </div>
         <div className="flex items-center space-x-2">
@@ -93,33 +127,34 @@ export function ServicesPage({ onOpenPHPVersionSelector, currentPhpVersion }: Se
                 <span>{t("services.controls.title", "Service Controls")}</span>
               </CardTitle>
               <CardDescription>
-                {t("services.controls.description", "Additional service management options")}
+                {t(
+                  "services.controls.description",
+                  "Additional service management options",
+                )}
               </CardDescription>
-            </div>
-            <div className="flex items-center space-x-2">
-              <label className="flex items-center space-x-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={autoRefresh}
-                  onChange={(e) => setAutoRefresh(e.target.checked)}
-                  className="rounded"
-                />
-                <span>{t("settings.autoRefresh", "Auto-refresh")}</span>
-              </label>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button variant="outline" className="flex items-center justify-center">
+            <Button
+              variant="outline"
+              className="flex items-center justify-center"
+            >
               <Activity className="mr-2 h-4 w-4" />
               {t("actions.startAll", "Start All Services")}
             </Button>
-            <Button variant="outline" className="flex items-center justify-center">
+            <Button
+              variant="outline"
+              className="flex items-center justify-center"
+            >
               <Settings className="mr-2 h-4 w-4" />
               {t("actions.stopAll", "Stop All Services")}
             </Button>
-            <Button variant="outline" className="flex items-center justify-center">
+            <Button
+              variant="outline"
+              className="flex items-center justify-center"
+            >
               <RefreshCw className="mr-2 h-4 w-4" />
               {t("actions.restartAll", "Restart All Services")}
             </Button>
@@ -128,33 +163,42 @@ export function ServicesPage({ onOpenPHPVersionSelector, currentPhpVersion }: Se
       </Card>
 
       {/* Service Logs */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center space-x-2">
-              <Activity className="h-5 w-5" />
-              <span>{t("services.logs.title", "Service Logs")}</span>
-            </CardTitle>
-            <Button onClick={clearLogs} variant="outline" size="sm">
-              <Trash2 className="mr-2 h-4 w-4" />
-              {t("actions.clear", "Clear")}
-            </Button>
-          </div>
-          <CardDescription>
-            {t("services.logs.description", "Real-time service activity and error logs")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Textarea
-            value={logs}
-            readOnly
-            placeholder={t("services.logs.placeholder", "Service logs will appear here...")}
-            className="min-h-[200px] font-mono text-sm"
-          />
-        </CardContent>
-      </Card>
+      <LogViewer
+        logs={logs}
+        onClear={clearLogs}
+        onRefresh={() => refreshLogs(selectedService)}
+        title={t("services.logs.title", "Service Logs")}
+        description={t(
+          "services.logs.description",
+          `Real-time logs for ${selectedService.toUpperCase()}`,
+        )}
+        searchable
+        autoScroll={autoRefresh}
+        onAutoScrollChange={setAutoRefresh}
+        loading={loading}
+      />
+
+      {/* Service Selection Tabs */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold">
+          {t("services.selectService", "Select Service for Logs")}
+        </h3>
+        <div className="flex gap-2">
+          {(["mysql", "apache", "php"] as const).map((service) => (
+            <button
+              key={service}
+              onClick={() => handleViewLogs(service)}
+              className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                selectedService === service
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted hover:bg-muted/80"
+              }`}
+            >
+              {service.charAt(0).toUpperCase() + service.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
     </motion.div>
   );
 }
-
-export default ServicesPage;
