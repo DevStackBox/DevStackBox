@@ -31,9 +31,9 @@ import { TAURI_COMMANDS } from "@/lib/commands";
 import { useToast } from "@/hooks/use-toast";
 import type { PHPVersionInfo } from "@/types/services";
 
-// PHP 8.2 is bundled with the installer; all other branches are downloaded
+// PHP 8.3 is bundled with the installer; all other branches are downloaded
 // on demand. See docs/ROADMAP.md "Bundled vs downloadable".
-const BUNDLED_DEFAULT_VERSION = "8.2";
+const BUNDLED_DEFAULT_VERSION = "8.3";
 
 // Static, user-facing context shown alongside each branch. Order matches the
 // product roadmap (newest first). Backend ultimately controls which versions
@@ -47,7 +47,7 @@ const BRANCH_NOTES: Record<
     features: ["Property hooks", "Improved performance", "New array helpers"],
   },
   "8.3": {
-    description: "Enhanced type system and performance improvements",
+    description: "Default bundled version - enhanced type system and performance improvements",
     features: [
       "Typed class constants",
       "Anonymous readonly classes",
@@ -55,7 +55,7 @@ const BRANCH_NOTES: Record<
     ],
   },
   "8.2": {
-    description: "Default bundled version - readonly classes and enums",
+    description: "Readonly classes and enums",
     features: [
       "Readonly classes",
       "Disjunctive Normal Form",
@@ -433,7 +433,7 @@ export function PHPVersionSelector({
               <p>
                 {t(
                   "php.noteBody",
-                  "Downloaded PHP versions live in the php/ folder next to the bundled 8.2. Switching versions points the php/current junction at the selected branch and does not affect your projects in www/.",
+                  "Downloaded PHP versions live in the php/ folder next to the bundled 8.3. Switching versions points the php/current junction at the selected branch and does not affect your projects in www/.",
                 )}
               </p>
             </div>

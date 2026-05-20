@@ -39,7 +39,7 @@ jobs:
               **What's Included:**
               - **Apache 2.4.65 (64-bit)** - Compatible with 64-bit Windows
               - **MySQL 8.0 Database** (embedded)
-              - **PHP 8.2** (with extensions)
+              - **PHP 8.3** (with extensions)
               - **phpMyAdmin** (database management)
               - **Modern React UI** (dark/light mode)
               - **Auto-Updates** via GitHub Releases

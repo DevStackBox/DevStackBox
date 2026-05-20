@@ -24,7 +24,7 @@ export function PHPService({
   onViewLogs,
   onOpenTerminal,
   compact = false,
-  currentVersion = "8.2",
+  currentVersion = "8.3",
 }: PHPServiceProps) {
   const { t } = useTranslation();
 

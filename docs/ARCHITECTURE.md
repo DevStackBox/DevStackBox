@@ -101,7 +101,7 @@ DevStackBox/
 |
 |-- mysql/                      # MariaDB binaries + data (bundled with app; folder named mysql/ by convention)
 |-- apache/                     # Apache binaries (bundled with app)
-|-- php/8.2/                    # PHP 8.2 binaries (bundled with app)
+|-- php/8.3/                    # PHP 8.3 binaries (bundled with app)
 |-- phpmyadmin/                 # phpMyAdmin PHP files (bundled with app)
 |-- www/                        # Web root - user's PHP projects go here
 |-- logs/                       # Runtime log files

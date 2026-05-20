@@ -152,7 +152,7 @@ Every config file written by DevStackBox must include a version field.
 ```json
 {
   "configVersion": 1,
-  "phpVersion": "8.2",
+  "phpVersion": "8.3",
   "mysqlPort": 3306
 }
 ```

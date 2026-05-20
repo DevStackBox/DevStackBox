@@ -38,7 +38,7 @@ The service binaries (MySQL, Apache, PHP) must be present in their directories:
 
 - `mysql/bin/mysqld.exe`
 - `apache/bin/httpd.exe`
-- `php/8.2/php.exe`
+- `php/8.3/php.exe`
 
 These are NOT committed to git (too large). Either:
 

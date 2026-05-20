@@ -66,7 +66,7 @@ Update this file every time a feature changes status. Do not maintain feature st
 | Apache config test         | DONE    | `test_apache_config` runs `httpd -t`                                                    |
 | Apache config auto-create  | DONE    | Creates `config/httpd.conf` if missing                                                  |
 | Apache 32-bit detection    | DONE    | Warns user if 32-bit Apache on 64-bit build                                             |
-| PHP status check           | DONE    | Checks if `php/8.2/php.exe` exists                                                      |
+| PHP status check           | DONE    | Checks if `php/8.3/php.exe` exists                                                      |
 | PHP as service start/stop  | STUB    | `toggle_php` returns true immediately                                                   |
 | PHP CGI / FastCGI          | PLANNED | Apache integration with PHP not tested                                                  |
 

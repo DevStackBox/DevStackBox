@@ -34,5 +34,5 @@ export const getMockServiceStatus = () => ({
 export const getMockBinariesStatus = () => ({
   mysql: false,
   apache: false,
-  'php8.2': false,
+  'php8.3': false,
 });

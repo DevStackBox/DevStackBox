@@ -54,7 +54,7 @@ DevStackBox/
 ├── src-tauri/         # Rust backend (service mgmt, config, IPC, updater)
 ├── src/               # Frontend: Vite + React + Tailwind + shadcn/ui + Framer Motion
 ├── mysql/             # Portable MySQL setup
-├── php/               # PHP 8.2 binaries (default)
+├── php/               # PHP 8.3 binaries (default)
 ├── apache/            # Apache setup (planned)
 ├── phpmyadmin/        # phpMyAdmin
 ├── apps/              # One-click app installers (planned)
@@ -135,7 +135,7 @@ DevStackBox/
 
 ## 📦 5. Binary Management
 
-- **Default PHP:** Only **PHP 8.2** is bundled by default.
+- **Default PHP:** Only **PHP 8.3** is bundled by default.
 - **Other Binaries:** Downloadable on demand via the in-app distribution installer—do not bundle extra binaries by default.
 
 ---

@@ -12,7 +12,7 @@ use tauri::{AppHandle, Emitter};
 use crate::types::{PHPVersionInfo, ServiceInfo};
 use crate::utils::paths::{get_installation_path, user_config_dir};
 
-// Branches we surface in the UI. The bundled default is 8.2; the others are
+// Branches we surface in the UI. The bundled default is 8.3; the others are
 // downloadable on demand (Roadmap Phase 3.1).
 const PHP_BRANCHES: &[&str] = &["8.1", "8.2", "8.3", "8.4"];
 
@@ -45,7 +45,7 @@ async fn get_current_php_version() -> Option<String> {
     let exe = if current_exe.exists() {
         current_exe
     } else {
-        let default_exe = php_branch_exe("8.2");
+        let default_exe = php_branch_exe("8.3");
         if !default_exe.exists() {
             return None;
         }
@@ -204,10 +204,16 @@ fn emit_progress(app: &AppHandle, payload: PhpDownloadProgress) {
 
 fn pick_zip_url(branch: &str, releases_json: &serde_json::Value) -> Option<(String, String)> {
     // releases.json shape (excerpt):
-    // { "8.3": { "version": "8.3.13", "ts": { "zip": { "path": "php-8.3.13-Win32-vs16-x64.zip" } } } }
+    // { "8.3": { "version": "8.3.31",
+    //            "ts-vs16-x64": { "zip": { "path": "php-8.3.31-Win32-vs16-x64.zip" } } } }
+    //
+    // We want the thread-safe x64 build, which lives under the
+    // "ts-vs16-x64" key (or "ts-vs17-x64" for newer branches such as 8.4).
     let branch_obj = releases_json.get(branch)?;
     let full_version = branch_obj.get("version")?.as_str()?.to_string();
-    let ts = branch_obj.get("ts")?;
+    let ts = branch_obj
+        .get("ts-vs17-x64")
+        .or_else(|| branch_obj.get("ts-vs16-x64"))?;
     let zip = ts.get("zip")?;
     let path = zip.get("path")?.as_str()?;
     let url = format!("https://windows.php.net/downloads/releases/{}", path);

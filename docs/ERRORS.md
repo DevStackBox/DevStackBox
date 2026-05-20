@@ -16,7 +16,7 @@ When you see an error in the UI or logs, find it here first.
 **Fix:**
 
 1. Open the Debug panel (dev builds only) — it shows what path was resolved
-2. Check that `apache/bin/httpd.exe`, `mysql/bin/mysqld.exe`, or `php/8.2/php.exe` exist
+2. Check that `apache/bin/httpd.exe`, `mysql/bin/mysqld.exe`, or `php/8.3/php.exe` exist
 3. If they are missing, re-run `scripts/prepare-binaries.ps1` or copy from your XAMPP installation
 4. If the path looks wrong (pointing to `C:\xampp\htdocs\DevStackBox` in a production install), see `docs/KNOWN_ISSUES.md` ISSUE-009
 
@@ -168,7 +168,7 @@ Remove-Item "mysql\data\<hostname>.pid" -ErrorAction SilentlyContinue
 
 ### `PHP binary not found`
 
-**Meaning:** `php/8.2/php.exe` (or other version) does not exist.
+**Meaning:** `php/8.3/php.exe` (or other version) does not exist.
 
 **Fix:**
 

@@ -32,7 +32,7 @@ export function ServiceManager({
   onOpenConfig,
   onViewLogs,
   onOpenPHPVersionSelector,
-  currentPhpVersion = "8.2",
+  currentPhpVersion = "8.3",
   onStatusesChange,
 }: ServiceManagerProps) {
   const { toast } = useToast();

@@ -14,7 +14,7 @@ It is NOT a universal developer infrastructure platform. Scope is intentionally 
 **Core Stack (always bundled in installer):**
 
 - Apache HTTP Server
-- PHP 8.2 (one version bundled today; additional versions are downloadable later)
+- PHP 8.3 (one version bundled today; additional versions are downloadable later)
 - MariaDB (MySQL-compatible; command names and binary use `mysql`/`mysqld` by convention)
 - phpMyAdmin
 
@@ -33,7 +33,7 @@ Do NOT require users to download core components on first launch. Bad first-laun
 | Component           | Strategy      | Notes                                                            |
 | ------------------- | ------------- | ---------------------------------------------------------------- |
 | Apache              | Bundled       | Core requirement, no internet needed                             |
-| PHP 8.2             | Bundled       | Current default version, works immediately                       |
+| PHP 8.3             | Bundled       | Current default version, works immediately                       |
 | MariaDB             | Bundled       | Database server (commands/binary use mysql naming by convention) |
 | phpMyAdmin          | Bundled       | Developers expect it, keep it bundled                            |
 | Default configs     | Bundled       | Required for first launch                                        |
@@ -162,7 +162,7 @@ src-tauri/src/
 
 ### 3.1 Additional PHP Version Downloader [DONE]
 
-**Note:** Base PHP 8.2 is bundled today. This feature adds support for downloading additional PHP versions (8.1, 8.3, 8.4, etc.) on demand. It does not replace the bundled PHP unless the product decision changes later.
+**Note:** Base PHP 8.3 is bundled today. This feature adds support for downloading additional PHP versions (8.1, 8.2, 8.4, etc.) on demand. It does not replace the bundled PHP unless the product decision changes later.
 
 - [x] Download PHP zip from `windows.php.net` using `reqwest` (rustls, streaming) in the Rust backend
 - [x] Resolve version-to-zip via `https://windows.php.net/downloads/releases/releases.json` and pick the latest `ts.zip` for the requested branch
@@ -203,7 +203,7 @@ src-tauri/src/
 ### 4.1 MSI Reliability and Bundled Stack Verification
 
 - [ ] Verify MariaDB binaries are in place and correctly configured in installer bundle
-- [ ] Verify bundled stack installs and starts correctly: Apache + PHP 8.2 + MariaDB + phpMyAdmin
+- [ ] Verify bundled stack installs and starts correctly: Apache + PHP 8.3 + MariaDB + phpMyAdmin
 - [ ] Test installation path options (`C:\dsb`, `C:\Program Files\DevStackBox`)
 - [ ] Verify all binaries are in expected paths after MSI install
 - [ ] Test clean install and upgrade install

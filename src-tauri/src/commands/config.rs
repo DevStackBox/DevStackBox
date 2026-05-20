@@ -10,7 +10,7 @@ pub async fn read_config(service: String) -> Result<String, String> {
     let config_file = match service.as_str() {
         "mysql" => config_dir.join("my.cnf"),
         "apache" | "httpd" => config_dir.join("httpd.conf"),
-        "php" => base_path.join("php").join("8.2").join("php.ini"),
+        "php" => base_path.join("php").join("8.3").join("php.ini"),
         "phpmyadmin" => config_dir.join("phpmyadmin.conf"),
         _ => return Err(format!("Unknown service: {}", service)),
     };
@@ -31,7 +31,7 @@ pub async fn update_config(service: String, content: String) -> Result<String, S
     let config_file = match service.as_str() {
         "mysql" => config_dir.join("my.cnf"),
         "apache" | "httpd" => config_dir.join("httpd.conf"),
-        "php" => base_path.join("php").join("8.2").join("php.ini"),
+        "php" => base_path.join("php").join("8.3").join("php.ini"),
         "phpmyadmin" => config_dir.join("phpmyadmin.conf"),
         _ => return Err(format!("Unknown service: {}", service)),
     };
@@ -70,7 +70,7 @@ pub async fn backup_config(service: String) -> Result<String, String> {
     let config_file = match service.as_str() {
         "mysql" => config_dir.join("my.cnf"),
         "apache" | "httpd" => config_dir.join("httpd.conf"),
-        "php" => base_path.join("php").join("8.2").join("php.ini"),
+        "php" => base_path.join("php").join("8.3").join("php.ini"),
         "phpmyadmin" => config_dir.join("phpmyadmin.conf"),
         _ => return Err(format!("Unknown service: {}", service)),
     };
@@ -141,7 +141,7 @@ pub async fn restore_config_backup(
     let config_file = match service.as_str() {
         "mysql" => config_dir.join("my.cnf"),
         "apache" | "httpd" => config_dir.join("httpd.conf"),
-        "php" => base_path.join("php").join("8.2").join("php.ini"),
+        "php" => base_path.join("php").join("8.3").join("php.ini"),
         "phpmyadmin" => config_dir.join("phpmyadmin.conf"),
         _ => return Err(format!("Unknown service: {}", service)),
     };

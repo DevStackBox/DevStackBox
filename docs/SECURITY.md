@@ -64,7 +64,7 @@ DevStackBox executes these binaries:
 
 - `apache/bin/httpd.exe`
 - `mysql/bin/mysqld.exe`
-- `php/8.2/php.exe`
+- `php/8.3/php.exe`
 
 **Risk:** If binaries are replaced by a malicious actor with filesystem access, the app will execute the replacement.
 

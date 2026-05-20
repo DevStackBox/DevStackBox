@@ -24,8 +24,8 @@ pub async fn check_binaries() -> Result<HashMap<String, bool>, String> {
     let apache_path = base_path.join("apache").join("bin").join("httpd.exe");
     binaries.insert("apache".to_string(), apache_path.exists());
 
-    let php_path = base_path.join("php").join("8.2").join("php.exe");
-    binaries.insert("php8.2".to_string(), php_path.exists());
+    let php_path = base_path.join("php").join("8.3").join("php.exe");
+    binaries.insert("php8.3".to_string(), php_path.exists());
 
     Ok(binaries)
 }
@@ -50,7 +50,7 @@ pub async fn debug_paths() -> Result<HashMap<String, String>, String> {
     paths.insert("apache_path".to_string(), apache_path.display().to_string());
     paths.insert("apache_exists".to_string(), apache_path.exists().to_string());
 
-    let php_path = base_path.join("php").join("8.2").join("php.exe");
+    let php_path = base_path.join("php").join("8.3").join("php.exe");
     paths.insert("php_path".to_string(), php_path.display().to_string());
     paths.insert("php_exists".to_string(), php_path.exists().to_string());
 
@@ -76,7 +76,7 @@ pub async fn debug_installation() -> Result<HashMap<String, String>, String> {
 
     let apache_bin = install_path.join("apache").join("bin").join("httpd.exe");
     let mysql_bin = install_path.join("mysql").join("bin").join("mysqld.exe");
-    let php_bin = install_path.join("php").join("8.2").join("php.exe");
+    let php_bin = install_path.join("php").join("8.3").join("php.exe");
     let phpmyadmin_index = install_path.join("phpmyadmin").join("index.php");
 
     debug_info.insert(

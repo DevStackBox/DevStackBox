@@ -51,7 +51,7 @@ export const TAURI_COMMANDS = {
 
 | Command Name                 | Rust Function                  | Parameters | Returns                                                   | Status               | Used By                 |
 | ---------------------------- | ------------------------------ | ---------- | --------------------------------------------------------- | -------------------- | ----------------------- |
-| `check_binaries`             | `check_binaries()`             | none       | `HashMap<String, bool>` keys: `mysql`, `apache`, `php8.2` | Working              | `App.tsx`               |
+| `check_binaries`             | `check_binaries()`             | none       | `HashMap<String, bool>` keys: `mysql`, `apache`, `php8.3` | Working              | `App.tsx`               |
 | `stop_all_services`          | `stop_all_services()`          | none       | `String` (summary message)                                | Working              | Not yet hooked up in UI |
 | `create_directory_structure` | `create_directory_structure()` | none       | `String` (success msg)                                    | Working              | Not yet called from UI  |
 | `debug_paths`                | `debug_paths()`                | none       | `HashMap<String, String>`                                 | Working (debug only) | `DebugPanel.tsx`        |
@@ -158,7 +158,7 @@ Many commands accept a `service: String` parameter. Valid values are:
 | ----------------------- | ------------------------ | ------------------------ |
 | `"mysql"`               | `config/my.cnf`          |                          |
 | `"apache"` or `"httpd"` | `config/httpd.conf`      | Both are accepted        |
-| `"php"`                 | `php/8.2/php.ini`        | Hardcoded to 8.2 for now |
+| `"php"`                 | `php/8.3/php.ini`        | Hardcoded to 8.3 for now |
 | `"phpmyadmin"`          | `config/phpmyadmin.conf` |                          |
 
 ---

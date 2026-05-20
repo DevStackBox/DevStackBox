@@ -50,7 +50,7 @@ function App() {
     });
     setTimeout(() => setCopiedPath(null), 2000);
   };
-  const [currentPhpVersion, setCurrentPhpVersion] = useState("8.2");
+  const [currentPhpVersion, setCurrentPhpVersion] = useState("8.3");
 
   // Handler to open config editor for a specific service
   const handleOpenConfig = (service: ServiceName) => {
@@ -84,12 +84,12 @@ function App() {
       if (!binaries.apache) {
         console.warn("Apache binary not found at apache/bin/httpd.exe");
       }
-      if (!binaries["php8.2"]) {
-        console.warn("PHP 8.2 binary not found at php/8.2/php.exe");
+      if (!binaries["php8.3"]) {
+        console.warn("PHP 8.3 binary not found at php/8.3/php.exe");
       }
 
       // Resolve the active PHP branch from the backend so the UI does not
-      // hardcode "8.2". `get_php_versions` returns each branch with an
+      // hardcode "8.3". `get_php_versions` returns each branch with an
       // `is_active` flag (set by the `php/current` junction). Fall back to
       // the first installed branch, then to the existing default.
       try {
