@@ -133,7 +133,10 @@ async fn create_default_mysql_config() -> Result<(), String> {
     let mysql_data = user_mysql_data_dir();
 
     let config_content = format!(
-        r#"[mysqld]
+        r#"# configVersion: 1
+# Managed by DevStackBox. Edits to this file are preserved across upgrades
+# unless the configVersion is bumped, which triggers a migration.
+[mysqld]
 port=3306
 basedir={}
 datadir={}

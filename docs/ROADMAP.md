@@ -108,7 +108,7 @@ This is a prerequisite for enabling auto-updates. Without it, updates will destr
 - [x] Move `logs/` to User Data Root
 - [x] Move runtime `config/` to User Data Root (default configs are now generated into `<root>/config/` on first run; source `config/` in repo is dev-only)
 - [x] Update `get_installation_path()` and add `get_user_data_root()` to `lib.rs`
-- [ ] Add `configVersion: 1` to all config files written by the app (deferred to migrations work)
+- [x] Add `configVersion: 1` to all config files written by the app (added to generated `php.ini`, `my.cnf`, and `httpd.conf`; migration tooling still TBD)
 - [x] Update all hardcoded path assumptions in `lib.rs`
 - [ ] Test: app works correctly after separation on a clean Windows install (manual QA)
 
@@ -160,23 +160,24 @@ src-tauri/src/
 
 **Goal:** Core features work end-to-end without workarounds.
 
-### 3.1 Additional PHP Version Downloader
+### 3.1 Additional PHP Version Downloader [DONE]
 
 **Note:** Base PHP 8.2 is bundled today. This feature adds support for downloading additional PHP versions (8.1, 8.3, 8.4, etc.) on demand. It does not replace the bundled PHP unless the product decision changes later.
 
-- [ ] Download PHP zip from `windows.php.net` using Tauri HTTP plugin
-- [ ] Extract to `php/{version}/`
-- [ ] Generate `php.ini` with sensible defaults
-- [ ] Verify `php.exe` works after extraction
-- [ ] Emit progress events to frontend (Tauri Channel)
-- [ ] Show real progress bar in `PHPVersionSelector`
-- [ ] Graceful error handling for: no internet, antivirus block, slow connection
+- [x] Download PHP zip from `windows.php.net` using `reqwest` (rustls, streaming) in the Rust backend
+- [x] Resolve version-to-zip via `https://windows.php.net/downloads/releases/releases.json` and pick the latest `ts.zip` for the requested branch
+- [x] Extract to `<install>/php/{branch}/` using the `zip` crate with `enclosed_name()` traversal guard
+- [x] Generate `php.ini` with sensible defaults (copy `php.ini-production` when present, else write a minimal config with `# configVersion: 1` header)
+- [x] Verify `php.exe` exists after extraction (`php_branch_exe(branch).exists()` drives `installed` in `get_php_versions`)
+- [x] Emit progress events to frontend via `app.emit("php-download-progress", PhpDownloadProgress { version, stage, percent, downloaded, total, message })`
+- [x] Show real progress bar in `PHPVersionSelector` (shadcn `Progress`, stage label, error display)
+- [x] Graceful error handling: errors emit `stage = "error"` with message; UI surfaces a destructive toast
 
-### 3.2 Real-Time Log Streaming
+### 3.2 Real-Time Log Streaming [DONE]
 
-- [ ] Start with: poll `get_service_logs` every 2 seconds from frontend
-- [ ] Auto-scroll to bottom on new lines
-- [ ] Filter/search on the frontend without re-fetching
+- [x] Frontend polls `get_service_logs` every 2 seconds while auto-refresh is enabled
+- [x] Auto-scroll the log textarea to the bottom on new content (when auto-scroll is on)
+- [x] Search/filter is applied client-side without re-fetching
 - [ ] Later (Phase 4): replace polling with Tauri Channel streaming
 
 ### 3.3 Virtual Hosts (Local Domains)
@@ -186,11 +187,11 @@ src-tauri/src/
 - [ ] Edit Windows `hosts` file (requires elevation prompt)
 - [ ] Show all active virtual hosts on dashboard
 
-### 3.4 Process Supervision (Crash Recovery)
+### 3.4 Process Supervision (Crash Recovery) [PARTIAL]
 
-- [ ] Detect when Apache or MySQL crashes (poll `is_process_running` every 5s)
-- [ ] Show crash notification in UI
-- [ ] Offer one-click restart
+- [x] Detect when Apache, MySQL, or PHP crashes (frontend `ServiceManager` polls `get_*_status` every 5s and compares running transitions)
+- [x] Show crash notification in UI (destructive toast when a service flips from running to stopped without the user pressing toggle)
+- [ ] Offer one-click restart from the crash toast (current toast only informs)
 - [ ] Log crash event with timestamp
 
 ---

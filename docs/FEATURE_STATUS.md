@@ -112,7 +112,7 @@ Update this file every time a feature changes status. Do not maintain feature st
 | Read log file (last 1000 lines) | DONE    | `get_service_logs` command               |
 | LogViewer component (static)    | DONE    | Renders text, no streaming               |
 | Log display on services page    | PARTIAL | Calls `get_service_logs` but UI is basic |
-| Real-time log streaming         | PLANNED | Needs Tauri Channel/Event                |
+| Real-time log streaming         | DONE    | Frontend polls `get_service_logs` every 2s while auto-refresh is on; auto-scroll on. Tauri Channel streaming still planned for Phase 4 |
 | Log filtering / search          | PLANNED |                                          |
 | Log tabs per service            | PLANNED | MariaDB, Apache, PHP tabs                |
 | Log auto-scroll toggle          | PLANNED |                                          |
@@ -126,7 +126,7 @@ Update this file every time a feature changes status. Do not maintain feature st
 | List PHP versions (installed) | DONE    | `get_php_versions` scans `php/` dir                                        |
 | PHP version selector UI       | DONE    | `php-version-selector.tsx`                                                 |
 | Switch PHP version            | DONE    | Creates `php/current` junction (Windows)                                   |
-| Download PHP version          | STUB    | `download_php_version` is placeholder-only; extra versions are future work |
+| Download PHP version          | DONE    | `download_php_version` streams the real zip from windows.php.net, extracts to `php/{branch}/`, writes a default `php.ini`, and emits `php-download-progress` events |
 | PHP Extension management      | PLANNED | Enable/disable extensions in php.ini                                       |
 
 ---

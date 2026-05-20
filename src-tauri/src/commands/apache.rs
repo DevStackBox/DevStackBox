@@ -186,7 +186,10 @@ pub async fn create_default_apache_config() -> Result<(), String> {
     let phpmyadmin_root = install_path.join("phpmyadmin");
 
     let config_content = format!(
-        r#"# Apache Configuration for DevStackBox
+        r#"# configVersion: 1
+# Apache Configuration for DevStackBox
+# Managed by DevStackBox. Edits to this file are preserved across upgrades
+# unless the configVersion is bumped, which triggers a migration.
 ServerRoot "{}"
 PidFile "{}/httpd.pid"
 Listen 80

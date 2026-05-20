@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { safeInvoke, isTauri, getMockServiceStatus } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
 import { motion } from "framer-motion";
@@ -43,6 +43,17 @@ export function ServiceManager({
   });
   const [loading, setLoading] = useState<string | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
+  // Roadmap Phase 3.4: detect unexpected service crashes.
+  // We track the previous running state per service so a transition
+  // "running -> stopped" that is NOT caused by the user clicking toggle
+  // surfaces as a crash notification.
+  const prevRunningRef = useRef<Record<string, boolean>>({
+    apache: false,
+    mysql: false,
+    php: false,
+  });
+  const loadingRef = useRef<string | null>(null);
+  loadingRef.current = loading;
 
   // Check service status
   const checkServiceStatus = async () => {
@@ -81,6 +92,21 @@ export function ServiceManager({
       }
 
       const nextStatuses = { apache, mysql, php };
+      // Crash detection: surface a toast for any service that flipped from
+      // running to stopped while NOT being toggled by the user.
+      (["apache", "mysql", "php"] as const).forEach((name) => {
+        const wasRunning = prevRunningRef.current[name];
+        const isRunning = nextStatuses[name].running;
+        if (wasRunning && !isRunning && loadingRef.current !== name) {
+          const label = name.charAt(0).toUpperCase() + name.slice(1);
+          toast({
+            variant: "destructive",
+            title: `${label} stopped unexpectedly`,
+            description: `${label} was running but is no longer responding. Check logs and restart it.`,
+          });
+        }
+        prevRunningRef.current[name] = isRunning;
+      });
       setServices(nextStatuses);
       onStatusesChange?.(nextStatuses);
       setInitialLoading(false);

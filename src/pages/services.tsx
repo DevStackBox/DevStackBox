@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { ServiceManager } from "@/components/services";
@@ -35,6 +35,8 @@ export function ServicesPage({
   const [logs, setLogs] = useState<string>("");
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [loading, setLoading] = useState(false);
+  // Roadmap Phase 3.2: poll logs every 2s while auto-refresh is enabled.
+  const pollRef = useRef<number | null>(null);
 
   const handleServiceToggle = (service: string) => {
     // Auto-refresh logs when service changes
@@ -65,6 +67,43 @@ export function ServicesPage({
       setLoading(false);
     }
   };
+
+  // Quiet poll: do not toggle the loading spinner so the textarea stays stable.
+  const pollLogs = async (service: string) => {
+    if (!isTauri()) return;
+    try {
+      const logContent = await safeInvoke<string>(
+        TAURI_COMMANDS.services.getServiceLogs,
+        { service },
+      );
+      if (typeof logContent === "string") {
+        setLogs(logContent);
+      }
+    } catch {
+      // ignore transient errors during polling
+    }
+  };
+
+  // Start/stop the 2-second polling loop based on autoRefresh + selectedService.
+  useEffect(() => {
+    if (pollRef.current !== null) {
+      window.clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+    if (!autoRefresh) return;
+    // Kick off an immediate refresh so the panel is populated quickly.
+    pollLogs(selectedService);
+    pollRef.current = window.setInterval(() => {
+      pollLogs(selectedService);
+    }, 2000);
+    return () => {
+      if (pollRef.current !== null) {
+        window.clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoRefresh, selectedService]);
 
   const handleOpenConfig = (service: string) => {
     onOpenConfig(service as ServiceName);

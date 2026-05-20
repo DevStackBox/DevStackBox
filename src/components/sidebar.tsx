@@ -157,8 +157,7 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
             transition={{ delay: 0.2 }}
             className="text-xs text-muted-foreground text-center"
           >
-            <p>Built with ❤️</p>
-            <p>by Nomad Programmer</p>
+            <p>Built by Nomad Programmer</p>
           </motion.div>
         )}
       </div>

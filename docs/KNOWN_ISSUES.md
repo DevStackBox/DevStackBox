@@ -74,45 +74,22 @@ Manually fix the `dead_code` warnings by either deleting unused functions or usi
 ### ISSUE-003: `download_php_version` is a Stub
 
 **Priority:** HIGH  
-**File:** `src-tauri/src/lib.rs` - `download_php_version()` command  
-**Status:** Unresolved
+**File:** `src-tauri/src/commands/php.rs` - `download_php_version()` command  
+**Status:** Resolved (v0.1.6)
 
-**Description:**  
-The `download_php_version` command does NOT actually download PHP. It:
-
-1. Sleeps for 3 seconds (fake download delay)
-2. Creates a directory
-3. Writes a file named "placeholder" as `php.exe`
-
-The `PHPVersionSelector` UI lets users click "Download PHP 8.1/8.3/8.4" and it appears to work but does nothing useful.
-
-**Impact:**  
-Users see a fake success confirmation for a download that never happened.
-
-**Fix required before this feature can ship:**
-
-1. Use Tauri's HTTP client or a shell command to download the actual PHP zip from `windows.php.net`
-2. Extract it to `php/{version}/`
-3. Configure `php.ini`
-4. Report real progress via Tauri Channel events
+**Resolution:**
+`download_php_version` is now a real implementation. It resolves the latest TS zip URL via `https://windows.php.net/downloads/releases/releases.json`, streams the download with `reqwest` (rustls), extracts into `<install>/php/{branch}/` via the `zip` crate with a path-traversal guard, copies `php.ini-production` to `php.ini` (or writes a minimal config with a `# configVersion: 1` header), and emits `php-download-progress` events with `{ version, stage, percent, downloaded, total, message }` to the frontend. `PHPVersionSelector` subscribes to those events and renders a shadcn `Progress` bar plus stage text, then refreshes the version list when `stage = "complete"`. Errors emit `stage = "error"` and surface as destructive toasts.
 
 ---
 
 ### ISSUE-004: Log Viewer Has No Real-Time Streaming
 
 **Priority:** HIGH  
-**File:** `src/components/services/log-viewer.tsx`, `src-tauri/src/lib.rs`  
-**Status:** Unresolved
+**File:** `src/components/services/log-viewer.tsx`, `src/pages/services.tsx`  
+**Status:** Resolved (v0.1.6, polling implementation)
 
-**Description:**  
-The `get_service_logs` command reads a log file once and returns the last 1000 lines. The `LogViewer` component renders this static text. There is no polling, no streaming, and no auto-refresh.
-
-**Impact:**  
-Users must manually trigger a log refresh. Running services do not show new log entries.
-
-**Fix:**  
-Option A (Simple): Poll `get_service_logs` every 2 seconds from the frontend.  
-Option B (Better): Use Tauri Channels to stream log file tail from Rust to frontend.
+**Resolution:**
+`src/pages/services.tsx` now starts a 2-second `setInterval` on mount (and whenever the selected service changes) that calls `get_service_logs` quietly and replaces the panel content. `LogViewer` watches `logs` and re-applies the active search filter; it also auto-scrolls its textarea to the bottom on new content while auto-scroll is enabled. The interval is cleared when auto-refresh is turned off, when the service changes, and on unmount. The Tauri Channel streaming variant remains a Phase 4 follow-up but is no longer required for basic UX.
 
 ---
 

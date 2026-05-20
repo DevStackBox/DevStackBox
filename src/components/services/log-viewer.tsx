@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Card,
@@ -38,18 +38,32 @@ export function LogViewer({
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredLogs, setFilteredLogs] = useState(logs);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-    if (value.trim() === "") {
+  // Re-apply the current filter when upstream logs change (e.g. from polling).
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
       setFilteredLogs(logs);
     } else {
       const filtered = logs
         .split("\n")
-        .filter((line) => line.toLowerCase().includes(value.toLowerCase()))
+        .filter((line) => line.toLowerCase().includes(searchTerm.toLowerCase()))
         .join("\n");
       setFilteredLogs(filtered);
     }
+  }, [logs, searchTerm]);
+
+  // Auto-scroll to the bottom whenever the visible logs grow.
+  useEffect(() => {
+    if (!autoScroll) return;
+    const el = textareaRef.current;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
+    }
+  }, [filteredLogs, autoScroll]);
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
   };
 
   const copyToClipboard = () => {
@@ -123,6 +137,7 @@ export function LogViewer({
           </div>
         )}
         <Textarea
+          ref={textareaRef}
           value={filteredLogs}
           readOnly
           placeholder={t("logs.empty", "No logs yet...")}
