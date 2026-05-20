@@ -38,18 +38,29 @@ const BUNDLED_DEFAULT_VERSION = "8.2";
 // Static, user-facing context shown alongside each branch. Order matches the
 // product roadmap (newest first). Backend ultimately controls which versions
 // exist in `get_php_versions`.
-const BRANCH_NOTES: Record<string, { description: string; features: string[] }> = {
+const BRANCH_NOTES: Record<
+  string,
+  { description: string; features: string[] }
+> = {
   "8.4": {
     description: "Latest stable release with enhanced performance",
     features: ["Property hooks", "Improved performance", "New array helpers"],
   },
   "8.3": {
     description: "Enhanced type system and performance improvements",
-    features: ["Typed class constants", "Anonymous readonly classes", "JSON validation"],
+    features: [
+      "Typed class constants",
+      "Anonymous readonly classes",
+      "JSON validation",
+    ],
   },
   "8.2": {
     description: "Default bundled version - readonly classes and enums",
-    features: ["Readonly classes", "Disjunctive Normal Form", "Random extension"],
+    features: [
+      "Readonly classes",
+      "Disjunctive Normal Form",
+      "Random extension",
+    ],
   },
   "8.1": {
     description: "Stable version with enums and fibers",
@@ -59,7 +70,13 @@ const BRANCH_NOTES: Record<string, { description: string; features: string[] }> 
 
 interface DownloadProgressPayload {
   version: string;
-  stage: "resolving" | "downloading" | "extracting" | "configuring" | "complete" | "error";
+  stage:
+    | "resolving"
+    | "downloading"
+    | "extracting"
+    | "configuring"
+    | "complete"
+    | "error";
   percent: number;
   downloaded: number;
   total: number;
@@ -83,7 +100,9 @@ export function PHPVersionSelector({
   const { toast } = useToast();
   const [versions, setVersions] = useState<PHPVersionInfo[]>([]);
   const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState<Record<string, DownloadProgressPayload>>({});
+  const [progress, setProgress] = useState<
+    Record<string, DownloadProgressPayload>
+  >({});
 
   const loadVersions = useCallback(async () => {
     setLoading(true);
@@ -107,7 +126,9 @@ export function PHPVersionSelector({
       );
       if (result) {
         // Show newest first.
-        const sorted = [...result].sort((a, b) => b.version.localeCompare(a.version));
+        const sorted = [...result].sort((a, b) =>
+          b.version.localeCompare(a.version),
+        );
         setVersions(sorted);
       }
     } catch (err) {
@@ -142,7 +163,10 @@ export function PHPVersionSelector({
         const handle = await listen<DownloadProgressPayload>(
           "php-download-progress",
           (event) => {
-            setProgress((prev) => ({ ...prev, [event.payload.version]: event.payload }));
+            setProgress((prev) => ({
+              ...prev,
+              [event.payload.version]: event.payload,
+            }));
             if (event.payload.stage === "complete") {
               // Refresh list so the new version shows as installed.
               loadVersions();
@@ -184,7 +208,10 @@ export function PHPVersionSelector({
       if (ok) {
         toast({
           title: t("php.downloaded", "PHP {{version}} installed", { version }),
-          description: t("php.downloadedHint", "You can now activate this version."),
+          description: t(
+            "php.downloadedHint",
+            "You can now activate this version.",
+          ),
         });
         loadVersions();
       }
@@ -225,7 +252,9 @@ export function PHPVersionSelector({
       onClose();
     } catch (err) {
       toast({
-        title: t("php.activateFailed", "Failed to activate PHP {{version}}", { version }),
+        title: t("php.activateFailed", "Failed to activate PHP {{version}}", {
+          version,
+        }),
         description: String(err),
         variant: "destructive",
       });
@@ -269,9 +298,7 @@ export function PHPVersionSelector({
         <Button disabled className="w-full">
           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
           {t("php.stage." + p!.stage, p!.stage)}
-          {p!.total > 0 && p!.stage === "downloading"
-            ? ` ${p!.percent}%`
-            : ""}
+          {p!.total > 0 && p!.stage === "downloading" ? ` ${p!.percent}%` : ""}
         </Button>
       );
     }
@@ -320,7 +347,9 @@ export function PHPVersionSelector({
               disabled={loading}
               title={t("actions.refresh", "Refresh")}
             >
-              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              <RefreshCw
+                className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+              />
             </Button>
           </DialogTitle>
           <DialogDescription>
@@ -400,9 +429,7 @@ export function PHPVersionSelector({
           <div className="flex items-start gap-2">
             <AlertCircle className="w-5 h-5 text-muted-foreground mt-0.5" />
             <div className="text-sm text-muted-foreground">
-              <p className="font-medium mb-1">
-                {t("php.noteTitle", "Note:")}
-              </p>
+              <p className="font-medium mb-1">{t("php.noteTitle", "Note:")}</p>
               <p>
                 {t(
                   "php.noteBody",

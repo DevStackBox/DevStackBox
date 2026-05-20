@@ -54,10 +54,24 @@ async fn get_current_php_version() -> Option<String> {
 
     match Command::new(&exe).arg("--version").output() {
         Ok(output) => {
-            let version_str = String::from_utf8_lossy(&output.stdout);
-            if let Some(start) = version_str.find("PHP ") {
-                if let Some(end) = version_str[start + 4..].find(' ') {
-                    return Some(version_str[start + 4..start + 4 + end].to_string());
+            // `php --version` can emit "PHP Startup: ..." warning lines to
+            // stdout before the actual banner. We must look specifically for a
+            // line that starts with "PHP " followed by a digit (the real
+            // banner: e.g. "PHP 8.2.12 (cli) (built: ...)").
+            let combined = format!(
+                "{}\n{}",
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            );
+            for line in combined.lines() {
+                let trimmed = line.trim_start();
+                if let Some(rest) = trimmed.strip_prefix("PHP ") {
+                    if rest.chars().next().is_some_and(|c| c.is_ascii_digit()) {
+                        if let Some(end) = rest.find(' ') {
+                            return Some(rest[..end].to_string());
+                        }
+                        return Some(rest.to_string());
+                    }
                 }
             }
             None

@@ -1,14 +1,14 @@
 import { motion } from "framer-motion";
-import { 
-  LayoutDashboard, 
-  Database, 
-  FolderOpen, 
-  FileText, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Database,
+  FolderOpen,
+  FileText,
+  Settings,
   Info,
   Server,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -23,46 +23,51 @@ interface SidebarProps {
   onToggleCollapse: () => void;
 }
 
-export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse }: SidebarProps) {
+export function Sidebar({
+  currentPage,
+  onPageChange,
+  collapsed,
+  onToggleCollapse,
+}: SidebarProps) {
   const { t } = useTranslation();
 
   const menuItems = [
     {
       id: "dashboard",
-      label: t('navigation.dashboard'),
+      label: t("navigation.dashboard"),
       icon: LayoutDashboard,
-      available: true
+      available: true,
     },
     {
-      id: "services", 
-      label: t('navigation.services'),
+      id: "services",
+      label: t("navigation.services"),
       icon: Database,
-      available: true
+      available: true,
     },
     {
       id: "projects",
-      label: t('navigation.projects'), 
+      label: t("navigation.projects"),
       icon: FolderOpen,
-      available: false
+      available: false,
     },
     {
       id: "logs",
-      label: t('navigation.logs'),
+      label: t("navigation.logs"),
       icon: FileText,
-      available: false
+      available: false,
     },
     {
       id: "settings",
-      label: t('navigation.settings'),
+      label: t("navigation.settings"),
       icon: Settings,
-      available: true
+      available: true,
     },
     {
       id: "about",
-      label: t('navigation.about'),
+      label: t("navigation.about"),
       icon: Info,
-      available: true
-    }
+      available: true,
+    },
   ];
 
   return (
@@ -109,7 +114,7 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentPage === item.id;
-          
+
           return (
             <motion.div
               key={item.id}
@@ -123,7 +128,7 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
                 className={cn(
                   "w-full justify-start relative",
                   collapsed ? "px-2" : "px-3",
-                  !item.available && "opacity-50"
+                  !item.available && "opacity-50",
                 )}
                 size={collapsed ? "icon" : "default"}
               >
@@ -139,7 +144,7 @@ export function Sidebar({ currentPage, onPageChange, collapsed, onToggleCollapse
                 )}
                 {!item.available && !collapsed && (
                   <Badge variant="outline" className="ml-auto text-xs">
-                    {t('common.comingSoon')}
+                    {t("common.comingSoon")}
                   </Badge>
                 )}
               </Button>

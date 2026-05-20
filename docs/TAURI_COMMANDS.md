@@ -79,14 +79,14 @@ export const TAURI_COMMANDS = {
 
 ### PHP Commands
 
-| Command Name           | Rust Function                   | Parameters        | Returns            | Status                  | Used By                    |
-| ---------------------- | ------------------------------- | ----------------- | ------------------ | ----------------------- | -------------------------- |
-| `get_php_status`       | `get_php_status()`              | none              | `ServiceInfo`      | Working                 | `service-manager.tsx`      |
-| `toggle_php`           | `toggle_php()`                  | none              | `bool`             | Stub only               | `service-manager.tsx`      |
-| `get_php_versions`     | `get_php_versions()`            | none              | `PHPVersionInfo[]` | Working                 | `php-version-selector.tsx` |
-| `switch_php_version`   | `switch_php_version(version)`   | `version: String` | `bool`             | Working (Windows only)  | `php-version-selector.tsx` |
-| `download_php_version` | `download_php_version(app: AppHandle, version: String)` | `version: String` | `bool` | Working - streams real PHP zip from windows.php.net; emits `php-download-progress` events | `php-version-selector.tsx` |
-| `open_php_terminal`    | `open_php_terminal(version)`    | `version: String` | `String`           | Working (Windows only)  | `service-manager.tsx`      |
+| Command Name           | Rust Function                                           | Parameters        | Returns            | Status                                                                                    | Used By                    |
+| ---------------------- | ------------------------------------------------------- | ----------------- | ------------------ | ----------------------------------------------------------------------------------------- | -------------------------- |
+| `get_php_status`       | `get_php_status()`                                      | none              | `ServiceInfo`      | Working                                                                                   | `service-manager.tsx`      |
+| `toggle_php`           | `toggle_php()`                                          | none              | `bool`             | Stub only                                                                                 | `service-manager.tsx`      |
+| `get_php_versions`     | `get_php_versions()`                                    | none              | `PHPVersionInfo[]` | Working                                                                                   | `php-version-selector.tsx` |
+| `switch_php_version`   | `switch_php_version(version)`                           | `version: String` | `bool`             | Working (Windows only)                                                                    | `php-version-selector.tsx` |
+| `download_php_version` | `download_php_version(app: AppHandle, version: String)` | `version: String` | `bool`             | Working - streams real PHP zip from windows.php.net; emits `php-download-progress` events | `php-version-selector.tsx` |
+| `open_php_terminal`    | `open_php_terminal(version)`                            | `version: String` | `String`           | Working (Windows only)                                                                    | `service-manager.tsx`      |
 
 ### Log Commands
 

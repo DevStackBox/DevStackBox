@@ -6,7 +6,9 @@ use tokio::time::sleep;
 
 use crate::types::ServiceInfo;
 use crate::utils::paths::{get_installation_path, user_config_dir, user_mysql_data_dir};
-use crate::utils::process::{create_hidden_command, get_process_pid, is_process_running};
+use crate::utils::process::{
+    create_hidden_command, ensure_port_available, get_process_pid, is_process_running,
+};
 
 #[tauri::command]
 pub async fn get_mysql_status() -> Result<ServiceInfo, String> {
@@ -69,6 +71,10 @@ pub async fn start_mysql() -> Result<bool, String> {
     }
 
     initialize_mysql_data().await?;
+
+    // Phase 5.2 - fail fast with a clear message if port 3306 is taken
+    // (commonly another MySQL/MariaDB install or a previous DevStackBox run).
+    ensure_port_available(3306, "MySQL")?;
 
     match create_hidden_command(&mysql_path.to_string_lossy())
         .arg(format!("--defaults-file={}", config_path.display()))

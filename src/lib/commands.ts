@@ -42,5 +42,6 @@ export const TAURI_COMMANDS = {
     showMainWindow: "show_main_window",
     hideToTray: "hide_to_tray",
     quitApp: "quit_app",
+    setTooltip: "set_tray_tooltip",
   },
 } as const;

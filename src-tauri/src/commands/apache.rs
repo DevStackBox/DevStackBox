@@ -9,7 +9,8 @@ use crate::utils::paths::{
     get_installation_path, get_user_data_root, user_config_dir, user_logs_dir, user_www_dir,
 };
 use crate::utils::process::{
-    create_hidden_command, get_process_pid, is_32bit_executable, is_process_running,
+    create_hidden_command, ensure_port_available, get_process_pid, is_32bit_executable,
+    is_process_running,
 };
 
 #[tauri::command]
@@ -63,6 +64,10 @@ pub async fn start_apache() -> Result<bool, String> {
     if !config_path.exists() {
         create_default_apache_config().await?;
     }
+
+    // Phase 5.2 - fail fast with a clear message if port 80 is taken
+    // (commonly by IIS, Skype, or another web server).
+    ensure_port_available(80, "Apache")?;
 
     std::env::set_current_dir(&base_path).map_err(|e| e.to_string())?;
 

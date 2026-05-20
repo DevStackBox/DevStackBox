@@ -109,9 +109,16 @@ export function PHPService({
       }
     >
       <div className="space-y-4">
-        {/* Service Information */}
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
+        {/* Service Information. On the dashboard (compact) the card can be
+            narrow, so stack the rows to avoid label/value overlap. */}
+        <div
+          className={
+            compact
+              ? "flex flex-col gap-1 text-sm"
+              : "grid grid-cols-2 gap-4 text-sm"
+          }
+        >
+          <div className="truncate">
             <span className="text-muted-foreground">
               {t("common.version", "Version")}:
             </span>
@@ -119,7 +126,7 @@ export function PHPService({
               {status.version || currentVersion}
             </span>
           </div>
-          <div>
+          <div className="truncate">
             <span className="text-muted-foreground">
               {t("common.status", "Status")}:
             </span>

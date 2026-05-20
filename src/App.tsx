@@ -87,6 +87,24 @@ function App() {
       if (!binaries["php8.2"]) {
         console.warn("PHP 8.2 binary not found at php/8.2/php.exe");
       }
+
+      // Resolve the active PHP branch from the backend so the UI does not
+      // hardcode "8.2". `get_php_versions` returns each branch with an
+      // `is_active` flag (set by the `php/current` junction). Fall back to
+      // the first installed branch, then to the existing default.
+      try {
+        const versions = await safeInvoke<
+          Array<{ version: string; is_active: boolean; installed: boolean }>
+        >(TAURI_COMMANDS.php.getVersions);
+        if (versions && versions.length > 0) {
+          const active = versions.find((v) => v.is_active);
+          const firstInstalled = versions.find((v) => v.installed);
+          const next = active?.version ?? firstInstalled?.version;
+          if (next) setCurrentPhpVersion(next);
+        }
+      } catch (err) {
+        console.warn("Failed to resolve active PHP version:", err);
+      }
     } catch (error) {
       console.error("Failed to initialize app:", error);
     }

@@ -107,27 +107,27 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ## Log Viewer
 
-| Feature                         | Status  | Notes                                    |
-| ------------------------------- | ------- | ---------------------------------------- |
-| Read log file (last 1000 lines) | DONE    | `get_service_logs` command               |
-| LogViewer component (static)    | DONE    | Renders text, no streaming               |
-| Log display on services page    | PARTIAL | Calls `get_service_logs` but UI is basic |
+| Feature                         | Status  | Notes                                                                                                                                  |
+| ------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Read log file (last 1000 lines) | DONE    | `get_service_logs` command                                                                                                             |
+| LogViewer component (static)    | DONE    | Renders text, no streaming                                                                                                             |
+| Log display on services page    | PARTIAL | Calls `get_service_logs` but UI is basic                                                                                               |
 | Real-time log streaming         | DONE    | Frontend polls `get_service_logs` every 2s while auto-refresh is on; auto-scroll on. Tauri Channel streaming still planned for Phase 4 |
-| Log filtering / search          | PLANNED |                                          |
-| Log tabs per service            | PLANNED | MariaDB, Apache, PHP tabs                |
-| Log auto-scroll toggle          | PLANNED |                                          |
+| Log filtering / search          | PLANNED |                                                                                                                                        |
+| Log tabs per service            | PLANNED | MariaDB, Apache, PHP tabs                                                                                                              |
+| Log auto-scroll toggle          | PLANNED |                                                                                                                                        |
 
 ---
 
 ## PHP Version Management
 
-| Feature                       | Status  | Notes                                                                      |
-| ----------------------------- | ------- | -------------------------------------------------------------------------- |
-| List PHP versions (installed) | DONE    | `get_php_versions` scans `php/` dir                                        |
-| PHP version selector UI       | DONE    | `php-version-selector.tsx`                                                 |
-| Switch PHP version            | DONE    | Creates `php/current` junction (Windows)                                   |
+| Feature                       | Status  | Notes                                                                                                                                                               |
+| ----------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| List PHP versions (installed) | DONE    | `get_php_versions` scans `php/` dir                                                                                                                                 |
+| PHP version selector UI       | DONE    | `php-version-selector.tsx`                                                                                                                                          |
+| Switch PHP version            | DONE    | Creates `php/current` junction (Windows)                                                                                                                            |
 | Download PHP version          | DONE    | `download_php_version` streams the real zip from windows.php.net, extracts to `php/{branch}/`, writes a default `php.ini`, and emits `php-download-progress` events |
-| PHP Extension management      | PLANNED | Enable/disable extensions in php.ini                                       |
+| PHP Extension management      | PLANNED | Enable/disable extensions in php.ini                                                                                                                                |
 
 ---
 
@@ -158,15 +158,15 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ## System Tray
 
-| Feature                     | Status  | Notes                                      |
-| --------------------------- | ------- | ------------------------------------------ |
-| Tray icon appears           | DONE    | Tauri tray-icon plugin                     |
-| Minimize to tray            | PARTIAL | Basic minimize works                       |
-| Tray context menu           | PARTIAL | Basic menu configured in `lib.rs`          |
-| Tray click opens app        | PARTIAL |                                            |
-| Tray service status display | PLANNED | Show MariaDB/Apache status in tray tooltip |
-| Tray service start/stop     | PLANNED | Quick start/stop from tray                 |
-| Notifications from tray     | PLANNED | Service start/stop notifications           |
+| Feature                     | Status  | Notes                                                                                                |
+| --------------------------- | ------- | ---------------------------------------------------------------------------------------------------- |
+| Tray icon appears           | DONE    | Tauri tray-icon plugin                                                                               |
+| Minimize to tray            | PARTIAL | Basic minimize works                                                                                 |
+| Tray context menu           | PARTIAL | Basic menu configured in `lib.rs`                                                                    |
+| Tray click opens app        | PARTIAL |                                                                                                      |
+| Tray service status display | DONE    | `set_tray_tooltip` updated every 5s by `ServiceManager` with Apache/MySQL/PHP state                  |
+| Tray service start/stop     | DONE    | Tray menu emits `tray-toggle-service`; `ServiceManager` routes to the same toggle pipeline as the UI |
+| Notifications from tray     | PLANNED | Service start/stop notifications                                                                     |
 
 ---
 

@@ -259,12 +259,12 @@ See `docs/UPDATES_AND_MIGRATIONS.md` for the full architecture and checklist.
 
 - [ ] Surface Apache error log entries in the main UI
 - [ ] Show PHP fatal errors with file/line
-- [ ] Port conflict detection before Apache starts
+- [ ] Port conflict detection before Apache starts (DONE - v0.1.6: `ensure_port_available` blocks startup with a clear message when port 80 or 3306 is taken)
 
 ### 5.3 Tray Polish
 
-- [ ] Show service status in tray tooltip
-- [ ] Quick start/stop from tray menu without opening main window
+- [ ] Show service status in tray tooltip (DONE - v0.1.6: frontend pushes `set_tray_tooltip` on every 5s status poll)
+- [ ] Quick start/stop from tray menu without opening main window (DONE - v0.1.6: tray menu emits `tray-toggle-service`, `ServiceManager` routes to the same toggle pipeline as the UI)
 - [ ] Startup-on-login option
 
 ### 5.4 System Tray & Startup

@@ -118,3 +118,27 @@ pub fn get_process_pid(process_name: &str) -> Option<u32> {
         Err(_) => None,
     }
 }
+
+// Phase 5.2 - port conflict detection.
+//
+// Returns Ok(()) if `port` on 127.0.0.1 is free; otherwise returns a
+// human-readable error mentioning the service name. We attempt to bind a
+// TCP listener; if the bind fails, the port is considered busy.
+pub fn ensure_port_available(port: u16, service: &str) -> Result<(), String> {
+    use std::net::{Ipv4Addr, SocketAddrV4, TcpListener};
+
+    let addr = SocketAddrV4::new(Ipv4Addr::LOCALHOST, port);
+    match TcpListener::bind(addr) {
+        Ok(listener) => {
+            // Release the port immediately so the real service can grab it.
+            drop(listener);
+            Ok(())
+        }
+        Err(e) => Err(format!(
+            "Port {port} is already in use, so {service} cannot start. \
+             Close the program holding that port (often IIS, Skype, another \
+             web server, or a previous DevStackBox instance) and try again. \
+             Underlying error: {e}"
+        )),
+    }
+}

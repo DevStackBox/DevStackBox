@@ -54,6 +54,10 @@ export function ServiceManager({
   });
   const loadingRef = useRef<string | null>(null);
   loadingRef.current = loading;
+  // Phase 5.3 - the tray menu emits "tray-toggle-service" with the service
+  // name; we need to call the latest toggleService closure from a one-shot
+  // listener effect, so keep it in a ref.
+  const toggleServiceRef = useRef<(service: string) => void>(() => {});
 
   // Check service status
   const checkServiceStatus = async () => {
@@ -110,6 +114,21 @@ export function ServiceManager({
       setServices(nextStatuses);
       onStatusesChange?.(nextStatuses);
       setInitialLoading(false);
+
+      // Phase 5.3 - push a compact status summary to the tray tooltip so
+      // users can read service state without opening the window.
+      const fmt = (label: string, s: ServiceStatus) =>
+        `${label}: ${s.running ? "Running" : "Stopped"}`;
+      const phpLabel = nextStatuses.php.version
+        ? `PHP ${nextStatuses.php.version}`
+        : "PHP";
+      const tooltip = [
+        "DevStackBox",
+        fmt("Apache", nextStatuses.apache),
+        fmt("MySQL", nextStatuses.mysql),
+        fmt(phpLabel, nextStatuses.php),
+      ].join("\n");
+      void safeInvoke(TAURI_COMMANDS.tray.setTooltip, { text: tooltip });
     } catch (error) {
       console.error("Failed to check service status:", error);
       setInitialLoading(false);
@@ -227,6 +246,27 @@ export function ServiceManager({
     const interval = setInterval(checkServiceStatus, 5000);
 
     return () => clearInterval(interval);
+  }, []);
+
+  // Phase 5.3 - subscribe to the tray's "Toggle MySQL" / "Toggle Apache"
+  // menu events and route them through the same toggleService used by the
+  // in-app buttons.
+  toggleServiceRef.current = toggleService;
+  useEffect(() => {
+    if (!isTauri()) return;
+    let unlisten: (() => void) | undefined;
+    (async () => {
+      const { listen } = await import("@tauri-apps/api/event");
+      unlisten = await listen<string>("tray-toggle-service", (event) => {
+        const svc = event.payload;
+        if (svc === "apache" || svc === "mysql" || svc === "php") {
+          toggleServiceRef.current(svc);
+        }
+      });
+    })();
+    return () => {
+      if (unlisten) unlisten();
+    };
   }, []);
 
   const containerClassName = compact

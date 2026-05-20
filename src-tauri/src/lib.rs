@@ -9,7 +9,7 @@ pub mod utils;
 
 use tauri::menu::{MenuBuilder, MenuItemBuilder};
 use tauri::tray::{TrayIconBuilder, TrayIconEvent};
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 
 use crate::commands::apache::{get_apache_status, start_apache, stop_apache, toggle_apache};
 use crate::commands::config::{
@@ -27,7 +27,7 @@ use crate::commands::system::{
     check_binaries, create_directory_structure, debug_installation, debug_paths, stop_all_services,
     test_apache_config,
 };
-use crate::commands::tray::{hide_to_tray, quit_app, show_main_window};
+use crate::commands::tray::{hide_to_tray, quit_app, set_tray_tooltip, show_main_window};
 use crate::utils::paths::ensure_user_data_dirs;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -68,6 +68,7 @@ pub fn run() {
             create_directory_structure,
             show_main_window,
             hide_to_tray,
+            set_tray_tooltip,
             quit_app
         ])
         .setup(|app| {
@@ -94,7 +95,7 @@ pub fn run() {
                 .item(&quit_item)
                 .build()?;
 
-            let _tray = TrayIconBuilder::new()
+            let _tray = TrayIconBuilder::with_id("main")
                 .menu(&menu)
                 .tooltip("DevStackBox - PHP Development Environment")
                 .icon(app.default_window_icon().unwrap().clone())
@@ -111,10 +112,18 @@ pub fn run() {
                         }
                     }
                     "mysql" => {
-                        println!("Toggle MySQL from tray");
+                        // Phase 5.3 - quick toggle from tray.
+                        // Delegate to the frontend so it can run the same
+                        // start/stop pipeline (config check, error toast,
+                        // status refresh) used by the UI buttons.
+                        if let Some(window) = _app.get_webview_window("main") {
+                            let _ = window.emit("tray-toggle-service", "mysql");
+                        }
                     }
                     "apache" => {
-                        println!("Toggle Apache from tray");
+                        if let Some(window) = _app.get_webview_window("main") {
+                            let _ = window.emit("tray-toggle-service", "apache");
+                        }
                     }
                     "quit" => {
                         _app.exit(0);
