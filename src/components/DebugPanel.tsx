@@ -1,21 +1,30 @@
-import React from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import React from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { TAURI_COMMANDS } from "@/lib/commands";
 
 interface DebugInfo {
   [key: string]: string;
 }
 
 export function DebugPanel() {
+  // Hard guard: this panel must never appear in production builds.
+  // See docs/ROADMAP.md Phase 1.7.
+  if (!import.meta.env.DEV) {
+    return null;
+  }
+
   const [debugInfo, setDebugInfo] = React.useState<DebugInfo>({});
   const [loading, setLoading] = React.useState(false);
 
   const runDebug = async () => {
     setLoading(true);
     try {
-      const info = await invoke<DebugInfo>('debug_installation');
+      const info = await invoke<DebugInfo>(
+        TAURI_COMMANDS.system.debugInstallation,
+      );
       setDebugInfo(info);
     } catch (error) {
-      console.error('Debug failed:', error);
+      console.error("Debug failed:", error);
       setDebugInfo({ error: String(error) });
     }
     setLoading(false);
@@ -23,43 +32,47 @@ export function DebugPanel() {
 
   const stopAllServices = async () => {
     try {
-      const result = await invoke<string>('stop_all_services');
-      alert('Stop Services Result: ' + result);
+      const result = await invoke<string>(
+        TAURI_COMMANDS.system.stopAllServices,
+      );
+      alert("Stop Services Result: " + result);
     } catch (error) {
-      alert('Failed to stop services: ' + error);
+      alert("Failed to stop services: " + error);
     }
   };
 
   const testApacheConfig = async () => {
     try {
-      const result = await invoke<string>('test_apache_config');
-      alert('Apache Config Test Result: ' + result);
+      const result = await invoke<string>(
+        TAURI_COMMANDS.system.testApacheConfig,
+      );
+      alert("Apache Config Test Result: " + result);
     } catch (error) {
-      alert('Apache Config Test Failed: ' + error);
+      alert("Apache Config Test Failed: " + error);
     }
   };
 
   return (
     <div className="p-4 bg-gray-100 rounded-lg">
       <h3 className="text-lg font-bold mb-4">Debug Installation</h3>
-      
+
       <div className="space-x-2 mb-4">
-        <button 
-          onClick={runDebug} 
+        <button
+          onClick={runDebug}
           disabled={loading}
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
         >
-          {loading ? 'Running...' : 'Debug Info'}
+          {loading ? "Running..." : "Debug Info"}
         </button>
-        
-        <button 
+
+        <button
           onClick={stopAllServices}
           className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
         >
           Stop All Services
         </button>
-        
-        <button 
+
+        <button
           onClick={testApacheConfig}
           className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
         >

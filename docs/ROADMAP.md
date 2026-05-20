@@ -60,66 +60,82 @@ The project has strong architecture and documentation but is in the "dangerous m
 
 ### 1.1 Remove Dead Code
 
-- [ ] Delete `src-tauri/src/service_manager.rs` (192 lines, never called)
-- [ ] Remove commented-out `mod service_manager;` from `lib.rs`
+- [x] Delete `src-tauri/src/service_manager.rs` (192 lines, never called)
+- [x] Remove commented-out `mod service_manager;` from `lib.rs`
 
 ### 1.2 Fix Rust Warnings
 
-- [ ] Run `cargo clippy --fix` in `src-tauri/`
-- [ ] Fix remaining `dead_code` warnings manually
-- [ ] Build should be warning-free before Phase 2 begins
+- [x] Run `cargo clippy --fix` in `src-tauri/`
+- [x] Fix remaining `dead_code` warnings manually
+- [x] Build should be warning-free before Phase 2 begins (verified: `cargo check` and `cargo clippy --all-targets -- -D warnings` both clean)
 
 ### 1.3 Fix Service Status Logic (Critical)
 
-- [ ] Remove `SERVICE_STATUS` global HashMap
-- [ ] All status queries use ONLY `is_process_running()` (OS process check)
-- [ ] No two sources of truth for service state
+- [x] Remove `SERVICE_STATUS` global HashMap (and `SERVICE_PROCESSES`)
+- [x] All status queries use ONLY `is_process_running()` (OS process check)
+- [x] No two sources of truth for service state
 
 ### 1.4 Fix Path Resolution
 
-- [ ] Remove `C:\xampp\htdocs\DevStackBox` from production fallback paths
-- [ ] Production fallbacks: `C:\dsb`, `C:\Program Files\DevStackBox`, `C:\DevStackBox`
+- [x] Remove `C:\xampp\htdocs\DevStackBox` from production fallback paths
+- [x] Production fallbacks: `C:\dsb`, `C:\Program Files\DevStackBox`, `C:\DevStackBox`
 - [ ] Add path resolution test via `debug_installation` command
 
 ### 1.5 Fix `switch_php_version`
 
-- [ ] Replace `Command::new("mklink")` with `Command::new("cmd").args(["/C", "mklink", "/J", ...])`
-- [ ] Test junction creation on fresh Windows install
-- [ ] Handle "requires admin" case with proper error message
+- [x] Replace `Command::new("mklink")` with `Command::new("cmd").args(["/C", "mklink", "/J", ...])`
+- [ ] Test junction creation on fresh Windows install (manual QA)
+- [x] Handle "requires admin" case with proper error message
 
 ### 1.6 Standardize Command Constants
 
-- [ ] Audit ALL `safeInvoke()` calls across frontend
-- [ ] Move every hardcoded command string into `TAURI_COMMANDS` in `src/lib/commands.ts`
-- [ ] Zero hardcoded strings in component files
+- [x] Audit ALL `safeInvoke()` and `invoke()` calls across frontend
+- [x] Move every hardcoded command string into `TAURI_COMMANDS` in `src/lib/commands.ts`
+- [x] Zero hardcoded strings in component files
 
 ### 1.7 Fix DebugPanel in Production
 
-- [ ] Wrap `DebugPanel` in `{import.meta.env.DEV && <DebugPanel />}`
-- [ ] Debug info must never be visible in release builds
+- [x] Wrap `DebugPanel` in `{import.meta.env.DEV && <DebugPanel />}` (implemented as internal `if (!import.meta.env.DEV) return null;` guard so it can never render in release)
+- [x] Debug info must never be visible in release builds
 
 ### 1.8 App/Data Directory Separation (Required Before Auto-Update)
 
 This is a prerequisite for enabling auto-updates. Without it, updates will destroy user data.
 
-- [ ] Define User Data Root path: `C:\dsb-data\` (configurable on first run)
-- [ ] Move MySQL `data/` directory out of `mysql/` and into User Data Root
-- [ ] Move `www/` to User Data Root
-- [ ] Move `logs/` to User Data Root
-- [ ] Move runtime `config/` to User Data Root (keep source configs in repo)
-- [ ] Update `get_installation_path()` and add `get_user_data_path()` to `lib.rs`
-- [ ] Add `configVersion: 1` to all config files written by the app
-- [ ] Update all hardcoded path assumptions in `lib.rs`
-- [ ] Test: app works correctly after separation on a clean Windows install
+- [x] Define User Data Root path: `%LOCALAPPDATA%\DevStackBox\` (override via `DEVSTACKBOX_DATA_DIR` env var)
+- [x] Move MySQL `data/` directory out of `mysql/` and into User Data Root (`<root>/mysql-data/`)
+- [x] Move `www/` to User Data Root
+- [x] Move `logs/` to User Data Root
+- [x] Move runtime `config/` to User Data Root (default configs are now generated into `<root>/config/` on first run; source `config/` in repo is dev-only)
+- [x] Update `get_installation_path()` and add `get_user_data_root()` to `lib.rs`
+- [ ] Add `configVersion: 1` to all config files written by the app (deferred to migrations work)
+- [x] Update all hardcoded path assumptions in `lib.rs`
+- [ ] Test: app works correctly after separation on a clean Windows install (manual QA)
+
+**Implemented layout (Phase 1.8):**
+
+```
+%LOCALAPPDATA%\DevStackBox\
+  config\           my.cnf, httpd.conf, phpmyadmin.conf
+  config-backups\   timestamped .bak files
+  logs\             error.log, access.log, mysql.log, php_error.log, httpd.pid
+  mysql-data\       MySQL data directory (initialized on first start)
+  www\              web document root (index.html, etc.)
+  backups\          mysql dumps and other app backups
+```
+
+Binaries (Apache, PHP, MySQL, phpMyAdmin) remain inside the install dir and may be replaced by auto-update without touching user data.
 
 See `docs/UPDATES_AND_MIGRATIONS.md` for the full architecture.
 
 ---
 
-## Phase 2 — Modularize Backend
+## Phase 2 — Modularize Backend [DONE]
 
 **Goal:** Split `lib.rs` (~1600 lines) into maintainable modules.  
 Do this as a dedicated refactor task. Do NOT mix with feature work.
+
+**Status:** Completed. `lib.rs` reduced from ~1900 lines to ~150 lines (module declarations + `run()` + tray setup). All commands extracted to `commands/{mysql,apache,php,config,logs,system,tray}.rs`. Path and process helpers extracted to `utils/{paths,process}.rs`. Shared types in `types.rs`. Default HTML/PHP templates moved out of Rust strings into `templates/default_*.{html,php}` and pulled in via `include_str!`. `cargo check`, `cargo clippy --all-targets -- -D warnings`, and `npx tsc --noEmit` all clean.
 
 ### Target structure
 

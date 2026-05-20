@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { safeInvoke } from "@/lib/tauri";
+import { TAURI_COMMANDS } from "@/lib/commands";
 import { Save, RotateCcw, Download, AlertCircle } from "lucide-react";
 import type { ServiceName } from "@/types/services";
 
@@ -33,7 +34,9 @@ export function ConfigEditor({ isOpen, onClose, service }: ConfigEditorProps) {
   const loadConfig = async () => {
     setLoading(true);
     try {
-      const content = await safeInvoke<string>("read_config", { service });
+      const content = await safeInvoke<string>(TAURI_COMMANDS.config.read, {
+        service,
+      });
       if (content) {
         setConfig(content);
         setOriginalConfig(content);
@@ -53,7 +56,7 @@ export function ConfigEditor({ isOpen, onClose, service }: ConfigEditorProps) {
   const saveConfig = async () => {
     setLoading(true);
     try {
-      const result = await safeInvoke<string>("update_config", {
+      const result = await safeInvoke<string>(TAURI_COMMANDS.config.update, {
         service,
         content: config,
       });
@@ -80,7 +83,9 @@ export function ConfigEditor({ isOpen, onClose, service }: ConfigEditorProps) {
   const backupConfig = async () => {
     setLoading(true);
     try {
-      const result = await safeInvoke<string>("backup_config", { service });
+      const result = await safeInvoke<string>(TAURI_COMMANDS.config.backup, {
+        service,
+      });
       if (result) {
         toast({
           title: t("common.success", "Success"),

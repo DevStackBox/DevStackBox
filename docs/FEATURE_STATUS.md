@@ -8,6 +8,16 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ---
 
+## Roadmap Phase Status
+
+| Phase                        | Status | Notes                                                                                                                                                                                                                                                     |
+| ---------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Phase 1 - Core Stability     | DONE   | Items 1.1-1.8 complete. `cargo check` and `cargo clippy -D warnings` both clean.                                                                                                                                                                          |
+| Phase 1.8 - User Data Root   | DONE   | Runtime data now lives in `%LOCALAPPDATA%\DevStackBox\` (override via `DEVSTACKBOX_DATA_DIR`).                                                                                                                                                            |
+| Phase 2 - Modularize Backend | DONE   | `lib.rs` reduced to ~150 lines. Commands split into `commands/{mysql,apache,php,config,logs,system,tray}.rs`; helpers in `utils/{paths,process}.rs`; shared types in `types.rs`; default web templates in `src-tauri/templates/`. Build and clippy clean. |
+
+---
+
 ## Status Key
 
 | Symbol  | Meaning                                              |
@@ -21,24 +31,24 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ## Core Infrastructure
 
-| Feature                        | Status  | Notes                                                                   |
-| ------------------------------ | ------- | ----------------------------------------------------------------------- |
-| Tauri 2 setup                  | DONE    | v2.1, tray-icon, updater plugins                                        |
-| Vite + React 18                | DONE    |                                                                         |
-| Tailwind CSS                   | DONE    | v3, compiled to ~27KB                                                   |
-| shadcn/ui                      | DONE    | Components in `src/components/ui/`                                      |
-| Framer Motion                  | DONE    | v11                                                                     |
-| i18next (EN + HI)              | DONE    | `locales/en.json` and `locales/hi.json`                                 |
-| Dark / Light mode              | DONE    | Tailwind + shadcn theme system                                          |
-| safeInvoke() wrapper           | DONE    | Browser mode fallback works                                             |
-| MSI installer                  | DONE    | 288.9 MB                                                                |
-| NSIS installer                 | DONE    | 147.7 MB                                                                |
-| GitHub Actions CI/CD           | DONE    | Builds on push to main                                                  |
-| App version constant           | DONE    | `src/lib/version.ts`                                                    |
-| Shared TypeScript types        | DONE    | `src/types/services.ts`                                                 |
-| TAURI_COMMANDS constants       | PARTIAL | `src/lib/commands.ts` covers service commands and still needs expansion |
-| Bundled stack (Apache+PHP+DB)  | DONE    | All core binaries ship in installer - no internet required              |
-| First-launch onboarding screen | PLANNED | Show Apache/PHP/MariaDB ready status after install, then "Start"        |
+| Feature                        | Status  | Notes                                                                                                                         |
+| ------------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Tauri 2 setup                  | DONE    | v2.1, tray-icon, updater plugins                                                                                              |
+| Vite + React 18                | DONE    |                                                                                                                               |
+| Tailwind CSS                   | DONE    | v3, compiled to ~27KB                                                                                                         |
+| shadcn/ui                      | DONE    | Components in `src/components/ui/`                                                                                            |
+| Framer Motion                  | DONE    | v11                                                                                                                           |
+| i18next (EN + HI)              | DONE    | `locales/en.json` and `locales/hi.json`                                                                                       |
+| Dark / Light mode              | DONE    | Tailwind + shadcn theme system                                                                                                |
+| safeInvoke() wrapper           | DONE    | Browser mode fallback works                                                                                                   |
+| MSI installer                  | DONE    | 288.9 MB                                                                                                                      |
+| NSIS installer                 | DONE    | 147.7 MB                                                                                                                      |
+| GitHub Actions CI/CD           | DONE    | Builds on push to main                                                                                                        |
+| App version constant           | DONE    | `src/lib/version.ts`                                                                                                          |
+| Shared TypeScript types        | DONE    | `src/types/services.ts`                                                                                                       |
+| TAURI_COMMANDS constants       | DONE    | `src/lib/commands.ts` grouped (system/services/php/config/tray); zero hardcoded command strings remain in frontend components |
+| Bundled stack (Apache+PHP+DB)  | DONE    | All core binaries ship in installer - no internet required                                                                    |
+| First-launch onboarding screen | PLANNED | Show Apache/PHP/MariaDB ready status after install, then "Start"                                                              |
 
 ---
 

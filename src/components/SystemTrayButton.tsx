@@ -1,32 +1,33 @@
-import React from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { Minimize2, EyeOff, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
+import React from "react";
+import { invoke } from "@tauri-apps/api/core";
+import { TAURI_COMMANDS } from "@/lib/commands";
+import { Minimize2, EyeOff, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 
 interface SystemTrayButtonProps {
-  variant?: 'minimize' | 'hide' | 'quit';
-  size?: 'sm' | 'lg';
+  variant?: "minimize" | "hide" | "quit";
+  size?: "sm" | "lg";
   className?: string;
 }
 
 export const SystemTrayButton: React.FC<SystemTrayButtonProps> = ({
-  variant = 'minimize',
-  size = 'sm',
-  className = '',
+  variant = "minimize",
+  size = "sm",
+  className = "",
 }) => {
   const handleTrayAction = async () => {
     try {
       switch (variant) {
-        case 'minimize':
-        case 'hide':
-          await invoke('hide_to_tray');
+        case "minimize":
+        case "hide":
+          await invoke(TAURI_COMMANDS.tray.hideToTray);
           break;
-        case 'quit':
-          await invoke('quit_app');
+        case "quit":
+          await invoke(TAURI_COMMANDS.tray.quitApp);
           break;
         default:
-          console.warn('Unknown tray action:', variant);
+          console.warn("Unknown tray action:", variant);
       }
     } catch (error) {
       console.error(`Failed to ${variant}:`, error);
@@ -35,11 +36,11 @@ export const SystemTrayButton: React.FC<SystemTrayButtonProps> = ({
 
   const getIcon = () => {
     switch (variant) {
-      case 'minimize':
+      case "minimize":
         return <Minimize2 className="h-4 w-4" />;
-      case 'hide':
+      case "hide":
         return <EyeOff className="h-4 w-4" />;
-      case 'quit':
+      case "quit":
         return <X className="h-4 w-4" />;
       default:
         return <Minimize2 className="h-4 w-4" />;
@@ -48,23 +49,23 @@ export const SystemTrayButton: React.FC<SystemTrayButtonProps> = ({
 
   const getTooltip = () => {
     switch (variant) {
-      case 'minimize':
-        return 'Minimize to System Tray';
-      case 'hide':
-        return 'Hide to System Tray';
-      case 'quit':
-        return 'Quit Application';
+      case "minimize":
+        return "Minimize to System Tray";
+      case "hide":
+        return "Hide to System Tray";
+      case "quit":
+        return "Quit Application";
       default:
-        return 'Minimize to Tray';
+        return "Minimize to Tray";
     }
   };
 
   const getVariantStyle = () => {
     switch (variant) {
-      case 'quit':
-        return 'destructive';
+      case "quit":
+        return "destructive";
       default:
-        return 'ghost';
+        return "ghost";
     }
   };
 

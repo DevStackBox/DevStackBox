@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { safeInvoke, isTauri, getMockBinariesStatus } from "@/lib/tauri";
+import { TAURI_COMMANDS } from "@/lib/commands";
 import { Server, FolderOpen, FileText, Info, Copy, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -72,8 +73,9 @@ function App() {
       }
 
       const binaries =
-        (await safeInvoke<Record<string, boolean>>("check_binaries")) ||
-        getMockBinariesStatus();
+        (await safeInvoke<Record<string, boolean>>(
+          TAURI_COMMANDS.system.checkBinaries,
+        )) || getMockBinariesStatus();
       console.log("Binary status:", binaries);
 
       if (!binaries.mysql) {
