@@ -18,6 +18,7 @@ It is built with Tauri for a smaller, faster, and more native experience, using 
 All documentation, project management, and bug reporting are via GitHub.
 
 **Key stack points:**
+
 - All backend/service management runs in Rust via Tauri.
 - The frontend is a Vite-powered React app, styled with Tailwind CSS and shadcn/ui, using Framer Motion for animations.
 - No custom CSS unless absolutely necessary; dark/light mode is required everywhere.
@@ -35,6 +36,7 @@ All documentation, project management, and bug reporting are via GitHub.
 - **Auto-update:** App is auto-updated from GitHub Releases.
 
 **Install:**
+
 ```bash
 git clone https://github.com/ProgrammerNomad/DevStackBox.git
 cd DevStackBox
@@ -68,43 +70,43 @@ DevStackBox/
 
 ## 🗂️ 3. Full Feature/Status Table (Updated v0.1.6)
 
-| Feature                                      | Status        | Description                                                      |
-|-----------------------------------------------|--------------|------------------------------------------------------------------|
-| MySQL Database                               | ✅ Available  | Embedded MySQL with GUI control                                  |
-| phpMyAdmin Integration                        | ✅ Available  | Built-in database management                                     |
-| Modern Tailwind/shadcn/ui/Framer UI           | ✅ Available  | Responsive, animated, utility-first UI                           |
-| Config Management (Backup/Restore)            | ✅ Available  | Syntax highlighting, backup/restore                              |
-| Multilanguage UI (i18next, EN/HI)             | ✅ Available  | English & Hindi, Unicode correct                                 |
-| Clean Semantic Versioning                     | ✅ Available  | MSI-compatible version format (v0.1.6)                           |
-| GitHub Actions CI/CD                          | ✅ Available  | Automated builds with MSI & NSIS installers                      |
-| Project Structure Cleanup                     | ✅ Available  | Organized codebase with proper file locations                    |
-| Build Optimization                            | ✅ Available  | 288.9MB MSI, 147.7MB NSIS installers                            |
-| Crash & Bug Reporting via GitHub              | 🔄 In Progress| Report bugs/crashes via GitHub Issues                            |
-| Logs Viewer                                   | 🔄 In Progress| Real-time log viewing with filter/search                         |
-| System Tray Integration                       | ✅ Available  | Minimize to tray/quick actions                                   |
-| Auto-Update                                   | 🔄 In Progress| Via GitHub Releases                                              |
-| Apache HTTP Server                            | 🕓 Planned    | Portable Apache, vhost & HTTPS                                   |
-| Multiple PHP Versions                         | 🕓 Planned    | Download via in-app installer                                    |
-| One-Click App Installers                      | 🕓 Planned    | WordPress, Laravel, etc.                                         |
-| PHP Extensions Management                     | 🕓 Planned    | Enable/disable per version                                       |
-| Security Analyzer                             | 🕓 Planned    | Scan configs/code for issues                                     |
-| Mail Testing Tools                            | 🕓 Planned    | Mailhog, etc.                                                    |
-| Portable Mode                                 | 🕓 Planned    | All data in app folder                                           |
-| Database/User Management                      | 🕓 Planned    | Manage users, backup/restore, SSL                                |
-| Database Backup/Restore (One-Click)           | 🕓 Planned    | UI to export/import MySQL databases                              |
-| Quick Launch Tools                            | 🕓 Planned    | Terminal (PHP/MySQL CLI), copy connection string, etc.           |
-| Full App/Data Backup/Restore                  | 🕓 Planned    | Backup configs, databases, logs in one click                     |
-| Automatic Virtual Host Management             | 🕓 Planned    | Pretty URLs like `myapp.test`                                    |
-| HTTPS/SSL for Local Sites                     | 🕓 Planned    | One-click SSL for local domains and phpMyAdmin                   |
-| Project Templates/Cloning                     | 🕓 Planned    | Clone from Git or use templates for new projects                 |
-| Composer Integration                          | 🕓 Planned    | Global/per-project Composer support                              |
-| PHP INI & Apache Config Editors               | 🕓 Planned    | User-friendly config editing                                     |
-| PHP Error Display Toggle                      | 🕓 Planned    | Enable/disable display_errors from UI                            |
-| Service Status & Tray Notifications           | 🕓 Planned    | Tray notifications for service events                            |
-| Portable PHP CLI                              | 🕓 Planned    | Terminal with PHP version selector                               |
-| Bundled Tools (curl, git, node, npm, etc.)    | 🕓 Planned    | Optionally bundle common CLI tools                               |
-| Log Viewer Enhancements                       | 🕓 Planned    | Real-time, filterable, tabbed log viewer for all services/apps   |
-| Project Full Backup/Restore                   | 🕓 Planned    | Backup/restore www files, configs, databases                     |
+| Feature                                    | Status         | Description                                                    |
+| ------------------------------------------ | -------------- | -------------------------------------------------------------- |
+| MySQL Database                             | ✅ Available   | Embedded MySQL with GUI control                                |
+| phpMyAdmin Integration                     | ✅ Available   | Built-in database management                                   |
+| Modern Tailwind/shadcn/ui/Framer UI        | ✅ Available   | Responsive, animated, utility-first UI                         |
+| Config Management (Backup/Restore)         | ✅ Available   | Syntax highlighting, backup/restore                            |
+| Multilanguage UI (i18next, EN/HI)          | ✅ Available   | English & Hindi, Unicode correct                               |
+| Clean Semantic Versioning                  | ✅ Available   | MSI-compatible version format (v0.1.6)                         |
+| GitHub Actions CI/CD                       | ✅ Available   | Automated builds with MSI & NSIS installers                    |
+| Project Structure Cleanup                  | ✅ Available   | Organized codebase with proper file locations                  |
+| Build Optimization                         | ✅ Available   | 288.9MB MSI, 147.7MB NSIS installers                           |
+| Crash & Bug Reporting via GitHub           | 🔄 In Progress | Report bugs/crashes via GitHub Issues                          |
+| Logs Viewer                                | 🔄 In Progress | Real-time log viewing with filter/search                       |
+| System Tray Integration                    | ✅ Available   | Minimize to tray/quick actions                                 |
+| Auto-Update                                | 🔄 In Progress | Via GitHub Releases                                            |
+| Apache HTTP Server                         | 🕓 Planned     | Portable Apache, vhost & HTTPS                                 |
+| Multiple PHP Versions                      | 🕓 Planned     | Download via in-app installer                                  |
+| One-Click App Installers                   | 🕓 Planned     | WordPress, Laravel, etc.                                       |
+| PHP Extensions Management                  | 🕓 Planned     | Enable/disable per version                                     |
+| Security Analyzer                          | 🕓 Planned     | Scan configs/code for issues                                   |
+| Mail Testing Tools                         | 🕓 Planned     | Mailhog, etc.                                                  |
+| Portable Mode                              | 🕓 Planned     | All data in app folder                                         |
+| Database/User Management                   | 🕓 Planned     | Manage users, backup/restore, SSL                              |
+| Database Backup/Restore (One-Click)        | 🕓 Planned     | UI to export/import MySQL databases                            |
+| Quick Launch Tools                         | 🕓 Planned     | Terminal (PHP/MySQL CLI), copy connection string, etc.         |
+| Full App/Data Backup/Restore               | 🕓 Planned     | Backup configs, databases, logs in one click                   |
+| Automatic Virtual Host Management          | 🕓 Planned     | Pretty URLs like `myapp.test`                                  |
+| HTTPS/SSL for Local Sites                  | 🕓 Planned     | One-click SSL for local domains and phpMyAdmin                 |
+| Project Templates/Cloning                  | 🕓 Planned     | Clone from Git or use templates for new projects               |
+| Composer Integration                       | 🕓 Planned     | Global/per-project Composer support                            |
+| PHP INI & Apache Config Editors            | 🕓 Planned     | User-friendly config editing                                   |
+| PHP Error Display Toggle                   | 🕓 Planned     | Enable/disable display_errors from UI                          |
+| Service Status & Tray Notifications        | 🕓 Planned     | Tray notifications for service events                          |
+| Portable PHP CLI                           | 🕓 Planned     | Terminal with PHP version selector                             |
+| Bundled Tools (curl, git, node, npm, etc.) | 🕓 Planned     | Optionally bundle common CLI tools                             |
+| Log Viewer Enhancements                    | 🕓 Planned     | Real-time, filterable, tabbed log viewer for all services/apps |
+| Project Full Backup/Restore                | 🕓 Planned     | Backup/restore www files, configs, databases                   |
 
 **Legend:**  
 ✅ Available  🔄 In Progress  🕓 Planned
@@ -171,35 +173,36 @@ DevStackBox/
 **DevStackBox uses a combination of modern, desktop-inspired navigation patterns for clarity and usability:**
 
 - **Sidebar Navigation (Primary):**  
-  Use shadcn/ui's `NavigationMenu` or a custom sidebar for main sections (Dashboard, Projects, Services, Logs, Settings, About).  
-  - Supports icons, labels, section grouping, and collapsible "rail" mode.  
+  Use shadcn/ui's `NavigationMenu` or a custom sidebar for main sections (Dashboard, Projects, Services, Logs, Settings, About).
+  - Supports icons, labels, section grouping, and collapsible "rail" mode.
   - **Copilot prompt:**  
     _"Create a sidebar menu with shadcn/ui and Tailwind, supporting dark/light mode and collapsible icons."_
 
 - **Top Bar (Secondary):**  
-  Place global actions (theme switcher, language selector, user menu, updates) in a sticky top bar above or beside the sidebar.  
+  Place global actions (theme switcher, language selector, user menu, updates) in a sticky top bar above or beside the sidebar.
   - **Copilot prompt:**  
     _"Implement a top bar with theme and language switchers, using shadcn/ui and Tailwind."_
 
 - **Tabs (Sub-navigation):**  
-  Use shadcn/ui's `Tabs` for sub-sections within a page (e.g., "Overview | Logs | Settings" for a given service).  
+  Use shadcn/ui's `Tabs` for sub-sections within a page (e.g., "Overview | Logs | Settings" for a given service).
   - **Copilot prompt:**  
     _"Add tabs for logs and settings in a service detail view, using shadcn/ui Tabs."_
 
 - **Context Menus:**  
-  Use shadcn/ui's `ContextMenu` for right-click/“more” actions on project, database, or service items.  
+  Use shadcn/ui's `ContextMenu` for right-click/“more” actions on project, database, or service items.
   - **Copilot prompt:**  
     _"Add a context menu for each database row with edit/delete options using shadcn/ui."_
 
 - **Command Palette:**  
-  Add a command palette (Ctrl+P/Cmd+P) with shadcn/ui's `Command` for fast search, navigation, and command execution (power user feature).  
+  Add a command palette (Ctrl+P/Cmd+P) with shadcn/ui's `Command` for fast search, navigation, and command execution (power user feature).
   - **Copilot prompt:**  
     _"Create a command palette using shadcn/ui Command for quick actions and navigation."_
 
 - **Floating Action Buttons:**  
   For quick “add” actions (e.g., new project/database), use floating shadcn/ui `Button` with fixed positioning (optional, desktop only).
 
-**Guidelines:**  
+**Guidelines:**
+
 - All navigation must be accessible (keyboard, screen readers).
 - Sidebar and command palette are primary navigation for all major DevStackBox features.
 - Always use Tailwind and shadcn/ui components for styling and transitions (no custom CSS unless needed).
@@ -209,6 +212,7 @@ DevStackBox/
 ## � 12. Recent Achievements & Lessons Learned (v0.1.6)
 
 **✅ Major Fixes Completed:**
+
 - **MSI Compatibility**: Fixed version format from `0.1.0-alpha.6` to `0.1.6` for MSI bundler
 - **File Structure**: Resolved accidental deletion of critical files (`globals.css`, `main.tsx`, `index.html`)
 - **GitHub Actions**: Fixed emoji encoding issues causing PowerShell parsing errors
@@ -216,6 +220,7 @@ DevStackBox/
 - **Build System**: Successfully generating both MSI (288.9MB) and NSIS (147.7MB) installers
 
 **🎓 Key Lessons:**
+
 - Always use clean semantic versioning for MSI compatibility (no hyphens, no text)
 - Avoid emoji characters in PowerShell scripts for GitHub Actions
 - Verify file locations before deletion - check if files are truly duplicates
@@ -223,6 +228,7 @@ DevStackBox/
 - Test build output to ensure CSS is being compiled correctly
 
 **🔧 Technical Improvements:**
+
 - GitHub Actions workflow is now emoji-free and stable
 - Proper project structure following Vite + React + Tauri best practices
 - All source files correctly organized with proper import paths
@@ -251,3 +257,5 @@ DevStackBox/
 **Let’s build the most modern, beautiful, and lightweight PHP dev stack together!**
 
 <sup>Author: Nomad Programmer • Email: shiv@srapsware.com • [Project on GitHub](https://github.com/ProgrammerNomad/DevStackBox)</sup>
+
+and never use any emojis anywhere and don't use any such character that does not exist on the keyboard. also never use any custom css and always use tailwind and shadcn/ui for styling. also all ui must support dark and light mode.

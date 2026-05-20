@@ -1,0 +1,51 @@
+# ADR 004 — Use Polling for Service Status (Not Event Streaming)
+
+**Status:** Accepted  
+**Date:** 2024
+
+---
+
+## Decision
+
+Service status (MySQL running/stopped, Apache running/stopped) is checked by polling from the frontend every 5 seconds. Not by event streaming or Tauri Channel.
+
+---
+
+## Context
+
+The frontend needs to know if services are running so it can show accurate status. Services can be started/stopped from the UI, but they can also crash unexpectedly. The UI must reflect real state.
+
+---
+
+## Options Considered
+
+| Option                        | Complexity | Reliability                 |
+| ----------------------------- | ---------- | --------------------------- |
+| **Frontend polling (5s)**     | Low        | Good enough for status      |
+| Tauri Event emit from backend | Medium     | Real-time but complex setup |
+| Tauri Channel streaming       | High       | Best for log streams        |
+| WebSocket                     | N/A        | Unnecessary for local IPC   |
+
+---
+
+## Decision Rationale
+
+1. **Simplicity**: Polling is one `setInterval` + one `safeInvoke`. Every developer understands it immediately.
+2. **5-second lag is acceptable**: Showing "stopped" 5 seconds after a crash is fine for a local dev tool. This is not a production monitoring system.
+3. **OS process check is the truth**: `is_process_running()` checks the OS process table directly. This is always accurate regardless of what internal state says.
+4. **Tauri Channels are overkill for status**: Channels shine for log streaming (lots of data, continuous). For a boolean "is it running?" check, polling is appropriate.
+
+---
+
+## Consequences
+
+- `service-manager.tsx` is the ONLY place that polls service status. No other component may create its own polling loop.
+- The polling interval is 5 seconds. Do NOT make it faster (wastes CPU) or slower (UX feels broken).
+- Service crashes are detected within 5 seconds of happening.
+- Tauri Channels should be used for log streaming when that feature is implemented (see `docs/ROADMAP.md` Phase 3.2). This ADR does not prevent using channels for log streaming — just for service status.
+
+---
+
+## When to Reconsider
+
+If crash detection speed becomes important (e.g., watchdog / auto-restart feature), consider Tauri Events for crash notification from Rust to frontend. The polling would remain for normal status display.

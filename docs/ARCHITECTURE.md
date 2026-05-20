@@ -8,15 +8,15 @@
 
 ## Tech Stack at a Glance
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| Frontend UI | React 18 + Vite | All visible UI |
-| Styling | Tailwind CSS + shadcn/ui | All styles - NO custom CSS |
-| Animation | Framer Motion | All transitions/animations |
-| i18n | i18next | EN and HI translations |
-| Backend | Tauri 2 (Rust) | Process management, file I/O, native OS ops |
-| IPC Bridge | Tauri Commands + Events | Frontend <-> Backend communication |
-| Service binaries | mysqld.exe, httpd.exe, php.exe | The actual servers |
+| Layer            | Technology                               | Purpose                                          |
+| ---------------- | ---------------------------------------- | ------------------------------------------------ |
+| Frontend UI      | React 18 + Vite                          | All visible UI                                   |
+| Styling          | Tailwind CSS + shadcn/ui                 | All styles - NO custom CSS                       |
+| Animation        | Framer Motion                            | All transitions/animations                       |
+| i18n             | i18next                                  | EN and HI translations                           |
+| Backend          | Tauri 2 (Rust)                           | Process management, file I/O, native OS ops      |
+| IPC Bridge       | Tauri Commands + Events                  | Frontend <-> Backend communication               |
+| Service binaries | httpd.exe, mysqld.exe (MariaDB), php.exe | The actual servers (always bundled in installer) |
 
 ---
 
@@ -90,7 +90,7 @@ DevStackBox/
 |   |-- wix/                    # MSI installer customization
 |
 |-- config/                     # Service config files (runtime, not source)
-|   |-- my.cnf                  # MySQL config
+|   |-- my.cnf                  # MariaDB config (file name is my.cnf by convention)
 |   |-- httpd.conf              # Apache config
 |   |-- phpmyadmin.conf         # phpMyAdmin Apache config
 |
@@ -98,7 +98,7 @@ DevStackBox/
 |   |-- en.json                 # English translations
 |   |-- hi.json                 # Hindi translations
 |
-|-- mysql/                      # MySQL binaries + data (bundled with app)
+|-- mysql/                      # MariaDB binaries + data (bundled with app; folder named mysql/ by convention)
 |-- apache/                     # Apache binaries (bundled with app)
 |-- php/8.2/                    # PHP 8.2 binaries (bundled with app)
 |-- phpmyadmin/                 # phpMyAdmin PHP files (bundled with app)
@@ -107,6 +107,116 @@ DevStackBox/
 |-- config-backups/             # Automatic config backups
 |-- docs/                       # THIS FOLDER - All project documentation
 ```
+
+---
+
+## UI Layout
+
+DevStackBox uses a fixed two-panel desktop app layout. Do not redesign this.
+
+```
+┌───────────────────┬──────────────────────────────────────┐
+│  Top Bar          │  Top Bar (continued)                 │
+│  DevStackBox      │  [ Search / Cmd Palette ]  [Theme]   │
+├───────────────────┼──────────────────────────────────────┤
+│                   │                                      │
+│  Sidebar          │  Main Content Area                   │
+│  (220-260px)      │                                      │
+│                   │  Current Page:                       │
+│  Dashboard        │  Service cards / Logs /              │
+│  Services         │  Config editor / PHP versions        │
+│  Logs             │                                      │
+│  Configurations   │  Clean, spacious, card-based.        │
+│  PHP Versions     │  NO crowded tables.                  │
+│  Settings         │                                      │
+│                   │                                      │
+└───────────────────┴──────────────────────────────────────┘
+```
+
+**Top Bar must contain:**
+
+- App title
+- Search / Command Palette trigger
+- Theme toggle (dark/light)
+- Running services indicator
+- Tray minimize button
+
+**Sidebar contains ONLY these 6 items:**
+`Dashboard` / `Services` / `Logs` / `Configurations` / `PHP Versions` / `Settings`
+
+Do not overload the sidebar with sub-items or collapsible trees.
+
+**Dashboard page structure:**
+
+```
+Dashboard
+├── Quick Actions (Start All / Stop All / Restart Apache)
+├── Service Status Cards (Apache / PHP / MariaDB)
+├── Current PHP Version
+├── Ports Overview
+├── Recent Logs (last 10 lines)
+└── Project Shortcuts (www/ folder links)
+```
+
+**Service card structure (each card):**
+
+```
+[ Apache ]       Running ●
+Port: 80   PID: 1234
+[ Start ]  [ Stop ]  [ Logs ]  [ Config ]
+```
+
+**Progressive Disclosure Rule:**  
+Default view shows: start / stop / running status only.  
+Expanded view shows: logs, config, ports, PID, arguments.  
+This keeps the UI approachable for beginners, powerful for advanced users.
+
+**Design Philosophy:**  
+DevStackBox should feel like a native desktop utility (like Docker Desktop or GitHub Desktop), NOT like a web admin panel, analytics dashboard, or cPanel.
+
+---
+
+## App/Data Directory Separation
+
+This is critical for reliable auto-updates. Violating this causes update-related data loss.
+
+### Two separate roots — NEVER mix them:
+
+**App Root (replaceable during updates):**
+
+```
+C:\Program Files\DevStackBox\     (or C:\DevStackBox\ for portable)
+  DevStackBox.exe
+  apache/        <- Apache binaries
+  php/           <- PHP binaries
+  phpmyadmin/    <- phpMyAdmin PHP files
+  resources/
+```
+
+**User Data Root (NEVER touched during updates):**
+
+```
+C:\dsb-data\                      (or %APPDATA%\DevStackBox\ for installed mode)
+  www/           <- User's PHP projects
+  mysql-data/    <- MariaDB database files
+  logs/          <- All service logs
+  config/        <- Runtime configs (php.ini, httpd.conf, my.cnf)
+  config-backups/
+  certs/
+  backups/
+```
+
+**Rule:** MariaDB database files (`mysql/data/`) must NEVER live inside the app folder. A database inside the app folder will be destroyed or corrupted on update.
+
+**Current state (v0.1.6):** This separation does not exist yet. Everything is in one directory. Fixing this is Phase 1.8 (see ROADMAP.md).
+
+**Config versioning:** All config files should contain a version field:
+
+```json
+{ "configVersion": 1 }
+```
+
+This allows migration scripts to transform old config formats when the app updates.
 
 ---
 
@@ -123,6 +233,7 @@ React Component
 ```
 
 **Rules:**
+
 - Always use `safeInvoke` (not raw `invoke`) so it works in browser dev mode too
 - All command names live in `src/lib/constants.ts:TAURI_COMMANDS` - never hardcode strings
 - All commands are in `src-tauri/src/lib.rs` - do NOT use `service_manager.rs`
@@ -147,7 +258,7 @@ Currently this pattern is NOT yet used - all status is fetched by polling from t
 
 ## Service Path Resolution
 
-This is a critical and error-prone area. The function `get_installation_path()` in `lib.rs` determines where MySQL, Apache, and PHP binaries live. It checks in this order:
+This is a critical and error-prone area. The function `get_installation_path()` in `lib.rs` determines where MariaDB, Apache, and PHP binaries live. It checks in this order:
 
 1. `current_dir` if it contains `apache/bin/httpd.exe`
 2. `exe_parent` (installed app location)
@@ -187,6 +298,7 @@ pnpm tauri:build
 ```
 
 Resources bundled into the installer are declared in `tauri.conf.json`:
+
 ```json
 "resources": ["../mysql/**/*", "../php/**/*", "../phpmyadmin/**/*", "../www/**/*", "../config/**/*"]
 ```
@@ -206,11 +318,15 @@ Resources bundled into the installer are declared in `tauri.conf.json`:
 
 ## Key Design Decisions
 
-| Decision | Reason |
-|---------|--------|
-| All Tauri commands in one `lib.rs` | Simpler to maintain; `service_manager.rs` is legacy dead code |
-| `safeInvoke` wrapper | Allows frontend to run in browser during development |
-| No custom CSS | Tailwind + shadcn/ui covers all needs; custom CSS causes theming bugs |
-| Polling for service status | Simpler than event streams; events are planned for future |
-| `config/` dir for runtime configs | Keeps source and runtime config separate |
-| `config-backups/` auto-backup | Auto-backup before every config save prevents data loss |
+| Decision                                | Reason                                                                          |
+| --------------------------------------- | ------------------------------------------------------------------------------- |
+| All Tauri commands in one `lib.rs`      | Simpler to maintain; `service_manager.rs` is legacy dead code                   |
+| `safeInvoke` wrapper                    | Allows frontend to run in browser during development                            |
+| No custom CSS                           | Tailwind + shadcn/ui covers all needs; custom CSS causes theming bugs           |
+| Polling for service status              | Simpler than event streams; events are planned for future                       |
+| `config/` dir for runtime configs       | Keeps source and runtime config separate                                        |
+| `config-backups/` auto-backup           | Auto-backup before every config save prevents data loss                         |
+| Two-panel layout (sidebar + main)       | Standard desktop utility pattern; do not redesign                               |
+| Progressive disclosure in service UI    | Beginners see start/stop; experts expand for logs, config, PID                  |
+| App/data directory separation (planned) | Required for safe auto-updates; see docs/UPDATES_AND_MIGRATIONS.md              |
+| Installed mode only (no portable in v1) | Portable mode cannot support auto-updates reliably; adds architectural conflict |

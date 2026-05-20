@@ -1,0 +1,203 @@
+# DevStackBox - Testing Strategy
+
+**How to test DevStackBox reliably without a formal test framework.**
+
+---
+
+## Current State
+
+DevStackBox has no automated test suite. All testing is currently manual. This document defines what to test and how — and sets the roadmap for adding automated tests.
+
+---
+
+## Test Categories
+
+### 1. Frontend Component Testing (Planned)
+
+**Goal:** Verify UI components render correctly and respond to user actions.
+
+**Recommended tool:** Vitest + React Testing Library
+
+**Priority components to test:**
+
+- `ServiceCard` - renders correct status (running/stopped/unknown)
+- `ConfigEditor` - loads config text, marks dirty on change, resets on cancel
+- `LogViewer` - renders log lines, filters by search term
+- `PHPVersionSelector` - lists versions, shows download state
+
+**Setup (when ready):**
+
+```bash
+pnpm add -D vitest @testing-library/react @testing-library/user-event jsdom
+```
+
+Add to `vite.config.ts`:
+
+```ts
+test: {
+  environment: 'jsdom',
+  globals: true,
+  setupFiles: './src/test-setup.ts'
+}
+```
+
+---
+
+### 2. Rust Unit Tests (Planned)
+
+**Goal:** Verify path resolution, config generation, and process utilities.
+
+**Priority functions to test:**
+
+- `get_installation_path()` - returns a valid path
+- `is_process_running()` - returns true for running processes, false otherwise
+- `create_default_php_ini()` / `create_default_apache_config()` - generates valid text
+- `validate_service_name()` - allows only `mysql`, `apache`, `php`
+
+**Example test location:** `src-tauri/src/utils/paths.rs` (when module split is done)
+
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_installation_path_is_not_empty() {
+        let path = get_installation_path();
+        assert!(!path.as_os_str().is_empty());
+    }
+}
+```
+
+Run with:
+
+```bash
+cd src-tauri
+cargo test
+```
+
+---
+
+### 3. Manual Integration Tests (Required Before Every Release)
+
+Run this checklist on a **fresh Windows 11 machine** before publishing any release.
+
+#### Install Test
+
+- [ ] MSI installs to default path without errors
+- [ ] App appears in Start Menu
+- [ ] App launches without being blocked by SmartScreen or Defender
+- [ ] App opens to Dashboard
+
+#### MySQL Service
+
+- [ ] Start MySQL: status changes to Running
+- [ ] MySQL port 3306 is listening after start
+- [ ] phpMyAdmin opens in default browser
+- [ ] Stop MySQL: status changes to Stopped
+- [ ] Port 3306 stops listening after stop
+- [ ] MySQL re-starts after stop
+
+#### Apache Service
+
+- [ ] Start Apache: status changes to Running
+- [ ] `http://localhost` responds in browser
+- [ ] Stop Apache: status changes to Stopped
+- [ ] `http://localhost` returns connection refused after stop
+- [ ] Apache re-starts after stop
+
+#### PHP
+
+- [ ] PHP version shows correctly in UI
+- [ ] `php --version` is callable from the PHP terminal button
+
+#### Config Editor
+
+- [ ] Opens `php.ini` with content visible
+- [ ] Edit content: "Save" button becomes enabled
+- [ ] Save: file changes are written to disk
+- [ ] "Backup" creates a file in `config-backups/`
+- [ ] "Restore" loads a backup
+
+#### Localization
+
+- [ ] Switch to Hindi: all labels update
+- [ ] Switch back to English: all labels update
+- [ ] No untranslated keys visible (no raw `key.path` strings in UI)
+
+#### Theme
+
+- [ ] Dark mode: all pages are readable
+- [ ] Light mode: all pages are readable
+- [ ] Theme persists after app restart
+
+#### Error Handling
+
+- [ ] Start Apache when port 80 is already in use: error message shown (not a crash)
+- [ ] Start MySQL when already running: graceful message
+- [ ] Open config for a service with no binary: clear error, not a crash
+
+---
+
+### 4. Installer Tests (Required Before Release)
+
+Test both installer formats on a clean machine:
+
+| Scenario                                 | MSI | NSIS |
+| ---------------------------------------- | --- | ---- |
+| First install (no previous version)      |     |      |
+| Upgrade over existing installation       |     |      |
+| Uninstall removes app directory          |     |      |
+| Uninstall removes Start Menu entry       |     |      |
+| Registry entries cleaned after uninstall |     |      |
+
+---
+
+### 5. Path Resolution Tests
+
+This is the most common source of bugs. Test on:
+
+| Environment                | Path                           | Expected                  |
+| -------------------------- | ------------------------------ | ------------------------- |
+| MSI install (default path) | `C:\Program Files\DevStackBox` | All binaries found        |
+| MSI install (custom path)  | `C:\dsb`                       | All binaries found        |
+| Dev mode                   | `C:\xampp\htdocs\DevStackBox`  | All binaries found        |
+| Portable (USB drive)       | `E:\DevStackBox`               | Should degrade gracefully |
+
+Use the `DebugPanel` (visible in dev builds only) to see what path was resolved.
+
+---
+
+### 6. Regression Tests
+
+After every bug fix, add the scenario to the manual test checklist so it never regresses.
+
+Current regressions to watch:
+
+- Version format: never use hyphens/letters in version strings
+- Emoji in `.yml` files: re-check `.github/workflows/` after any GitHub Actions edit
+- `globals.css` and `main.tsx` must exist: verify before every build
+- `SERVICE_STATUS` removed: never add a global state HashMap for service state
+
+---
+
+## Windows Version Compatibility
+
+Test on these OS versions before each major release:
+
+| OS                  | Required      |
+| ------------------- | ------------- |
+| Windows 11 (latest) | Must pass     |
+| Windows 10 22H2     | Should pass   |
+| Windows 10 older    | Best effort   |
+| Windows Server      | Not supported |
+
+---
+
+## Known Testing Gaps (To Fix Later)
+
+1. No automated tests exist at all - all manual
+2. No CI test step after build - GitHub Actions only builds, not tests
+3. No portable mode tests - app behavior when run from USB is unknown
+4. No memory/resource leak tests - long-running sessions untested
+5. No concurrent operation tests - what happens if user starts MySQL twice simultaneously

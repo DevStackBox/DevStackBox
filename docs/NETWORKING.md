@@ -1,0 +1,229 @@
+# DevStackBox - Networking Reference
+
+**Ports, conflicts, firewall behavior, and localhost configuration.**
+
+---
+
+## Default Ports
+
+| Service     | Default Port                       | Config File         | Config Key    |
+| ----------- | ---------------------------------- | ------------------- | ------------- |
+| Apache HTTP | 80                                 | `config/httpd.conf` | `Listen 80`   |
+| MySQL       | 3306                               | `config/my.cnf`     | `port = 3306` |
+| phpMyAdmin  | (served through Apache on port 80) | —                   | —             |
+
+---
+
+## Binding Behavior
+
+By default, all services bind to `127.0.0.1` (loopback) only.
+
+This means:
+
+- Services are accessible from your machine only
+- Services are NOT exposed to your local network or internet
+- This is intentional for a local dev environment
+
+**Do NOT change bind addresses unless you know the security implications.** See `docs/SECURITY.md`.
+
+---
+
+## Common Port Conflicts
+
+### Port 80 Already in Use
+
+Port 80 is blocked when another service is running on it.
+
+**Typical culprits on Windows:**
+
+| Service                             | How to Check                    | How to Stop                   |
+| ----------------------------------- | ------------------------------- | ----------------------------- | --------------------- |
+| IIS (Internet Information Services) | `netstat -ano                   | findstr :80`                  | Services → IIS → Stop |
+| World Wide Web Publishing Service   | Task Manager → Services         | `net stop W3SVC`              |
+| Skype (older versions)              | Skype Settings → Advanced       | Uncheck "use port 80 and 443" |
+| Windows 10/11 Device Portal         | Check Settings → Developer Mode | Disable Device Portal         |
+| Another XAMPP / WAMP                | Check system tray               | Stop the other stack          |
+
+**DevStackBox error message when port 80 is busy:** `Port 80 is not available. Another service may be using it.`
+
+**Fix:**
+
+1. Find what is using port 80: `netstat -ano | findstr :80`
+2. Note the PID in the last column
+3. Find the process: `tasklist | findstr <PID>`
+4. Stop that service
+5. Try starting Apache again
+
+Or change Apache's port in `config/httpd.conf`:
+
+```
+Listen 8080
+```
+
+Note: changing the port means phpMyAdmin URL becomes `http://localhost:8080/phpmyadmin/`
+
+---
+
+### Port 3306 Already in Use
+
+**Typical culprits:**
+
+| Service                          | How to Stop                             |
+| -------------------------------- | --------------------------------------- |
+| Another MySQL / MariaDB instance | Stop it via Services or its own manager |
+| Another XAMPP                    | Stop XAMPP MySQL                        |
+| Docker MySQL container           | `docker stop <container>`               |
+
+**Fix:**
+
+```powershell
+netstat -ano | findstr :3306
+```
+
+Note PID, then:
+
+```powershell
+tasklist | findstr <PID>
+```
+
+Or change MySQL's port in `config/my.cnf`:
+
+```ini
+[mysqld]
+port = 3307
+```
+
+Note: changing the port means you must connect phpMyAdmin to the new port.
+
+---
+
+## Firewall Behavior
+
+Windows Defender Firewall may prompt to allow Apache and MySQL on first launch.
+
+**Expected behavior:**
+
+- First time Apache starts: Windows Firewall dialog asks "Allow httpd.exe to communicate on network?"
+- Click "Allow access" — only for Private networks, NOT public networks
+- Same for MySQL's `mysqld.exe`
+
+If you accidentally deny the firewall prompt:
+
+1. Open Windows Defender Firewall → Advanced Settings
+2. Find the blocked rule for `httpd.exe` or `mysqld.exe`
+3. Enable it
+
+---
+
+## IIS Conflict (Common on Developer Machines)
+
+IIS (Internet Information Services) is common on Windows developer machines and directly conflicts with Apache on port 80.
+
+**Disable IIS completely:**
+
+```powershell
+# Run as Administrator
+Disable-WindowsOptionalFeature -Online -FeatureName IIS-WebServer
+```
+
+**Or just stop IIS temporarily:**
+
+```powershell
+net stop W3SVC
+net stop WAS
+```
+
+**Re-enable IIS later:**
+
+```powershell
+net start W3SVC
+```
+
+---
+
+## Accessing phpMyAdmin
+
+URL: `http://localhost/phpmyadmin/`
+
+Default credentials:
+
+- Username: `root`
+- Password: (empty)
+
+If phpMyAdmin shows "Cannot connect to MySQL server":
+
+1. Check MySQL is running (green status in DevStackBox)
+2. Check `phpmyadmin/config.inc.php` — `$cfg['Servers'][$i]['host']` should be `127.0.0.1`
+3. Check MySQL port is 3306 (default)
+
+---
+
+## Localhost DNS Behavior
+
+`localhost` resolves to `127.0.0.1` via the Windows `hosts` file:
+
+```
+127.0.0.1   localhost
+```
+
+This file is at: `C:\Windows\System32\drivers\etc\hosts`
+
+DevStackBox does NOT modify this file unless you use the virtual hosts feature (Phase 3). The base `localhost` always works via Windows default.
+
+---
+
+## Virtual Hosts (Phase 3 — Not Yet Available)
+
+When virtual hosts are added, DevStackBox will:
+
+1. Add entries to the Windows `hosts` file:
+
+   ```
+   127.0.0.1   myapp.local
+   127.0.0.1   shop.local
+   ```
+
+2. Add vhost blocks to Apache config (`extra/httpd-vhosts.conf`):
+
+   ```apache
+   <VirtualHost *:80>
+       ServerName myapp.local
+       DocumentRoot "C:/dsb/www/myapp"
+   </VirtualHost>
+   ```
+
+3. Require UAC elevation for the `hosts` file edit.
+
+**Current status:** Not implemented. See `docs/ROADMAP.md` Phase 3.3.
+
+---
+
+## HTTPS / SSL (Phase 5 — Not Yet Available)
+
+Local HTTPS for `localhost` and virtual hosts is planned for Phase 5. The approach will be:
+
+1. Generate a local root CA with `mkcert` or similar
+2. Trust it in Windows Certificate Store (requires elevation)
+3. Issue certificates for `localhost` and configured virtual hosts
+
+**Current status:** Not implemented. See `docs/ROADMAP.md` Phase 5.1.
+
+---
+
+## Network Diagnostics
+
+Quick commands to check port state from PowerShell:
+
+```powershell
+# Check what is listening on port 80
+netstat -ano | findstr ":80 "
+
+# Check what is listening on port 3306
+netstat -ano | findstr ":3306 "
+
+# List all listening TCP ports
+netstat -an | findstr LISTENING
+
+# Find which process owns a PID
+tasklist /FI "PID eq <PID>"
+```

@@ -1,0 +1,72 @@
+# ADR 005 — PHP-Only Scope for v1
+
+**Status:** Accepted  
+**Date:** 2025
+
+---
+
+## Decision
+
+DevStackBox v1.0 supports only the PHP stack: Apache, PHP, MySQL, phpMyAdmin. No Node.js, Python, Redis, PostgreSQL, Docker, or Nginx.
+
+---
+
+## Context
+
+DevStackBox is a local development environment. The question arose: should it be a universal developer tool (like Docker Desktop) or a focused PHP stack (like Laragon)?
+
+---
+
+## Options Considered
+
+| Option         | Scope                             |
+| -------------- | --------------------------------- |
+| **PHP-only**   | Apache + PHP + MySQL + phpMyAdmin |
+| Multi-language | + Node.js runtimes                |
+| Full stack     | + Redis, PostgreSQL, Python       |
+| Universal      | + Docker, Nginx, anything         |
+
+---
+
+## Decision Rationale
+
+1. **Focus**: The existing competition (XAMPP, WAMP, Laragon) is strong but dated. DevStackBox can win on UX and modernness for PHP developers. Spreading to other stacks dilutes this positioning.
+2. **Complexity**: Each added runtime multiplies the testing surface, installer size, and maintenance burden. Node version management alone (nvm-windows, fnm, Volta) is a solved problem with better tools.
+3. **Target user**: WordPress, Laravel, Symfony, and CodeIgniter developers are a large, underserved market for modern local dev tooling.
+4. **Architecture impact**: Supporting multiple runtimes requires a plugin architecture from the start. Building that before the core is solid is premature.
+5. **Momentum**: A finished, polished PHP stack ships faster and builds user trust faster than an unfinished multi-runtime platform.
+
+---
+
+## Consequences
+
+- No Node.js, Python, PostgreSQL, Redis, Docker, or Nginx in v1
+- All backend commands, installer size, and UI are optimized for PHP development
+- MariaDB is the project's decided database (MySQL-compatible, lighter, cleaner redistribution license)
+- A plugin/extension system for additional stacks can be designed after v1.0 ships
+- The product positioning is: "The modern PHP local development stack for Windows"
+
+---
+
+## What This Means for Architecture
+
+Even though scope is PHP-only, the backend module structure should be modular:
+
+```
+commands/
+  mysql.rs
+  apache.rs
+  php.rs
+```
+
+This makes a future extension system possible without rewriting the core. Do not put everything in one file just because the scope is narrow.
+
+---
+
+## When to Reconsider
+
+After v1.0 ships with a stable user base, evaluate:
+
+- Most requested "other stack" from user issues
+- Whether a plugin/extension architecture makes sense
+- Start with the most-requested option only (likely Node.js for Laravel mix/Vite compatibility)

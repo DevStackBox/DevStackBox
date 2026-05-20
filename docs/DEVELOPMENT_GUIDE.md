@@ -1,0 +1,391 @@
+# DevStackBox - Development Guide
+
+**How to run, build, debug, and extend DevStackBox without breaking things.**  
+Read this before writing any new code.
+
+---
+
+## 1. Prerequisites
+
+| Tool      | Version | Install                    |
+| --------- | ------- | -------------------------- |
+| Node.js   | 18+     | https://nodejs.org/        |
+| pnpm      | latest  | `npm install -g pnpm`      |
+| Rust      | stable  | https://rustup.rs/         |
+| Tauri CLI | 2.x     | bundled in devDependencies |
+| Git       | any     | https://git-scm.com/       |
+
+Verify your setup:
+
+```bash
+node --version   # 18+
+pnpm --version
+rustc --version
+cargo --version
+```
+
+---
+
+## 2. First-Time Setup
+
+```bash
+git clone https://github.com/ProgrammerNomad/DevStackBox.git
+cd DevStackBox
+pnpm install
+```
+
+The service binaries (MySQL, Apache, PHP) must be present in their directories:
+
+- `mysql/bin/mysqld.exe`
+- `apache/bin/httpd.exe`
+- `php/8.2/php.exe`
+
+These are NOT committed to git (too large). Either:
+
+- Copy them from a working XAMPP installation
+- Run `scripts/prepare-binaries.ps1`
+
+---
+
+## 3. Running in Development
+
+```bash
+pnpm tauri dev
+# or
+npm run tauri:dev
+```
+
+This starts:
+
+1. Vite dev server on `http://localhost:1420`
+2. Tauri shell with the Rust backend
+
+Hot reload works for frontend changes. Rust changes require a full rebuild (happens automatically).
+
+**Browser-only mode (no Tauri):**
+
+```bash
+pnpm dev
+```
+
+Opens just the frontend in a browser. All Tauri commands return null (safeInvoke handles this). Useful for fast UI development.
+
+---
+
+## 4. Building for Production
+
+```bash
+pnpm tauri:build
+# or
+npm run tauri:build
+```
+
+Produces:
+
+- `src-tauri/target/release/bundle/msi/DevStackBox_0.1.6_x64_en-US.msi`
+- `src-tauri/target/release/bundle/nsis/DevStackBox_0.1.6_x64-setup.exe`
+
+**Pre-build check:**
+
+- Version must be clean semver in ALL THREE places: `package.json`, `src-tauri/Cargo.toml`, `src-tauri/tauri.conf.json`
+- No emoji in GitHub Actions `.yml` files (causes PowerShell encoding errors)
+
+---
+
+## 5. UI Design Principles
+
+Read this before designing or modifying any UI component.
+
+### Design Philosophy
+
+DevStackBox must feel like a **native desktop utility** — like Docker Desktop, GitHub Desktop, or Warp.  
+It must NOT look like: a web admin panel, a cPanel clone, analytics dashboard, or enterprise CMS.
+
+This mindset changes everything. When in doubt, ask: "does this look like a desktop app or a website?"
+
+### Progressive Disclosure
+
+This is the single most important UI rule:
+
+**Default (beginner) view:** Start, Stop, Running status only.  
+**Expanded (advanced) view:** Logs, config, port, PID, process arguments.
+
+Do NOT show everything at once. Overloaded UIs drive users away.
+
+### Layout Rules (do not change these)
+
+- Two-panel layout: fixed sidebar (220-260px) + main content area
+- Top bar: app title, search/command palette, theme toggle, running status, tray button
+- Sidebar: EXACTLY 6 items — Dashboard, Services, Logs, Configurations, PHP Versions, Settings
+- Main area: card-based, spacious, clean — no dense tables, no charts
+
+See ARCHITECTURE.md for the full layout diagram.
+
+### Service Card Pattern
+
+Each service card follows this exact structure:
+
+```
+[ Apache ]          Running ●
+Port: 80   PID: 1234
+[ Start ]  [ Stop ]  [ Logs ]  [ Config ]
+```
+
+Colors: green = running, red = stopped, yellow = warning/starting.
+
+### What NOT to Do
+
+- Do NOT add nested sidebar items or collapsible sidebar trees
+- Do NOT put logs, configs, services, and stats all on one screen at once
+- Do NOT use rainbow colors, gradients, neon accents, or gaming aesthetics
+- Do NOT use mobile-style UI patterns (bottom nav, full-screen modals for simple actions)
+- Do NOT add charts or analytics — this is a utility, not a dashboard
+- Do NOT design for web browsers — design for a desktop window
+
+### Command Palette
+
+The command palette (`Ctrl+P`, component: `command-palette.tsx`) is a first-class feature.  
+Add any new quick action to the command palette. Example entries:
+
+```
+> Start Apache
+> Stop MySQL
+> Open php.ini
+> Switch PHP 8.3
+> Open www/ folder
+```
+
+---
+
+## 6. Project Coding Rules
+
+### Frontend (React/TypeScript)
+
+**Styling:**
+
+- Tailwind CSS classes ONLY
+- shadcn/ui components for all UI elements
+- Framer Motion for all animations
+- NO custom CSS files (except `globals.css` which has only Tailwind base imports)
+- Dark/light mode via Tailwind `dark:` prefix or shadcn/ui components
+
+**State:**
+
+- Local `useState` for component state
+- No global state manager (no Redux, no Zustand) unless it becomes necessary
+- Pass callbacks down via props for parent-child communication
+
+**Tauri calls:**
+
+- Always use `safeInvoke()` from `src/lib/tauri.ts`
+- Always use command name from `TAURI_COMMANDS` in `src/lib/constants.ts`
+- Never hardcode command name strings in components
+
+**Text / i18n:**
+
+- All user-visible text uses `t('key')` from `useTranslation()`
+- Add EN key to `locales/en.json` and HI key to `locales/hi.json` at the same time
+
+**Types:**
+
+- Shared types live in `src/types/services.ts` ONLY
+- Do not duplicate type definitions across files
+
+### Backend (Rust)
+
+**Commands:**
+
+- All commands go in `src-tauri/src/lib.rs`
+- Do NOT add code to `service_manager.rs` (it is dead code, see KNOWN_ISSUES.md)
+- Commands must return `Result<T, String>`
+- Long-running operations must be `async`
+- Add every new command to `invoke_handler` in `run()` at the bottom of `lib.rs`
+
+**Paths:**
+
+- Never hardcode absolute paths
+- Use `get_installation_path()` to get the base path
+- Prefer `base_path.join("subdir").join("file")` over string concatenation
+
+**Errors:**
+
+- Return descriptive `Err(format!("..."))` strings - they show to the user
+- Do not `unwrap()` or `expect()` in production code paths
+
+---
+
+## 7. Adding a New Page
+
+1. Create `src/pages/my-page.tsx`:
+
+   ```tsx
+   import { useTranslation } from "react-i18next";
+   import { motion } from "framer-motion";
+
+   export function MyPage() {
+     const { t } = useTranslation();
+     return (
+       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+         <h1>{t("myPage.title")}</h1>
+       </motion.div>
+     );
+   }
+   ```
+
+2. Export from `src/pages/index.ts`:
+
+   ```ts
+   export { MyPage } from "./my-page";
+   ```
+
+3. Add to sidebar in `src/components/sidebar.tsx` (navItems array).
+
+4. Add to router in `src/App.tsx` (the `renderPage()` function or the page switch).
+
+5. Add translation keys to `locales/en.json` and `locales/hi.json`.
+
+6. Update `docs/COMPONENTS.md` with the new page.
+
+---
+
+## 8. Adding a New Tauri Command
+
+1. Add the Rust function in `src-tauri/src/lib.rs` (NOT in service_manager.rs):
+
+   ```rust
+   #[tauri::command]
+   async fn my_command(service: String) -> Result<String, String> {
+       let base_path = get_installation_path();
+       // ... your logic ...
+       Ok("done".to_string())
+   }
+   ```
+
+2. Register it in the `invoke_handler` inside `run()` at the bottom of `lib.rs`.
+
+3. Add the constant to `src/lib/constants.ts`.
+
+4. Call from frontend with `safeInvoke`.
+
+5. Update `docs/TAURI_COMMANDS.md`.
+
+---
+
+## 9. Adding a New shadcn/ui Component
+
+```bash
+npx shadcn add <component-name>
+```
+
+Example:
+
+```bash
+npx shadcn add tabs
+npx shadcn add select
+npx shadcn add alert
+```
+
+This generates the component in `src/components/ui/`. Do NOT manually edit these files. Document it in `docs/COMPONENTS.md`.
+
+---
+
+## 10. Adding Translations
+
+Open both `locales/en.json` and `locales/hi.json` and add matching keys at the same time.
+
+```json
+// locales/en.json
+{
+  "services": {
+    "startButton": "Start"
+  }
+}
+
+// locales/hi.json
+{
+  "services": {
+    "startButton": "शुरू करें"
+  }
+}
+```
+
+Use in component:
+
+```tsx
+const { t } = useTranslation();
+<Button>{t("services.startButton")}</Button>;
+```
+
+---
+
+## 11. Version Bumping
+
+Version must be identical in all three files. Change all three at once:
+
+1. `package.json` - `"version": "0.1.7"`
+2. `src-tauri/Cargo.toml` - `version = "0.1.7"`
+3. `src-tauri/tauri.conf.json` - `"version": "0.1.7"`
+
+Rule: Version must be clean semver only: `X.Y.Z` - no hyphens, no letters (MSI requirement).
+
+---
+
+## 12. Debugging
+
+**Frontend debugging:**
+
+- Open DevTools in the Tauri window: Right-click -> Inspect
+- Or use `Ctrl+Shift+I`
+- Console logs from `safeInvoke` show which commands were called
+
+**Rust debugging:**
+
+- Use `println!()` - output appears in the terminal where `pnpm tauri dev` is running
+- Use `DebugPanel.tsx` component - it calls `debug_paths` and `debug_installation` commands to show resolved paths
+
+**Service path issues:**
+
+- Call `debug_installation` from `DebugPanel` to see where Rust is looking for binaries
+- Most bugs are path resolution failures - check `get_installation_path()` logic in `lib.rs`
+
+**Common errors:**
+
+- `binary not found at ...` - service binary missing from the expected path
+- `port X is not listening` - service started but crashed immediately; check logs
+- `Architecture mismatch` - Apache 32-bit on 64-bit build; download 64-bit Apache
+
+---
+
+## 12. File Locations to Never Touch
+
+| File/Dir                  | Why                                                          |
+| ------------------------- | ------------------------------------------------------------ |
+| `src/globals.css`         | Tailwind base only - adding custom CSS here breaks the build |
+| `src/main.tsx`            | React entry point - do not modify                            |
+| `src/components/ui/*.tsx` | shadcn/ui generated - use `npx shadcn add` to update         |
+| `src-tauri/src/main.rs`   | Tauri entry point - do not modify                            |
+| `src-tauri/target/`       | Build output - never commit this                             |
+| `src-tauri/gen/`          | Tauri generated - never commit this                          |
+
+---
+
+## 13. Git Workflow
+
+1. Never commit directly to `main`.
+2. Branch: `git checkout -b feature/my-feature`
+3. Build and test locally before pushing.
+4. Open a PR.
+
+Do NOT push with `--force` unless you know exactly what you are doing.
+
+---
+
+## 14. Common pnpm Commands
+
+```bash
+pnpm install              # Install all dependencies
+pnpm dev                  # Frontend only (browser)
+pnpm tauri dev            # Full app (Tauri + frontend)
+pnpm tauri:build          # Production build
+pnpm tauri -- --version   # Check Tauri CLI version
+```

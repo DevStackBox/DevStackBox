@@ -1,0 +1,60 @@
+# ADR 003 — No Global State Manager
+
+**Status:** Accepted  
+**Date:** 2024
+
+---
+
+## Decision
+
+Do not use Redux, Zustand, Jotai, or any other global state manager. Use React's built-in `useState`, `useContext`, and prop-passing.
+
+---
+
+## Context
+
+Frontend state in DevStackBox is:
+
+- Service statuses (running/stopped) — polled every 5 seconds
+- UI state (sidebar open, modals open, current page)
+- Config content (per editor session)
+- Settings (theme, language)
+
+---
+
+## Options Considered
+
+| Option               | Complexity | When to Use                         |
+| -------------------- | ---------- | ----------------------------------- |
+| **useState + props** | Low        | Simple, local state                 |
+| React Context        | Medium     | Shared state, limited updates       |
+| Zustand              | Medium     | Global state without boilerplate    |
+| Redux Toolkit        | High       | Large apps with complex state flows |
+
+---
+
+## Decision Rationale
+
+1. **App is small**: DevStackBox has a handful of pages and a small component tree. Global state management adds overhead that is not justified.
+2. **Service state is ephemeral**: Service status is polled from the OS every 5 seconds anyway. There is no need for optimistic updates or complex state transitions.
+3. **Prop drilling is not deep**: The component tree is shallow enough that prop passing does not become painful.
+4. **Simplicity**: Any contributor can understand `useState` without learning a state library.
+
+---
+
+## Consequences
+
+- State is managed at the component level or in `App.tsx` for app-wide state
+- Service polling lives exclusively in `service-manager.tsx` — do not create other polling loops
+- If the app grows significantly in complexity, reconsider Zustand (lightweight, no boilerplate)
+- Theme and language are exceptions: they use i18next (language) and a `useTheme` hook (theme) which act as app-wide state
+
+---
+
+## When to Reconsider
+
+If these conditions are met, add Zustand:
+
+- More than 5 pages with shared state
+- Deep prop drilling (3+ levels for the same prop)
+- Complex async state with loading/error/success flows in multiple components
