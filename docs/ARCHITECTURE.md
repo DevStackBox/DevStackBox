@@ -16,7 +16,7 @@
 | i18n             | i18next                                  | EN and HI translations                           |
 | Backend          | Tauri 2 (Rust)                           | Process management, file I/O, native OS ops      |
 | IPC Bridge       | Tauri Commands + Events                  | Frontend <-> Backend communication               |
-| Service binaries | httpd.exe, mysqld.exe (MariaDB), php.exe | The actual servers (always bundled in installer) |
+| Service binaries | httpd.exe, mysqld.exe (MySQL), php.exe | The actual servers (always bundled in installer) |
 
 ---
 
@@ -91,7 +91,7 @@ DevStackBox/
 |   |-- wix/                    # MSI installer customization
 |
 |-- config/                     # Service config files (runtime, not source)
-|   |-- my.cnf                  # MariaDB config (file name is my.cnf by convention)
+|   |-- my.cnf                  # MySQL config
 |   |-- httpd.conf              # Apache config
 |   |-- phpmyadmin.conf         # phpMyAdmin Apache config
 |
@@ -99,7 +99,7 @@ DevStackBox/
 |   |-- en.json                 # English translations
 |   |-- hi.json                 # Hindi translations
 |
-|-- mysql/                      # MariaDB binaries + data (bundled with app; folder named mysql/ by convention)
+|-- mysql/                      # MySQL binaries + data (bundled with app)
 |-- apache/                     # Apache binaries (bundled with app)
 |-- php/8.3/                    # PHP 8.3 binaries (bundled with app)
 |-- phpmyadmin/                 # phpMyAdmin PHP files (bundled with app)
@@ -162,7 +162,7 @@ Do not overload the sidebar with sub-items or collapsible trees.
 ```text
 Dashboard
 ├── Quick Actions (Start All / Stop All / Restart Apache)
-├── Service Status Cards (Apache / PHP / MariaDB)
+├── Service Status Cards (Apache / PHP / MySQL)
 ├── Current PHP Version
 ├── Ports Overview
 ├── Recent Logs (last 10 lines)
@@ -219,7 +219,7 @@ C:\Program Files\DevStackBox\     (or C:\DevStackBox\ for portable)
 ```text
 C:\dsb-data\                      (or %APPDATA%\DevStackBox\ for installed mode)
   www/           <- User's PHP projects
-  mysql-data/    <- MariaDB database files
+  mysql-data/    <- MySQL database files
   logs/          <- All service logs
   config/        <- Runtime configs (php.ini, httpd.conf, my.cnf)
   config-backups/
@@ -227,7 +227,7 @@ C:\dsb-data\                      (or %APPDATA%\DevStackBox\ for installed mode)
   backups/
 ```
 
-**Rule:** MariaDB database files (`mysql/data/`) must NEVER live inside the app folder. A database inside the app folder will be destroyed or corrupted on update.
+**Rule:** MySQL database files (`mysql/data/`) must NEVER live inside the app folder. A database inside the app folder will be destroyed or corrupted on update.
 
 **Current state (v0.1.6):** This separation does not exist yet. Everything is in one directory. Fixing this is Phase 1.8 (see ROADMAP.md).
 
@@ -280,7 +280,7 @@ Currently this pattern is NOT yet used - all status is fetched by polling from t
 
 ## Service Path Resolution
 
-This is a critical and error-prone area. The function `get_installation_path()` in `lib.rs` determines where MariaDB, Apache, and PHP binaries live. It checks in this order:
+This is a critical and error-prone area. The function `get_installation_path()` in `lib.rs` determines where MySQL, Apache, and PHP binaries live. It checks in this order:
 
 1. `current_dir` if it contains `apache/bin/httpd.exe`
 2. `exe_parent` (installed app location)

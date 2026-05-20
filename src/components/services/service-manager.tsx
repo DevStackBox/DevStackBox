@@ -9,6 +9,7 @@ import {
   ServiceStatus,
 } from "./index";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 
@@ -107,6 +108,14 @@ export function ServiceManager({
             variant: "destructive",
             title: `${label} stopped unexpectedly`,
             description: `${label} was running but is no longer responding. Check logs and restart it.`,
+            action: (
+              <ToastAction
+                altText={`Restart ${label}`}
+                onClick={() => toggleServiceRef.current(name)}
+              >
+                Restart
+              </ToastAction>
+            ),
           });
         }
         prevRunningRef.current[name] = isRunning;

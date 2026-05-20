@@ -73,7 +73,7 @@ pub async fn start_mysql() -> Result<bool, String> {
     initialize_mysql_data().await?;
 
     // Phase 5.2 - fail fast with a clear message if port 3306 is taken
-    // (commonly another MySQL/MariaDB install or a previous DevStackBox run).
+    // (commonly another MySQL install or a previous DevStackBox run).
     ensure_port_available(3306, "MySQL")?;
 
     match create_hidden_command(&mysql_path.to_string_lossy())

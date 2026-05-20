@@ -48,7 +48,7 @@ Update this file every time a feature changes status. Do not maintain feature st
 | Shared TypeScript types        | DONE    | `src/types/services.ts`                                                                                                       |
 | TAURI_COMMANDS constants       | DONE    | `src/lib/commands.ts` grouped (system/services/php/config/tray); zero hardcoded command strings remain in frontend components |
 | Bundled stack (Apache+PHP+DB)  | DONE    | All core binaries ship in installer - no internet required                                                                    |
-| First-launch onboarding screen | PLANNED | Show Apache/PHP/MariaDB ready status after install, then "Start"                                                              |
+| First-launch onboarding screen | DONE    | Welcome dialog with one-click "Start all services"; remembered in localStorage                                                |
 
 ---
 
@@ -56,11 +56,11 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 | Feature                    | Status  | Notes                                                                                   |
 | -------------------------- | ------- | --------------------------------------------------------------------------------------- |
-| MariaDB start / stop       | DONE    | `start_mysql`, `stop_mysql` commands work (command names reference mysql by convention) |
-| MariaDB status check       | DONE    | Polls process list for `mysqld.exe`                                                     |
-| MariaDB version detect     | DONE    | Reads `mysqld --version`                                                                |
-| MariaDB data init          | DONE    | Auto-initializes if data dir missing                                                    |
-| MariaDB config auto-create | DONE    | Creates `config/my.cnf` if missing                                                      |
+| MySQL start / stop         | DONE    | `start_mysql`, `stop_mysql` commands work                                               |
+| MySQL status check         | DONE    | Polls process list for `mysqld.exe`                                                     |
+| MySQL version detect       | DONE    | Reads `mysqld --version`                                                                |
+| MySQL data init            | DONE    | Auto-initializes if data dir missing                                                    |
+| MySQL config auto-create   | DONE    | Creates `config/my.cnf` if missing                                                      |
 | Apache start / stop        | DONE    | `start_apache`, `stop_apache` commands work                                             |
 | Apache status check        | DONE    | Polls process list for `httpd.exe`                                                      |
 | Apache config test         | DONE    | `test_apache_config` runs `httpd -t`                                                    |
@@ -74,17 +74,18 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ## Service UI
 
-| Feature                  | Status  | Notes                                  |
-| ------------------------ | ------- | -------------------------------------- |
-| ServiceManager component | DONE    | Polls status every 5 seconds           |
-| ServiceCard component    | DONE    | Generic card for service display       |
-| StatusBadge component    | DONE    | Running/Stopped indicator              |
-| ServiceActions component | DONE    | Start/Stop/Open buttons                |
-| MariaDB service UI       | DONE    | `mysql-service.tsx`                    |
-| Apache service UI        | DONE    | `apache-service.tsx`                   |
-| PHP service UI           | DONE    | `php-service.tsx`                      |
-| Services page            | PARTIAL | Start/stop works, logs are incomplete  |
-| Dashboard page           | DONE    | Shows service overview and quick stats |
+| Feature                  | Status | Notes                                                                             |
+| ------------------------ | ------ | --------------------------------------------------------------------------------- |
+| ServiceManager component | DONE   | Polls status every 5 seconds                                                      |
+| ServiceCard component    | DONE   | Generic card for service display                                                  |
+| StatusBadge component    | DONE   | Running/Stopped indicator                                                         |
+| ServiceActions component | DONE   | Start/Stop/Open buttons                                                           |
+| MySQL service UI         | DONE   | `mysql-service.tsx`                                                               |
+| Apache service UI        | DONE   | `apache-service.tsx`                                                              |
+| PHP service UI           | DONE   | `php-service.tsx`                                                                 |
+| Services page            | DONE   | Start/stop works, log viewer with service tabs, bulk start/stop/restart all wired |
+| Dashboard page           | DONE   | Shows service overview and quick stats                                            |
+| Dashboard log preview    | DONE   | `error-log-preview.tsx` tails last lines of Apache/MySQL/PHP logs                 |
 
 ---
 
@@ -101,21 +102,21 @@ Update this file every time a feature changes status. Do not maintain feature st
 | Config editor UI (textarea)   | DONE    | `config-editor.tsx` - basic textarea |
 | Config editor (Monaco)        | PLANNED | Syntax highlighting, line numbers    |
 | Config validation (Apache -t) | PLANNED | Run config test before save          |
-| Config validation (MariaDB)   | PLANNED |                                      |
+| Config validation (MySQL)     | PLANNED |                                      |
 
 ---
 
 ## Log Viewer
 
-| Feature                         | Status  | Notes                                                                                                                                  |
-| ------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Read log file (last 1000 lines) | DONE    | `get_service_logs` command                                                                                                             |
-| LogViewer component (static)    | DONE    | Renders text, no streaming                                                                                                             |
-| Log display on services page    | PARTIAL | Calls `get_service_logs` but UI is basic                                                                                               |
-| Real-time log streaming         | DONE    | Frontend polls `get_service_logs` every 2s while auto-refresh is on; auto-scroll on. Tauri Channel streaming still planned for Phase 4 |
-| Log filtering / search          | PLANNED |                                                                                                                                        |
-| Log tabs per service            | PLANNED | MariaDB, Apache, PHP tabs                                                                                                              |
-| Log auto-scroll toggle          | PLANNED |                                                                                                                                        |
+| Feature                         | Status | Notes                                                                                                                  |
+| ------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------- |
+| Read log file (last 1000 lines) | DONE   | `get_service_logs` command                                                                                             |
+| LogViewer component (static)    | DONE   | Renders text, no streaming                                                                                             |
+| Log display on services page    | DONE   | Uses `LogViewer` with search and copy/download actions                                                                 |
+| Real-time log streaming         | DONE   | Frontend polls `get_service_logs` every 2s while auto-refresh is on. Tauri Channel streaming still planned for Phase 4 |
+| Log filtering / search          | DONE   | Search bar in `LogViewer` filters lines in place                                                                       |
+| Log tabs per service            | DONE   | shadcn `Tabs` on services page switches MySQL / Apache / PHP                                                           |
+| Log auto-scroll toggle          | DONE   | Auto-scroll checkbox in `LogViewer` header, independent from the 2s poll toggle                                        |
 
 ---
 
@@ -136,8 +137,8 @@ Update this file every time a feature changes status. Do not maintain feature st
 | Feature                       | Status  | Notes                                   |
 | ----------------------------- | ------- | --------------------------------------- |
 | phpMyAdmin integration        | DONE    | Served via Apache at `/phpmyadmin`      |
-| MariaDB database backup (all) | DONE    | `backup_mysql_database` using mysqldump |
-| MariaDB user management UI    | PLANNED |                                         |
+| MySQL database backup (all)   | DONE    | `backup_mysql_database` using mysqldump |
+| MySQL user management UI      | PLANNED |                                         |
 | Database-specific backup      | PLANNED | Backup individual databases             |
 | Database restore              | PLANNED | Import .sql file                        |
 
@@ -151,7 +152,7 @@ Update this file every time a feature changes status. Do not maintain feature st
 | Command palette (Ctrl+P) | DONE    | `command-palette.tsx`                      |
 | Top bar with actions     | DONE    | In `App.tsx` header                        |
 | Context menus            | PLANNED | shadcn/ui ContextMenu for per-item actions |
-| Breadcrumb navigation    | PLANNED |                                            |
+| Breadcrumb navigation    | DONE    | Topbar breadcrumb reflects current page  |
 | Window controls (custom) | DONE    | `WindowControls.tsx`                       |
 
 ---
@@ -163,7 +164,7 @@ Update this file every time a feature changes status. Do not maintain feature st
 | Tray icon appears           | DONE    | Tauri tray-icon plugin                                                                               |
 | Minimize to tray            | PARTIAL | Basic minimize works                                                                                 |
 | Tray context menu           | PARTIAL | Basic menu configured in `lib.rs`                                                                    |
-| Tray click opens app        | PARTIAL |                                                                                                      |
+| Tray click opens app        | DONE    | Left-click on tray icon shows the main window (`lib.rs`)                                             |
 | Tray service status display | DONE    | `set_tray_tooltip` updated every 5s by `ServiceManager` with Apache/MySQL/PHP state                  |
 | Tray service start/stop     | DONE    | Tray menu emits `tray-toggle-service`; `ServiceManager` routes to the same toggle pipeline as the UI |
 | Notifications from tray     | PLANNED | Service start/stop notifications                                                                     |
@@ -187,7 +188,7 @@ Update this file every time a feature changes status. Do not maintain feature st
 | ------------------------------- | ------- | --------------------------------- |
 | Open PHP terminal (Windows cmd) | DONE    | `open_php_terminal` opens cmd.exe |
 | Embedded xterm.js terminal      | PLANNED | Full terminal in-app              |
-| MariaDB CLI in terminal         | PLANNED |                                   |
+| MySQL CLI in terminal           | PLANNED |                                   |
 | Composer CLI in terminal        | PLANNED |                                   |
 
 ---

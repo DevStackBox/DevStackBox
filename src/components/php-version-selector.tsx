@@ -47,7 +47,8 @@ const BRANCH_NOTES: Record<
     features: ["Property hooks", "Improved performance", "New array helpers"],
   },
   "8.3": {
-    description: "Default bundled version - enhanced type system and performance improvements",
+    description:
+      "Default bundled version - enhanced type system and performance improvements",
     features: [
       "Typed class constants",
       "Anonymous readonly classes",

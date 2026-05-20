@@ -18,6 +18,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "./components/language-switcher";
 import { AutoUpdater } from "./components/auto-updater";
 import { Sidebar } from "./components/sidebar";
+import { Breadcrumb } from "./components/breadcrumb";
+import { OnboardingDialog } from "./components/onboarding-dialog";
 import { CommandPalette } from "./components/command-palette";
 import { PHPVersionSelector } from "./components/php-version-selector";
 import { ConfigEditor } from "./components/config-editor";
@@ -426,12 +428,20 @@ function App() {
           {/* Top Bar */}
           <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Server className="h-5 w-5" />
-                <h1 className="text-lg font-semibold">DevStackBox</h1>
-                <Badge variant="outline" className="text-xs">
-                  v{APP_VERSION}
-                </Badge>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Server className="h-5 w-5" />
+                  <h1 className="text-lg font-semibold">DevStackBox</h1>
+                  <Badge variant="outline" className="text-xs">
+                    v{APP_VERSION}
+                  </Badge>
+                </div>
+                <div className="hidden md:block h-5 w-px bg-border" />
+                <Breadcrumb
+                  currentPage={currentPage}
+                  onPageChange={setCurrentPage}
+                  className="hidden md:flex"
+                />
               </div>
 
               <div className="flex items-center gap-2">
@@ -471,6 +481,11 @@ function App() {
 
         {/* Toast Notifications */}
         <Toaster />
+
+        {/* First-launch onboarding */}
+        <OnboardingDialog
+          onOpenServices={() => setCurrentPage("services")}
+        />
       </div>
     </ThemeProvider>
   );

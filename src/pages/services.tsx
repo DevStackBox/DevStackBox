@@ -11,10 +11,12 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Settings, Activity, RefreshCw } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Settings, Activity, RefreshCw, Play, Square } from "lucide-react";
 import { LogViewer } from "@/components/services";
 import { safeInvoke, isTauri } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
+import { useToast } from "@/hooks/use-toast";
 import type { ServiceName } from "@/types/services";
 
 interface ServicesPageProps {
@@ -29,12 +31,20 @@ export function ServicesPage({
   currentPhpVersion,
 }: ServicesPageProps) {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [selectedService, setSelectedService] = useState<
     "mysql" | "apache" | "php"
   >("mysql");
   const [logs, setLogs] = useState<string>("");
+  // Phase 3.2: autoRefresh controls the 2s polling loop.
   const [autoRefresh, setAutoRefresh] = useState(true);
+  // Log viewer auto-scroll is independent from polling: users may want
+  // polling on but pause scroll while they read older lines.
+  const [autoScroll, setAutoScroll] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [bulkLoading, setBulkLoading] = useState<
+    "start" | "stop" | "restart" | null
+  >(null);
   // Roadmap Phase 3.2: poll logs every 2s while auto-refresh is enabled.
   const pollRef = useRef<number | null>(null);
 
@@ -122,6 +132,85 @@ export function ServicesPage({
     refreshLogs(selectedService);
   };
 
+  // Bulk service controls (Phase 3.2 polish).
+  const startAllServices = async () => {
+    if (bulkLoading) return;
+    setBulkLoading("start");
+    try {
+      if (!isTauri()) {
+        toast({
+          title: t("toast.browserOnly", "Browser mode"),
+          description: t(
+            "toast.requiresTauri",
+            "This action requires the desktop app.",
+          ),
+        });
+        return;
+      }
+      await safeInvoke(TAURI_COMMANDS.services.startMysql);
+      await safeInvoke(TAURI_COMMANDS.services.startApache);
+      toast({
+        title: t("toast.startAllOk", "Services starting"),
+        description: t(
+          "toast.startAllOkDesc",
+          "MySQL and Apache start commands sent.",
+        ),
+      });
+    } catch (error) {
+      toast({
+        title: t("toast.startAllErr", "Start all failed"),
+        description: String(error),
+        variant: "destructive",
+      });
+    } finally {
+      setBulkLoading(null);
+    }
+  };
+
+  const stopAllServices = async () => {
+    if (bulkLoading) return;
+    setBulkLoading("stop");
+    try {
+      if (!isTauri()) return;
+      await safeInvoke(TAURI_COMMANDS.system.stopAllServices);
+      toast({
+        title: t("toast.stopAllOk", "All services stopped"),
+      });
+    } catch (error) {
+      toast({
+        title: t("toast.stopAllErr", "Stop all failed"),
+        description: String(error),
+        variant: "destructive",
+      });
+    } finally {
+      setBulkLoading(null);
+    }
+  };
+
+  const restartAllServices = async () => {
+    if (bulkLoading) return;
+    setBulkLoading("restart");
+    try {
+      if (!isTauri()) return;
+      await safeInvoke(TAURI_COMMANDS.system.stopAllServices);
+      // Small delay to allow ports to free up before re-binding.
+      await new Promise((r) => setTimeout(r, 750));
+      await safeInvoke(TAURI_COMMANDS.services.startMysql);
+      await safeInvoke(TAURI_COMMANDS.services.startApache);
+      toast({
+        title: t("toast.restartAllOk", "Services restarted"),
+      });
+    } catch (error) {
+      toast({
+        title: t("toast.restartAllErr", "Restart all failed"),
+        description: String(error),
+        variant: "destructive",
+      });
+    } finally {
+      setBulkLoading(null);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -187,27 +276,53 @@ export function ServicesPage({
             <Button
               variant="outline"
               className="flex items-center justify-center"
+              onClick={startAllServices}
+              disabled={bulkLoading !== null}
             >
-              <Activity className="mr-2 h-4 w-4" />
-              {t("actions.startAll", "Start All Services")}
+              <Play className="mr-2 h-4 w-4" />
+              {bulkLoading === "start"
+                ? t("status.starting", "Starting...")
+                : t("actions.startAll", "Start All Services")}
             </Button>
             <Button
               variant="outline"
               className="flex items-center justify-center"
+              onClick={stopAllServices}
+              disabled={bulkLoading !== null}
             >
-              <Settings className="mr-2 h-4 w-4" />
-              {t("actions.stopAll", "Stop All Services")}
+              <Square className="mr-2 h-4 w-4" />
+              {bulkLoading === "stop"
+                ? t("status.stopping", "Stopping...")
+                : t("actions.stopAll", "Stop All Services")}
             </Button>
             <Button
               variant="outline"
               className="flex items-center justify-center"
+              onClick={restartAllServices}
+              disabled={bulkLoading !== null}
             >
               <RefreshCw className="mr-2 h-4 w-4" />
-              {t("actions.restartAll", "Restart All Services")}
+              {bulkLoading === "restart"
+                ? t("status.restarting", "Restarting...")
+                : t("actions.restartAll", "Restart All Services")}
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      {/* Service selection tabs above the log viewer (Phase 3.2). */}
+      <div className="space-y-3">
+        <h3 className="text-lg font-semibold">
+          {t("services.selectService", "Select Service for Logs")}
+        </h3>
+        <Tabs value={selectedService} onValueChange={(v) => handleViewLogs(v)}>
+          <TabsList>
+            <TabsTrigger value="mysql">MySQL</TabsTrigger>
+            <TabsTrigger value="apache">Apache</TabsTrigger>
+            <TabsTrigger value="php">PHP</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
 
       {/* Service Logs */}
       <LogViewer
@@ -220,31 +335,24 @@ export function ServicesPage({
           `Real-time logs for ${selectedService.toUpperCase()}`,
         )}
         searchable
-        autoScroll={autoRefresh}
-        onAutoScrollChange={setAutoRefresh}
+        autoScroll={autoScroll}
+        onAutoScrollChange={setAutoScroll}
         loading={loading}
       />
 
-      {/* Service Selection Tabs */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">
-          {t("services.selectService", "Select Service for Logs")}
-        </h3>
-        <div className="flex gap-2">
-          {(["mysql", "apache", "php"] as const).map((service) => (
-            <button
-              key={service}
-              onClick={() => handleViewLogs(service)}
-              className={`px-4 py-2 rounded-md font-medium transition-colors ${
-                selectedService === service
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted hover:bg-muted/80"
-              }`}
-            >
-              {service.charAt(0).toUpperCase() + service.slice(1)}
-            </button>
-          ))}
-        </div>
+      {/* Auto-refresh polling toggle (separate from auto-scroll). */}
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={autoRefresh}
+            onChange={(e) => setAutoRefresh(e.target.checked)}
+            className="rounded"
+          />
+          <span>
+            {t("services.logs.autoRefresh", "Auto-refresh logs every 2s")}
+          </span>
+        </label>
       </div>
     </motion.div>
   );

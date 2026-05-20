@@ -70,7 +70,7 @@ Note: changing the port means phpMyAdmin URL becomes `http://localhost:8080/phpm
 
 | Service                          | How to Stop                             |
 | -------------------------------- | --------------------------------------- |
-| Another MySQL / MariaDB instance | Stop it via Services or its own manager |
+| Another MySQL instance           | Stop it via Services or its own manager |
 | Another XAMPP                    | Stop XAMPP MySQL                        |
 | Docker MySQL container           | `docker stop <container>`               |
 

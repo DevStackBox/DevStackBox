@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { ServiceManager, type ServiceStatus } from "@/components/services";
+import { ErrorLogPreview } from "@/components/error-log-preview";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -262,6 +263,9 @@ export function DashboardPage({
           />
         </CardContent>
       </Card>
+
+      {/* Recent log activity */}
+      <ErrorLogPreview />
 
       {/* Quick Actions */}
       <Card>

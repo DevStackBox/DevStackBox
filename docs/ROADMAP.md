@@ -15,7 +15,7 @@ It is NOT a universal developer infrastructure platform. Scope is intentionally 
 
 - Apache HTTP Server
 - PHP 8.3 (one version bundled today; additional versions are downloadable later)
-- MariaDB (MySQL-compatible; command names and binary use `mysql`/`mysqld` by convention)
+- MySQL (bundled portable distribution)
 - phpMyAdmin
 
 No Docker, no Redis, no PostgreSQL, no Node runtime manager — not in v1.
@@ -34,7 +34,7 @@ Do NOT require users to download core components on first launch. Bad first-laun
 | ------------------- | ------------- | ---------------------------------------------------------------- |
 | Apache              | Bundled       | Core requirement, no internet needed                             |
 | PHP 8.3             | Bundled       | Current default version, works immediately                       |
-| MariaDB             | Bundled       | Database server (commands/binary use mysql naming by convention) |
+| MySQL               | Bundled       | Database server                                                  |
 | phpMyAdmin          | Bundled       | Developers expect it, keep it bundled                            |
 | Default configs     | Bundled       | Required for first launch                                        |
 | Sample `www/` page  | Bundled       | Confirms stack works immediately                                 |
@@ -191,7 +191,7 @@ src-tauri/src/
 
 - [x] Detect when Apache, MySQL, or PHP crashes (frontend `ServiceManager` polls `get_*_status` every 5s and compares running transitions)
 - [x] Show crash notification in UI (destructive toast when a service flips from running to stopped without the user pressing toggle)
-- [ ] Offer one-click restart from the crash toast (current toast only informs)
+- [x] Offer one-click restart from the crash toast (`ToastAction` calls the same toggle pipeline)
 - [ ] Log crash event with timestamp
 
 ---
@@ -202,8 +202,8 @@ src-tauri/src/
 
 ### 4.1 MSI Reliability and Bundled Stack Verification
 
-- [ ] Verify MariaDB binaries are in place and correctly configured in installer bundle
-- [ ] Verify bundled stack installs and starts correctly: Apache + PHP 8.3 + MariaDB + phpMyAdmin
+- [ ] Verify MySQL binaries are in place and correctly configured in installer bundle
+- [ ] Verify bundled stack installs and starts correctly: Apache + PHP 8.3 + MySQL + phpMyAdmin
 - [ ] Test installation path options (`C:\dsb`, `C:\Program Files\DevStackBox`)
 - [ ] Verify all binaries are in expected paths after MSI install
 - [ ] Test clean install and upgrade install
@@ -295,19 +295,14 @@ These are explicitly out of scope for the current product:
 
 ---
 
-## MariaDB (Decided)
+## MySQL (Decided)
 
-DevStackBox uses **MariaDB** as its database server.
+DevStackBox uses **MySQL** as its bundled database server.
 
-**Why MariaDB:**
-
-- No Oracle EULA complexity — redistribution is cleaner
-- Lighter binaries
-- Fully MySQL-compatible — no app code changes needed
-- Used by most modern PHP stacks (Laravel Sail, DDEV, Herd)
-- Same `mysqld.exe` binary interface — Tauri command names remain `start_mysql`, `stop_mysql` etc. by convention
-
-Users will not notice the difference. phpMyAdmin, Laravel, WordPress, and all common PHP tools work identically with MariaDB.
+- Bundled as a portable Windows distribution under `mysql/`
+- Data lives outside the app folder (under the user data dir) so updates never touch databases
+- Tauri command names: `start_mysql`, `stop_mysql`, `mysql_status`, `mysql_version`, etc.
+- Works out of the box with phpMyAdmin, Laravel, WordPress, and other standard PHP tooling
 
 ---
 

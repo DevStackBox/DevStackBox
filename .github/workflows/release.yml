@@ -3,7 +3,7 @@ name: Release DevStackBox
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
 
 jobs:
@@ -77,8 +77,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: 'windows-latest'
-            args: '--target x86_64-pc-windows-msvc'
+          - platform: "windows-latest"
+            args: "--target x86_64-pc-windows-msvc"
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -91,13 +91,13 @@ jobs:
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: './src-tauri -> target'
+          workspaces: "./src-tauri -> target"
 
       - name: Sync node version and setup cache
         uses: actions/setup-node@v4
         with:
-          node-version: 'lts/*'
-          cache: 'npm'
+          node-version: "lts/*"
+          cache: "npm"
 
       - name: Install frontend dependencies
         run: npm install
@@ -109,7 +109,7 @@ jobs:
       - name: Verify server components are ready
         run: |
           Write-Host "Verifying server components in src-tauri..." -ForegroundColor Cyan
-          
+
           $components = @("apache", "mysql", "php", "phpmyadmin", "www", "config")
           foreach ($component in $components) {
             $path = "src-tauri/$component"
@@ -121,7 +121,7 @@ jobs:
               Write-Host "MISSING $component : Not found" -ForegroundColor Red
             }
           }
-          
+
           Write-Host "Ready for Tauri build" -ForegroundColor Blue
         shell: powershell
 

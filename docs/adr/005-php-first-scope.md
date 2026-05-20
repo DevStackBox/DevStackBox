@@ -42,7 +42,7 @@ DevStackBox is a local development environment. The question arose: should it be
 
 - No Node.js, Python, PostgreSQL, Redis, Docker, or Nginx in v1
 - All backend commands, installer size, and UI are optimized for PHP development
-- MariaDB is the project's decided database (MySQL-compatible, lighter, cleaner redistribution license)
+- MySQL is the project's decided database (bundled portable distribution)
 - A plugin/extension system for additional stacks can be designed after v1.0 ships
 - The product positioning is: "The modern PHP local development stack for Windows"
 
