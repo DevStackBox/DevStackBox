@@ -22,7 +22,7 @@
 
 ## Directory Map (What Lives Where)
 
-```
+```text
 DevStackBox/
 |
 |-- src/                        # FRONTEND (React + Vite)
@@ -34,7 +34,7 @@ DevStackBox/
 |   |   |-- dashboard.tsx       # Dashboard page - service overview
 |   |   |-- services.tsx        # Services page - start/stop controls + logs
 |   |   |-- SystemTrayPage.tsx  # System tray config page
-|   |   |-- index.ts            # Re-exports all pages
+|   |   |-- index.ts            # Re-exports pages currently used by App.tsx
 |   |
 |   |-- components/
 |   |   |-- ui/                 # shadcn/ui base components (DO NOT MODIFY)
@@ -61,6 +61,7 @@ DevStackBox/
 |   |   |-- WindowControls.tsx      # Custom window buttons
 |   |   |-- SystemTrayButton.tsx    # Tray minimize button
 |   |   |-- SystemTrayStatus.tsx    # Tray status indicator
+|   |   |-- system-tray/            # System tray re-export helpers and notes
 |   |
 |   |-- hooks/
 |   |   |-- use-toast.ts            # Toast notification hook
@@ -71,7 +72,7 @@ DevStackBox/
 |   |   |-- i18n.ts                 # i18next setup
 |   |   |-- utils.ts                # cn() class merge helper (shadcn)
 |   |   |-- version.ts              # APP_VERSION constant
-|   |   |-- constants.ts            # TAURI_COMMANDS map (command name strings)
+|   |   |-- commands.ts             # TAURI_COMMANDS map (command name strings)
 |   |
 |   |-- types/
 |       |-- services.ts             # Shared TypeScript types (ServiceStatus, ServiceName, etc.)
@@ -114,41 +115,51 @@ DevStackBox/
 
 DevStackBox uses a fixed two-panel desktop app layout. Do not redesign this.
 
-```
+```text
 ┌───────────────────┬──────────────────────────────────────┐
 │  Top Bar          │  Top Bar (continued)                 │
-│  DevStackBox      │  [ Search / Cmd Palette ]  [Theme]   │
+│  DevStackBox      │  [Version] [Updates] [Lang] [Theme]  │
 ├───────────────────┼──────────────────────────────────────┤
 │                   │                                      │
 │  Sidebar          │  Main Content Area                   │
 │  (220-260px)      │                                      │
 │                   │  Current Page:                       │
-│  Dashboard        │  Service cards / Logs /              │
+│  Dashboard        │  Service cards / logs / settings     │
 │  Services         │  Config editor / PHP versions        │
-│  Logs             │                                      │
-│  Configurations   │  Clean, spacious, card-based.        │
-│  PHP Versions     │  NO crowded tables.                  │
+│  Projects         │                                      │
+│  Logs             │  Clean, spacious, card-based.        │
 │  Settings         │                                      │
+│  About            │  NO crowded tables.                  │
 │                   │                                      │
 └───────────────────┴──────────────────────────────────────┘
 ```
 
-**Top Bar must contain:**
+**Top Bar currently contains:**
 
 - App title
-- Search / Command Palette trigger
+- Version badge
+- Auto updater entry point
+- Language switcher
 - Theme toggle (dark/light)
-- Running services indicator
-- Tray minimize button
 
-**Sidebar contains ONLY these 6 items:**
-`Dashboard` / `Services` / `Logs` / `Configurations` / `PHP Versions` / `Settings`
+**Current shortcut-driven controls:**
+
+- Command palette opens with `Ctrl+P`
+- Tray controls exist in dedicated components and hooks, but are not mounted in the current top bar
+
+**Sidebar currently contains these 6 items:**
+`Dashboard` / `Services` / `Projects` / `Logs` / `Settings` / `About`
+
+**Availability today:**
+
+- `Dashboard`, `Services`, `Settings`, and `About` are active
+- `Projects` and `Logs` are present as placeholders and intentionally disabled in the sidebar
 
 Do not overload the sidebar with sub-items or collapsible trees.
 
 **Dashboard page structure:**
 
-```
+```text
 Dashboard
 ├── Quick Actions (Start All / Stop All / Restart Apache)
 ├── Service Status Cards (Apache / PHP / MariaDB)
@@ -160,7 +171,7 @@ Dashboard
 
 **Service card structure (each card):**
 
-```
+```text
 [ Apache ]       Running ●
 Port: 80   PID: 1234
 [ Start ]  [ Stop ]  [ Logs ]  [ Config ]
@@ -174,17 +185,27 @@ This keeps the UI approachable for beginners, powerful for advanced users.
 **Design Philosophy:**  
 DevStackBox should feel like a native desktop utility (like Docker Desktop or GitHub Desktop), NOT like a web admin panel, analytics dashboard, or cPanel.
 
+## Reuse and Consistency Rules
+
+These rules are architectural, not optional style preferences.
+
+1. Reuse existing shared components before creating new ones. Start with `ServiceCard`, `ServiceActions`, `StatusBadge`, `LogViewer`, `ConfigEditor`, and existing shadcn/ui primitives.
+2. Keep business logic in one owner. Polling stays in `service-manager.tsx`; command strings stay in `src/lib/commands.ts`; shared types stay in `src/types/services.ts`.
+3. Prefer composition over cloning. If two screens need the same card, toolbar, or dialog shell, add props or children to the shared component instead of copying markup.
+4. Keep visual language consistent. The same action should use the same component, label pattern, spacing scale, and variant wherever it appears.
+5. If a new reusable pattern is introduced, document it in `docs/COMPONENTS.md` immediately so future work can extend it instead of recreating it.
+
 ---
 
 ## App/Data Directory Separation
 
 This is critical for reliable auto-updates. Violating this causes update-related data loss.
 
-### Two separate roots — NEVER mix them:
+### Two separate roots — NEVER mix them
 
 **App Root (replaceable during updates):**
 
-```
+```text
 C:\Program Files\DevStackBox\     (or C:\DevStackBox\ for portable)
   DevStackBox.exe
   apache/        <- Apache binaries
@@ -195,7 +216,7 @@ C:\Program Files\DevStackBox\     (or C:\DevStackBox\ for portable)
 
 **User Data Root (NEVER touched during updates):**
 
-```
+```text
 C:\dsb-data\                      (or %APPDATA%\DevStackBox\ for installed mode)
   www/           <- User's PHP projects
   mysql-data/    <- MariaDB database files
@@ -224,7 +245,7 @@ This allows migration scripts to transform old config formats when the app updat
 
 Every call from React to Rust goes through `src/lib/tauri.ts:safeInvoke()`.
 
-```
+```text
 React Component
   --> safeInvoke("command_name", { param: value })   [src/lib/tauri.ts]
       --> Tauri invoke()                             [Tauri IPC bridge]
@@ -235,7 +256,8 @@ React Component
 **Rules:**
 
 - Always use `safeInvoke` (not raw `invoke`) so it works in browser dev mode too
-- All command names live in `src/lib/constants.ts:TAURI_COMMANDS` - never hardcode strings
+- Shared command names live in `src/lib/commands.ts:TAURI_COMMANDS`; expand that file instead of creating new scattered constants
+- Current gap: some older components still hardcode command strings and should be migrated into `TAURI_COMMANDS`
 - All commands are in `src-tauri/src/lib.rs` - do NOT use `service_manager.rs`
 - Commands return `Result<T, String>` - errors are caught in the component
 
@@ -245,7 +267,7 @@ React Component
 
 For real-time data (log streaming, service status changes), Rust uses Tauri events:
 
-```
+```text
 Rust (lib.rs)
   --> app_handle.emit("event-name", payload)
       --> Frontend listener
@@ -290,7 +312,7 @@ There is no global state manager (no Redux, Zustand, etc.). State is managed:
 
 ## Build Pipeline
 
-```
+```text
 pnpm tauri:build
   --> npm run build (tsc && vite build)  --> dist/
   --> cargo build --release              --> src-tauri/target/release/
@@ -308,7 +330,7 @@ Resources bundled into the installer are declared in `tauri.conf.json`:
 ## Adding a New Feature: Checklist
 
 1. **Rust backend command** (if needed): Add `#[tauri::command] async fn my_command()` to `lib.rs`, and add it to `invoke_handler` in `run()` at the bottom of `lib.rs`.
-2. **Frontend constant**: Add the command name to `TAURI_COMMANDS` in `src/lib/constants.ts`.
+2. **Frontend constant**: Add the command name to `TAURI_COMMANDS` in `src/lib/commands.ts`.
 3. **TypeScript types**: Add any new types to `src/types/services.ts`.
 4. **React component**: Create component in appropriate folder. Style with Tailwind + shadcn/ui only.
 5. **Translation keys**: Add EN and HI strings to `locales/en.json` and `locales/hi.json`.

@@ -7,13 +7,13 @@ Read this before writing any new code.
 
 ## 1. Prerequisites
 
-| Tool      | Version | Install                    |
-| --------- | ------- | -------------------------- |
-| Node.js   | 18+     | https://nodejs.org/        |
-| pnpm      | latest  | `npm install -g pnpm`      |
-| Rust      | stable  | https://rustup.rs/         |
-| Tauri CLI | 2.x     | bundled in devDependencies |
-| Git       | any     | https://git-scm.com/       |
+| Tool      | Version | Install                             |
+| --------- | ------- | ----------------------------------- |
+| Node.js   | 18+     | [nodejs.org](https://nodejs.org/)   |
+| pnpm      | latest  | `npm install -g pnpm`               |
+| Rust      | stable  | [rustup.rs](https://rustup.rs/)     |
+| Tauri CLI | 2.x     | bundled in devDependencies          |
+| Git       | any     | [git-scm.com](https://git-scm.com/) |
 
 Verify your setup:
 
@@ -115,8 +115,9 @@ Do NOT show everything at once. Overloaded UIs drive users away.
 ### Layout Rules (do not change these)
 
 - Two-panel layout: fixed sidebar (220-260px) + main content area
-- Top bar: app title, search/command palette, theme toggle, running status, tray button
-- Sidebar: EXACTLY 6 items — Dashboard, Services, Logs, Configurations, PHP Versions, Settings
+- Top bar: app title, version badge, auto updater, language switcher, theme toggle
+- Command palette: keyboard-driven via `Ctrl+P` in the current implementation
+- Sidebar: EXACTLY 6 items in the current app — Dashboard, Services, Projects, Logs, Settings, About
 - Main area: card-based, spacious, clean — no dense tables, no charts
 
 See ARCHITECTURE.md for the full layout diagram.
@@ -125,7 +126,7 @@ See ARCHITECTURE.md for the full layout diagram.
 
 Each service card follows this exact structure:
 
-```
+```text
 [ Apache ]          Running ●
 Port: 80   PID: 1234
 [ Start ]  [ Stop ]  [ Logs ]  [ Config ]
@@ -147,11 +148,11 @@ Colors: green = running, red = stopped, yellow = warning/starting.
 The command palette (`Ctrl+P`, component: `command-palette.tsx`) is a first-class feature.  
 Add any new quick action to the command palette. Example entries:
 
-```
+```text
 > Start Apache
 > Stop MySQL
 > Open php.ini
-> Switch PHP 8.3
+> Switch PHP 8.4
 > Open www/ folder
 ```
 
@@ -160,6 +161,13 @@ Add any new quick action to the command palette. Example entries:
 ## 6. Project Coding Rules
 
 ### Frontend (React/TypeScript)
+
+**Reuse-first workflow:**
+
+- Check `docs/COMPONENTS.md` before creating any component, page section, dialog, or status widget.
+- If an existing component is close, extend it with props, variants, or children instead of copying markup.
+- If the same command, type, or UI pattern appears in more than one place, centralize it immediately.
+- Keep the same action looking and behaving the same everywhere in the app.
 
 **Styling:**
 
@@ -178,7 +186,7 @@ Add any new quick action to the command palette. Example entries:
 **Tauri calls:**
 
 - Always use `safeInvoke()` from `src/lib/tauri.ts`
-- Always use command name from `TAURI_COMMANDS` in `src/lib/constants.ts`
+- Always use command name from `TAURI_COMMANDS` in `src/lib/commands.ts`
 - Never hardcode command name strings in components
 
 **Text / i18n:**
@@ -238,13 +246,15 @@ Add any new quick action to the command palette. Example entries:
    export { MyPage } from "./my-page";
    ```
 
-3. Add to sidebar in `src/components/sidebar.tsx` (navItems array).
+3. Add to sidebar in `src/components/sidebar.tsx` (`menuItems` array).
 
 4. Add to router in `src/App.tsx` (the `renderPage()` function or the page switch).
 
 5. Add translation keys to `locales/en.json` and `locales/hi.json`.
 
 6. Update `docs/COMPONENTS.md` with the new page.
+
+7. If the page is mostly composed of existing cards, dialogs, or sections, reuse those components instead of creating page-specific duplicates.
 
 ---
 
@@ -263,7 +273,7 @@ Add any new quick action to the command palette. Example entries:
 
 2. Register it in the `invoke_handler` inside `run()` at the bottom of `lib.rs`.
 
-3. Add the constant to `src/lib/constants.ts`.
+3. Add the constant to `src/lib/commands.ts`.
 
 4. Call from frontend with `safeInvoke`.
 
@@ -286,6 +296,8 @@ npx shadcn add alert
 ```
 
 This generates the component in `src/components/ui/`. Do NOT manually edit these files. Document it in `docs/COMPONENTS.md`.
+
+Do not generate a new shadcn component if an existing one plus composition solves the problem. Prefer reuse over surface-area growth.
 
 ---
 
@@ -356,7 +368,19 @@ Rule: Version must be clean semver only: `X.Y.Z` - no hyphens, no letters (MSI r
 
 ---
 
-## 12. File Locations to Never Touch
+## 13. Reuse Checklist Before You Add Code
+
+1. Does a component with the same shape already exist in `docs/COMPONENTS.md`?
+2. Can the existing component accept props, children, or a variant instead?
+3. Is there already a shared Tauri command name in `src/lib/commands.ts`?
+4. Is there already a shared type in `src/types/services.ts`?
+5. Will the new UI look and behave the same as the rest of the app?
+
+If any answer is yes, extend the shared path instead of creating a duplicate implementation.
+
+---
+
+## 14. File Locations to Never Touch
 
 | File/Dir                  | Why                                                          |
 | ------------------------- | ------------------------------------------------------------ |
@@ -369,7 +393,7 @@ Rule: Version must be clean semver only: `X.Y.Z` - no hyphens, no letters (MSI r
 
 ---
 
-## 13. Git Workflow
+## 15. Git Workflow
 
 1. Never commit directly to `main`.
 2. Branch: `git checkout -b feature/my-feature`
@@ -380,7 +404,7 @@ Do NOT push with `--force` unless you know exactly what you are doing.
 
 ---
 
-## 14. Common pnpm Commands
+## 16. Common pnpm Commands
 
 ```bash
 pnpm install              # Install all dependencies

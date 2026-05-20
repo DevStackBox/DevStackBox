@@ -229,11 +229,11 @@ See `docs/MSI_TROUBLESHOOTING.md` for more detail.
 
 **Meaning:** Frontend is calling a Tauri command that does not exist in the backend.
 
-**Likely cause:** Command was renamed in Rust but the constant in `src/lib/constants.ts` was not updated.
+**Likely cause:** Command was renamed in Rust but the constant in `src/lib/commands.ts` was not updated.
 
 **Fix:**
 
-1. Check `TAURI_COMMANDS` in `src/lib/constants.ts`
+1. Check `TAURI_COMMANDS` in `src/lib/commands.ts`
 2. Check `invoke_handler` in `src-tauri/src/lib.rs`
 3. Ensure the name matches exactly (case-sensitive)
 
@@ -274,7 +274,7 @@ Most common causes:
 1. Check `docs/KNOWN_ISSUES.md` — your issue may be documented there
 2. Use the Debug panel in dev builds to inspect path resolution
 3. Check the relevant log file in `logs/`
-4. Open a GitHub Issue: https://github.com/ProgrammerNomad/DevStackBox/issues
+4. Open a GitHub Issue: [ProgrammerNomad/DevStackBox issues](https://github.com/ProgrammerNomad/DevStackBox/issues)
    - Include DevStackBox version
    - Include OS version
    - Include the exact error message

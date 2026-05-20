@@ -13,54 +13,32 @@ Every command name used in the frontend must match exactly what is listed here.
 1. Find the command you need in the table below.
 2. Check its parameters and return type.
 3. Use the exact command name string from the "Command Name" column.
-4. Add it to `src/lib/constants.ts:TAURI_COMMANDS` if it is not already there.
+4. Add it to `src/lib/commands.ts:TAURI_COMMANDS` if it is not already there.
 5. Call it via `safeInvoke<ReturnType>("command_name", { params })`.
 
 ---
 
 ## Frontend Constants File
 
-All command names are centralized in `src/lib/constants.ts`. This is the only place command name strings should live.
+Shared command names are being centralized in `src/lib/commands.ts`. This should become the only place command name strings live.
+
+**Current state:** Service commands are already mapped in `TAURI_COMMANDS.services`. Config-related calls still need to be migrated from hardcoded strings.
 
 **Pattern:**
 
 ```ts
-// src/lib/constants.ts
+// src/lib/commands.ts
 export const TAURI_COMMANDS = {
-  system: {
-    checkBinaries: "check_binaries",
-    stopAllServices: "stop_all_services",
-    createDirectoryStructure: "create_directory_structure",
-    debugPaths: "debug_paths",
-    debugInstallation: "debug_installation",
-  },
   services: {
-    startMysql: "start_mysql",
-    stopMysql: "stop_mysql",
     getMysqlStatus: "get_mysql_status",
     toggleMysql: "toggle_mysql",
-    startApache: "start_apache",
-    stopApache: "stop_apache",
     getApacheStatus: "get_apache_status",
     toggleApache: "toggle_apache",
-    testApacheConfig: "test_apache_config",
     getPhpStatus: "get_php_status",
     togglePhp: "toggle_php",
-    getPhpVersions: "get_php_versions",
-    switchPhpVersion: "switch_php_version",
-    downloadPhpVersion: "download_php_version",
+    getServiceLogs: "get_service_logs",
     backupMysqlDatabase: "backup_mysql_database",
     openPhpTerminal: "open_php_terminal",
-  },
-  logs: {
-    getServiceLogs: "get_service_logs",
-  },
-  config: {
-    readConfig: "read_config",
-    updateConfig: "update_config",
-    backupConfig: "backup_config",
-    listConfigBackups: "list_config_backups",
-    restoreConfigBackup: "restore_config_backup",
   },
 };
 ```
@@ -258,7 +236,7 @@ These are commands the frontend calls or will need but do not yet exist in Rust:
    ]
    ```
 
-3. Add the constant to `src/lib/constants.ts`:
+3. Add the constant to `src/lib/commands.ts`:
 
    ```ts
    export const TAURI_COMMANDS = {

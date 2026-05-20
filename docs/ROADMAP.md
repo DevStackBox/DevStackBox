@@ -14,7 +14,7 @@ It is NOT a universal developer infrastructure platform. Scope is intentionally 
 **Core Stack (always bundled in installer):**
 
 - Apache HTTP Server
-- PHP 8.3 (one version bundled; additional versions are downloadable)
+- PHP 8.2 (one version bundled today; additional versions are downloadable later)
 - MariaDB (MySQL-compatible; command names and binary use `mysql`/`mysqld` by convention)
 - phpMyAdmin
 
@@ -33,12 +33,12 @@ Do NOT require users to download core components on first launch. Bad first-laun
 | Component           | Strategy      | Notes                                                            |
 | ------------------- | ------------- | ---------------------------------------------------------------- |
 | Apache              | Bundled       | Core requirement, no internet needed                             |
-| PHP 8.3             | Bundled       | One stable version, works immediately                            |
+| PHP 8.2             | Bundled       | Current default version, works immediately                       |
 | MariaDB             | Bundled       | Database server (commands/binary use mysql naming by convention) |
 | phpMyAdmin          | Bundled       | Developers expect it, keep it bundled                            |
 | Default configs     | Bundled       | Required for first launch                                        |
 | Sample `www/` page  | Bundled       | Confirms stack works immediately                                 |
-| PHP 8.1 / 8.2 / 8.4 | Downloadable  | Optional, on demand via PHP Versions UI                          |
+| PHP 8.1 / 8.3 / 8.4 | Downloadable  | Optional future versions on demand via PHP Versions UI           |
 | Node.js support     | Future module | Not in v1                                                        |
 | Redis               | Future module | Not in v1                                                        |
 | PostgreSQL          | Future module | Not in v1                                                        |
@@ -90,7 +90,7 @@ The project has strong architecture and documentation but is in the "dangerous m
 ### 1.6 Standardize Command Constants
 
 - [ ] Audit ALL `safeInvoke()` calls across frontend
-- [ ] Move every hardcoded command string into `TAURI_COMMANDS` in `src/lib/constants.ts`
+- [ ] Move every hardcoded command string into `TAURI_COMMANDS` in `src/lib/commands.ts`
 - [ ] Zero hardcoded strings in component files
 
 ### 1.7 Fix DebugPanel in Production
@@ -121,9 +121,9 @@ See `docs/UPDATES_AND_MIGRATIONS.md` for the full architecture.
 **Goal:** Split `lib.rs` (~1600 lines) into maintainable modules.  
 Do this as a dedicated refactor task. Do NOT mix with feature work.
 
-### Target structure:
+### Target structure
 
-```
+```text
 src-tauri/src/
   lib.rs                 (run() + module declarations only)
   commands/
@@ -146,7 +146,7 @@ src-tauri/src/
 
 ### 3.1 Additional PHP Version Downloader
 
-**Note:** Base PHP 8.3 is ALWAYS bundled in the installer. This feature adds support for downloading _additional_ PHP versions (8.1, 8.2, 8.4, etc.) on demand. It does NOT replace the bundled PHP.
+**Note:** Base PHP 8.2 is bundled today. This feature adds support for downloading additional PHP versions (8.1, 8.3, 8.4, etc.) on demand. It does not replace the bundled PHP unless the product decision changes later.
 
 - [ ] Download PHP zip from `windows.php.net` using Tauri HTTP plugin
 - [ ] Extract to `php/{version}/`
@@ -186,7 +186,7 @@ src-tauri/src/
 ### 4.1 MSI Reliability and Bundled Stack Verification
 
 - [ ] Verify MariaDB binaries are in place and correctly configured in installer bundle
-- [ ] Verify bundled stack installs and starts correctly: Apache + PHP 8.3 + MariaDB + phpMyAdmin
+- [ ] Verify bundled stack installs and starts correctly: Apache + PHP 8.2 + MariaDB + phpMyAdmin
 - [ ] Test installation path options (`C:\dsb`, `C:\Program Files\DevStackBox`)
 - [ ] Verify all binaries are in expected paths after MSI install
 - [ ] Test clean install and upgrade install

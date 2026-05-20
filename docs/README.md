@@ -58,6 +58,8 @@
 6. **Bugs/debt** -> `docs/KNOWN_ISSUES.md` (fix critical issues before adding features)
 7. **Auto-update/paths** -> `docs/UPDATES_AND_MIGRATIONS.md` (before touching paths or update logic)
 
+**Reuse-first rule:** Before adding a new page, card, modal, status block, action row, or service helper, check `docs/COMPONENTS.md` and extend an existing component if the job is similar. Prefer shared props and composition over copy-pasting UI or logic.
+
 ---
 
 ## Before You Start Any Task
@@ -70,6 +72,7 @@ Answer these questions:
 4. Does the Tauri command I need already exist? -> Check [TAURI_COMMANDS.md](TAURI_COMMANDS.md)
 5. Am I building on broken code? -> Check [KNOWN_ISSUES.md](KNOWN_ISSUES.md)
 6. Where does my new file go? -> Check [ARCHITECTURE.md](ARCHITECTURE.md)
+7. Can I extend an existing component or command wrapper instead of adding a parallel one? -> Check [COMPONENTS.md](COMPONENTS.md) and `src/lib/commands.ts`
 
 ---
 
@@ -82,9 +85,16 @@ Answer these questions:
 - Framer Motion for animations
 - i18next for English and Hindi translations
 
-**Current state (v0.1.6):** MySQL and Apache work. Config editor works. Logs are basic. PHP version switching is partial. Download, real-time logs, and tray are incomplete.
+**Current state (v0.1.6):** MySQL and Apache controls work. The config editor works. Logs are basic and manually refreshed. PHP version selection is UI-complete but backend download/install is still incomplete. The system tray surface exists in the codebase but is not wired into the main app flow.
 
 **Next milestone (v0.2.0):** Complete Phase 1 (stability) and Phase 2 (modularize backend). See [ROADMAP.md](ROADMAP.md).
+
+## Documentation Audit Notes
+
+- The current sidebar contains six items: Dashboard, Services, Projects, Logs, Settings, About.
+- Only Dashboard, Services, Settings, and About are active today. Projects and Logs are placeholder surfaces.
+- The command palette exists and opens with `Ctrl+P`, but there is no always-visible trigger in the current top bar.
+- Shared frontend command names are defined in `src/lib/commands.ts`, not `src/lib/constants.ts`.
 
 ---
 

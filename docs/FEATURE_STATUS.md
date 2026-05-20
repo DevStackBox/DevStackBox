@@ -21,24 +21,24 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ## Core Infrastructure
 
-| Feature                        | Status  | Notes                                                            |
-| ------------------------------ | ------- | ---------------------------------------------------------------- |
-| Tauri 2 setup                  | DONE    | v2.1, tray-icon, updater plugins                                 |
-| Vite + React 18                | DONE    |                                                                  |
-| Tailwind CSS                   | DONE    | v3, compiled to ~27KB                                            |
-| shadcn/ui                      | DONE    | Components in `src/components/ui/`                               |
-| Framer Motion                  | DONE    | v11                                                              |
-| i18next (EN + HI)              | DONE    | `locales/en.json` and `locales/hi.json`                          |
-| Dark / Light mode              | DONE    | Tailwind + shadcn theme system                                   |
-| safeInvoke() wrapper           | DONE    | Browser mode fallback works                                      |
-| MSI installer                  | DONE    | 288.9 MB                                                         |
-| NSIS installer                 | DONE    | 147.7 MB                                                         |
-| GitHub Actions CI/CD           | DONE    | Builds on push to main                                           |
-| App version constant           | DONE    | `src/lib/version.ts`                                             |
-| Shared TypeScript types        | DONE    | `src/types/services.ts`                                          |
-| TAURI_COMMANDS constants       | PARTIAL | `src/lib/constants.ts` - needs audit                             |
-| Bundled stack (Apache+PHP+DB)  | DONE    | All core binaries ship in installer - no internet required       |
-| First-launch onboarding screen | PLANNED | Show Apache/PHP/MariaDB ready status after install, then "Start" |
+| Feature                        | Status  | Notes                                                                   |
+| ------------------------------ | ------- | ----------------------------------------------------------------------- |
+| Tauri 2 setup                  | DONE    | v2.1, tray-icon, updater plugins                                        |
+| Vite + React 18                | DONE    |                                                                         |
+| Tailwind CSS                   | DONE    | v3, compiled to ~27KB                                                   |
+| shadcn/ui                      | DONE    | Components in `src/components/ui/`                                      |
+| Framer Motion                  | DONE    | v11                                                                     |
+| i18next (EN + HI)              | DONE    | `locales/en.json` and `locales/hi.json`                                 |
+| Dark / Light mode              | DONE    | Tailwind + shadcn theme system                                          |
+| safeInvoke() wrapper           | DONE    | Browser mode fallback works                                             |
+| MSI installer                  | DONE    | 288.9 MB                                                                |
+| NSIS installer                 | DONE    | 147.7 MB                                                                |
+| GitHub Actions CI/CD           | DONE    | Builds on push to main                                                  |
+| App version constant           | DONE    | `src/lib/version.ts`                                                    |
+| Shared TypeScript types        | DONE    | `src/types/services.ts`                                                 |
+| TAURI_COMMANDS constants       | PARTIAL | `src/lib/commands.ts` covers service commands and still needs expansion |
+| Bundled stack (Apache+PHP+DB)  | DONE    | All core binaries ship in installer - no internet required              |
+| First-launch onboarding screen | PLANNED | Show Apache/PHP/MariaDB ready status after install, then "Start"        |
 
 ---
 
@@ -111,13 +111,13 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ## PHP Version Management
 
-| Feature                       | Status  | Notes                                                                                                                                        |
-| ----------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| List PHP versions (installed) | DONE    | `get_php_versions` scans `php/` dir                                                                                                          |
-| PHP version selector UI       | DONE    | `php-version-selector.tsx`                                                                                                                   |
-| Switch PHP version            | DONE    | Creates `php/current` junction (Windows)                                                                                                     |
-| Download PHP version          | STUB    | `download_php_version` creates placeholder - no real download. This is for ADDITIONAL versions only — PHP 8.3 is always bundled in installer |
-| PHP Extension management      | PLANNED | Enable/disable extensions in php.ini                                                                                                         |
+| Feature                       | Status  | Notes                                                                      |
+| ----------------------------- | ------- | -------------------------------------------------------------------------- |
+| List PHP versions (installed) | DONE    | `get_php_versions` scans `php/` dir                                        |
+| PHP version selector UI       | DONE    | `php-version-selector.tsx`                                                 |
+| Switch PHP version            | DONE    | Creates `php/current` junction (Windows)                                   |
+| Download PHP version          | STUB    | `download_php_version` is placeholder-only; extra versions are future work |
+| PHP Extension management      | PLANNED | Enable/disable extensions in php.ini                                       |
 
 ---
 

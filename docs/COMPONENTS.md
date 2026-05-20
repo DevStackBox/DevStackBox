@@ -3,6 +3,22 @@
 **Single Source of Truth for all React components.**  
 Before writing a new component, check this file to see if one already exists that can be reused or extended.
 
+**Primary rule:** If the UI, action, or layout is similar to an existing component, extend the existing component with props, slots, or children before creating a sibling component.
+
+## Reuse Workflow
+
+1. Check the Quick Lookup table for an existing match.
+2. If the behavior is similar, extend the existing component instead of copying its JSX or logic.
+3. If the logic is shared across services, move it into the shared component or a shared helper.
+4. If you must create something new, make it generic enough for the next similar use case and document it here immediately.
+
+## Reuse Priorities
+
+- Service presentation: reuse `ServiceCard`, `StatusBadge`, `ServiceActions`, and `LogViewer`.
+- Shared dialogs and modal flows: reuse `ConfigEditor`, `PHPVersionSelector`, and shadcn `Dialog` primitives.
+- Navigation and app shell: reuse `Sidebar`, `CommandPalette`, `ThemeToggle`, `LanguageSwitcher`, and `AutoUpdater`.
+- Shared service logic: reuse `ServiceManager`, `safeInvoke()`, `TAURI_COMMANDS`, and types in `src/types/services.ts`.
+
 ---
 
 ## Quick Lookup
@@ -34,11 +50,15 @@ Before writing a new component, check this file to see if one already exists tha
 
 ## Pages
 
-| Page Component   | File                       | Route                 | Status         |
-| ---------------- | -------------------------- | --------------------- | -------------- |
-| `DashboardPage`  | `pages/dashboard.tsx`      | `dashboard` (default) | Working        |
-| `ServicesPage`   | `pages/services.tsx`       | `services`            | Partial        |
-| `SystemTrayPage` | `pages/SystemTrayPage.tsx` | `tray`                | Not functional |
+| Page Component   | File                       | Route                 | Status       |
+| ---------------- | -------------------------- | --------------------- | ------------ |
+| `DashboardPage`  | `pages/dashboard.tsx`      | `dashboard` (default) | Working      |
+| `ServicesPage`   | `pages/services.tsx`       | `services`            | Partial      |
+| `Projects`       | `App.tsx` inline branch    | `projects`            | Placeholder  |
+| `Logs`           | `App.tsx` inline branch    | `logs`                | Placeholder  |
+| `Settings`       | `App.tsx` inline branch    | `settings`            | Partial      |
+| `About`          | `App.tsx` inline branch    | `about`               | Working      |
+| `SystemTrayPage` | `pages/SystemTrayPage.tsx` | not mounted           | Experimental |
 
 ---
 
@@ -101,11 +121,11 @@ interface SidebarProps {
   currentPage: string;
   onPageChange: (page: string) => void;
   collapsed: boolean;
-  onCollapsedChange: (collapsed: boolean) => void;
+  onToggleCollapse: () => void;
 }
 ```
 
-**Pages registered:** dashboard, services, tray  
+**Pages registered:** dashboard, services, projects, logs, settings, about  
 **Rule:** Add new pages here and in `App.tsx`.
 
 ---
@@ -118,10 +138,10 @@ interface SidebarProps {
 
 ```ts
 interface CommandPaletteProps {
-  open: boolean;
+  isOpen: boolean;
   onClose: () => void;
-  onServiceToggle: (service: string) => void;
   onPageChange: (page: string) => void;
+  onServiceToggle: (service: string) => void;
 }
 ```
 
@@ -137,15 +157,15 @@ interface CommandPaletteProps {
 
 ```ts
 interface ConfigEditorProps {
-  open: boolean;
+  isOpen: boolean;
   onClose: () => void;
   service: ServiceName; // "mysql" | "apache" | "php" | "phpmyadmin"
 }
 ```
 
-**Tauri commands used:** `read_config`, `update_config`, `backup_config`, `list_config_backups`, `restore_config_backup`  
-**Reuse:** Yes. Pass a different `service` prop to edit any service's config.  
-**Note:** Uses plain `<textarea>` for now. Monaco editor is a planned upgrade.
+**Tauri commands used:** `read_config`, `update_config`, `backup_config`  
+**Reuse:** Yes. Pass a different `service` prop to edit any supported service config.  
+**Extension rule:** Add validation, syntax helpers, or backup history to this component instead of building separate config dialogs per service.
 
 ---
 
@@ -166,15 +186,15 @@ interface ConfigEditorProps {
 
 ```ts
 interface PHPVersionSelectorProps {
-  open: boolean;
+  isOpen: boolean;
   onClose: () => void;
   currentVersion: string;
   onVersionChange: (version: string) => void;
 }
 ```
 
-**Tauri commands used:** `get_php_versions`, `switch_php_version`, `download_php_version`  
-**Note:** `download_php_version` is currently a stub - no real download happens.
+**Status:** Currently a frontend-managed selector with simulated downloads and local version switching state.  
+**Extension rule:** Keep version-card layout centralized here. Do not create separate selectors elsewhere.
 
 ---
 
@@ -186,18 +206,23 @@ interface PHPVersionSelectorProps {
 
 ```ts
 interface ServiceManagerProps {
-  onStatusChange?: (statuses: {
+  compact?: boolean;
+  onServiceToggle?: (service: string, status: boolean) => void;
+  onOpenConfig?: (service: string) => void;
+  onViewLogs?: (service: string) => void;
+  onOpenPHPVersionSelector?: () => void;
+  currentPhpVersion?: string;
+  onStatusesChange?: (statuses: {
     apache: ServiceStatus;
     mysql: ServiceStatus;
     php: ServiceStatus;
   }) => void;
-  onServiceToggle?: (service: string, status: boolean) => void;
-  showControls?: boolean;
 }
 ```
 
 **Tauri commands used:** `get_apache_status`, `get_mysql_status`, `get_php_status`, `toggle_mysql`, `toggle_apache`, `toggle_php`, `backup_mysql_database`, `open_php_terminal`  
 **Rule:** All service polling logic lives here. Do NOT create another polling loop in any other component.
+**Extension rule:** New cross-service actions should be added here or below this layer, not reimplemented in each service card.
 
 ---
 
@@ -262,13 +287,20 @@ interface StatusBadgeProps {
 
 ```ts
 interface LogViewerProps {
-  content: string;
-  maxLines?: number; // Default: 500
-  autoScroll?: boolean; // Default: true
+  logs: string;
+  onClear?: () => void;
+  onRefresh?: () => void;
+  title?: string;
+  description?: string;
+  searchable?: boolean;
+  autoScroll?: boolean;
+  onAutoScrollChange?: (enabled: boolean) => void;
+  loading?: boolean;
 }
 ```
 
-**Note:** Currently renders plain text. Real-time streaming not yet implemented.
+**Reuse:** Use this for log display, search, copy, download, and clear behavior instead of making per-service log blocks.  
+**Note:** Currently renders plain text with manual refresh. Real-time streaming is not implemented yet.
 
 ---
 
@@ -349,6 +381,8 @@ export interface PHPVersion {
 2. All animations use Framer Motion. No CSS keyframes.
 3. All text that shows to the user goes through `useTranslation()` from i18next.
 4. All Tauri calls go through `safeInvoke()` from `lib/tauri.ts`.
-5. Use shadcn/ui `Dialog` for modals, `DropdownMenu` for menus, `Tabs` for sub-navigation.
+5. Command names must come from `src/lib/commands.ts`. Do not hardcode command strings in new components.
 6. Support dark/light mode automatically by using Tailwind `dark:` variants or shadcn/ui components.
-7. Mark new components in this file as soon as you create them.
+7. Use shadcn/ui `Dialog` for modals, `DropdownMenu` for menus, `Tabs` for sub-navigation.
+8. Extend existing shared components before creating parallel ones for similar UI.
+9. Mark new components in this file as soon as you create them.

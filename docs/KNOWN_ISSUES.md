@@ -137,10 +137,10 @@ Remove `SERVICE_STATUS` entirely and always use `is_process_running()` for statu
 
 ---
 
-### ISSUE-006: `constants.ts` Does Not Include All Commands
+### ISSUE-006: `commands.ts` Does Not Include All Commands
 
 **Priority:** HIGH  
-**File:** `src/lib/constants.ts`  
+**File:** `src/lib/commands.ts`  
 **Status:** Unresolved
 
 **Description:**  
@@ -152,7 +152,7 @@ If a command is renamed in Rust, the frontend will break silently in places usin
 **Fix:**
 
 1. Audit all `safeInvoke` calls across the frontend
-2. Move every command name into `TAURI_COMMANDS` in `src/lib/constants.ts`
+2. Move every command name into `TAURI_COMMANDS` in `src/lib/commands.ts`
 3. Replace hardcoded strings with `TAURI_COMMANDS.group.commandName`
 
 ---
@@ -178,7 +178,7 @@ Hard to navigate, hard to maintain, slow to understand for new contributors.
 **Fix:**  
 Split into modules:
 
-```
+```text
 src-tauri/src/
   lib.rs            (just run() and module declarations)
   commands/
