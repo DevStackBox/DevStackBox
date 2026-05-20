@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Settings, Activity, RefreshCw } from "lucide-react";
 import { LogViewer } from "@/components/services";
 import { safeInvoke, isTauri } from "@/lib/tauri";
+import { TAURI_COMMANDS } from "@/lib/commands";
 import type { ServiceName } from "@/types/services";
 
 interface ServicesPageProps {
@@ -51,9 +52,12 @@ export function ServicesPage({
         return;
       }
 
-      const logContent = await safeInvoke<string>("get_service_logs", {
-        service,
-      });
+      const logContent = await safeInvoke<string>(
+        TAURI_COMMANDS.services.getServiceLogs,
+        {
+          service,
+        },
+      );
       setLogs(logContent || `No logs available for ${service}`);
     } catch (error) {
       setLogs(`Error reading logs: ${error}`);
@@ -73,6 +77,10 @@ export function ServicesPage({
 
   const clearLogs = () => {
     setLogs("");
+  };
+
+  const refreshServices = () => {
+    refreshLogs(selectedService);
   };
 
   return (

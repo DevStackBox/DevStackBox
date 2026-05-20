@@ -1,4 +1,4 @@
-export { ApacheService, type ServiceStatus } from "./apache-service";
+export { ApacheService } from "./apache-service";
 export { MySQLService } from "./mysql-service";
 export { PHPService } from "./php-service";
 export { ServiceManager } from "./service-manager";
@@ -19,6 +19,7 @@ export {
 export { LogViewer } from "./log-viewer";
 
 // Re-export common types for convenience
-export type { ServiceStatus as ApacheServiceStatus } from "./apache-service";
-export type { ServiceStatus as MySQLServiceStatus } from "./mysql-service";
-export type { ServiceStatus as PHPServiceStatus } from "./php-service";
+export type { ServiceStatus } from "@/types/services";
+export type { ServiceStatus as ApacheServiceStatus } from "@/types/services";
+export type { ServiceStatus as MySQLServiceStatus } from "@/types/services";
+export type { ServiceStatus as PHPServiceStatus } from "@/types/services";

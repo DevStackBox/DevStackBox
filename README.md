@@ -13,6 +13,7 @@ A lightweight, portable, open-source local development environment for PHP devel
 ## 🎉 Recent Updates (v0.1.6)
 
 ### ✅ **What's New:**
+
 - **✅ MSI Compatibility Fixed:** Clean semantic versioning (v0.1.6) for Windows MSI installer
 - **✅ Complete UI Restoration:** Fixed accidentally deleted CSS and core files
 - **✅ Both Installer Formats:** MSI (288.9 MB) and NSIS (147.7 MB) available
@@ -20,6 +21,7 @@ A lightweight, portable, open-source local development environment for PHP devel
 - **✅ Project Structure Optimized:** Clean codebase following Vite + React + Tauri best practices
 
 ### 📦 **Download Now:**
+
 - **Windows MSI Installer:** [DevStackBox_0.1.6_x64_en-US.msi](https://github.com/ProgrammerNomad/DevStackBox/releases/latest)
 - **Windows NSIS Installer:** [DevStackBox_0.1.6_x64-setup.exe](https://github.com/ProgrammerNomad/DevStackBox/releases/latest)
 
@@ -27,42 +29,42 @@ A lightweight, portable, open-source local development environment for PHP devel
 
 ## 🗂 Feature Summary Table
 
-| Feature                                      | Status        | Description                                                        |
-|-----------------------------------------------|--------------|--------------------------------------------------------------------|
-| **MySQL Database**                           | ✅ Available  | Embedded MySQL server with GUI management                          |
-| **phpMyAdmin Integration**                    | ✅ Available  | Built-in database management interface                             |
-| **Modern UI (Vite+React+Tailwind+shadcn/ui)** | ✅ Available  | Fast, responsive, utility-first design with animations             |
-| **Config Management (Backup/Restore)**        | ✅ Available  | Syntax-highlighting and backup/restore for config files            |
-| **Clean Semantic Versioning**                | ✅ Available  | MSI/NSIS compatible version format (v0.1.6)                       |
-| **Multi-Format Installers**                  | ✅ Available  | Windows MSI (288.9 MB) and NSIS (147.7 MB) installers             |
-| **Multilanguage UI**                          | ✅ Available  | i18next-based internationalization with English and Hindi support  |
-| **Crash & Bug Reporting via GitHub**          | 🔄 In Progress| User-initiated crash/bug reports with pre-filled GitHub Issues     |
-| **Logs Viewer**                               | 🔄 In Progress| View MySQL, phpMyAdmin, Apache, PHP, and app logs with real-time search/filter |
-| **System Tray Integration**                   | 🔄 In Progress| Minimize to tray, quick actions                                    |
-| **Auto-Update Support**                       | 🔄 In Progress| Tauri auto-updates via GitHub Releases                             |
-| **Apache HTTP Server**                        | 🕓 Planned    | Portable Apache, vhost & HTTPS management                          |
-| **Multiple PHP Versions**                     | 🕓 Planned    | Default PHP 8.2, others downloadable via in-app installer          |
-| **One-Click App Installers**                  | 🕓 Planned    | Install WordPress, Laravel, more with simple UI                    |
-| **PHP Extensions Management**                 | 🕓 Planned    | Enable/disable extensions per PHP version                          |
-| **Security Analyzer**                         | 🕓 Planned    | Scan PHP configs/code for security issues                          |
-| **Mail Testing Tools**                        | 🕓 Planned    | Built-in Mailhog or similar for email capture                      |
-| **Portable Mode / Zero Installation**         | 🕓 Planned    | All data/settings/logs in app folder                               |
-| **Database Backup/Restore (One-Click)**       | 🕓 Planned    | UI to export/import MySQL databases                                |
-| **MySQL User Management**                     | 🕓 Planned    | Create/edit MySQL users/privileges via UI                          |
-| **Quick Launch Tools**                        | 🕓 Planned    | Terminal (PHP/MySQL CLI), copy connection string, etc.             |
-| **Full App/Data Backup/Restore**              | 🕓 Planned    | Backup configs, databases, logs in one click                       |
-| **Automatic Virtual Host Management**         | 🕓 Planned    | Pretty URLs like `myapp.test`                                      |
-| **HTTPS/SSL for Local Sites**                 | 🕓 Planned    | One-click SSL for local domains and phpMyAdmin                     |
-| **Multilanguage UI**                          | ✅ Available  | i18next-based internationalization with English and Hindi support  |
-| **Project Templates/Cloning**                 | 🕓 Planned    | Clone from Git or use templates for new projects                   |
-| **Composer Integration**                      | 🕓 Planned    | Global/per-project Composer support                                |
-| **PHP INI & Apache Config Editors**           | 🕓 Planned    | User-friendly config editing                                       |
-| **PHP Error Display Toggle**                  | 🕓 Planned    | Enable/disable display_errors from UI                              |
-| **Service Status & Tray Notifications**       | 🕓 Planned    | Tray notifications for service events                              |
-| **Portable PHP CLI**                          | 🕓 Planned    | Terminal with PHP version selector                                 |
-| **Bundled Tools (curl, git, node, npm, etc.)**| 🕓 Planned    | Optionally bundle common CLI tools                                 |
-| **Log Viewer Enhancements**                   | 🕓 Planned    | Real-time, filterable, tabbed log viewer for all services/apps     |
-| **Project Full Backup/Restore**               | 🕓 Planned    | Backup/restore www files, configs, databases                       |
+| Feature                                        | Status         | Description                                                                    |
+| ---------------------------------------------- | -------------- | ------------------------------------------------------------------------------ |
+| **MySQL Database**                             | ✅ Available   | Embedded MySQL server with GUI management                                      |
+| **phpMyAdmin Integration**                     | ✅ Available   | Built-in database management interface                                         |
+| **Modern UI (Vite+React+Tailwind+shadcn/ui)**  | ✅ Available   | Fast, responsive, utility-first design with animations                         |
+| **Config Management (Backup/Restore)**         | ✅ Available   | Syntax-highlighting and backup/restore for config files                        |
+| **Clean Semantic Versioning**                  | ✅ Available   | MSI/NSIS compatible version format (v0.1.6)                                    |
+| **Multi-Format Installers**                    | ✅ Available   | Windows MSI (288.9 MB) and NSIS (147.7 MB) installers                          |
+| **Multilanguage UI**                           | ✅ Available   | i18next-based internationalization with English and Hindi support              |
+| **Crash & Bug Reporting via GitHub**           | 🔄 In Progress | User-initiated crash/bug reports with pre-filled GitHub Issues                 |
+| **Logs Viewer**                                | 🔄 In Progress | View MySQL, phpMyAdmin, Apache, PHP, and app logs with real-time search/filter |
+| **System Tray Integration**                    | 🔄 In Progress | Minimize to tray, quick actions                                                |
+| **Auto-Update Support**                        | 🔄 In Progress | Tauri auto-updates via GitHub Releases                                         |
+| **Apache HTTP Server**                         | 🕓 Planned     | Portable Apache, vhost & HTTPS management                                      |
+| **Multiple PHP Versions**                      | 🕓 Planned     | Default PHP 8.2, others downloadable via in-app installer                      |
+| **One-Click App Installers**                   | 🕓 Planned     | Install WordPress, Laravel, more with simple UI                                |
+| **PHP Extensions Management**                  | 🕓 Planned     | Enable/disable extensions per PHP version                                      |
+| **Security Analyzer**                          | 🕓 Planned     | Scan PHP configs/code for security issues                                      |
+| **Mail Testing Tools**                         | 🕓 Planned     | Built-in Mailhog or similar for email capture                                  |
+| **Portable Mode / Zero Installation**          | 🕓 Planned     | All data/settings/logs in app folder                                           |
+| **Database Backup/Restore (One-Click)**        | 🕓 Planned     | UI to export/import MySQL databases                                            |
+| **MySQL User Management**                      | 🕓 Planned     | Create/edit MySQL users/privileges via UI                                      |
+| **Quick Launch Tools**                         | 🕓 Planned     | Terminal (PHP/MySQL CLI), copy connection string, etc.                         |
+| **Full App/Data Backup/Restore**               | 🕓 Planned     | Backup configs, databases, logs in one click                                   |
+| **Automatic Virtual Host Management**          | 🕓 Planned     | Pretty URLs like `myapp.test`                                                  |
+| **HTTPS/SSL for Local Sites**                  | 🕓 Planned     | One-click SSL for local domains and phpMyAdmin                                 |
+| **Multilanguage UI**                           | ✅ Available   | i18next-based internationalization with English and Hindi support              |
+| **Project Templates/Cloning**                  | 🕓 Planned     | Clone from Git or use templates for new projects                               |
+| **Composer Integration**                       | 🕓 Planned     | Global/per-project Composer support                                            |
+| **PHP INI & Apache Config Editors**            | 🕓 Planned     | User-friendly config editing                                                   |
+| **PHP Error Display Toggle**                   | 🕓 Planned     | Enable/disable display_errors from UI                                          |
+| **Service Status & Tray Notifications**        | 🕓 Planned     | Tray notifications for service events                                          |
+| **Portable PHP CLI**                           | 🕓 Planned     | Terminal with PHP version selector                                             |
+| **Bundled Tools (curl, git, node, npm, etc.)** | 🕓 Planned     | Optionally bundle common CLI tools                                             |
+| **Log Viewer Enhancements**                    | 🕓 Planned     | Real-time, filterable, tabbed log viewer for all services/apps                 |
+| **Project Full Backup/Restore**                | 🕓 Planned     | Backup/restore www files, configs, databases                                   |
 
 **Legend:**  
 ✅ Available  🔄 In Progress  🕓 Planned
@@ -96,28 +98,33 @@ It provides a **fast, modern, cross-platform GUI** for managing your entire PHP 
 ## 🛠 Installation & Getting Started
 
 1. **Clone the repository:**
+
    ```bash
    git clone https://github.com/ProgrammerNomad/DevStackBox.git
    cd DevStackBox
    ```
 
 2. **Install dependencies:**
+
    ```bash
    pnpm install
    # or
    npm install
    ```
 
-3. **Install Tauri CLI:**
+3. **Tauri CLI is already included via project dependencies:**
+
    ```bash
-   cargo install tauri-cli
+   npm run tauri -- --version
+   # or
+   pnpm tauri --version
    ```
 
 4. **Run the application:**
    ```bash
    pnpm tauri dev
    # or
-   npm run tauri dev
+   npm run tauri:dev
    ```
 
 ---

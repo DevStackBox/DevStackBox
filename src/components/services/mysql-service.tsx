@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Database, ExternalLink, Copy } from "lucide-react";
+import { Database } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ServiceCard } from "./service-card";
 import { StatusBadge } from "./status-badge";
@@ -60,7 +60,9 @@ export function MySQLService({
           : t("actions.start", "Start"),
       onClick: onToggle,
       disabled: loading,
-      variant: (status.running ? "destructive" : "default") as const,
+      variant: status.running
+        ? ("destructive" as "destructive" | "default")
+        : ("default" as "destructive" | "default"),
     },
     ...(onOpenConfig
       ? [

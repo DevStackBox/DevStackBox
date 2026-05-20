@@ -1194,6 +1194,80 @@ async fn toggle_php() -> Result<bool, String> {
 }
 
 #[tauri::command]
+async fn backup_mysql_database() -> Result<String, String> {
+    let base_path = get_installation_path();
+    let mysql_dump_path = base_path.join("mysql").join("bin").join("mysqldump.exe");
+
+    if !mysql_dump_path.exists() {
+        return Err(format!(
+            "mysqldump not found at {}",
+            mysql_dump_path.display()
+        ));
+    }
+
+    let backups_dir = base_path.join("backups").join("mysql");
+    std::fs::create_dir_all(&backups_dir)
+        .map_err(|e| format!("Failed to create backup directory: {}", e))?;
+
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_err(|e| format!("Failed to generate backup timestamp: {}", e))?
+        .as_secs();
+
+    let backup_file = backups_dir.join(format!("mysql_backup_{}.sql", timestamp));
+
+    let output = Command::new(&mysql_dump_path)
+        .args(["-u", "root", "--all-databases"])
+        .output()
+        .map_err(|e| format!("Failed to execute mysqldump: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("mysqldump failed: {}", stderr.trim()));
+    }
+
+    std::fs::write(&backup_file, output.stdout)
+        .map_err(|e| format!("Failed to write backup file: {}", e))?;
+
+    Ok(format!("MySQL backup created: {}", backup_file.display()))
+}
+
+#[tauri::command]
+async fn open_php_terminal(version: String) -> Result<String, String> {
+    let base_path = get_installation_path();
+    let php_exe = base_path.join("php").join(&version).join("php.exe");
+
+    if !php_exe.exists() {
+        return Err(format!("PHP {} is not installed", version));
+    }
+
+    #[cfg(windows)]
+    {
+        let php_dir = php_exe
+            .parent()
+            .ok_or_else(|| "Failed to resolve PHP directory".to_string())?;
+
+        let command = format!(
+            "cd /d \"{}\" && set PATH={}\\;%%PATH%% && php --version",
+            base_path.display(),
+            php_dir.display()
+        );
+
+        Command::new("cmd")
+            .args(["/K", &command])
+            .spawn()
+            .map_err(|e| format!("Failed to open terminal: {}", e))?;
+    }
+
+    #[cfg(not(windows))]
+    {
+        return Err("open_php_terminal is currently implemented for Windows only".to_string());
+    }
+
+    Ok(format!("Opened PHP {} terminal", version))
+}
+
+#[tauri::command]
 async fn get_service_logs(service: String) -> Result<String, String> {
     let base_path = get_installation_path();
     let logs_dir = base_path.join("logs");
@@ -1688,6 +1762,8 @@ pub fn run() {
             toggle_mysql,
             toggle_php,
             toggle_apache,
+            backup_mysql_database,
+            open_php_terminal,
             get_service_logs,
             read_config,
             update_config,

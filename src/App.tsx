@@ -37,6 +37,7 @@ function App() {
   const [copiedPath, setCopiedPath] = useState<string | null>(null);
   const [configEditorOpen, setConfigEditorOpen] = useState(false);
   const [configService, setConfigService] = useState<ServiceName>("mysql");
+  const [configView, setConfigView] = useState<"apache" | "mysql" | null>(null);
 
   // Copy path to clipboard helper
   const copyToClipboard = (path: string, label: string) => {

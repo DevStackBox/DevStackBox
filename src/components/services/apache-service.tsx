@@ -49,7 +49,9 @@ export function ApacheService({
           : t("actions.start", "Start"),
       onClick: onToggle,
       disabled: loading,
-      variant: (status.running ? "destructive" : "default") as const,
+      variant: status.running
+        ? ("destructive" as "destructive" | "default")
+        : ("default" as "destructive" | "default"),
     },
     ...(onOpenConfig
       ? [

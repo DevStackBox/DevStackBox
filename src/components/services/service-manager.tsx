@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
 import { safeInvoke, isTauri, getMockServiceStatus } from "@/lib/tauri";
+import { TAURI_COMMANDS } from "@/lib/commands";
 import { motion } from "framer-motion";
-import { ApacheService, MySQLService, PHPService, ServiceStatus } from "./index";
+import {
+  ApacheService,
+  MySQLService,
+  PHPService,
+  ServiceStatus,
+} from "./index";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
@@ -27,7 +33,7 @@ export function ServiceManager({
   onViewLogs,
   onOpenPHPVersionSelector,
   currentPhpVersion = "8.2",
-  onStatusesChange
+  onStatusesChange,
 }: ServiceManagerProps) {
   const { toast } = useToast();
   const [services, setServices] = useState({
@@ -62,18 +68,18 @@ export function ServiceManager({
         setInitialLoading(false);
         return;
       }
-      
+
       const [apache, mysql, php] = await Promise.all([
-        safeInvoke<ServiceStatus>("get_apache_status"),
-        safeInvoke<ServiceStatus>("get_mysql_status"),
-        safeInvoke<ServiceStatus>("get_php_status"),
+        safeInvoke<ServiceStatus>(TAURI_COMMANDS.services.getApacheStatus),
+        safeInvoke<ServiceStatus>(TAURI_COMMANDS.services.getMysqlStatus),
+        safeInvoke<ServiceStatus>(TAURI_COMMANDS.services.getPhpStatus),
       ]);
-      
+
       if (!apache || !mysql || !php) {
         setInitialLoading(false);
         return;
       }
-      
+
       const nextStatuses = { apache, mysql, php };
       setServices(nextStatuses);
       onStatusesChange?.(nextStatuses);
@@ -97,32 +103,34 @@ export function ServiceManager({
         setLoading(null);
         return;
       }
-      
+
       let result: boolean | null;
       const serviceName = service.charAt(0).toUpperCase() + service.slice(1);
-      
+
       if (service === "apache") {
-        result = await safeInvoke<boolean>("toggle_apache");
+        result = await safeInvoke<boolean>(
+          TAURI_COMMANDS.services.toggleApache,
+        );
       } else if (service === "mysql") {
-        result = await safeInvoke<boolean>("toggle_mysql");
+        result = await safeInvoke<boolean>(TAURI_COMMANDS.services.toggleMysql);
       } else {
-        result = await safeInvoke<boolean>("toggle_php");
+        result = await safeInvoke<boolean>(TAURI_COMMANDS.services.togglePhp);
       }
-      
+
       if (result === null) {
         setLoading(null);
         return;
       }
-      
+
       await checkServiceStatus();
       onServiceToggle?.(service, result);
-      
+
       // Show toast notification
       toast({
         variant: "success",
-        title: `${serviceName} ${result ? 'Started' : 'Stopped'}`,
-        description: result 
-          ? `${serviceName} service is now running` 
+        title: `${serviceName} ${result ? "Started" : "Stopped"}`,
+        description: result
+          ? `${serviceName} service is now running`
           : `${serviceName} service has been stopped`,
       });
     } catch (error) {
@@ -130,7 +138,7 @@ export function ServiceManager({
       toast({
         variant: "destructive",
         title: "Service Error",
-        description: `Failed to ${services[service as keyof typeof services].running ? 'stop' : 'start'} ${service}. Check logs for details.`,
+        description: `Failed to ${services[service as keyof typeof services].running ? "stop" : "start"} ${service}. Check logs for details.`,
       });
     } finally {
       setLoading(null);
@@ -150,7 +158,7 @@ export function ServiceManager({
   // Handle database backup
   const handleBackupDatabase = async () => {
     try {
-      await safeInvoke("backup_mysql_database");
+      await safeInvoke(TAURI_COMMANDS.services.backupMysqlDatabase);
       toast({
         variant: "success",
         title: "Backup Created",
@@ -169,7 +177,9 @@ export function ServiceManager({
   // Handle PHP terminal opening
   const handleOpenTerminal = async () => {
     try {
-      await safeInvoke("open_php_terminal", { version: currentPhpVersion });
+      await safeInvoke(TAURI_COMMANDS.services.openPhpTerminal, {
+        version: currentPhpVersion,
+      });
       toast({
         title: "Terminal Opened",
         description: `PHP ${currentPhpVersion} terminal launched`,
@@ -186,15 +196,15 @@ export function ServiceManager({
 
   useEffect(() => {
     checkServiceStatus();
-    
+
     // Set up periodic status checking every 5 seconds for real-time monitoring
     const interval = setInterval(checkServiceStatus, 5000);
-    
+
     return () => clearInterval(interval);
   }, []);
 
-  const containerClassName = compact 
-    ? "grid grid-cols-1 md:grid-cols-3 gap-4" 
+  const containerClassName = compact
+    ? "grid grid-cols-1 md:grid-cols-3 gap-4"
     : "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6";
 
   // Service Card Skeleton
