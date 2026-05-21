@@ -7,6 +7,7 @@ export const TAURI_COMMANDS = {
     checkBinaries: "check_binaries",
     debugPaths: "debug_paths",
     debugInstallation: "debug_installation",
+    startAllServices: "start_all_services",
     stopAllServices: "stop_all_services",
     testApacheConfig: "test_apache_config",
     createDirectoryStructure: "create_directory_structure",
@@ -24,6 +25,9 @@ export const TAURI_COMMANDS = {
     togglePhp: "toggle_php",
     getServiceLogs: "get_service_logs",
     backupMysqlDatabase: "backup_mysql_database",
+    backupMysqlDatabaseNamed: "backup_mysql_database_named",
+    listMysqlDatabases: "list_mysql_databases",
+    restoreMysqlDatabase: "restore_mysql_database",
     openPhpTerminal: "open_php_terminal",
   },
   php: {

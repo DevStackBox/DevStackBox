@@ -3,16 +3,19 @@ import { Database } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ServiceCard } from "./service-card";
 import { StatusBadge } from "./status-badge";
+import { ServiceOverflowMenu } from "./service-overflow-menu";
 import {
   ServiceActions,
   StartIcon,
   StopIcon,
-  ConfigIcon,
-  LogsIcon,
   OpenIcon,
-  BackupIcon,
-  CopyIcon,
 } from "./service-actions";
+import {
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuSeparator,
+} from "@/components/ui/context-menu";
 import type { ServiceStatus } from "@/types/services";
 
 interface MySQLServiceProps {
@@ -23,6 +26,8 @@ interface MySQLServiceProps {
   onViewLogs?: () => void;
   onBackupDatabase?: () => void;
   compact?: boolean;
+  isSelected?: boolean;
+  onSelect?: () => void;
 }
 
 export function MySQLService({
@@ -33,6 +38,8 @@ export function MySQLService({
   onViewLogs,
   onBackupDatabase,
   compact = false,
+  isSelected = false,
+  onSelect,
 }: MySQLServiceProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -50,7 +57,8 @@ export function MySQLService({
     });
   };
 
-  const actions = [
+  // Primary actions: Start/Stop + one Open (phpMyAdmin while running).
+  const primaryActions = [
     {
       icon: status.running ? StopIcon : StartIcon,
       label: loading
@@ -64,36 +72,6 @@ export function MySQLService({
         ? ("destructive" as "destructive" | "default")
         : ("default" as "destructive" | "default"),
     },
-    ...(onOpenConfig
-      ? [
-          {
-            icon: ConfigIcon,
-            label: t("actions.config", "Config"),
-            onClick: onOpenConfig,
-            variant: "ghost" as const,
-          },
-        ]
-      : []),
-    ...(onViewLogs
-      ? [
-          {
-            icon: LogsIcon,
-            label: t("actions.logs", "Logs"),
-            onClick: onViewLogs,
-            variant: "ghost" as const,
-          },
-        ]
-      : []),
-    ...(onBackupDatabase
-      ? [
-          {
-            icon: BackupIcon,
-            label: t("actions.backup", "Backup"),
-            onClick: onBackupDatabase,
-            variant: "ghost" as const,
-          },
-        ]
-      : []),
     ...(status.running
       ? [
           {
@@ -104,21 +82,13 @@ export function MySQLService({
           },
         ]
       : []),
-    ...(status.running
-      ? [
-          {
-            icon: CopyIcon,
-            label: t("actions.copy", "Copy"),
-            onClick: copyConnectionString,
-            variant: "outline" as const,
-          },
-        ]
-      : []),
   ];
+
+  const title = t("services.mysql.title", "MySQL Database");
 
   return (
     <ServiceCard
-      title={t("services.mysql.title", "MySQL Database")}
+      title={title}
       description={t(
         "services.mysql.description",
         "Database server for storing application data",
@@ -128,7 +98,91 @@ export function MySQLService({
       isRunning={status.running}
       compact={compact}
       delay={0.1}
-      header={<StatusBadge running={status.running} />}
+      isSelected={isSelected}
+      onSelect={onSelect}
+      header={
+        <div className="flex items-center gap-1">
+          <StatusBadge running={status.running} />
+          <ServiceOverflowMenu
+            label={title}
+            groups={[
+              {
+                items: [
+                  ...(onOpenConfig
+                    ? [
+                        {
+                          label: t("actions.config", "Config"),
+                          onSelect: onOpenConfig,
+                        },
+                      ]
+                    : []),
+                  ...(onViewLogs
+                    ? [
+                        {
+                          label: t("actions.logs", "Logs"),
+                          onSelect: onViewLogs,
+                        },
+                      ]
+                    : []),
+                  ...(onBackupDatabase
+                    ? [
+                        {
+                          label: t("actions.backup", "Backup"),
+                          onSelect: onBackupDatabase,
+                        },
+                      ]
+                    : []),
+                ],
+              },
+              {
+                items: [
+                  {
+                    label: t("actions.copy", "Copy connection"),
+                    onSelect: copyConnectionString,
+                    disabled: !status.running,
+                  },
+                ],
+              },
+            ]}
+          />
+        </div>
+      }
+      contextMenu={
+        <ContextMenuContent className="w-56">
+          <ContextMenuLabel>{title}</ContextMenuLabel>
+          <ContextMenuSeparator />
+          <ContextMenuItem onSelect={onToggle} disabled={loading}>
+            {status.running
+              ? t("actions.stop", "Stop")
+              : t("actions.start", "Start")}
+          </ContextMenuItem>
+          {onOpenConfig && (
+            <ContextMenuItem onSelect={onOpenConfig}>
+              {t("actions.config", "Config")}
+            </ContextMenuItem>
+          )}
+          {onViewLogs && (
+            <ContextMenuItem onSelect={onViewLogs}>
+              {t("actions.logs", "Logs")}
+            </ContextMenuItem>
+          )}
+          {onBackupDatabase && (
+            <ContextMenuItem onSelect={onBackupDatabase}>
+              {t("actions.backup", "Backup")}
+            </ContextMenuItem>
+          )}
+          <ContextMenuSeparator />
+          <ContextMenuItem onSelect={openPhpMyAdmin} disabled={!status.running}>
+            {t("quickActions.openPhpMyAdmin", "phpMyAdmin")}
+          </ContextMenuItem>
+          <ContextMenuItem
+            onSelect={copyConnectionString}
+            disabled={!status.running}
+          >
+            {t("actions.copy", "Copy")}
+          </ContextMenuItem>
+        </ContextMenuContent>
+      }
     >
       <div className="space-y-4">
         {/* Service Information */}
@@ -149,9 +203,9 @@ export function MySQLService({
           )}
         </div>
 
-        {/* Action Buttons */}
+        {/* Primary action row */}
         <ServiceActions
-          actions={actions}
+          actions={primaryActions}
           loading={loading}
           compact={compact}
           layout="grid"

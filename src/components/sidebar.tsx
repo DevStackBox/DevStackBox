@@ -41,6 +41,12 @@ export function Sidebar({
     {
       id: "services",
       label: t("navigation.services"),
+      icon: Server,
+      available: true,
+    },
+    {
+      id: "databases",
+      label: t("navigation.databases", "Databases"),
       icon: Database,
       available: true,
     },
@@ -54,7 +60,7 @@ export function Sidebar({
       id: "logs",
       label: t("navigation.logs"),
       icon: FileText,
-      available: false,
+      available: true,
     },
     {
       id: "settings",

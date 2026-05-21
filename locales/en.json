@@ -22,6 +22,7 @@
   "navigation": {
     "dashboard": "Dashboard",
     "services": "Services",
+    "databases": "Databases",
     "projects": "Projects",
     "logs": "Logs",
     "settings": "Settings",

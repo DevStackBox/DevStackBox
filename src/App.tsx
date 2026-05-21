@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { safeInvoke, isTauri, getMockBinariesStatus } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
-import { Server, FolderOpen, FileText, Info, Copy, Check } from "lucide-react";
+import { Server, FolderOpen, Info, Copy, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -20,10 +19,11 @@ import { AutoUpdater } from "./components/auto-updater";
 import { Sidebar } from "./components/sidebar";
 import { Breadcrumb } from "./components/breadcrumb";
 import { OnboardingDialog } from "./components/onboarding-dialog";
+import { BugReportDialog } from "./components/bug-report-dialog";
 import { CommandPalette } from "./components/command-palette";
 import { PHPVersionSelector } from "./components/php-version-selector";
 import { ConfigEditor } from "./components/config-editor";
-import { DashboardPage, ServicesPage } from "./pages";
+import { DashboardPage, ServicesPage, LogsPage, DatabasesPage } from "./pages";
 import { APP_VERSION } from "@/lib/version";
 import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
@@ -162,16 +162,10 @@ function App() {
         );
 
       case "logs":
-        return (
-          <div className="space-y-6">
-            <h2 className="text-3xl font-bold">{t("navigation.logs")}</h2>
-            <EmptyState
-              icon={FileText}
-              title="Log Viewer Coming Soon"
-              description="View real-time logs from Apache, MySQL, and PHP with syntax highlighting, search, and filtering capabilities. Currently in development for Phase 1.2."
-            />
-          </div>
-        );
+        return <LogsPage />;
+
+      case "databases":
+        return <DatabasesPage />;
 
       case "settings":
         return (
@@ -390,8 +384,35 @@ function App() {
                     shiv@srapsware.com
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <AutoUpdater />
+                  <BugReportDialog />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      window.open(
+                        "https://github.com/ProgrammerNomad/DevStackBox",
+                        "_blank",
+                        "noopener,noreferrer",
+                      )
+                    }
+                  >
+                    GitHub
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      window.open(
+                        "https://github.com/ProgrammerNomad/DevStackBox/wiki",
+                        "_blank",
+                        "noopener,noreferrer",
+                      )
+                    }
+                  >
+                    Documentation
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -428,21 +449,10 @@ function App() {
           {/* Top Bar */}
           <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <Server className="h-5 w-5" />
-                  <h1 className="text-lg font-semibold">DevStackBox</h1>
-                  <Badge variant="outline" className="text-xs">
-                    v{APP_VERSION}
-                  </Badge>
-                </div>
-                <div className="hidden md:block h-5 w-px bg-border" />
-                <Breadcrumb
-                  currentPage={currentPage}
-                  onPageChange={setCurrentPage}
-                  className="hidden md:flex"
-                />
-              </div>
+              <Breadcrumb
+                currentPage={currentPage}
+                onPageChange={setCurrentPage}
+              />
 
               <div className="flex items-center gap-2">
                 <AutoUpdater />
@@ -483,9 +493,7 @@ function App() {
         <Toaster />
 
         {/* First-launch onboarding */}
-        <OnboardingDialog
-          onOpenServices={() => setCurrentPage("services")}
-        />
+        <OnboardingDialog onOpenServices={() => setCurrentPage("services")} />
       </div>
     </ThemeProvider>
   );

@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { notify, primeNotificationPermission } from "@/lib/notify";
 
 interface ServiceManagerProps {
   compact?: boolean;
@@ -25,6 +26,13 @@ interface ServiceManagerProps {
     mysql: ServiceStatus;
     php: ServiceStatus;
   }) => void;
+  /**
+   * Phase 6.2 - which service card is currently selected (drives the
+   * Services workspace panel below the grid). When undefined the cards
+   * are not selectable.
+   */
+  selectedService?: "apache" | "mysql" | "php";
+  onSelectService?: (service: "apache" | "mysql" | "php") => void;
 }
 
 export function ServiceManager({
@@ -35,6 +43,8 @@ export function ServiceManager({
   onOpenPHPVersionSelector,
   currentPhpVersion = "8.3",
   onStatusesChange,
+  selectedService,
+  onSelectService,
 }: ServiceManagerProps) {
   const { toast } = useToast();
   const [services, setServices] = useState({
@@ -117,6 +127,10 @@ export function ServiceManager({
               </ToastAction>
             ),
           });
+          void notify(
+            `${label} stopped unexpectedly`,
+            "Open DevStackBox to view logs and restart the service.",
+          );
         }
         prevRunningRef.current[name] = isRunning;
       });
@@ -187,6 +201,12 @@ export function ServiceManager({
           ? `${serviceName} service is now running`
           : `${serviceName} service has been stopped`,
       });
+      void notify(
+        `${serviceName} ${result ? "started" : "stopped"}`,
+        result
+          ? `${serviceName} service is now running.`
+          : `${serviceName} service has been stopped.`,
+      );
     } catch (error) {
       console.error(`Failed to toggle ${service}:`, error);
       toast({
@@ -249,6 +269,7 @@ export function ServiceManager({
   };
 
   useEffect(() => {
+    primeNotificationPermission();
     checkServiceStatus();
 
     // Set up periodic status checking every 5 seconds for real-time monitoring
@@ -323,6 +344,8 @@ export function ServiceManager({
         onOpenConfig={() => handleOpenConfig("apache")}
         onViewLogs={() => handleViewLogs("apache")}
         compact={compact}
+        isSelected={selectedService === "apache"}
+        onSelect={onSelectService ? () => onSelectService("apache") : undefined}
       />
 
       <MySQLService
@@ -333,6 +356,8 @@ export function ServiceManager({
         onViewLogs={() => handleViewLogs("mysql")}
         onBackupDatabase={handleBackupDatabase}
         compact={compact}
+        isSelected={selectedService === "mysql"}
+        onSelect={onSelectService ? () => onSelectService("mysql") : undefined}
       />
 
       <PHPService
@@ -344,6 +369,8 @@ export function ServiceManager({
         onOpenTerminal={handleOpenTerminal}
         compact={compact}
         currentVersion={currentPhpVersion}
+        isSelected={selectedService === "php"}
+        onSelect={onSelectService ? () => onSelectService("php") : undefined}
       />
     </motion.div>
   );

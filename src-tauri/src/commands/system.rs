@@ -4,8 +4,8 @@ use std::collections::HashMap;
 use std::env;
 use std::path::PathBuf;
 
-use crate::commands::apache::stop_apache;
-use crate::commands::mysql::stop_mysql;
+use crate::commands::apache::{start_apache, stop_apache};
+use crate::commands::mysql::{start_mysql, stop_mysql};
 use crate::utils::paths::{
     ensure_user_data_dirs, get_installation_path, get_user_data_root, user_config_dir,
     user_www_dir,
@@ -207,6 +207,23 @@ pub async fn stop_all_services() -> Result<String, String> {
     match stop_apache().await {
         Ok(_) => results.push("Apache stopped".to_string()),
         Err(e) => results.push(format!("Apache stop failed: {}", e)),
+    }
+
+    Ok(results.join("; "))
+}
+
+#[tauri::command]
+pub async fn start_all_services() -> Result<String, String> {
+    let mut results = Vec::new();
+
+    match start_apache().await {
+        Ok(_) => results.push("Apache started".to_string()),
+        Err(e) => results.push(format!("Apache start failed: {}", e)),
+    }
+
+    match start_mysql().await {
+        Ok(_) => results.push("MySQL started".to_string()),
+        Err(e) => results.push(format!("MySQL start failed: {}", e)),
     }
 
     Ok(results.join("; "))

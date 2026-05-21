@@ -131,11 +131,7 @@ export function OnboardingDialog({ onOpenServices }: OnboardingDialogProps) {
         </p>
 
         <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-center">
-          <Button
-            variant="outline"
-            onClick={markCompleted}
-            disabled={starting}
-          >
+          <Button variant="outline" onClick={markCompleted} disabled={starting}>
             {t("onboarding.exploreFirst", "Explore first")}
           </Button>
           <Button onClick={handleStartAll} disabled={starting}>

@@ -14,7 +14,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { safeInvoke } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
-import { Save, RotateCcw, Download, AlertCircle } from "lucide-react";
+import {
+  Save,
+  RotateCcw,
+  Download,
+  AlertCircle,
+  ShieldCheck,
+} from "lucide-react";
 import type { ServiceName } from "@/types/services";
 
 interface ConfigEditorProps {
@@ -69,10 +75,55 @@ export function ConfigEditor({ isOpen, onClose, service }: ConfigEditorProps) {
         setOriginalConfig(config);
         setHasChanges(false);
       }
+
+      // Auto-validate Apache config after save (Phase 3.3).
+      if (service === "apache") {
+        try {
+          const validation = await safeInvoke<string>(
+            TAURI_COMMANDS.system.testApacheConfig,
+          );
+          if (validation) {
+            toast({
+              title: t("config.validate.passed", "Apache config valid"),
+              description: validation,
+            });
+          }
+        } catch (validationError) {
+          toast({
+            title: t("config.validate.failed", "Apache config invalid"),
+            description: `${validationError}`,
+            variant: "destructive",
+          });
+        }
+      }
     } catch (error) {
       toast({
         title: t("common.error", "Error"),
         description: `Failed to save config: ${error}`,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const validateConfig = async () => {
+    if (service !== "apache") return;
+    setLoading(true);
+    try {
+      const result = await safeInvoke<string>(
+        TAURI_COMMANDS.system.testApacheConfig,
+      );
+      if (result) {
+        toast({
+          title: t("config.validate.passed", "Apache config valid"),
+          description: result,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: t("config.validate.failed", "Apache config invalid"),
+        description: `${error}`,
         variant: "destructive",
       });
     } finally {
@@ -213,6 +264,17 @@ export function ConfigEditor({ isOpen, onClose, service }: ConfigEditorProps) {
             <Download className="h-4 w-4 mr-2" />
             {t("config.backup", "Backup")}
           </Button>
+          {service === "apache" && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={validateConfig}
+              disabled={loading}
+            >
+              <ShieldCheck className="h-4 w-4 mr-2" />
+              {t("config.validate", "Validate")}
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"

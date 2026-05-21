@@ -17,15 +17,16 @@ use crate::commands::config::{
 };
 use crate::commands::logs::get_service_logs;
 use crate::commands::mysql::{
-    backup_mysql_database, get_mysql_status, start_mysql, stop_mysql, toggle_mysql,
+    backup_mysql_database, backup_mysql_database_named, get_mysql_status, list_mysql_databases,
+    restore_mysql_database, start_mysql, stop_mysql, toggle_mysql,
 };
 use crate::commands::php::{
     download_php_version, get_php_status, get_php_versions, open_php_terminal, switch_php_version,
     toggle_php,
 };
 use crate::commands::system::{
-    check_binaries, create_directory_structure, debug_installation, debug_paths, stop_all_services,
-    test_apache_config,
+    check_binaries, create_directory_structure, debug_installation, debug_paths,
+    start_all_services, stop_all_services, test_apache_config,
 };
 use crate::commands::tray::{hide_to_tray, quit_app, set_tray_tooltip, show_main_window};
 use crate::utils::paths::ensure_user_data_dirs;
@@ -42,6 +43,7 @@ pub fn run() {
             check_binaries,
             debug_paths,
             debug_installation,
+            start_all_services,
             stop_all_services,
             test_apache_config,
             get_mysql_status,
@@ -58,6 +60,9 @@ pub fn run() {
             toggle_php,
             toggle_apache,
             backup_mysql_database,
+            backup_mysql_database_named,
+            list_mysql_databases,
+            restore_mysql_database,
             open_php_terminal,
             get_service_logs,
             read_config,

@@ -30,18 +30,18 @@ Do NOT require users to download core components on first launch. Bad first-laun
 
 **What is bundled vs downloadable:**
 
-| Component           | Strategy      | Notes                                                            |
-| ------------------- | ------------- | ---------------------------------------------------------------- |
-| Apache              | Bundled       | Core requirement, no internet needed                             |
-| PHP 8.3             | Bundled       | Current default version, works immediately                       |
-| MySQL               | Bundled       | Database server                                                  |
-| phpMyAdmin          | Bundled       | Developers expect it, keep it bundled                            |
-| Default configs     | Bundled       | Required for first launch                                        |
-| Sample `www/` page  | Bundled       | Confirms stack works immediately                                 |
-| PHP 8.1 / 8.3 / 8.4 | Downloadable  | Optional future versions on demand via PHP Versions UI           |
-| Node.js support     | Future module | Not in v1                                                        |
-| Redis               | Future module | Not in v1                                                        |
-| PostgreSQL          | Future module | Not in v1                                                        |
+| Component           | Strategy      | Notes                                                  |
+| ------------------- | ------------- | ------------------------------------------------------ |
+| Apache              | Bundled       | Core requirement, no internet needed                   |
+| PHP 8.3             | Bundled       | Current default version, works immediately             |
+| MySQL               | Bundled       | Database server                                        |
+| phpMyAdmin          | Bundled       | Developers expect it, keep it bundled                  |
+| Default configs     | Bundled       | Required for first launch                              |
+| Sample `www/` page  | Bundled       | Confirms stack works immediately                       |
+| PHP 8.1 / 8.3 / 8.4 | Downloadable  | Optional future versions on demand via PHP Versions UI |
+| Node.js support     | Future module | Not in v1                                              |
+| Redis               | Future module | Not in v1                                              |
+| PostgreSQL          | Future module | Not in v1                                              |
 
 **Target installer size:** 250–500 MB is acceptable. Do not sacrifice reliability or UX to reduce installer size.
 
@@ -274,6 +274,56 @@ See `docs/UPDATES_AND_MIGRATIONS.md` for the full architecture and checklist.
 
 ---
 
+## Phase 6 — UI Workspace Refresh
+
+**Goal:** Evolve the UI from "stacked web cards" to a focused desktop workspace.
+Driven by the v0.1.6 product review: less vertical scrolling, status-first cards,
+contextual sub-panels, real preferences in Settings, useful About page.
+
+### 6.1 Dashboard Slim-Down
+
+- [ ] Trim `src/pages/dashboard.tsx` to a single-screen overview at 1366x768
+- [ ] Keep: compact welcome, compact `ServiceManager`, Start All / Stop All / Open Services strip, capped recent activity feed
+- [ ] Remove: the 4 stat cards (Running Services / Uptime / PHP Version / Status) and the large 4-tile Quick Actions grid
+- [ ] Add `start_all_services` Tauri command (mirrors existing `stop_all_services`)
+
+### 6.2 Services Workspace Layout
+
+- [ ] Service cards: keep only Start/Stop + one "Open" action visible; move Config, Logs, Backup, Terminal, Copy connection, Change Version, WWW, Composer into a single shadcn `DropdownMenu` (`MoreHorizontal` trigger in the card header)
+- [ ] Add selection state (`selectedService` + `onSelectService`) to `ServiceManager`; selected card gets `ring-2 ring-primary`
+- [ ] New `src/components/services/service-workspace.tsx`: shadcn `Tabs` panel (Logs / Config / extras) that reflects the selected service
+- [ ] `src/pages/services.tsx` becomes top grid + bottom workspace
+- [ ] Persist last selection in `localStorage` key `devstackbox.services.selected`
+
+### 6.3 Databases Page Polish
+
+- [ ] New `list_mysql_databases_detailed` Tauri command (name + table count + size, single `information_schema.tables` query)
+- [ ] Each row renders "X tables \* Y MB" under the database name
+- [ ] Sticky search Input above the list filters by name
+- [ ] Right-click row context menu: Backup, Open in phpMyAdmin (`?db=NAME`), Copy DB name
+
+### 6.4 Terminal-Style Log Viewer
+
+- [ ] `src/components/services/log-viewer.tsx`: replace `Textarea` with a read-only `<pre>` (`font-mono text-xs leading-snug whitespace-pre-wrap bg-zinc-950 text-zinc-100 p-3 rounded-md min-h-[400px] max-h-[60vh] overflow-auto`)
+- [ ] Per-line coloring: `[ERROR]`/`error` -> red, `[WARN]`/`warning` -> amber, `[INFO]` -> sky
+- [ ] Search + auto-scroll + copy/download row becomes `sticky top-0 z-10 bg-background/95 backdrop-blur`
+- [ ] Trim outer padding in `src/pages/logs.tsx`
+
+### 6.5 Real Settings Page
+
+- [ ] New `src/pages/settings.tsx` with sections: Appearance (Theme + Language), Startup (Launch on Windows startup), Updates (Check for updates automatically), Configuration shortcuts (compact Apache/MySQL tiles)
+- [ ] Install `tauri-plugin-autostart`; expose `set_autostart` / `get_autostart` Tauri commands
+- [ ] "Auto-check updates" stored in `localStorage` key `devstackbox.settings.autoCheckUpdates`; `auto-updater.tsx` honours it (poll on launch + every 6h when on)
+- [ ] Move inline settings JSX out of `App.tsx`
+
+### 6.6 About Page System Info
+
+- [ ] Extract about case from `App.tsx` into `src/pages/about.tsx`
+- [ ] New `get_system_info` Tauri command: OS + arch (`std::env::consts`), OS version (`cmd /c ver`), Tauri version, app version, Apache version (`httpd -v`), MySQL version (`mysqld --version`), installed PHP versions
+- [ ] System Information card on About renders the result as a definition list with a loading skeleton
+
+---
+
 ## What We Will NOT Build (in v1)
 
 These are explicitly out of scope for the current product:
@@ -308,10 +358,10 @@ DevStackBox uses **MySQL** as its bundled database server.
 
 ## Version Milestones
 
-| Version | Goal                                                                                       |
-| ------- | ------------------------------------------------------------------------------------------ |
-| v0.1.6  | Current — architecture and docs complete, builds work                                      |
-| v0.2.0  | Phase 1 + 2 — stable backend, no dead code, app/data dirs separated, zero Rust warnings    |
-| v0.3.0  | Phase 3 — additional PHP downloader, real-time logs, virtual hosts, crash recovery         |
-| v0.4.0  | Phase 4 — MSI reliability, code signing, safe auto-update enabled                          |
-| v1.0.0  | Phase 5 — HTTPS localhost, tray polish, startup-on-login, first-launch onboarding complete |
+| Version | Goal                                                                                                            |
+| ------- | --------------------------------------------------------------------------------------------------------------- |
+| v0.1.6  | Current — architecture and docs complete, builds work                                                           |
+| v0.2.0  | Phase 1 + 2 — stable backend, no dead code, app/data dirs separated, zero Rust warnings                         |
+| v0.3.0  | Phase 3 — additional PHP downloader, real-time logs, virtual hosts, crash recovery                              |
+| v0.4.0  | Phase 4 — MSI reliability, code signing, safe auto-update enabled                                               |
+| v1.0.0  | Phase 5 + 6 — HTTPS localhost, tray polish, startup-on-login, workspace UI refresh, real Settings, useful About |

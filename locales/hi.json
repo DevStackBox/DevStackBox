@@ -22,6 +22,7 @@
   "navigation": {
     "dashboard": "डैशबोर्ड",
     "services": "सेवाएं",
+    "databases": "डेटाबेस",
     "projects": "परियोजनाएं",
     "logs": "लॉग्स",
     "settings": "सेटिंग्स",

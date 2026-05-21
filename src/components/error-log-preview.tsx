@@ -56,16 +56,12 @@ export function ErrorLogPreview() {
       );
       if (!content) {
         setLines([]);
-        setMessage(
-          t("dashboard.errorLog.empty", "No log entries yet."),
-        );
+        setMessage(t("dashboard.errorLog.empty", "No log entries yet."));
       } else {
         const tail = tailLines(content, MAX_LINES);
         setLines(tail);
         if (tail.length === 0) {
-          setMessage(
-            t("dashboard.errorLog.empty", "No log entries yet."),
-          );
+          setMessage(t("dashboard.errorLog.empty", "No log entries yet."));
         }
       }
     } catch (err) {
@@ -102,9 +98,7 @@ export function ErrorLogPreview() {
           onClick={() => load(service)}
           disabled={loading}
         >
-          <RefreshCw
-            className={cn("h-4 w-4", loading && "animate-spin")}
-          />
+          <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
         </Button>
       </CardHeader>
       <CardContent className="space-y-3">

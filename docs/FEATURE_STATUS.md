@@ -31,92 +31,100 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ## Core Infrastructure
 
-| Feature                        | Status  | Notes                                                                                                                         |
-| ------------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Tauri 2 setup                  | DONE    | v2.1, tray-icon, updater plugins                                                                                              |
-| Vite + React 18                | DONE    |                                                                                                                               |
-| Tailwind CSS                   | DONE    | v3, compiled to ~27KB                                                                                                         |
-| shadcn/ui                      | DONE    | Components in `src/components/ui/`                                                                                            |
-| Framer Motion                  | DONE    | v11                                                                                                                           |
-| i18next (EN + HI)              | DONE    | `locales/en.json` and `locales/hi.json`                                                                                       |
-| Dark / Light mode              | DONE    | Tailwind + shadcn theme system                                                                                                |
-| safeInvoke() wrapper           | DONE    | Browser mode fallback works                                                                                                   |
-| MSI installer                  | DONE    | 288.9 MB                                                                                                                      |
-| NSIS installer                 | DONE    | 147.7 MB                                                                                                                      |
-| GitHub Actions CI/CD           | DONE    | Builds on push to main                                                                                                        |
-| App version constant           | DONE    | `src/lib/version.ts`                                                                                                          |
-| Shared TypeScript types        | DONE    | `src/types/services.ts`                                                                                                       |
-| TAURI_COMMANDS constants       | DONE    | `src/lib/commands.ts` grouped (system/services/php/config/tray); zero hardcoded command strings remain in frontend components |
-| Bundled stack (Apache+PHP+DB)  | DONE    | All core binaries ship in installer - no internet required                                                                    |
-| First-launch onboarding screen | DONE    | Welcome dialog with one-click "Start all services"; remembered in localStorage                                                |
+| Feature                        | Status | Notes                                                                                                                         |
+| ------------------------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| Tauri 2 setup                  | DONE   | v2.1, tray-icon, updater plugins                                                                                              |
+| Vite + React 18                | DONE   |                                                                                                                               |
+| Tailwind CSS                   | DONE   | v3, compiled to ~27KB                                                                                                         |
+| shadcn/ui                      | DONE   | Components in `src/components/ui/`                                                                                            |
+| Framer Motion                  | DONE   | v11                                                                                                                           |
+| i18next (EN + HI)              | DONE   | `locales/en.json` and `locales/hi.json`                                                                                       |
+| Dark / Light mode              | DONE   | Tailwind + shadcn theme system                                                                                                |
+| safeInvoke() wrapper           | DONE   | Browser mode fallback works                                                                                                   |
+| MSI installer                  | DONE   | 288.9 MB                                                                                                                      |
+| NSIS installer                 | DONE   | 147.7 MB                                                                                                                      |
+| GitHub Actions CI/CD           | DONE   | Builds on push to main                                                                                                        |
+| App version constant           | DONE   | `src/lib/version.ts`                                                                                                          |
+| Shared TypeScript types        | DONE   | `src/types/services.ts`                                                                                                       |
+| TAURI_COMMANDS constants       | DONE   | `src/lib/commands.ts` grouped (system/services/php/config/tray); zero hardcoded command strings remain in frontend components |
+| Bundled stack (Apache+PHP+DB)  | DONE   | All core binaries ship in installer - no internet required                                                                    |
+| First-launch onboarding screen | DONE   | Welcome dialog with one-click "Start all services"; remembered in localStorage                                                |
 
 ---
 
 ## Service Management
 
-| Feature                    | Status  | Notes                                                                                   |
-| -------------------------- | ------- | --------------------------------------------------------------------------------------- |
-| MySQL start / stop         | DONE    | `start_mysql`, `stop_mysql` commands work                                               |
-| MySQL status check         | DONE    | Polls process list for `mysqld.exe`                                                     |
-| MySQL version detect       | DONE    | Reads `mysqld --version`                                                                |
-| MySQL data init            | DONE    | Auto-initializes if data dir missing                                                    |
-| MySQL config auto-create   | DONE    | Creates `config/my.cnf` if missing                                                      |
-| Apache start / stop        | DONE    | `start_apache`, `stop_apache` commands work                                             |
-| Apache status check        | DONE    | Polls process list for `httpd.exe`                                                      |
-| Apache config test         | DONE    | `test_apache_config` runs `httpd -t`                                                    |
-| Apache config auto-create  | DONE    | Creates `config/httpd.conf` if missing                                                  |
-| Apache 32-bit detection    | DONE    | Warns user if 32-bit Apache on 64-bit build                                             |
-| PHP status check           | DONE    | Checks if `php/8.3/php.exe` exists                                                      |
-| PHP as service start/stop  | STUB    | `toggle_php` returns true immediately                                                   |
-| PHP CGI / FastCGI          | PLANNED | Apache integration with PHP not tested                                                  |
+| Feature                   | Status  | Notes                                                           |
+| ------------------------- | ------- | --------------------------------------------------------------- |
+| MySQL start / stop        | DONE    | `start_mysql`, `stop_mysql` commands work                       |
+| MySQL status check        | DONE    | Polls process list for `mysqld.exe`                             |
+| MySQL version detect      | DONE    | Reads `mysqld --version`                                        |
+| MySQL data init           | DONE    | Auto-initializes if data dir missing                            |
+| MySQL config auto-create  | DONE    | Creates `config/my.cnf` if missing                              |
+| Apache start / stop       | DONE    | `start_apache`, `stop_apache` commands work                     |
+| Apache status check       | DONE    | Polls process list for `httpd.exe`                              |
+| Apache config test        | DONE    | `test_apache_config` runs `httpd -t`                            |
+| Apache config auto-create | DONE    | Creates `config/httpd.conf` if missing                          |
+| Apache 32-bit detection   | DONE    | Warns user if 32-bit Apache on 64-bit build                     |
+| PHP status check          | DONE    | Checks if `php/8.3/php.exe` exists                              |
+| PHP as service start/stop | STUB    | `toggle_php` returns true immediately                           |
+| PHP CGI / FastCGI         | PLANNED | Apache integration with PHP not tested                          |
+| Bulk start all services   | DONE    | `start_all_services` Tauri command + Dashboard Start All button |
+| Bulk stop all services    | DONE    | `stop_all_services` command + tray menu entry                   |
 
 ---
 
 ## Service UI
 
-| Feature                  | Status | Notes                                                                             |
-| ------------------------ | ------ | --------------------------------------------------------------------------------- |
-| ServiceManager component | DONE   | Polls status every 5 seconds                                                      |
-| ServiceCard component    | DONE   | Generic card for service display                                                  |
-| StatusBadge component    | DONE   | Running/Stopped indicator                                                         |
-| ServiceActions component | DONE   | Start/Stop/Open buttons                                                           |
-| MySQL service UI         | DONE   | `mysql-service.tsx`                                                               |
-| Apache service UI        | DONE   | `apache-service.tsx`                                                              |
-| PHP service UI           | DONE   | `php-service.tsx`                                                                 |
-| Services page            | DONE   | Start/stop works, log viewer with service tabs, bulk start/stop/restart all wired |
-| Dashboard page           | DONE   | Shows service overview and quick stats                                            |
-| Dashboard log preview    | DONE   | `error-log-preview.tsx` tails last lines of Apache/MySQL/PHP logs                 |
+| Feature                         | Status | Notes                                                                                                                                                                            |
+| ------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ServiceManager component        | DONE   | Polls status every 5 seconds                                                                                                                                                     |
+| ServiceCard component           | DONE   | Generic card for service display                                                                                                                                                 |
+| StatusBadge component           | DONE   | Running/Stopped indicator                                                                                                                                                        |
+| ServiceActions component        | DONE   | Start/Stop/Open buttons                                                                                                                                                          |
+| MySQL service UI                | DONE   | `mysql-service.tsx`                                                                                                                                                              |
+| Apache service UI               | DONE   | `apache-service.tsx`                                                                                                                                                             |
+| PHP service UI                  | DONE   | `php-service.tsx`                                                                                                                                                                |
+| Services page                   | DONE   | Start/stop works, log viewer with service tabs, bulk start/stop/restart all wired                                                                                                |
+| Service card primary/overflow   | DONE   | Secondary actions live in a `MoreHorizontal` overflow menu (`service-overflow-menu.tsx`); cards keep Start/Stop + one Open visible and become click-selectable for the workspace |
+| Service workspace (split panel) | DONE   | Services page is top grid + bottom `service-workspace.tsx`; shadcn Tabs (Logs / Config / Actions) reflect the selected card and remember selection via `localStorage`            |
+| Dashboard page                  | DONE   | Shows service overview and quick stats                                                                                                                                           |
+| Dashboard slim-down             | DONE   | Status row + Start All / Stop All / Open Services strip + ServiceManager compact + ErrorLogPreview; stat tiles and Quick Actions grid removed                                    |
+| Dashboard log preview           | DONE   | `error-log-preview.tsx` tails last lines of Apache/MySQL/PHP logs                                                                                                                |
 
 ---
 
 ## Config Management
 
-| Feature                       | Status  | Notes                                |
-| ----------------------------- | ------- | ------------------------------------ |
-| Read config file              | DONE    | `read_config` command                |
-| Write/save config file        | DONE    | `update_config` command              |
-| Auto-backup before save       | DONE    | Saves to `config-backups/`           |
-| Manual config backup          | DONE    | `backup_config` command              |
-| List config backups           | DONE    | `list_config_backups` command        |
-| Restore config backup         | DONE    | `restore_config_backup` command      |
-| Config editor UI (textarea)   | DONE    | `config-editor.tsx` - basic textarea |
-| Config editor (Monaco)        | PLANNED | Syntax highlighting, line numbers    |
-| Config validation (Apache -t) | PLANNED | Run config test before save          |
-| Config validation (MySQL)     | PLANNED |                                      |
+| Feature                       | Status  | Notes                                                                                                  |
+| ----------------------------- | ------- | ------------------------------------------------------------------------------------------------------ |
+| Read config file              | DONE    | `read_config` command                                                                                  |
+| Write/save config file        | DONE    | `update_config` command                                                                                |
+| Auto-backup before save       | DONE    | Saves to `config-backups/`                                                                             |
+| Manual config backup          | DONE    | `backup_config` command                                                                                |
+| List config backups           | DONE    | `list_config_backups` command                                                                          |
+| Restore config backup         | DONE    | `restore_config_backup` command                                                                        |
+| Config editor UI (textarea)   | DONE    | `config-editor.tsx` - basic textarea                                                                   |
+| Config editor (Monaco)        | PLANNED | Syntax highlighting, line numbers                                                                      |
+| Config validation (Apache -t) | DONE    | `validateConfig` button + auto-validation after save in `config-editor.tsx` calls `test_apache_config` |
+| Config validation (MySQL)     | PLANNED |                                                                                                        |
 
 ---
 
 ## Log Viewer
 
-| Feature                         | Status | Notes                                                                                                                  |
-| ------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------- |
-| Read log file (last 1000 lines) | DONE   | `get_service_logs` command                                                                                             |
-| LogViewer component (static)    | DONE   | Renders text, no streaming                                                                                             |
-| Log display on services page    | DONE   | Uses `LogViewer` with search and copy/download actions                                                                 |
-| Real-time log streaming         | DONE   | Frontend polls `get_service_logs` every 2s while auto-refresh is on. Tauri Channel streaming still planned for Phase 4 |
-| Log filtering / search          | DONE   | Search bar in `LogViewer` filters lines in place                                                                       |
-| Log tabs per service            | DONE   | shadcn `Tabs` on services page switches MySQL / Apache / PHP                                                           |
-| Log auto-scroll toggle          | DONE   | Auto-scroll checkbox in `LogViewer` header, independent from the 2s poll toggle                                        |
+| Feature                         | Status  | Notes                                                                                                                  |
+| ------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Read log file (last 1000 lines) | DONE    | `get_service_logs` command                                                                                             |
+| LogViewer component (static)    | DONE    | Renders text, no streaming                                                                                             |
+| Log display on services page    | DONE    | Uses `LogViewer` with search and copy/download actions                                                                 |
+| Real-time log streaming         | DONE    | Frontend polls `get_service_logs` every 2s while auto-refresh is on. Tauri Channel streaming still planned for Phase 4 |
+| Log filtering / search          | DONE    | Search bar in `LogViewer` filters lines in place                                                                       |
+| Log tabs per service            | DONE    | shadcn `Tabs` on services page switches MySQL / Apache / PHP                                                           |
+| Dedicated Logs page             | DONE    | `pages/logs.tsx` provides a top-level Logs route with the same tabs and search                                         |
+| Log auto-scroll toggle          | DONE    | Auto-scroll checkbox in `LogViewer` header, independent from the 2s poll toggle                                        |
+| Terminal-style log viewer       | PLANNED | Replace `Textarea` with styled `<pre>` (mono, dark terminal bg, line-level coloring for ERROR/WARN/INFO)               |
+| Sticky log search bar           | PLANNED | Search row becomes `sticky top-0` inside `LogViewer` so it stays visible while scrolling                               |
 
 ---
 
@@ -134,26 +142,30 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ## Database Management
 
-| Feature                       | Status  | Notes                                   |
-| ----------------------------- | ------- | --------------------------------------- |
-| phpMyAdmin integration        | DONE    | Served via Apache at `/phpmyadmin`      |
-| MySQL database backup (all)   | DONE    | `backup_mysql_database` using mysqldump |
-| MySQL user management UI      | PLANNED |                                         |
-| Database-specific backup      | PLANNED | Backup individual databases             |
-| Database restore              | PLANNED | Import .sql file                        |
+| Feature                     | Status  | Notes                                                                                                  |
+| --------------------------- | ------- | ------------------------------------------------------------------------------------------------------ |
+| phpMyAdmin integration      | DONE    | Served via Apache at `/phpmyadmin`                                                                     |
+| MySQL database backup (all) | DONE    | `backup_mysql_database` using mysqldump                                                                |
+| MySQL user management UI    | PLANNED |                                                                                                        |
+| Database list               | DONE    | `list_mysql_databases` lists user databases on the Databases page                                      |
+| Database list metadata      | PLANNED | New `list_mysql_databases_detailed` returns name + table count + size from `information_schema.tables` |
+| Database search             | PLANNED | Live filter input on the Databases page                                                                |
+| Database row context menu   | PLANNED | Right-click row -> Backup, Open in phpMyAdmin (deep link to ?db=NAME), Copy DB name                    |
+| Database-specific backup    | DONE    | `backup_mysql_database_named` per-database backup wired into Databases page                            |
+| Database restore            | DONE    | `restore_mysql_database` accepts SQL piped from a `.sql` file picked in the UI                         |
 
 ---
 
 ## Navigation & UI Shell
 
-| Feature                  | Status  | Notes                                      |
-| ------------------------ | ------- | ------------------------------------------ |
-| Sidebar navigation       | DONE    | `sidebar.tsx`                              |
-| Command palette (Ctrl+P) | DONE    | `command-palette.tsx`                      |
-| Top bar with actions     | DONE    | In `App.tsx` header                        |
-| Context menus            | PLANNED | shadcn/ui ContextMenu for per-item actions |
-| Breadcrumb navigation    | DONE    | Topbar breadcrumb reflects current page  |
-| Window controls (custom) | DONE    | `WindowControls.tsx`                       |
+| Feature                  | Status | Notes                                                                                   |
+| ------------------------ | ------ | --------------------------------------------------------------------------------------- |
+| Sidebar navigation       | DONE   | `sidebar.tsx`                                                                           |
+| Command palette (Ctrl+P) | DONE   | `command-palette.tsx`                                                                   |
+| Top bar with actions     | DONE   | In `App.tsx` header                                                                     |
+| Context menus            | DONE   | shadcn `ContextMenu` wired into Apache, MySQL, PHP service cards via `service-card.tsx` |
+| Breadcrumb navigation    | DONE   | Topbar breadcrumb reflects current page                                                 |
+| Window controls (custom) | DONE   | `WindowControls.tsx`                                                                    |
 
 ---
 
@@ -167,18 +179,42 @@ Update this file every time a feature changes status. Do not maintain feature st
 | Tray click opens app        | DONE    | Left-click on tray icon shows the main window (`lib.rs`)                                             |
 | Tray service status display | DONE    | `set_tray_tooltip` updated every 5s by `ServiceManager` with Apache/MySQL/PHP state                  |
 | Tray service start/stop     | DONE    | Tray menu emits `tray-toggle-service`; `ServiceManager` routes to the same toggle pipeline as the UI |
-| Notifications from tray     | PLANNED | Service start/stop notifications                                                                     |
+| Notifications from tray     | DONE    | Service start/stop and crash notifications via `src/lib/notify.ts`                                   |
 
 ---
 
 ## Auto-Update
 
-| Feature                         | Status  | Notes                                    |
-| ------------------------------- | ------- | ---------------------------------------- |
-| Tauri updater plugin configured | DONE    | `tauri-plugin-updater` in Cargo.toml     |
-| Update check on startup         | PARTIAL | `auto-updater.tsx` component exists      |
-| Install update prompt           | PARTIAL | UI exists, flow not fully tested         |
-| Update from GitHub Releases     | PLANNED | Needs `tauri.conf.json` updater endpoint |
+| Feature                         | Status  | Notes                                                                                                               |
+| ------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------- |
+| Tauri updater plugin configured | DONE    | `tauri-plugin-updater` in Cargo.toml                                                                                |
+| Update check on startup         | PARTIAL | `auto-updater.tsx` component exists                                                                                 |
+| Install update prompt           | PARTIAL | UI exists, flow not fully tested                                                                                    |
+| Update from GitHub Releases     | PLANNED | Needs `tauri.conf.json` updater endpoint                                                                            |
+| Auto-check updates toggle       | PLANNED | Settings page switch persisted to `localStorage`; `auto-updater.tsx` honours it (poll on launch + every 6h when on) |
+
+---
+
+## Settings & Preferences
+
+| Feature                         | Status  | Notes                                                                      |
+| ------------------------------- | ------- | -------------------------------------------------------------------------- |
+| Settings page                   | PLANNED | New `src/pages/settings.tsx` replaces the inline placeholder in `App.tsx`  |
+| Theme preference                | PLANNED | Inline ThemeToggle inside Settings (uses existing `ThemeProvider`)         |
+| Language preference             | PLANNED | Inline LanguageSwitcher inside Settings (uses existing i18next setup)      |
+| Launch on Windows startup       | PLANNED | `tauri-plugin-autostart`; `set_autostart` / `get_autostart` Tauri commands |
+| Auto-check updates (preference) | PLANNED | See Auto-Update table                                                      |
+| Config shortcuts (Apache/MySQL) | PLANNED | Moved from App.tsx into Settings page as a compact 2-column row            |
+
+---
+
+## About
+
+| Feature                  | Status  | Notes                                                                                                  |
+| ------------------------ | ------- | ------------------------------------------------------------------------------------------------------ |
+| About page (basic)       | DONE    | App version + author + GitHub/Docs/BugReport buttons (inline in `App.tsx` today)                       |
+| About page (extracted)   | PLANNED | Move into `src/pages/about.tsx`                                                                        |
+| System Information block | PLANNED | New `get_system_info` Tauri command surfaces OS, Tauri version, app version, Apache/MySQL/PHP versions |
 
 ---
 
@@ -205,11 +241,11 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ## Security & Analyzer
 
-| Feature                         | Status  | Notes                  |
-| ------------------------------- | ------- | ---------------------- |
-| Bug reporting via GitHub Issues | PLANNED | Pre-filled issue modal |
-| Security config analyzer        | PLANNED |                        |
-| HTTPS / SSL for local sites     | PLANNED |                        |
+| Feature                         | Status  | Notes                                                                             |
+| ------------------------------- | ------- | --------------------------------------------------------------------------------- |
+| Bug reporting via GitHub Issues | DONE    | `bug-report-dialog.tsx` opens a pre-filled GitHub issue with environment metadata |
+| Security config analyzer        | PLANNED |                                                                                   |
+| HTTPS / SSL for local sites     | PLANNED |                                                                                   |
 
 ---
 

@@ -11,6 +11,7 @@ interface BreadcrumbProps {
 const PAGE_LABEL_KEYS: Record<string, string> = {
   dashboard: "navigation.dashboard",
   services: "navigation.services",
+  databases: "navigation.databases",
   projects: "navigation.projects",
   logs: "navigation.logs",
   settings: "navigation.settings",

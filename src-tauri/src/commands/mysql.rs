@@ -245,3 +245,134 @@ pub async fn backup_mysql_database() -> Result<String, String> {
 
     Ok(format!("MySQL backup created: {}", backup_file.display()))
 }
+
+/// List all non-system databases on the running MySQL server.
+#[tauri::command]
+pub async fn list_mysql_databases() -> Result<Vec<String>, String> {
+    let base_path = get_installation_path();
+    let mysql_path = base_path.join("mysql").join("bin").join("mysql.exe");
+
+    if !mysql_path.exists() {
+        return Err(format!("mysql not found at {}", mysql_path.display()));
+    }
+
+    let output = create_hidden_command(&mysql_path.to_string_lossy())
+        .args([
+            "-u",
+            "root",
+            "-N",
+            "-B",
+            "-e",
+            "SHOW DATABASES",
+        ])
+        .output()
+        .map_err(|e| format!("Failed to execute mysql client: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("mysql query failed: {}", stderr.trim()));
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let system = ["information_schema", "performance_schema", "mysql", "sys"];
+    let dbs: Vec<String> = stdout
+        .lines()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty() && !system.contains(&s.as_str()))
+        .collect();
+
+    Ok(dbs)
+}
+
+/// Back up a single MySQL database to `<user_data>/backups/mysql/<db>_<timestamp>.sql`.
+#[tauri::command]
+pub async fn backup_mysql_database_named(database: String) -> Result<String, String> {
+    if database.trim().is_empty() {
+        return Err("Database name is required".to_string());
+    }
+    if database.contains(|c: char| !c.is_ascii_alphanumeric() && c != '_' && c != '-') {
+        return Err("Invalid database name".to_string());
+    }
+
+    let base_path = get_installation_path();
+    let mysql_dump_path = base_path.join("mysql").join("bin").join("mysqldump.exe");
+
+    if !mysql_dump_path.exists() {
+        return Err(format!(
+            "mysqldump not found at {}",
+            mysql_dump_path.display()
+        ));
+    }
+
+    let backups_dir = crate::utils::paths::user_backups_dir().join("mysql");
+    std::fs::create_dir_all(&backups_dir)
+        .map_err(|e| format!("Failed to create backup directory: {}", e))?;
+
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_err(|e| format!("Failed to generate backup timestamp: {}", e))?
+        .as_secs();
+
+    let backup_file = backups_dir.join(format!("{}_{}.sql", database, timestamp));
+
+    let output = create_hidden_command(&mysql_dump_path.to_string_lossy())
+        .args(["-u", "root", "--databases", &database])
+        .output()
+        .map_err(|e| format!("Failed to execute mysqldump: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("mysqldump failed: {}", stderr.trim()));
+    }
+
+    std::fs::write(&backup_file, output.stdout)
+        .map_err(|e| format!("Failed to write backup file: {}", e))?;
+
+    Ok(format!("Backup created: {}", backup_file.display()))
+}
+
+/// Restore a `.sql` dump into the MySQL server. The frontend should read the
+/// file with FileReader and pass the SQL text directly so we don't need the
+/// dialog plugin.
+#[tauri::command]
+pub async fn restore_mysql_database(sql: String) -> Result<String, String> {
+    if sql.trim().is_empty() {
+        return Err("SQL content is empty".to_string());
+    }
+
+    let base_path = get_installation_path();
+    let mysql_path = base_path.join("mysql").join("bin").join("mysql.exe");
+
+    if !mysql_path.exists() {
+        return Err(format!("mysql not found at {}", mysql_path.display()));
+    }
+
+    use std::io::Write;
+    use std::process::Stdio;
+
+    let mut child = create_hidden_command(&mysql_path.to_string_lossy())
+        .args(["-u", "root"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| format!("Failed to spawn mysql client: {}", e))?;
+
+    if let Some(stdin) = child.stdin.as_mut() {
+        stdin
+            .write_all(sql.as_bytes())
+            .map_err(|e| format!("Failed to pipe SQL to mysql: {}", e))?;
+    }
+
+    let output = child
+        .wait_with_output()
+        .map_err(|e| format!("Failed to wait for mysql client: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("mysql restore failed: {}", stderr.trim()));
+    }
+
+    let bytes = sql.len();
+    Ok(format!("Restored {} bytes of SQL", bytes))
+}

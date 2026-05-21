@@ -8,14 +8,14 @@
 
 ## Tech Stack at a Glance
 
-| Layer            | Technology                               | Purpose                                          |
-| ---------------- | ---------------------------------------- | ------------------------------------------------ |
-| Frontend UI      | React 18 + Vite                          | All visible UI                                   |
-| Styling          | Tailwind CSS + shadcn/ui                 | All styles - NO custom CSS                       |
-| Animation        | Framer Motion                            | All transitions/animations                       |
-| i18n             | i18next                                  | EN and HI translations                           |
-| Backend          | Tauri 2 (Rust)                           | Process management, file I/O, native OS ops      |
-| IPC Bridge       | Tauri Commands + Events                  | Frontend <-> Backend communication               |
+| Layer            | Technology                             | Purpose                                          |
+| ---------------- | -------------------------------------- | ------------------------------------------------ |
+| Frontend UI      | React 18 + Vite                        | All visible UI                                   |
+| Styling          | Tailwind CSS + shadcn/ui               | All styles - NO custom CSS                       |
+| Animation        | Framer Motion                          | All transitions/animations                       |
+| i18n             | i18next                                | EN and HI translations                           |
+| Backend          | Tauri 2 (Rust)                         | Process management, file I/O, native OS ops      |
+| IPC Bridge       | Tauri Commands + Events                | Frontend <-> Backend communication               |
 | Service binaries | httpd.exe, mysqld.exe (MySQL), php.exe | The actual servers (always bundled in installer) |
 
 ---

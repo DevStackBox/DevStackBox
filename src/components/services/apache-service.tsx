@@ -2,14 +2,19 @@ import { useTranslation } from "react-i18next";
 import { Server } from "lucide-react";
 import { ServiceCard } from "./service-card";
 import { StatusBadge } from "./status-badge";
+import { ServiceOverflowMenu } from "./service-overflow-menu";
 import {
   ServiceActions,
   StartIcon,
   StopIcon,
-  ConfigIcon,
-  LogsIcon,
   OpenIcon,
 } from "./service-actions";
+import {
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuSeparator,
+} from "@/components/ui/context-menu";
 import type { ServiceStatus } from "@/types/services";
 
 interface ApacheServiceProps {
@@ -19,6 +24,8 @@ interface ApacheServiceProps {
   onOpenConfig?: () => void;
   onViewLogs?: () => void;
   compact?: boolean;
+  isSelected?: boolean;
+  onSelect?: () => void;
 }
 
 export function ApacheService({
@@ -28,6 +35,8 @@ export function ApacheService({
   onOpenConfig,
   onViewLogs,
   compact = false,
+  isSelected = false,
+  onSelect,
 }: ApacheServiceProps) {
   const { t } = useTranslation();
 
@@ -39,7 +48,8 @@ export function ApacheService({
     window.open("http://localhost/www", "_blank");
   };
 
-  const actions = [
+  // Primary actions stay in the card body: Start/Stop + one Open.
+  const primaryActions = [
     {
       icon: status.running ? StopIcon : StartIcon,
       label: loading
@@ -53,26 +63,6 @@ export function ApacheService({
         ? ("destructive" as "destructive" | "default")
         : ("default" as "destructive" | "default"),
     },
-    ...(onOpenConfig
-      ? [
-          {
-            icon: ConfigIcon,
-            label: t("actions.config", "Config"),
-            onClick: onOpenConfig,
-            variant: "ghost" as const,
-          },
-        ]
-      : []),
-    ...(onViewLogs
-      ? [
-          {
-            icon: LogsIcon,
-            label: t("actions.logs", "Logs"),
-            onClick: onViewLogs,
-            variant: "ghost" as const,
-          },
-        ]
-      : []),
     ...(status.running
       ? [
           {
@@ -83,21 +73,13 @@ export function ApacheService({
           },
         ]
       : []),
-    ...(status.running
-      ? [
-          {
-            icon: OpenIcon,
-            label: t("actions.www", "WWW"),
-            onClick: openWWW,
-            variant: "outline" as const,
-          },
-        ]
-      : []),
   ];
+
+  const title = t("services.apache.title", "Apache HTTP Server");
 
   return (
     <ServiceCard
-      title={t("services.apache.title", "Apache HTTP Server")}
+      title={title}
       description={t(
         "services.apache.description",
         "Local web server for hosting PHP applications",
@@ -107,7 +89,75 @@ export function ApacheService({
       isRunning={status.running}
       compact={compact}
       delay={0}
-      header={<StatusBadge running={status.running} />}
+      isSelected={isSelected}
+      onSelect={onSelect}
+      header={
+        <div className="flex items-center gap-1">
+          <StatusBadge running={status.running} />
+          <ServiceOverflowMenu
+            label={title}
+            groups={[
+              {
+                items: [
+                  ...(onOpenConfig
+                    ? [
+                        {
+                          label: t("actions.config", "Config"),
+                          onSelect: onOpenConfig,
+                        },
+                      ]
+                    : []),
+                  ...(onViewLogs
+                    ? [
+                        {
+                          label: t("actions.logs", "Logs"),
+                          onSelect: onViewLogs,
+                        },
+                      ]
+                    : []),
+                ],
+              },
+              {
+                items: [
+                  {
+                    label: t("actions.www", "WWW"),
+                    onSelect: openWWW,
+                    disabled: !status.running,
+                  },
+                ],
+              },
+            ]}
+          />
+        </div>
+      }
+      contextMenu={
+        <ContextMenuContent className="w-56">
+          <ContextMenuLabel>{title}</ContextMenuLabel>
+          <ContextMenuSeparator />
+          <ContextMenuItem onSelect={onToggle} disabled={loading}>
+            {status.running
+              ? t("actions.stop", "Stop")
+              : t("actions.start", "Start")}
+          </ContextMenuItem>
+          {onOpenConfig && (
+            <ContextMenuItem onSelect={onOpenConfig}>
+              {t("actions.config", "Config")}
+            </ContextMenuItem>
+          )}
+          {onViewLogs && (
+            <ContextMenuItem onSelect={onViewLogs}>
+              {t("actions.logs", "Logs")}
+            </ContextMenuItem>
+          )}
+          <ContextMenuSeparator />
+          <ContextMenuItem onSelect={openApache} disabled={!status.running}>
+            {t("actions.open", "Open")}
+          </ContextMenuItem>
+          <ContextMenuItem onSelect={openWWW} disabled={!status.running}>
+            {t("actions.www", "WWW")}
+          </ContextMenuItem>
+        </ContextMenuContent>
+      }
     >
       <div className="space-y-4">
         {/* Service Information */}
@@ -128,9 +178,9 @@ export function ApacheService({
           )}
         </div>
 
-        {/* Action Buttons */}
+        {/* Primary action row */}
         <ServiceActions
-          actions={actions}
+          actions={primaryActions}
           loading={loading}
           compact={compact}
           layout="grid"
