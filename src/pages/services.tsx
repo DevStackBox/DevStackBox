@@ -4,7 +4,16 @@ import { motion } from "framer-motion";
 import { ServiceManager } from "@/components/services";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Activity, RefreshCw, Play, Square } from "lucide-react";
+import {
+  Activity,
+  RefreshCw,
+  Play,
+  Square,
+  Terminal,
+  PackageCheck,
+  Globe,
+  Wrench,
+} from "lucide-react";
 import { safeInvoke, isTauri } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
 import { useToast } from "@/hooks/use-toast";
@@ -104,6 +113,65 @@ export function ServicesPage({
     }
   };
 
+  const [toolLoading, setToolLoading] = useState<string | null>(null);
+
+  const openPhpTerminal = async () => {
+    setToolLoading("php");
+    try {
+      await safeInvoke(TAURI_COMMANDS.services.openPhpTerminal, {
+        version: currentPhpVersion,
+      });
+    } catch (err) {
+      toast({
+        title: t("tools.phpTerminalFailed", "Failed to open PHP terminal"),
+        description: String(err),
+        variant: "destructive",
+      });
+    } finally {
+      setToolLoading(null);
+    }
+  };
+
+  const openComposerTerminal = async () => {
+    setToolLoading("composer");
+    try {
+      await safeInvoke(TAURI_COMMANDS.services.openComposerTerminal, {
+        version: currentPhpVersion,
+      });
+    } catch (err) {
+      toast({
+        title: t(
+          "tools.composerTerminalFailed",
+          "Failed to open Composer terminal",
+        ),
+        description: String(err),
+        variant: "destructive",
+      });
+    } finally {
+      setToolLoading(null);
+    }
+  };
+
+  const openPhpMyAdmin = async () => {
+    setToolLoading("phpmyadmin");
+    try {
+      if (isTauri()) {
+        const { open } = await import("@tauri-apps/plugin-shell");
+        await open("http://localhost/phpmyadmin");
+      } else {
+        window.open("http://localhost/phpmyadmin", "_blank");
+      }
+    } catch (err) {
+      toast({
+        title: t("tools.phpMyAdminFailed", "Failed to open phpMyAdmin"),
+        description: String(err),
+        variant: "destructive",
+      });
+    } finally {
+      setToolLoading(null);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -174,6 +242,50 @@ export function ServicesPage({
         onOpenPHPVersionSelector={onOpenPHPVersionSelector}
         currentPhpVersion={currentPhpVersion}
       />
+
+      {/* Developer Tools — quick-launch items that are not services */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <hr className="flex-1 border-border" />
+          <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wide px-1">
+            <Wrench className="h-3 w-3" />
+            {t("tools.title", "Developer Tools")}
+          </span>
+          <hr className="flex-1 border-border" />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={openPhpTerminal}
+            disabled={toolLoading === "php"}
+          >
+            <Terminal className="mr-2 h-4 w-4" />
+            {t("tools.phpTerminal", "PHP Terminal")}
+            <Badge variant="secondary" className="ml-2 font-mono text-xs">
+              {currentPhpVersion}
+            </Badge>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={openComposerTerminal}
+            disabled={toolLoading === "composer"}
+          >
+            <PackageCheck className="mr-2 h-4 w-4" />
+            {t("tools.composerTerminal", "Composer Terminal")}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={openPhpMyAdmin}
+            disabled={toolLoading === "phpmyadmin"}
+          >
+            <Globe className="mr-2 h-4 w-4" />
+            {t("tools.phpMyAdmin", "phpMyAdmin")}
+          </Button>
+        </div>
+      </div>
     </motion.div>
   );
 }
