@@ -104,7 +104,14 @@ export function ApacheService({
                   ...(onOpenConfig
                     ? [
                         {
-                          label: t("actions.config", "Config"),
+                          label: (
+                            <span className="flex w-full items-center justify-between gap-4">
+                              <span>{t("actions.config", "Config")}</span>
+                              <span className="font-mono text-xs text-muted-foreground">
+                                httpd.conf
+                              </span>
+                            </span>
+                          ),
                           onSelect: onOpenConfig,
                         },
                       ]
@@ -143,7 +150,12 @@ export function ApacheService({
           </ContextMenuItem>
           {onOpenConfig && (
             <ContextMenuItem onSelect={onOpenConfig}>
-              {t("actions.config", "Config")}
+              <span className="flex w-full items-center justify-between gap-4">
+                <span>{t("actions.config", "Config")}</span>
+                <span className="font-mono text-xs text-muted-foreground">
+                  httpd.conf
+                </span>
+              </span>
             </ContextMenuItem>
           )}
           {onViewLogs && (

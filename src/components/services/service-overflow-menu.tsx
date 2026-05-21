@@ -1,4 +1,5 @@
-import { MoreHorizontal } from "lucide-react";
+import type { ReactNode } from "react";
+import { MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export interface OverflowItem {
-  label: string;
+  label: ReactNode;
   onSelect: () => void;
   disabled?: boolean;
 }
@@ -53,7 +54,7 @@ export function ServiceOverflowMenu({
           aria-label={`${label} actions`}
           onClick={(e) => e.stopPropagation()}
         >
-          <MoreHorizontal className="h-4 w-4" />
+          <MoreVertical className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
