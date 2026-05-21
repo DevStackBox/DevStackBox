@@ -36,15 +36,15 @@
   "services": {
     "title": "Services",
     "mysql": {
-      "title": "MySQL Database",
+      "title": "MySQL",
       "description": "Embedded MySQL server with GUI management"
     },
     "php": {
-      "title": "PHP 8.2",
+      "title": "PHP",
       "description": "Default PHP runtime with extensions"
     },
     "apache": {
-      "title": "Apache Server",
+      "title": "Apache",
       "description": "Portable Apache with vhost management"
     }
   },

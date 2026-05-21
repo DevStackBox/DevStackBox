@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import {
@@ -9,7 +9,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import { useToast } from "@/hooks/use-toast";
 import { safeInvoke, isTauri } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
@@ -19,27 +27,67 @@ import {
   Upload,
   RefreshCw,
   ExternalLink,
+  Search,
+  Copy,
 } from "lucide-react";
+
+interface DatabaseInfo {
+  name: string;
+  tableCount: number;
+  sizeBytes: number;
+}
+
+// Tauri returns snake_case fields (serde::Serialize on the Rust struct).
+interface RawDatabaseInfo {
+  name: string;
+  table_count: number;
+  size_bytes: number;
+}
+
+function formatBytes(bytes: number): string {
+  if (!bytes || bytes <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let value = bytes;
+  let unit = 0;
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  const rounded =
+    value >= 100 || unit === 0 ? Math.round(value) : value.toFixed(1);
+  return `${rounded} ${units[unit]}`;
+}
 
 export function DatabasesPage() {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const [databases, setDatabases] = useState<string[]>([]);
+  const [databases, setDatabases] = useState<DatabaseInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const loadDatabases = async () => {
     setLoading(true);
     try {
       if (!isTauri()) {
-        setDatabases(["sample_db", "wordpress", "laravel_app"]);
+        setDatabases([
+          { name: "sample_db", tableCount: 5, sizeBytes: 1024000 },
+          { name: "wordpress", tableCount: 12, sizeBytes: 5242880 },
+          { name: "laravel_app", tableCount: 0, sizeBytes: 0 },
+        ]);
         return;
       }
-      const list = await safeInvoke<string[]>(
-        TAURI_COMMANDS.services.listMysqlDatabases,
+      const list = await safeInvoke<RawDatabaseInfo[]>(
+        TAURI_COMMANDS.services.listMysqlDatabasesDetailed,
       );
-      setDatabases(list ?? []);
+      setDatabases(
+        (list ?? []).map((d) => ({
+          name: d.name,
+          tableCount: d.table_count,
+          sizeBytes: d.size_bytes,
+        })),
+      );
     } catch (err) {
       toast({
         variant: "destructive",
@@ -131,6 +179,36 @@ export function DatabasesPage() {
     }
   };
 
+  const openInPhpMyAdmin = (name: string) => {
+    window.open(
+      `http://localhost/phpmyadmin/?db=${encodeURIComponent(name)}`,
+      "_blank",
+    );
+  };
+
+  const copyName = async (name: string) => {
+    try {
+      await navigator.clipboard.writeText(name);
+      toast({
+        variant: "success",
+        title: t("databases.copied", "Copied"),
+        description: name,
+      });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: t("databases.copyFailed", "Copy failed"),
+        description: `${err}`,
+      });
+    }
+  };
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return databases;
+    return databases.filter((d) => d.name.toLowerCase().includes(q));
+  }, [databases, search]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -219,17 +297,39 @@ export function DatabasesPage() {
           <CardDescription>
             {loading
               ? t("databases.loading", "Reading database list...")
-              : t("databases.count", "{{count}} user databases found", {
-                  count: databases.length,
-                })}
+              : search.trim()
+                ? t(
+                    "databases.countFiltered",
+                    "{{shown}} of {{total}} databases",
+                    { shown: filtered.length, total: databases.length },
+                  )
+                : t("databases.count", "{{count}} user databases found", {
+                    count: databases.length,
+                  })}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-3">
+          <div className="sticky top-0 z-10 -mx-6 -mt-2 mb-2 bg-background/95 px-6 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t(
+                  "databases.searchPlaceholder",
+                  "Filter databases by name...",
+                )}
+                className="pl-9"
+                disabled={loading || databases.length === 0}
+              />
+            </div>
+          </div>
+
           {loading ? (
             <div className="space-y-2">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
             </div>
           ) : databases.length === 0 ? (
             <p className="text-sm text-muted-foreground">
@@ -238,26 +338,65 @@ export function DatabasesPage() {
                 "No user databases yet. Create one in phpMyAdmin.",
               )}
             </p>
+          ) : filtered.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {t("databases.noMatch", "No databases match your search.")}
+            </p>
           ) : (
-            databases.map((name) => (
-              <div
-                key={name}
-                className="flex items-center justify-between rounded-md border bg-card px-3 py-2"
-              >
-                <span className="font-mono text-sm">{name}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => backupDatabase(name)}
-                  disabled={busy !== null}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  {busy === name
-                    ? t("databases.backingUp", "Backing up...")
-                    : t("databases.backup", "Backup")}
-                </Button>
-              </div>
-            ))
+            <div className="space-y-2">
+              {filtered.map((db) => (
+                <ContextMenu key={db.name}>
+                  <ContextMenuTrigger asChild>
+                    <div className="flex items-center justify-between rounded-md border bg-card px-3 py-2 transition-colors hover:bg-accent/50">
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate font-mono text-sm">
+                          {db.name}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {t("databases.tablesCount", "{{count}} tables", {
+                            count: db.tableCount,
+                          })}
+                          <span className="mx-1.5">&middot;</span>
+                          {formatBytes(db.sizeBytes)}
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => backupDatabase(db.name)}
+                        disabled={busy !== null}
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        {busy === db.name
+                          ? t("databases.backingUp", "Backing up...")
+                          : t("databases.backup", "Backup")}
+                      </Button>
+                    </div>
+                  </ContextMenuTrigger>
+                  <ContextMenuContent className="w-56">
+                    <ContextMenuItem
+                      onSelect={() => backupDatabase(db.name)}
+                      disabled={busy !== null}
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      {t("databases.backup", "Backup")}
+                    </ContextMenuItem>
+                    <ContextMenuItem onSelect={() => openInPhpMyAdmin(db.name)}>
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      {t(
+                        "databases.openInPhpMyAdmin",
+                        "Open in phpMyAdmin",
+                      )}
+                    </ContextMenuItem>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem onSelect={() => copyName(db.name)}>
+                      <Copy className="mr-2 h-4 w-4" />
+                      {t("databases.copyName", "Copy database name")}
+                    </ContextMenuItem>
+                  </ContextMenuContent>
+                </ContextMenu>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>

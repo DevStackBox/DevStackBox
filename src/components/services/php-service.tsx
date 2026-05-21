@@ -58,7 +58,7 @@ export function PHPService({
     },
   ];
 
-  const title = t("services.php.title", "PHP Environment");
+  const title = t("services.php.title", "PHP");
 
   return (
     <ServiceCard
@@ -166,31 +166,15 @@ export function PHPService({
       }
     >
       <div className="space-y-4">
-        {/* Service Information. On the dashboard (compact) the card can be
-            narrow, so stack the rows to avoid label/value overlap. */}
-        <div
-          className={
-            compact
-              ? "flex flex-col gap-1 text-sm"
-              : "grid grid-cols-2 gap-4 text-sm"
-          }
-        >
-          <div className="truncate">
-            <span className="text-muted-foreground">
-              {t("common.version", "Version")}:
-            </span>
-            <span className="ml-2 font-mono">
-              {status.version || currentVersion}
-            </span>
-          </div>
-          <div className="truncate">
-            <span className="text-muted-foreground">
-              {t("common.status", "Status")}:
-            </span>
-            <span className="ml-2 text-blue-500 font-medium">
-              {t("status.ready", "Ready")}
-            </span>
-          </div>
+        {/* Service Information. The "Ready" status is already shown in the
+            header badge, so we only display the resolved PHP version here. */}
+        <div className="text-sm">
+          <span className="text-muted-foreground">
+            {t("common.version", "Version")}:
+          </span>
+          <span className="ml-2 font-mono">
+            {status.version || currentVersion}
+          </span>
         </div>
 
         {/* Primary action row */}

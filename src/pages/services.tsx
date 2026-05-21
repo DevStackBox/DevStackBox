@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { ServiceManager, ServiceWorkspace } from "@/components/services";
+import { ServiceManager } from "@/components/services";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Activity, RefreshCw, Play, Square } from "lucide-react";
@@ -13,35 +13,19 @@ import type { ServiceName } from "@/types/services";
 interface ServicesPageProps {
   onOpenPHPVersionSelector: () => void;
   onOpenConfig: (service: ServiceName) => void;
+  /** Single source of truth: route Logs clicks to the Logs page. */
+  onViewLogs: (service: ServiceName) => void;
   currentPhpVersion: string;
 }
-
-type WorkspaceService = "apache" | "mysql" | "php";
-const SELECTION_KEY = "devstackbox.services.selected";
-const isWorkspaceService = (v: string | null): v is WorkspaceService =>
-  v === "apache" || v === "mysql" || v === "php";
 
 export function ServicesPage({
   onOpenPHPVersionSelector,
   onOpenConfig,
+  onViewLogs,
   currentPhpVersion,
 }: ServicesPageProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
-
-  const [selectedService, setSelectedService] = useState<WorkspaceService>(
-    () => {
-      if (typeof window === "undefined") return "apache";
-      const stored = window.localStorage.getItem(SELECTION_KEY);
-      return isWorkspaceService(stored) ? stored : "apache";
-    },
-  );
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(SELECTION_KEY, selectedService);
-    }
-  }, [selectedService]);
 
   const [bulkLoading, setBulkLoading] = useState<
     "start" | "stop" | "restart" | null
@@ -52,9 +36,7 @@ export function ServicesPage({
   };
 
   const handleViewLogs = (service: string) => {
-    if (isWorkspaceService(service)) {
-      setSelectedService(service);
-    }
+    onViewLogs(service as ServiceName);
   };
 
   const startAllServices = async () => {
@@ -172,7 +154,7 @@ export function ServicesPage({
           </Button>
           <Button
             size="sm"
-            variant="ghost"
+            variant="outline"
             onClick={restartAllServices}
             disabled={bulkLoading !== null}
           >
@@ -184,21 +166,13 @@ export function ServicesPage({
         </div>
       </div>
 
-      {/* Service grid */}
+      {/* Service grid (single source of truth for status + actions). */}
       <ServiceManager
         compact={false}
         onOpenConfig={handleOpenConfig}
         onViewLogs={handleViewLogs}
         onOpenPHPVersionSelector={onOpenPHPVersionSelector}
         currentPhpVersion={currentPhpVersion}
-        selectedService={selectedService}
-        onSelectService={setSelectedService}
-      />
-
-      {/* Workspace panel for the selected service */}
-      <ServiceWorkspace
-        service={selectedService}
-        onOpenConfig={handleOpenConfig}
       />
     </motion.div>
   );

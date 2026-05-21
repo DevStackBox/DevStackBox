@@ -41,6 +41,12 @@ function App() {
   const [configEditorOpen, setConfigEditorOpen] = useState(false);
   const [configService, setConfigService] = useState<ServiceName>("mysql");
   const [configView, setConfigView] = useState<"apache" | "mysql" | null>(null);
+  // Single source of truth for the Logs page: when the user clicks the
+  // "Logs" item from any service card (dashboard or services), we set
+  // this and navigate to the Logs page so the matching tab opens.
+  const [logsService, setLogsService] = useState<"apache" | "mysql" | "php">(
+    "apache",
+  );
 
   // Copy path to clipboard helper
   const copyToClipboard = (path: string, label: string) => {
@@ -58,6 +64,12 @@ function App() {
   const handleOpenConfig = (service: ServiceName) => {
     setConfigService(service);
     setConfigEditorOpen(true);
+  };
+
+  // Handler: jump to the Logs page on the requested service tab.
+  const handleViewLogs = (service: "apache" | "mysql" | "php") => {
+    setLogsService(service);
+    setCurrentPage("logs");
   };
 
   // Initialize app and check binaries
@@ -138,6 +150,7 @@ function App() {
             currentPhpVersion={currentPhpVersion}
             onOpenPHPVersionSelector={() => setPhpVersionSelectorOpen(true)}
             onOpenConfig={handleOpenConfig}
+            onViewLogs={handleViewLogs}
           />
         );
 
@@ -162,7 +175,7 @@ function App() {
         );
 
       case "logs":
-        return <LogsPage />;
+        return <LogsPage initialService={logsService} />;
 
       case "databases":
         return <DatabasesPage />;
@@ -424,6 +437,8 @@ function App() {
           <DashboardPage
             onOpenPHPVersionSelector={() => setPhpVersionSelectorOpen(true)}
             onPageChange={setCurrentPage}
+            onOpenConfig={handleOpenConfig}
+            onViewLogs={handleViewLogs}
             currentPhpVersion={currentPhpVersion}
           />
         );

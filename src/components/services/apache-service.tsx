@@ -75,7 +75,7 @@ export function ApacheService({
       : []),
   ];
 
-  const title = t("services.apache.title", "Apache HTTP Server");
+  const title = t("services.apache.title", "Apache");
 
   return (
     <ServiceCard

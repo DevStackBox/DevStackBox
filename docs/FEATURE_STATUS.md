@@ -76,21 +76,21 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ## Service UI
 
-| Feature                         | Status | Notes                                                                                                                                                                            |
-| ------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ServiceManager component        | DONE   | Polls status every 5 seconds                                                                                                                                                     |
-| ServiceCard component           | DONE   | Generic card for service display                                                                                                                                                 |
-| StatusBadge component           | DONE   | Running/Stopped indicator                                                                                                                                                        |
-| ServiceActions component        | DONE   | Start/Stop/Open buttons                                                                                                                                                          |
-| MySQL service UI                | DONE   | `mysql-service.tsx`                                                                                                                                                              |
-| Apache service UI               | DONE   | `apache-service.tsx`                                                                                                                                                             |
-| PHP service UI                  | DONE   | `php-service.tsx`                                                                                                                                                                |
-| Services page                   | DONE   | Start/stop works, log viewer with service tabs, bulk start/stop/restart all wired                                                                                                |
-| Service card primary/overflow   | DONE   | Secondary actions live in a `MoreHorizontal` overflow menu (`service-overflow-menu.tsx`); cards keep Start/Stop + one Open visible and become click-selectable for the workspace |
-| Service workspace (split panel) | DONE   | Services page is top grid + bottom `service-workspace.tsx`; shadcn Tabs (Logs / Config / Actions) reflect the selected card and remember selection via `localStorage`            |
-| Dashboard page                  | DONE   | Shows service overview and quick stats                                                                                                                                           |
-| Dashboard slim-down             | DONE   | Status row + Start All / Stop All / Open Services strip + ServiceManager compact + ErrorLogPreview; stat tiles and Quick Actions grid removed                                    |
-| Dashboard log preview           | DONE   | `error-log-preview.tsx` tails last lines of Apache/MySQL/PHP logs                                                                                                                |
+| Feature                         | Status  | Notes                                                                                                                                                                                                                        |
+| ------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ServiceManager component        | DONE    | Polls status every 5 seconds                                                                                                                                                                                                 |
+| ServiceCard component           | DONE    | Generic card for service display                                                                                                                                                                                             |
+| StatusBadge component           | DONE    | Running/Stopped indicator                                                                                                                                                                                                    |
+| ServiceActions component        | DONE    | Start/Stop/Open buttons                                                                                                                                                                                                      |
+| MySQL service UI                | DONE    | `mysql-service.tsx`                                                                                                                                                                                                          |
+| Apache service UI               | DONE    | `apache-service.tsx`                                                                                                                                                                                                         |
+| PHP service UI                  | DONE    | `php-service.tsx`                                                                                                                                                                                                            |
+| Services page                   | DONE    | Start/stop works, log viewer with service tabs, bulk start/stop/restart all wired                                                                                                                                            |
+| Service card primary/overflow   | DONE    | Secondary actions live in a `MoreHorizontal` overflow menu (`service-overflow-menu.tsx`); cards keep Start/Stop + one Open visible and become click-selectable for the workspace                                             |
+| Service workspace (split panel) | DROPPED | Replaced by single-source-of-truth navigation: card overflow `Logs` routes to the Logs page (with the right tab pre-selected) and `Config` opens the shared Config editor. The duplicate inline workspace tabs were removed. |
+| Dashboard page                  | DONE    | Shows service overview and quick stats                                                                                                                                                                                       |
+| Dashboard slim-down             | DONE    | Status row + Start All / Stop All / Open Services strip + ServiceManager compact + ErrorLogPreview; stat tiles and Quick Actions grid removed                                                                                |
+| Dashboard log preview           | DONE    | `error-log-preview.tsx` tails last lines of Apache/MySQL/PHP logs                                                                                                                                                            |
 
 ---
 
@@ -123,8 +123,8 @@ Update this file every time a feature changes status. Do not maintain feature st
 | Log tabs per service            | DONE    | shadcn `Tabs` on services page switches MySQL / Apache / PHP                                                           |
 | Dedicated Logs page             | DONE    | `pages/logs.tsx` provides a top-level Logs route with the same tabs and search                                         |
 | Log auto-scroll toggle          | DONE    | Auto-scroll checkbox in `LogViewer` header, independent from the 2s poll toggle                                        |
-| Terminal-style log viewer       | PLANNED | Replace `Textarea` with styled `<pre>` (mono, dark terminal bg, line-level coloring for ERROR/WARN/INFO)               |
-| Sticky log search bar           | PLANNED | Search row becomes `sticky top-0` inside `LogViewer` so it stays visible while scrolling                               |
+| Terminal-style log viewer       | DONE    | Styled `<pre>` (mono, zinc-950 terminal bg, per-line coloring for ERROR/WARN/INFO/DEBUG)                              |
+| Sticky log search bar           | DONE    | Search row is `sticky top-0` inside `LogViewer` with `backdrop-blur` so it stays visible while scrolling               |
 
 ---
 
@@ -148,9 +148,9 @@ Update this file every time a feature changes status. Do not maintain feature st
 | MySQL database backup (all) | DONE    | `backup_mysql_database` using mysqldump                                                                |
 | MySQL user management UI    | PLANNED |                                                                                                        |
 | Database list               | DONE    | `list_mysql_databases` lists user databases on the Databases page                                      |
-| Database list metadata      | PLANNED | New `list_mysql_databases_detailed` returns name + table count + size from `information_schema.tables` |
-| Database search             | PLANNED | Live filter input on the Databases page                                                                |
-| Database row context menu   | PLANNED | Right-click row -> Backup, Open in phpMyAdmin (deep link to ?db=NAME), Copy DB name                    |
+| Database list metadata      | DONE    | `list_mysql_databases_detailed` returns name + table count + size (data + index bytes) from `information_schema.tables` |
+| Database search             | DONE    | Sticky search input on the Databases page filters rows by name                                         |
+| Database row context menu   | DONE    | Right-click row -> Backup, Open in phpMyAdmin (deep link to ?db=NAME), Copy DB name                    |
 | Database-specific backup    | DONE    | `backup_mysql_database_named` per-database backup wired into Databases page                            |
 | Database restore            | DONE    | `restore_mysql_database` accepts SQL piped from a `.sql` file picked in the UI                         |
 

@@ -84,7 +84,7 @@ export function MySQLService({
       : []),
   ];
 
-  const title = t("services.mysql.title", "MySQL Database");
+  const title = t("services.mysql.title", "MySQL");
 
   return (
     <ServiceCard

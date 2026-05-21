@@ -36,15 +36,15 @@
   "services": {
     "title": "सेवाएं",
     "mysql": {
-      "title": "MySQL डेटाबेस",
+      "title": "MySQL",
       "description": "GUI प्रबंधन के साथ एम्बेडेड MySQL सर्वर"
     },
     "php": {
-      "title": "PHP 8.2",
+      "title": "PHP",
       "description": "एक्सटेंशन के साथ डिफ़ॉल्ट PHP रनटाइम"
     },
     "apache": {
-      "title": "Apache सर्वर",
+      "title": "Apache",
       "description": "vhost प्रबंधन के साथ पोर्टेबल Apache"
     }
   },

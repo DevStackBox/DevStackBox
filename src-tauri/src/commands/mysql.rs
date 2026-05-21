@@ -284,6 +284,68 @@ pub async fn list_mysql_databases() -> Result<Vec<String>, String> {
     Ok(dbs)
 }
 
+/// Same as `list_mysql_databases` but also returns table count + total size
+/// (data + index bytes) per schema via a single `information_schema.tables`
+/// query. Used by the Databases page row UI.
+#[tauri::command]
+pub async fn list_mysql_databases_detailed() -> Result<Vec<crate::types::DatabaseInfo>, String> {
+    let base_path = get_installation_path();
+    let mysql_path = base_path.join("mysql").join("bin").join("mysql.exe");
+
+    if !mysql_path.exists() {
+        return Err(format!("mysql not found at {}", mysql_path.display()));
+    }
+
+    // Excluding system schemas at SQL level keeps the result tight.
+    let sql = "SELECT table_schema, COUNT(*), \
+        IFNULL(SUM(data_length + index_length), 0) \
+        FROM information_schema.tables \
+        WHERE table_schema NOT IN ('information_schema','performance_schema','mysql','sys') \
+        GROUP BY table_schema";
+
+    let output = create_hidden_command(&mysql_path.to_string_lossy())
+        .args(["-u", "root", "-N", "-B", "-e", sql])
+        .output()
+        .map_err(|e| format!("Failed to execute mysql client: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("mysql query failed: {}", stderr.trim()));
+    }
+
+    // Some user databases may exist with zero tables. They are not returned
+    // by the GROUP BY above, so fold them in via the plain SHOW DATABASES
+    // result with zeroed metrics.
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let mut detailed: std::collections::HashMap<String, (u64, u64)> =
+        std::collections::HashMap::new();
+    for line in stdout.lines() {
+        let parts: Vec<&str> = line.split('\t').collect();
+        if parts.len() != 3 {
+            continue;
+        }
+        let name = parts[0].trim().to_string();
+        let table_count: u64 = parts[1].trim().parse().unwrap_or(0);
+        let size_bytes: u64 = parts[2].trim().parse().unwrap_or(0);
+        detailed.insert(name, (table_count, size_bytes));
+    }
+
+    let all_names = list_mysql_databases().await?;
+    let mut result: Vec<crate::types::DatabaseInfo> = all_names
+        .into_iter()
+        .map(|name| {
+            let (table_count, size_bytes) = detailed.remove(&name).unwrap_or((0, 0));
+            crate::types::DatabaseInfo {
+                name,
+                table_count,
+                size_bytes,
+            }
+        })
+        .collect();
+    result.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    Ok(result)
+}
+
 /// Back up a single MySQL database to `<user_data>/backups/mysql/<db>_<timestamp>.sql`.
 #[tauri::command]
 pub async fn backup_mysql_database_named(database: String) -> Result<String, String> {

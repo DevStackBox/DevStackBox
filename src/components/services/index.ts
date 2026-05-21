@@ -18,7 +18,6 @@ export {
 } from "./service-actions";
 export { LogViewer } from "./log-viewer";
 export { ServiceOverflowMenu } from "./service-overflow-menu";
-export { ServiceWorkspace } from "./service-workspace";
 
 // Re-export common types for convenience
 export type { ServiceStatus } from "@/types/services";

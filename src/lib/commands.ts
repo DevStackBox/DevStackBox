@@ -27,6 +27,7 @@ export const TAURI_COMMANDS = {
     backupMysqlDatabase: "backup_mysql_database",
     backupMysqlDatabaseNamed: "backup_mysql_database_named",
     listMysqlDatabases: "list_mysql_databases",
+    listMysqlDatabasesDetailed: "list_mysql_databases_detailed",
     restoreMysqlDatabase: "restore_mysql_database",
     openPhpTerminal: "open_php_terminal",
   },

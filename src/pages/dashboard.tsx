@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { ServiceManager, type ServiceStatus } from "@/components/services";
 import { ErrorLogPreview } from "@/components/error-log-preview";
-import { BugReportDialog } from "@/components/bug-report-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { TAURI_COMMANDS } from "@/lib/commands";
@@ -13,12 +12,18 @@ import { Play, Square, Server, Loader2 } from "lucide-react";
 interface DashboardPageProps {
   onOpenPHPVersionSelector: () => void;
   onPageChange: (page: string) => void;
+  /** Single source of truth: route Config clicks to the shared editor. */
+  onOpenConfig: (service: "apache" | "mysql" | "php") => void;
+  /** Single source of truth: route Logs clicks to the Logs page. */
+  onViewLogs: (service: "apache" | "mysql" | "php") => void;
   currentPhpVersion: string;
 }
 
 export function DashboardPage({
   onOpenPHPVersionSelector,
   onPageChange,
+  onOpenConfig,
+  onViewLogs,
   currentPhpVersion,
 }: DashboardPageProps) {
   const { t } = useTranslation();
@@ -118,13 +123,12 @@ export function DashboardPage({
           </Button>
           <Button
             size="sm"
-            variant="ghost"
+            variant="outline"
             onClick={() => onPageChange("services")}
           >
             <Server className="mr-2 h-4 w-4" />
             {t("dashboard.actions.openServices", "Open Services")}
           </Button>
-          <BugReportDialog />
         </div>
       </div>
 
@@ -134,6 +138,8 @@ export function DashboardPage({
         onServiceToggle={() => {
           /* status changes flow through onStatusesChange */
         }}
+        onOpenConfig={(s) => onOpenConfig(s as "apache" | "mysql" | "php")}
+        onViewLogs={(s) => onViewLogs(s as "apache" | "mysql" | "php")}
         onOpenPHPVersionSelector={onOpenPHPVersionSelector}
         currentPhpVersion={currentPhpVersion}
         onStatusesChange={setStatuses}

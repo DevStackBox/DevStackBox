@@ -17,3 +17,13 @@ pub struct PHPVersionInfo {
     pub installed: bool,
     pub download_url: String,
 }
+
+/// Per-database metadata for the Databases page row UI.
+/// Aggregates table count + total size (data + index bytes) from
+/// `information_schema.tables` in a single query.
+#[derive(serde::Serialize)]
+pub struct DatabaseInfo {
+    pub name: String,
+    pub table_count: u64,
+    pub size_bytes: u64,
+}

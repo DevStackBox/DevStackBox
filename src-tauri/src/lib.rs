@@ -18,7 +18,7 @@ use crate::commands::config::{
 use crate::commands::logs::get_service_logs;
 use crate::commands::mysql::{
     backup_mysql_database, backup_mysql_database_named, get_mysql_status, list_mysql_databases,
-    restore_mysql_database, start_mysql, stop_mysql, toggle_mysql,
+    list_mysql_databases_detailed, restore_mysql_database, start_mysql, stop_mysql, toggle_mysql,
 };
 use crate::commands::php::{
     download_php_version, get_php_status, get_php_versions, open_php_terminal, switch_php_version,
@@ -62,6 +62,7 @@ pub fn run() {
             backup_mysql_database,
             backup_mysql_database_named,
             list_mysql_databases,
+            list_mysql_databases_detailed,
             restore_mysql_database,
             open_php_terminal,
             get_service_logs,

@@ -1,6 +1,12 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Download, RefreshCw, AlertCircle } from "lucide-react";
@@ -21,13 +27,13 @@ export function AutoUpdater() {
 
   const checkForUpdates = async (showNotification = false) => {
     if (!isTauri()) {
-      console.log('[Browser Mode] Updates only available in Tauri app');
+      console.log("[Browser Mode] Updates only available in Tauri app");
       return;
     }
-    
+
     setChecking(true);
     setError(null);
-    
+
     try {
       const { check } = await import("@tauri-apps/plugin-updater");
       const update = await check();
@@ -49,20 +55,22 @@ export function AutoUpdater() {
 
   const downloadAndInstall = async () => {
     if (!updateInfo || !isTauri()) return;
-    
+
     setDownloading(true);
     setError(null);
-    
+
     try {
       const { relaunch } = await import("@tauri-apps/plugin-process");
-      
+
       await updateInfo.downloadAndInstall((event: any) => {
         switch (event.event) {
           case "Started":
             setDownloadProgress(0);
             break;
           case "Progress":
-            const progress = Math.round((event.data.chunkLength / event.data.contentLength) * 100);
+            const progress = Math.round(
+              (event.data.chunkLength / event.data.contentLength) * 100,
+            );
             setDownloadProgress(progress);
             break;
           case "Finished":
@@ -70,7 +78,7 @@ export function AutoUpdater() {
             break;
         }
       });
-      
+
       // Restart the app after update
       await relaunch();
     } catch (error) {
@@ -85,10 +93,13 @@ export function AutoUpdater() {
     const startupCheck = setTimeout(() => {
       checkForUpdates(false);
     }, 2000); // Delay to let app fully load
-    
+
     // Check for updates every 2 hours for testing (reduce from 6 hours)
-    const interval = setInterval(() => checkForUpdates(false), 2 * 60 * 60 * 1000);
-    
+    const interval = setInterval(
+      () => checkForUpdates(false),
+      2 * 60 * 60 * 1000,
+    );
+
     return () => {
       clearTimeout(startupCheck);
       clearInterval(interval);
@@ -105,16 +116,16 @@ export function AutoUpdater() {
         disabled={checking}
         className="relative"
       >
-        <motion.div
-          animate={checking ? { rotate: 360 } : { rotate: 0 }}
-          transition={{ duration: 1, repeat: checking ? Infinity : 0 }}
-        >
-          <RefreshCw className="h-4 w-4 mr-2" />
-        </motion.div>
+        <RefreshCw
+          className={`h-4 w-4 mr-2 ${checking ? "animate-spin" : ""}`}
+        />
         {t("updater.checkUpdates")}
-        
+
         {updateAvailable && (
-          <Badge variant="destructive" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center">
+          <Badge
+            variant="destructive"
+            className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center"
+          >
             !
           </Badge>
         )}
@@ -129,10 +140,12 @@ export function AutoUpdater() {
               {t("updater.updateAvailable")}
             </DialogTitle>
             <DialogDescription>
-              {t("updater.newVersionAvailable", { version: updateInfo?.version })}
+              {t("updater.newVersionAvailable", {
+                version: updateInfo?.version,
+              })}
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             {/* Version Badge */}
             <div className="flex items-center gap-2">
@@ -140,7 +153,7 @@ export function AutoUpdater() {
               <span>→</span>
               <Badge variant="default">New: {updateInfo?.version}</Badge>
             </div>
-            
+
             {/* Release Notes */}
             {updateInfo?.body && (
               <div className="max-h-32 overflow-y-auto rounded-md border p-3 text-sm bg-muted/50">
@@ -150,10 +163,10 @@ export function AutoUpdater() {
                 </pre>
               </div>
             )}
-            
+
             {/* Download Progress */}
             {downloading && (
-              <motion.div 
+              <motion.div
                 className="space-y-2"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -165,14 +178,16 @@ export function AutoUpdater() {
                   </span>
                 </div>
                 <p className="text-sm text-center text-muted-foreground">
-                  {downloadProgress === 100 ? t("updater.installAndRestart") : t("updater.downloading")}
+                  {downloadProgress === 100
+                    ? t("updater.installAndRestart")
+                    : t("updater.downloading")}
                 </p>
               </motion.div>
             )}
-            
+
             {/* Error Message */}
             {error && (
-              <motion.div 
+              <motion.div
                 className="flex items-center gap-2 text-sm text-destructive"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -181,18 +196,18 @@ export function AutoUpdater() {
                 {error}
               </motion.div>
             )}
-            
+
             {/* Action Buttons */}
             <div className="flex gap-2 justify-end">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowDialog(false)} 
+              <Button
+                variant="outline"
+                onClick={() => setShowDialog(false)}
                 disabled={downloading}
               >
                 {t("updater.later")}
               </Button>
-              <Button 
-                onClick={downloadAndInstall} 
+              <Button
+                onClick={downloadAndInstall}
                 disabled={downloading}
                 className="min-w-[120px]"
               >
@@ -207,7 +222,9 @@ export function AutoUpdater() {
                 ) : (
                   <Download className="h-4 w-4 mr-2" />
                 )}
-                {downloading ? t("updater.downloading") : t("updater.updateNow")}
+                {downloading
+                  ? t("updater.downloading")
+                  : t("updater.updateNow")}
               </Button>
             </div>
           </div>

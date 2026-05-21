@@ -8,14 +8,29 @@ import { TAURI_COMMANDS } from "@/lib/commands";
 
 type LogService = "mysql" | "apache" | "php";
 
-export function LogsPage() {
+interface LogsPageProps {
+  /**
+   * Initial / requested service tab. When the parent changes this value
+   * (e.g. the user clicks the "Logs" item on a service card), the Logs
+   * page switches to that service so it remains the single source of
+   * truth for log viewing.
+   */
+  initialService?: LogService;
+}
+
+export function LogsPage({ initialService = "apache" }: LogsPageProps) {
   const { t } = useTranslation();
-  const [service, setService] = useState<LogService>("apache");
+  const [service, setService] = useState<LogService>(initialService);
   const [logs, setLogs] = useState<string>("");
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [autoScroll, setAutoScroll] = useState(true);
   const [loading, setLoading] = useState(false);
   const pollRef = useRef<number | null>(null);
+
+  // Sync external service requests (e.g. card overflow -> Logs).
+  useEffect(() => {
+    setService(initialService);
+  }, [initialService]);
 
   const refresh = async (svc: LogService) => {
     setLoading(true);

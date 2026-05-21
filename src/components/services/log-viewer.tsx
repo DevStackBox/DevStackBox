@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Card,
@@ -8,7 +8,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Activity, Trash2, Search, Copy, Download } from "lucide-react";
 
@@ -24,6 +23,38 @@ interface LogViewerProps {
   loading?: boolean;
 }
 
+// Classify a log line for terminal-style coloring. Cheap substring checks only.
+function classifyLine(line: string): string {
+  const lower = line.toLowerCase();
+  if (
+    lower.includes("[error]") ||
+    lower.includes(" error ") ||
+    lower.startsWith("error") ||
+    lower.includes("fatal") ||
+    lower.includes("critical")
+  ) {
+    return "text-red-400";
+  }
+  if (
+    lower.includes("[warn]") ||
+    lower.includes("warning") ||
+    lower.includes(" warn ")
+  ) {
+    return "text-amber-300";
+  }
+  if (
+    lower.includes("[info]") ||
+    lower.includes("[notice]") ||
+    lower.startsWith("info")
+  ) {
+    return "text-sky-300";
+  }
+  if (lower.includes("[debug]") || lower.includes("trace")) {
+    return "text-zinc-400";
+  }
+  return "text-zinc-100";
+}
+
 export function LogViewer({
   logs,
   onClear,
@@ -37,34 +68,23 @@ export function LogViewer({
 }: LogViewerProps) {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredLogs, setFilteredLogs] = useState(logs);
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const scrollRef = useRef<HTMLPreElement | null>(null);
 
-  // Re-apply the current filter when upstream logs change (e.g. from polling).
-  useEffect(() => {
-    if (searchTerm.trim() === "") {
-      setFilteredLogs(logs);
-    } else {
-      const filtered = logs
-        .split("\n")
-        .filter((line) => line.toLowerCase().includes(searchTerm.toLowerCase()))
-        .join("\n");
-      setFilteredLogs(filtered);
-    }
+  const filteredLines = useMemo(() => {
+    const lines = logs.split("\n");
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return lines;
+    return lines.filter((line) => line.toLowerCase().includes(q));
   }, [logs, searchTerm]);
 
   // Auto-scroll to the bottom whenever the visible logs grow.
   useEffect(() => {
     if (!autoScroll) return;
-    const el = textareaRef.current;
+    const el = scrollRef.current;
     if (el) {
       el.scrollTop = el.scrollHeight;
     }
-  }, [filteredLogs, autoScroll]);
-
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-  };
+  }, [filteredLines, autoScroll]);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(logs);
@@ -79,6 +99,9 @@ export function LogViewer({
     element.click();
     document.body.removeChild(element);
   };
+
+  const hasContent = filteredLines.some((l) => l.length > 0);
+  const totalLines = filteredLines.filter((l) => l.length > 0).length;
 
   return (
     <Card>
@@ -106,13 +129,13 @@ export function LogViewer({
       </CardHeader>
       <CardContent className="space-y-4">
         {searchable && (
-          <div className="flex gap-2">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <div className="sticky top-0 z-10 -mx-6 -mt-2 mb-2 flex gap-2 bg-background/95 px-6 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder={t("actions.search", "Search logs...")}
                 value={searchTerm}
-                onChange={(e) => handleSearch(e.target.value)}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
             </div>
@@ -136,13 +159,22 @@ export function LogViewer({
             </Button>
           </div>
         )}
-        <Textarea
-          ref={textareaRef}
-          value={filteredLogs}
-          readOnly
-          placeholder={t("logs.empty", "No logs yet...")}
-          className="min-h-[300px] font-mono text-sm bg-muted"
-        />
+        <pre
+          ref={scrollRef}
+          className="max-h-[60vh] min-h-[400px] overflow-auto whitespace-pre-wrap break-words rounded-md bg-zinc-950 p-3 font-mono text-xs leading-snug text-zinc-100"
+        >
+          {!hasContent ? (
+            <span className="text-zinc-500">
+              {t("logs.empty", "No logs yet...")}
+            </span>
+          ) : (
+            filteredLines.map((line, idx) => (
+              <span key={idx} className={`block ${classifyLine(line)}`}>
+                {line.length === 0 ? "\u00A0" : line}
+              </span>
+            ))
+          )}
+        </pre>
         <div className="flex gap-2">
           {onRefresh && (
             <Button
@@ -161,9 +193,8 @@ export function LogViewer({
             </Button>
           )}
           <div className="flex-1" />
-          <span className="text-xs text-muted-foreground mt-2">
-            {t("logs.lineCount", "Lines")}:{" "}
-            {filteredLogs.split("\n").filter((l) => l).length}
+          <span className="mt-2 text-xs text-muted-foreground">
+            {t("logs.lineCount", "Lines")}: {totalLines}
           </span>
         </div>
       </CardContent>
