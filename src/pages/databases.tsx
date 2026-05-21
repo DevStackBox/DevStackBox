@@ -19,7 +19,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { useToast } from "@/hooks/use-toast";
-import { safeInvoke, isTauri } from "@/lib/tauri";
+import { safeInvoke, isTauri, openExternalUrl } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
 import {
   Database as DatabaseIcon,
@@ -180,9 +180,8 @@ export function DatabasesPage() {
   };
 
   const openInPhpMyAdmin = (name: string) => {
-    window.open(
+    openExternalUrl(
       `http://localhost/phpmyadmin/?db=${encodeURIComponent(name)}`,
-      "_blank",
     );
   };
 
@@ -243,7 +242,7 @@ export function DatabasesPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => window.open("http://localhost/phpmyadmin", "_blank")}
+            onClick={() => openExternalUrl("http://localhost/phpmyadmin")}
           >
             <ExternalLink className="mr-2 h-4 w-4" />
             {t("databases.openPhpMyAdmin", "phpMyAdmin")}

@@ -16,6 +16,8 @@ interface ServiceCardProps {
   description?: string;
   icon: LucideIcon;
   iconColor: string;
+  /** When set, shows this image in place of the Lucide icon */
+  logoSrc?: string;
   isRunning: boolean;
   compact?: boolean;
   header?: ReactNode;
@@ -41,6 +43,7 @@ export function ServiceCard({
   description,
   icon: Icon,
   iconColor,
+  logoSrc,
   isRunning,
   compact = false,
   header,
@@ -63,7 +66,15 @@ export function ServiceCard({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <div className="relative">
-              <Icon className={`h-5 w-5 ${iconColor}`} />
+              {logoSrc ? (
+                <img
+                  src={logoSrc}
+                  alt={title}
+                  className="h-5 w-5 object-contain"
+                />
+              ) : (
+                <Icon className={`h-5 w-5 ${iconColor}`} />
+              )}
               {isRunning && (
                 <motion.div
                   className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-green-500"

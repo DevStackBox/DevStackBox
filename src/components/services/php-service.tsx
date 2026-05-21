@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { Code, FileText } from "lucide-react";
+import { openExternalUrl } from "@/lib/tauri";
 import { ServiceCard } from "./service-card";
 import { Badge } from "@/components/ui/badge";
 import { ServiceOverflowMenu } from "./service-overflow-menu";
@@ -43,7 +44,7 @@ export function PHPService({
   const [extensionsOpen, setExtensionsOpen] = useState(false);
 
   const openPhpInfo = () => {
-    window.open("http://localhost/phpinfo.php", "_blank");
+    openExternalUrl("http://localhost/phpinfo.php");
   };
 
   const openComposer = () => {
@@ -72,6 +73,7 @@ export function PHPService({
       )}
       icon={Code}
       iconColor="text-purple-500"
+      logoSrc="/php.svg"
       isRunning={true}
       compact={compact}
       delay={0.2}

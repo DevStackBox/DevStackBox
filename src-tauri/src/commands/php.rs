@@ -511,53 +511,36 @@ pub async fn open_php_terminal(version: String) -> Result<String, String> {
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
-        // CREATE_NEW_CONSOLE (0x10) forces a new visible console window even
-        // when spawned from a GUI process (Tauri has no inherited console).
-        const CREATE_NEW_CONSOLE: u32 = 0x00000010;
+        // DETACHED_PROCESS: new process runs detached, giving it a fresh console.
+        // Using cmd /c start "" spawns an independent window via the shell so
+        // Rust's inherited (GUI-app) stdio handles never reach the new CMD window
+        // and the user can type normally.
+        const DETACHED_PROCESS: u32 = 0x00000008;
 
         let php_dir = php_exe
             .parent()
             .ok_or_else(|| "Failed to resolve PHP directory".to_string())?;
 
-        // Locate Composer in common places alongside the app.
-        let composer_locations = [
-            base_path.join("composer.bat"),
-            base_path.join("composer.phar"),
-            base_path.join("composer").join("composer.bat"),
-            base_path.join("composer").join("composer.phar"),
-            php_dir.join("composer.bat"),
-            php_dir.join("composer.phar"),
-        ];
-        let composer_hint = match composer_locations.iter().find(|p| p.exists()) {
-            Some(p) if p.extension().is_some_and(|e| e == "bat") => {
-                // composer.bat is directly callable
-                format!(
-                    "set PATH={}\\;%%PATH%% && echo Composer: {}",
-                    p.parent().unwrap().display(),
-                    p.display()
-                )
-            }
-            Some(p) => {
-                // composer.phar — call via php
-                format!("echo Composer phar: {} (run with: php \"{}\")", p.display(), p.display())
-            }
-            None => format!(
-                "echo Composer not found. Place composer.phar in {}",
-                base_path.display()
-            ),
-        };
-
-        let command = format!(
-            "cd /d \"{base}\" && set PATH={php}\\;%%PATH%% && {composer} && echo. && echo PHP {version} terminal ready  ^(type 'php -v' or 'php composer.phar'^)",
+        // Write a small batch file to avoid quoting hell in the /K command string.
+        let bat_path = std::env::temp_dir().join(format!("dsb_php_{}_terminal.bat", version));
+        let bat = format!(
+            "@echo off\r\ntitle PHP {ver} Terminal - DevStackBox\r\ncd /d \"{base}\"\r\nset PATH={php};%PATH%\r\necho.\r\necho PHP {ver} terminal ready. Type 'php -v' to verify.\r\ncmd /k\r\n",
+            ver = version,
             base = base_path.display(),
             php = php_dir.display(),
-            composer = composer_hint,
-            version = version,
         );
+        std::fs::write(&bat_path, bat)
+            .map_err(|e| format!("Failed to write terminal script: {}", e))?;
 
+        // `start "" "path\to.bat"` opens a new CMD window independently.
         Command::new("cmd")
-            .args(["/K", &command])
-            .creation_flags(CREATE_NEW_CONSOLE)
+            .args([
+                "/c",
+                "start",
+                "",
+                bat_path.to_str().unwrap_or("dsb_terminal.bat"),
+            ])
+            .creation_flags(DETACHED_PROCESS)
             .spawn()
             .map_err(|e| format!("Failed to open terminal: {}", e))?;
     }

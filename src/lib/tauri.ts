@@ -7,6 +7,16 @@ export const isTauri = (): boolean => {
   return typeof window !== "undefined" && "__TAURI__" in window;
 };
 
+// Open a URL in the system default browser (works in both Tauri and browser)
+export const openExternalUrl = async (url: string): Promise<void> => {
+  if (isTauri()) {
+    const { openUrl } = await import("@tauri-apps/plugin-opener");
+    await openUrl(url);
+  } else {
+    window.open(url, "_blank");
+  }
+};
+
 // Safe invoke wrapper that checks for Tauri environment
 export const safeInvoke = async <T>(
   command: string,

@@ -164,7 +164,7 @@ function App() {
         return <DatabasesPage />;
 
       case "settings":
-        return <SettingsPage onOpenConfig={handleOpenConfig} />;
+        return <SettingsPage />;
 
       case "about":
         return <AboutPage />;

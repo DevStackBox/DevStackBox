@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Server } from "lucide-react";
+import { openExternalUrl } from "@/lib/tauri";
 import { ServiceCard } from "./service-card";
 import { StatusBadge } from "./status-badge";
 import { ServiceOverflowMenu } from "./service-overflow-menu";
@@ -41,11 +42,11 @@ export function ApacheService({
   const { t } = useTranslation();
 
   const openApache = () => {
-    window.open("http://localhost", "_blank");
+    openExternalUrl("http://localhost");
   };
 
   const openWWW = () => {
-    window.open("http://localhost/www", "_blank");
+    openExternalUrl("http://localhost/www");
   };
 
   // Primary actions stay in the card body: Start/Stop + one Open.
@@ -86,6 +87,7 @@ export function ApacheService({
       )}
       icon={Server}
       iconColor="text-orange-500"
+      logoSrc="/apache.svg"
       isRunning={status.running}
       compact={compact}
       delay={0}
@@ -183,7 +185,7 @@ export function ApacheService({
           actions={primaryActions}
           loading={loading}
           compact={compact}
-          layout="grid"
+          layout="row"
         />
       </div>
     </ServiceCard>

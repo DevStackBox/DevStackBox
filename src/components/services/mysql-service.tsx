@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Database } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { openExternalUrl } from "@/lib/tauri";
 import { ServiceCard } from "./service-card";
 import { StatusBadge } from "./status-badge";
 import { ServiceOverflowMenu } from "./service-overflow-menu";
@@ -45,7 +46,13 @@ export function MySQLService({
   const { toast } = useToast();
 
   const openPhpMyAdmin = () => {
-    window.open("http://localhost/phpmyadmin", "_blank");
+    openExternalUrl("http://localhost/phpmyadmin").catch((err) =>
+      toast({
+        title: "Failed to open phpMyAdmin",
+        description: String(err),
+        variant: "destructive",
+      }),
+    );
   };
 
   const copyConnectionString = () => {
@@ -95,6 +102,7 @@ export function MySQLService({
       )}
       icon={Database}
       iconColor="text-blue-500"
+      logoSrc="/mysql.svg"
       isRunning={status.running}
       compact={compact}
       delay={0.1}
@@ -208,7 +216,7 @@ export function MySQLService({
           actions={primaryActions}
           loading={loading}
           compact={compact}
-          layout="grid"
+          layout="row"
         />
       </div>
     </ServiceCard>

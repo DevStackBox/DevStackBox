@@ -17,21 +17,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Server, Power, Bell, Palette, FileCog } from "lucide-react";
+import { Power, Bell, Palette } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { useToast } from "@/hooks/use-toast";
 import { safeInvoke, isTauri } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
-import type { ServiceName } from "@/types/services";
 import i18n from "@/lib/i18n";
 
 const AUTO_CHECK_KEY = "devstackbox.settings.autoCheckUpdates";
 
-interface SettingsPageProps {
-  onOpenConfig: (service: ServiceName) => void;
-}
+interface SettingsPageProps {}
 
-export function SettingsPage({ onOpenConfig }: SettingsPageProps) {
+export function SettingsPage({}: SettingsPageProps) {
   const { t } = useTranslation();
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
@@ -266,47 +263,6 @@ export function SettingsPage({ onOpenConfig }: SettingsPageProps) {
             </div>
             <Switch checked={autoCheck} onCheckedChange={handleAutoCheck} />
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileCog className="h-5 w-5" />
-            {t("settings.configuration", "Configuration")}
-          </CardTitle>
-          <CardDescription>
-            {t(
-              "settings.configurationDesc",
-              "Edit the configuration file for each service. Backups are taken automatically before each save.",
-            )}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <Button
-            variant="outline"
-            className="h-20 flex-col gap-2"
-            onClick={() => onOpenConfig("apache")}
-          >
-            <Server className="h-5 w-5" />
-            {t("settings.openApacheConfig", "Apache (httpd.conf)")}
-          </Button>
-          <Button
-            variant="outline"
-            className="h-20 flex-col gap-2"
-            onClick={() => onOpenConfig("mysql")}
-          >
-            <Server className="h-5 w-5" />
-            {t("settings.openMysqlConfig", "MySQL (my.cnf)")}
-          </Button>
-          <Button
-            variant="outline"
-            className="h-20 flex-col gap-2"
-            onClick={() => onOpenConfig("php")}
-          >
-            <Server className="h-5 w-5" />
-            {t("settings.openPhpConfig", "PHP (php.ini)")}
-          </Button>
         </CardContent>
       </Card>
     </motion.div>
