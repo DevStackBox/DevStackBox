@@ -209,10 +209,16 @@ export function ServiceManager({
       );
     } catch (error) {
       console.error(`Failed to toggle ${service}:`, error);
+      const errorMsg =
+        typeof error === "string"
+          ? error
+          : error instanceof Error
+            ? error.message
+            : String(error);
       toast({
         variant: "destructive",
         title: "Service Error",
-        description: `Failed to ${services[service as keyof typeof services].running ? "stop" : "start"} ${service}. Check logs for details.`,
+        description: errorMsg || `Failed to start/stop ${service}.`,
       });
     } finally {
       setLoading(null);

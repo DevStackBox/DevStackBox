@@ -8,18 +8,23 @@ use tokio::time::sleep;
 use crate::types::ServiceInfo;
 use crate::utils::paths::{get_installation_path, user_config_dir, user_mysql_data_dir};
 use crate::utils::process::{
-    create_hidden_command, ensure_port_available, get_process_pid, is_process_running,
+    create_hidden_command, ensure_port_available, find_our_processes, is_our_process_running,
+    kill_pid,
 };
+
+fn mysqld_exe_path() -> std::path::PathBuf {
+    get_installation_path()
+        .join("mysql")
+        .join("bin")
+        .join("mysqld.exe")
+}
 
 #[tauri::command]
 pub async fn get_mysql_status() -> Result<ServiceInfo, String> {
-    let running = is_process_running("mysqld.exe");
-
-    let pid = if running {
-        get_process_pid("mysqld.exe")
-    } else {
-        None
-    };
+    let exe = mysqld_exe_path();
+    let our_pids = find_our_processes("mysqld.exe", &exe);
+    let running = !our_pids.is_empty();
+    let pid = our_pids.first().copied();
 
     Ok(ServiceInfo {
         running,
@@ -106,30 +111,33 @@ pub async fn start_mysql() -> Result<bool, String> {
 
 #[tauri::command]
 pub async fn stop_mysql() -> Result<bool, String> {
-    if !is_process_running("mysqld.exe") {
-        return Err("MySQL is not running".to_string());
+    let mysql_path = mysqld_exe_path();
+
+    if !is_our_process_running("mysqld.exe", &mysql_path) {
+        return Err("DevStackBox MySQL is not running".to_string());
     }
 
-    match Command::new("taskkill")
-        .args(["/F", "/IM", "mysqld.exe"])
-        .output()
-    {
-        Ok(output) => {
-            let stdout = String::from_utf8_lossy(&output.stdout);
-            let stderr = String::from_utf8_lossy(&output.stderr);
-
-            std::thread::sleep(Duration::from_millis(1000));
-
-            if !is_process_running("mysqld.exe") {
-                Ok(true)
-            } else {
-                Err(format!(
-                    "MySQL process still running after kill attempt.\nOutput: {}\nError: {}",
-                    stdout, stderr
-                ))
+    let mut errors: Vec<String> = Vec::new();
+    for attempt in 0..4 {
+        let pids = find_our_processes("mysqld.exe", &mysql_path);
+        if pids.is_empty() {
+            return Ok(true);
+        }
+        for pid in pids {
+            if let Err(e) = kill_pid(pid) {
+                errors.push(e);
             }
         }
-        Err(e) => Err(format!("Failed to execute taskkill: {}", e)),
+        std::thread::sleep(Duration::from_millis(if attempt == 0 { 1000 } else { 500 }));
+    }
+
+    if find_our_processes("mysqld.exe", &mysql_path).is_empty() {
+        Ok(true)
+    } else {
+        Err(format!(
+            "DevStackBox MySQL process still running after kill attempts. Errors: {}",
+            errors.join("; ")
+        ))
     }
 }
 

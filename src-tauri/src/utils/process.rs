@@ -119,6 +119,141 @@ pub fn get_process_pid(process_name: &str) -> Option<u32> {
     }
 }
 
+// =====================================================================
+// Path-aware process lookup
+//
+// `is_process_running` and `get_process_pid` above match by image name only.
+// That is unsafe on a developer machine because XAMPP, WAMP, MAMP, Laragon,
+// or a manual Apache install can have their own `httpd.exe` / `mysqld.exe`
+// running. We must only consider a service "ours" when its executable lives
+// under the DevStackBox installation dir, otherwise Start refuses to run and
+// Stop kills the wrong process.
+//
+// On Windows we use PowerShell + Win32_Process so we get the full
+// `ExecutablePath`. PowerShell is on every supported Windows version (unlike
+// `wmic` which is deprecated and missing on newer Windows 11 builds).
+// =====================================================================
+
+#[cfg(windows)]
+pub fn find_processes_by_image(process_name: &str) -> Vec<(u32, std::path::PathBuf)> {
+    // Sanitize: only allow simple filenames, never anything that could break
+    // out of the single-quoted PowerShell filter string.
+    if process_name.is_empty()
+        || process_name
+            .chars()
+            .any(|c| !c.is_ascii_alphanumeric() && c != '.' && c != '_' && c != '-')
+    {
+        return Vec::new();
+    }
+
+    let script = format!(
+        "Get-CimInstance Win32_Process -Filter \"Name='{}'\" | \
+         ForEach-Object {{ \"$($_.ProcessId)|$($_.ExecutablePath)\" }}",
+        process_name
+    );
+
+    let output = match create_hidden_command("powershell.exe")
+        .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+        .output()
+    {
+        Ok(o) => o,
+        Err(_) => return Vec::new(),
+    };
+
+    let mut results = Vec::new();
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    for line in stdout.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        let mut parts = line.splitn(2, '|');
+        let pid_str = parts.next().unwrap_or("").trim();
+        let path_str = parts.next().unwrap_or("").trim();
+        if let Ok(pid) = pid_str.parse::<u32>() {
+            results.push((pid, std::path::PathBuf::from(path_str)));
+        }
+    }
+    results
+}
+
+#[cfg(not(windows))]
+pub fn find_processes_by_image(_process_name: &str) -> Vec<(u32, std::path::PathBuf)> {
+    Vec::new()
+}
+
+// Returns true only for processes whose ExecutablePath equals (case-insensitively
+// on Windows) the path we expect. This is the canonical "is OUR service running?"
+// check.
+pub fn is_our_process_running(process_name: &str, expected_path: &std::path::Path) -> bool {
+    !find_our_processes(process_name, expected_path).is_empty()
+}
+
+// Returns the PIDs of processes whose ExecutablePath matches `expected_path`.
+pub fn find_our_processes(process_name: &str, expected_path: &std::path::Path) -> Vec<u32> {
+    let expected = normalize_path(expected_path);
+    find_processes_by_image(process_name)
+        .into_iter()
+        .filter_map(|(pid, p)| {
+            if normalize_path(&p) == expected {
+                Some(pid)
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+fn normalize_path(p: &std::path::Path) -> String {
+    // Canonicalize when possible so junctions / different casings collapse;
+    // fall back to the raw path lowercased.
+    let raw = std::fs::canonicalize(p)
+        .map(|c| c.to_string_lossy().into_owned())
+        .unwrap_or_else(|_| p.to_string_lossy().into_owned());
+    let stripped = raw.strip_prefix(r"\\?\").unwrap_or(&raw).to_string();
+    if cfg!(windows) {
+        stripped.to_lowercase()
+    } else {
+        stripped
+    }
+}
+
+// Kills a single PID. Used instead of `taskkill /IM <name>` so we do not
+// touch processes belonging to other stacks (XAMPP, WAMP, etc.).
+#[cfg(windows)]
+pub fn kill_pid(pid: u32) -> Result<(), String> {
+    let output = Command::new("taskkill")
+        .args(["/F", "/PID", &pid.to_string(), "/T"])
+        .output()
+        .map_err(|e| format!("Failed to execute taskkill: {e}"))?;
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(format!(
+            "taskkill failed for pid {}: {}",
+            pid,
+            String::from_utf8_lossy(&output.stderr)
+        ))
+    }
+}
+
+#[cfg(not(windows))]
+pub fn kill_pid(pid: u32) -> Result<(), String> {
+    let output = Command::new("kill")
+        .args(["-9", &pid.to_string()])
+        .output()
+        .map_err(|e| format!("Failed to execute kill: {e}"))?;
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(format!(
+            "kill failed for pid {}: {}",
+            pid,
+            String::from_utf8_lossy(&output.stderr)
+        ))
+    }
+}
+
 // Phase 5.2 - port conflict detection.
 //
 // Returns Ok(()) if `port` on 127.0.0.1 is free; otherwise returns a

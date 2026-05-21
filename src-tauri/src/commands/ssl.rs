@@ -12,7 +12,7 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-use crate::utils::paths::{get_installation_path, user_config_dir};
+use crate::utils::paths::{get_installation_path, to_apache_path, user_config_dir, user_logs_dir, user_www_dir};
 use crate::utils::process::create_hidden_command;
 
 // ── types ─────────────────────────────────────────────────────────────────────
@@ -311,6 +311,8 @@ pub async fn enable_ssl() -> Result<String, String> {
     let config_dir = user_config_dir();
     let crt = cert_path();
     let key = key_path();
+    let www = user_www_dir();
+    let logs = user_logs_dir();
 
     // Write ssl.conf with LoadModule directives and SSL VirtualHost.
     let ssl_conf = format!(
@@ -355,29 +357,19 @@ Listen 443
         Require all granted
     </Directory>
 
-    # phpMyAdmin
-    Include "{config}/phpmyadmin.conf"
+    # phpMyAdmin (optional - file created on first run)
+    IncludeOptional "{config}/phpmyadmin.conf"
 
     ErrorLog "{logs}/ssl-error.log"
     CustomLog "{logs}/ssl-access.log" common
 </VirtualHost>
 "#,
-        www = config_dir
-            .join("..").join("www")
-            .canonicalize()
-            .unwrap_or_else(|_| install.join("www"))
-            .to_string_lossy()
-            .replace('\\', "/"),
-        crt = crt.to_string_lossy().replace('\\', "/"),
-        key = key.to_string_lossy().replace('\\', "/"),
-        logs = config_dir
-            .join("..").join("logs")
-            .canonicalize()
-            .unwrap_or_else(|_| install.join("logs"))
-            .to_string_lossy()
-            .replace('\\', "/"),
-        install = install.to_string_lossy().replace('\\', "/"),
-        config = config_dir.to_string_lossy().replace('\\', "/"),
+        www = to_apache_path(&www),
+        crt = to_apache_path(&crt),
+        key = to_apache_path(&key),
+        logs = to_apache_path(&logs),
+        install = to_apache_path(&install),
+        config = to_apache_path(&config_dir),
     );
 
     let _ = apache_root; // referenced via install

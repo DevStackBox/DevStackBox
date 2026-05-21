@@ -127,6 +127,21 @@ pub fn user_mysql_data_dir() -> PathBuf {
     p
 }
 
+// Converts a path to a forward-slash string safe for Apache config files.
+//
+// Windows canonicalize() prepends \\?\ (extended-length path prefix) which
+// Apache rejects as a UNC path.  This helper strips that prefix before
+// converting backslashes to forward slashes.
+pub fn to_apache_path(p: &std::path::Path) -> String {
+    let raw = p.to_string_lossy();
+    let stripped = if raw.starts_with(r"\\?\") {
+        raw[4..].to_string()
+    } else {
+        raw.into_owned()
+    };
+    stripped.replace('\\', "/")
+}
+
 pub fn user_backups_dir() -> PathBuf {
     let p = get_user_data_root().join("backups");
     let _ = std::fs::create_dir_all(&p);
