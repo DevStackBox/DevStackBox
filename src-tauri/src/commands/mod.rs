@@ -6,5 +6,7 @@ pub mod config;
 pub mod logs;
 pub mod mysql;
 pub mod php;
+pub mod security;
 pub mod system;
+pub mod terminal;
 pub mod tray;

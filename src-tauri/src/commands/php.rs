@@ -10,7 +10,7 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 
 use crate::types::{PHPVersionInfo, ServiceInfo};
-use crate::utils::paths::{get_installation_path, user_config_dir};
+use crate::utils::paths::get_installation_path;
 
 // Branches we surface in the UI. The bundled default is 8.3; the others are
 // downloadable on demand (Roadmap Phase 3.1).
@@ -97,16 +97,11 @@ async fn check_active_php_version(version: &str) -> bool {
     false
 }
 
-async fn update_php_config(version: &str) -> Result<(), String> {
-    let apache_config_path = user_config_dir().join("httpd.conf");
-    if apache_config_path.exists() {
-        let content = fs::read_to_string(&apache_config_path).map_err(|e| e.to_string())?;
-        let updated_content = content.replace(
-            "php/php8apache2_4.dll",
-            &format!("php/current/php{}apache2_4.dll", version.replace('.', "")),
-        );
-        fs::write(&apache_config_path, updated_content).map_err(|e| e.to_string())?;
-    }
+async fn update_php_config(_version: &str) -> Result<(), String> {
+    // The httpd.conf ScriptAlias points to php/current/ (a junction).
+    // Switching PHP versions only requires updating the junction target,
+    // which switch_php_version already does via mklink /J.
+    // Apache picks up the change on next restart - no conf rewrite needed.
     Ok(())
 }
 

@@ -21,6 +21,8 @@ import {
   DatabasesPage,
   SettingsPage,
   AboutPage,
+  MySQLUsersPage,
+  TerminalPage,
 } from "./pages";
 import { Toaster } from "@/components/ui/toaster";
 import type { ServiceName } from "@/types/services";
@@ -162,6 +164,12 @@ function App() {
 
       case "databases":
         return <DatabasesPage />;
+
+      case "mysql-users":
+        return <MySQLUsersPage />;
+
+      case "terminal":
+        return <TerminalPage />;
 
       case "settings":
         return <SettingsPage />;

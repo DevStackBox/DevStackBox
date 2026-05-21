@@ -26,7 +26,9 @@
     "projects": "परियोजनाएं",
     "logs": "लॉग्स",
     "settings": "सेटिंग्स",
-    "about": "के बारे में"
+    "about": "के बारे में",
+    "mysqlUsers": "MySQL Users",
+    "terminal": "Terminal"
   },
   "app": {
     "title": "डेवस्टैकबॉक्स",

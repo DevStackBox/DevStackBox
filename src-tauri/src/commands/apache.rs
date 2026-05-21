@@ -206,6 +206,13 @@ LoadModule rewrite_module modules/mod_rewrite.so
 LoadModule authz_core_module modules/mod_authz_core.so
 LoadModule authz_host_module modules/mod_authz_host.so
 LoadModule access_compat_module modules/mod_access_compat.so
+LoadModule log_config_module modules/mod_log_config.so
+LoadModule cgi_module modules/mod_cgi.so
+LoadModule alias_module modules/mod_alias.so
+LoadModule actions_module modules/mod_actions.so
+LoadModule headers_module modules/mod_headers.so
+LoadModule env_module modules/mod_env.so
+LoadModule setenvif_module modules/mod_setenvif.so
 
 ServerName localhost:80
 DocumentRoot "{}"
@@ -220,6 +227,18 @@ DocumentRoot "{}"
 # MIME Types
 TypesConfig conf/mime.types
 AddType text/html .html .htm
+
+# PHP CGI configuration - uses php/current junction, auto-follows active version
+ScriptAlias /php/ "{}/php/current/"
+Action php-script /php/php-cgi.exe
+AddHandler php-script .php
+AddType application/x-httpd-php .php
+
+<Directory "{}/php/current">
+    AllowOverride None
+    Options ExecCGI
+    Require all granted
+</Directory>
 
 # Error and Access logs
 ErrorLog "{}/error.log"
@@ -236,6 +255,8 @@ Include "{}/phpmyadmin.conf"
         logs_root.display().to_string().replace("\\", "/"),
         www_root.display().to_string().replace("\\", "/"),
         www_root.display().to_string().replace("\\", "/"),
+        install_path.display().to_string().replace("\\", "/"),
+        install_path.display().to_string().replace("\\", "/"),
         logs_root.display().to_string().replace("\\", "/"),
         logs_root.display().to_string().replace("\\", "/"),
         user_config_dir().display().to_string().replace("\\", "/")

@@ -17,8 +17,9 @@ use crate::commands::config::{
 };
 use crate::commands::logs::get_service_logs;
 use crate::commands::mysql::{
-    backup_mysql_database, backup_mysql_database_named, get_mysql_status, list_mysql_databases,
-    list_mysql_databases_detailed, restore_mysql_database, start_mysql, stop_mysql, toggle_mysql,
+    backup_mysql_database, backup_mysql_database_named, create_mysql_user, drop_mysql_user,
+    get_mysql_status, list_mysql_databases, list_mysql_databases_detailed, list_mysql_users,
+    restore_mysql_database, set_mysql_user_password, start_mysql, stop_mysql, toggle_mysql,
 };
 use crate::commands::php::{
     download_php_version, get_php_status, get_php_versions, list_php_extensions,
@@ -27,15 +28,20 @@ use crate::commands::php::{
 use crate::commands::system::{
     check_binaries, create_directory_structure, debug_installation, debug_paths, get_autostart,
     get_system_info, set_autostart, start_all_services, stop_all_services, test_apache_config,
+    test_mysql_config,
 };
+use crate::commands::security::analyze_security;
+use crate::commands::terminal::{kill_terminal_session, send_terminal_input, spawn_terminal, TerminalSessions};
 use crate::commands::tray::{hide_to_tray, quit_app, set_tray_tooltip, show_main_window};
 use crate::utils::paths::ensure_user_data_dirs;
+use std::sync::Arc;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     println!("Starting DevStackBox application...");
 
     tauri::Builder::default()
+        .manage(Arc::new(TerminalSessions::new()))
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_opener::init())
@@ -46,6 +52,7 @@ pub fn run() {
             start_all_services,
             stop_all_services,
             test_apache_config,
+            test_mysql_config,
             get_mysql_status,
             get_php_status,
             get_apache_status,
@@ -66,6 +73,10 @@ pub fn run() {
             list_mysql_databases,
             list_mysql_databases_detailed,
             restore_mysql_database,
+            list_mysql_users,
+            create_mysql_user,
+            drop_mysql_user,
+            set_mysql_user_password,
             open_php_terminal,
             get_service_logs,
             read_config,
@@ -80,7 +91,11 @@ pub fn run() {
             show_main_window,
             hide_to_tray,
             set_tray_tooltip,
-            quit_app
+            quit_app,
+            spawn_terminal,
+            send_terminal_input,
+            kill_terminal_session,
+            analyze_security
         ])
         .setup(|app| {
             println!("DevStackBox setup complete, setting up system tray...");

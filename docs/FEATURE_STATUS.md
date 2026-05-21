@@ -54,23 +54,23 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ## Service Management
 
-| Feature                   | Status  | Notes                                                           |
-| ------------------------- | ------- | --------------------------------------------------------------- |
-| MySQL start / stop        | DONE    | `start_mysql`, `stop_mysql` commands work                       |
-| MySQL status check        | DONE    | Polls process list for `mysqld.exe`                             |
-| MySQL version detect      | DONE    | Reads `mysqld --version`                                        |
-| MySQL data init           | DONE    | Auto-initializes if data dir missing                            |
-| MySQL config auto-create  | DONE    | Creates `config/my.cnf` if missing                              |
-| Apache start / stop       | DONE    | `start_apache`, `stop_apache` commands work                     |
-| Apache status check       | DONE    | Polls process list for `httpd.exe`                              |
-| Apache config test        | DONE    | `test_apache_config` runs `httpd -t`                            |
-| Apache config auto-create | DONE    | Creates `config/httpd.conf` if missing                          |
-| Apache 32-bit detection   | DONE    | Warns user if 32-bit Apache on 64-bit build                     |
-| PHP status check          | DONE    | Checks if `php/8.3/php.exe` exists                              |
-| PHP as service start/stop | STUB    | `toggle_php` returns true immediately                           |
-| PHP CGI / FastCGI         | PLANNED | Apache integration with PHP not tested                          |
-| Bulk start all services   | DONE    | `start_all_services` Tauri command + Dashboard Start All button |
-| Bulk stop all services    | DONE    | `stop_all_services` command + tray menu entry                   |
+| Feature                   | Status | Notes                                                                                                                                                    |
+| ------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| MySQL start / stop        | DONE   | `start_mysql`, `stop_mysql` commands work                                                                                                                |
+| MySQL status check        | DONE   | Polls process list for `mysqld.exe`                                                                                                                      |
+| MySQL version detect      | DONE   | Reads `mysqld --version`                                                                                                                                 |
+| MySQL data init           | DONE   | Auto-initializes if data dir missing                                                                                                                     |
+| MySQL config auto-create  | DONE   | Creates `config/my.cnf` if missing                                                                                                                       |
+| Apache start / stop       | DONE   | `start_apache`, `stop_apache` commands work                                                                                                              |
+| Apache status check       | DONE   | Polls process list for `httpd.exe`                                                                                                                       |
+| Apache config test        | DONE   | `test_apache_config` runs `httpd -t`                                                                                                                     |
+| Apache config auto-create | DONE   | Creates `config/httpd.conf` if missing                                                                                                                   |
+| Apache 32-bit detection   | DONE   | Warns user if 32-bit Apache on 64-bit build                                                                                                              |
+| PHP status check          | DONE   | Checks if `php/8.3/php.exe` exists                                                                                                                       |
+| PHP as service start/stop | STUB   | `toggle_php` returns true immediately                                                                                                                    |
+| PHP CGI / FastCGI         | DONE   | `ScriptAlias /php/ php/current/` + `Action php-script` in httpd.conf; `php/current` junction auto-follows active version; phpMyAdmin reuses same handler |
+| Bulk start all services   | DONE   | `start_all_services` Tauri command + Dashboard Start All button                                                                                          |
+| Bulk stop all services    | DONE   | `stop_all_services` command + tray menu entry                                                                                                            |
 
 ---
 
@@ -86,7 +86,7 @@ Update this file every time a feature changes status. Do not maintain feature st
 | Apache service UI               | DONE    | `apache-service.tsx`                                                                                                                                                                                                         |
 | PHP service UI                  | DONE    | `php-service.tsx`                                                                                                                                                                                                            |
 | Services page                   | DONE    | Start/stop works, log viewer with service tabs, bulk start/stop/restart all wired                                                                                                                                            |
-| Service card primary/overflow   | DONE    | Secondary actions live in a `MoreHorizontal` overflow menu (`service-overflow-menu.tsx`); cards keep Start/Stop + one Open visible and become click-selectable for the workspace                                             |
+| Service card primary/overflow   | DONE    | Secondary actions live in a `MoreVertical` overflow menu (`service-overflow-menu.tsx`); Config items show filename right-aligned (httpd.conf / my.cnf / php.ini); cards keep Start/Stop + one Open visible                   |
 | Service workspace (split panel) | DROPPED | Replaced by single-source-of-truth navigation: card overflow `Logs` routes to the Logs page (with the right tab pre-selected) and `Config` opens the shared Config editor. The duplicate inline workspace tabs were removed. |
 | Dashboard page                  | DONE    | Shows service overview and quick stats                                                                                                                                                                                       |
 | Dashboard slim-down             | DONE    | Status row + Start All / Stop All / Open Services strip + ServiceManager compact + ErrorLogPreview; stat tiles and Quick Actions grid removed                                                                                |
@@ -96,18 +96,18 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ## Config Management
 
-| Feature                       | Status  | Notes                                                                                                  |
-| ----------------------------- | ------- | ------------------------------------------------------------------------------------------------------ |
-| Read config file              | DONE    | `read_config` command                                                                                  |
-| Write/save config file        | DONE    | `update_config` command                                                                                |
-| Auto-backup before save       | DONE    | Saves to `config-backups/`                                                                             |
-| Manual config backup          | DONE    | `backup_config` command                                                                                |
-| List config backups           | DONE    | `list_config_backups` command                                                                          |
-| Restore config backup         | DONE    | `restore_config_backup` command                                                                        |
-| Config editor UI (textarea)   | DONE    | `config-editor.tsx` - basic textarea                                                                   |
-| Config editor (Monaco)        | PLANNED | Syntax highlighting, line numbers                                                                      |
-| Config validation (Apache -t) | DONE    | `validateConfig` button + auto-validation after save in `config-editor.tsx` calls `test_apache_config` |
-| Config validation (MySQL)     | PLANNED |                                                                                                        |
+| Feature                       | Status | Notes                                                                                                                   |
+| ----------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------- |
+| Read config file              | DONE   | `read_config` command                                                                                                   |
+| Write/save config file        | DONE   | `update_config` command                                                                                                 |
+| Auto-backup before save       | DONE   | Saves to `config-backups/`                                                                                              |
+| Manual config backup          | DONE   | `backup_config` command                                                                                                 |
+| List config backups           | DONE   | `list_config_backups` command                                                                                           |
+| Restore config backup         | DONE   | `restore_config_backup` command                                                                                         |
+| Config editor UI (textarea)   | DONE   | `config-editor.tsx` - basic textarea                                                                                    |
+| Config editor (Monaco)        | DONE   | `@monaco-editor/react`; language: `ini`; theme follows dark/light mode; line numbers, word-wrap, auto-layout            |
+| Config validation (Apache -t) | DONE   | `validateConfig` button + auto-validation after save in `config-editor.tsx` calls `test_apache_config`                  |
+| Config validation (MySQL)     | DONE   | `test_mysql_config` runs `mysqld --validate-config`; auto-validates after save; Validate button shown for mysql service |
 
 ---
 
@@ -142,17 +142,17 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ## Database Management
 
-| Feature                     | Status  | Notes                                                                                                                   |
-| --------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------- |
-| phpMyAdmin integration      | DONE    | Served via Apache at `/phpmyadmin`                                                                                      |
-| MySQL database backup (all) | DONE    | `backup_mysql_database` using mysqldump                                                                                 |
-| MySQL user management UI    | PLANNED |                                                                                                                         |
-| Database list               | DONE    | `list_mysql_databases` lists user databases on the Databases page                                                       |
-| Database list metadata      | DONE    | `list_mysql_databases_detailed` returns name + table count + size (data + index bytes) from `information_schema.tables` |
-| Database search             | DONE    | Sticky search input on the Databases page filters rows by name                                                          |
-| Database row context menu   | DONE    | Right-click row -> Backup, Open in phpMyAdmin (deep link to ?db=NAME), Copy DB name                                     |
-| Database-specific backup    | DONE    | `backup_mysql_database_named` per-database backup wired into Databases page                                             |
-| Database restore            | DONE    | `restore_mysql_database` accepts SQL piped from a `.sql` file picked in the UI                                          |
+| Feature                     | Status | Notes                                                                                                                           |
+| --------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| phpMyAdmin integration      | DONE   | Served via Apache at `/phpmyadmin`                                                                                              |
+| MySQL database backup (all) | DONE   | `backup_mysql_database` using mysqldump                                                                                         |
+| MySQL user management UI    | DONE   | `list/create/drop/set_password` Tauri commands; `pages/mysql-users.tsx` table with Add/Set Password/Drop dialogs; sidebar entry |
+| Database list               | DONE   | `list_mysql_databases` lists user databases on the Databases page                                                               |
+| Database list metadata      | DONE   | `list_mysql_databases_detailed` returns name + table count + size (data + index bytes) from `information_schema.tables`         |
+| Database search             | DONE   | Sticky search input on the Databases page filters rows by name                                                                  |
+| Database row context menu   | DONE   | Right-click row -> Backup, Open in phpMyAdmin (deep link to ?db=NAME), Copy DB name                                             |
+| Database-specific backup    | DONE   | `backup_mysql_database_named` per-database backup wired into Databases page                                                     |
+| Database restore            | DONE   | `restore_mysql_database` accepts SQL piped from a `.sql` file picked in the UI                                                  |
 
 ---
 
@@ -197,14 +197,14 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ## Settings & Preferences
 
-| Feature                         | Status | Notes                                                                                                      |
-| ------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------- |
-| Settings page                   | DONE   | `src/pages/settings.tsx` replaces the inline placeholder in `App.tsx`                                      |
-| Theme preference                | DONE   | Inline shadcn `Select` (light/dark/system) inside Settings (uses `useTheme`)                               |
-| Language preference             | DONE   | Inline shadcn `Select` (English / Hindi) inside Settings (i18next.changeLanguage)                          |
-| Launch on Windows startup       | DONE   | `get_autostart` / `set_autostart` Tauri commands write `HKCU\...\Run\DevStackBox` via `reg.exe` (no admin) |
-| Auto-check updates (preference) | DONE   | See Auto-Update table                                                                                      |
-| Config shortcuts (Apache/MySQL) | DONE   | Settings page shows a 3-button row (Apache/MySQL/PHP) that opens the shared ConfigEditor modal             |
+| Feature                         | Status | Notes                                                                                                        |
+| ------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------ |
+| Settings page                   | DONE   | `src/pages/settings.tsx` replaces the inline placeholder in `App.tsx`                                        |
+| Theme preference                | DONE   | Inline shadcn `Select` (light/dark/system) inside Settings (uses `useTheme`)                                 |
+| Language preference             | DONE   | Inline shadcn `Select` (English / Hindi) inside Settings (i18next.changeLanguage)                            |
+| Launch on Windows startup       | DONE   | `get_autostart` / `set_autostart` Tauri commands write `HKCU\...\Run\DevStackBox` via `reg.exe` (no admin)   |
+| Auto-check updates (preference) | DONE   | See Auto-Update table                                                                                        |
+| Config shortcuts (Apache/MySQL) | DONE   | Config accessed via three-dots (MoreVertical) overflow menu on each service card; removed from Settings page |
 
 ---
 
@@ -220,12 +220,12 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ## Developer Terminal
 
-| Feature                         | Status  | Notes                             |
-| ------------------------------- | ------- | --------------------------------- |
-| Open PHP terminal (Windows cmd) | DONE    | `open_php_terminal` opens cmd.exe |
-| Embedded xterm.js terminal      | PLANNED | Full terminal in-app              |
-| MySQL CLI in terminal           | PLANNED |                                   |
-| Composer CLI in terminal        | PLANNED |                                   |
+| Feature                         | Status  | Notes                                                                                                                                      |
+| ------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Open PHP terminal (Windows cmd) | DONE    | `open_php_terminal` opens cmd.exe                                                                                                          |
+| Embedded xterm.js terminal      | DONE    | `@xterm/xterm` + `addon-fit` + `addon-web-links`; `terminal-panel.tsx` component; `pages/terminal.tsx` with tabbed sessions; sidebar entry |
+| MySQL CLI in terminal           | DONE    | "MySQL CLI" button spawns terminal tab with `mysql -u root` as initial command                                                             |
+| Composer CLI in terminal        | PLANNED | Composer binary not bundled yet                                                                                                            |
 
 ---
 

@@ -1,5 +1,6 @@
 // MySQL service commands.
 
+use serde_json;
 use std::process::Command;
 use std::time::Duration;
 use tokio::time::sleep;
@@ -437,4 +438,130 @@ pub async fn restore_mysql_database(sql: String) -> Result<String, String> {
 
     let bytes = sql.len();
     Ok(format!("Restored {} bytes of SQL", bytes))
+}
+
+// ── MySQL user management ────────────────────────────────────────────────────
+
+fn run_mysql_query(query: &str) -> Result<String, String> {
+    let base_path = get_installation_path();
+    let mysql_path = base_path.join("mysql").join("bin").join("mysql.exe");
+
+    if !mysql_path.exists() {
+        return Err(format!("mysql not found at {}", mysql_path.display()));
+    }
+
+    let output = create_hidden_command(&mysql_path.to_string_lossy())
+        .args(["-u", "root", "--batch", "--skip-column-names", "-e", query])
+        .output()
+        .map_err(|e| format!("Failed to run mysql query: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(stderr.trim().to_string());
+    }
+
+    Ok(String::from_utf8_lossy(&output.stdout).to_string())
+}
+
+#[tauri::command]
+pub async fn list_mysql_users() -> Result<Vec<serde_json::Value>, String> {
+    let raw = run_mysql_query(
+        "SELECT User, Host, IF(authentication_string != '', 'Yes', 'No') AS has_password \
+         FROM mysql.user ORDER BY User, Host;",
+    )?;
+
+    let users = raw
+        .lines()
+        .filter(|l| !l.trim().is_empty())
+        .map(|line| {
+            let cols: Vec<&str> = line.splitn(3, '\t').collect();
+            serde_json::json!({
+                "user": cols.first().unwrap_or(&""),
+                "host": cols.get(1).unwrap_or(&""),
+                "has_password": cols.get(2).unwrap_or(&"No") == &"Yes"
+            })
+        })
+        .collect();
+
+    Ok(users)
+}
+
+#[tauri::command]
+pub async fn create_mysql_user(
+    username: String,
+    host: String,
+    password: String,
+) -> Result<String, String> {
+    if username.is_empty() {
+        return Err("Username cannot be empty".to_string());
+    }
+
+    let host = if host.is_empty() {
+        "localhost".to_string()
+    } else {
+        host
+    };
+
+    let query = if password.is_empty() {
+        format!(
+            "CREATE USER '{}'@'{}'; FLUSH PRIVILEGES;",
+            username.replace('\'', "\\'"),
+            host.replace('\'', "\\'")
+        )
+    } else {
+        format!(
+            "CREATE USER '{}'@'{}' IDENTIFIED BY '{}'; FLUSH PRIVILEGES;",
+            username.replace('\'', "\\'"),
+            host.replace('\'', "\\'"),
+            password.replace('\'', "\\'")
+        )
+    };
+
+    run_mysql_query(&query)?;
+    Ok(format!("User '{}' created", username))
+}
+
+#[tauri::command]
+pub async fn drop_mysql_user(username: String, host: String) -> Result<String, String> {
+    if username.is_empty() {
+        return Err("Username cannot be empty".to_string());
+    }
+
+    let query = format!(
+        "DROP USER IF EXISTS '{}'@'{}'; FLUSH PRIVILEGES;",
+        username.replace('\'', "\\'"),
+        host.replace('\'', "\\'")
+    );
+
+    run_mysql_query(&query)?;
+    Ok(format!("User '{}' dropped", username))
+}
+
+#[tauri::command]
+pub async fn set_mysql_user_password(
+    username: String,
+    host: String,
+    password: String,
+) -> Result<String, String> {
+    if username.is_empty() {
+        return Err("Username cannot be empty".to_string());
+    }
+
+    let query = if password.is_empty() {
+        format!(
+            "ALTER USER '{}'@'{}' IDENTIFIED BY ''; FLUSH PRIVILEGES;",
+            username.replace('\'', "\\'"),
+            host.replace('\'', "\\'")
+        )
+    } else {
+        format!(
+            "ALTER USER '{}'@'{}' IDENTIFIED BY '{}'; FLUSH PRIVILEGES;",
+            username.replace('\'', "\\'"),
+            host.replace('\'', "\\'"),
+            password.replace('\'', "\\'")
+        )
+    };
+
+    run_mysql_query(&query)?;
+    Ok(format!("Password updated for '{}'", username))
 }

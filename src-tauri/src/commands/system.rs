@@ -286,6 +286,52 @@ pub async fn test_apache_config() -> Result<String, String> {
 }
 
 #[tauri::command]
+pub async fn test_mysql_config() -> Result<String, String> {
+    let base_path = get_installation_path();
+    let mysqld_path = base_path.join("mysql").join("bin").join("mysqld.exe");
+    let config_path = user_config_dir().join("my.cnf");
+
+    if !mysqld_path.exists() {
+        return Err(format!(
+            "MySQL binary not found at: {}",
+            mysqld_path.display()
+        ));
+    }
+
+    if !config_path.exists() {
+        return Err(format!(
+            "MySQL config not found at: {}",
+            config_path.display()
+        ));
+    }
+
+    let mut cmd = create_hidden_command(&mysqld_path.to_string_lossy());
+    cmd.arg(format!("--defaults-file={}", config_path.display()))
+        .arg("--validate-config")
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped());
+
+    match cmd.output() {
+        Ok(output) => {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            if output.status.success() {
+                Ok(format!(
+                    "MySQL config validation PASSED\nOutput: {}",
+                    if stderr.trim().is_empty() { stdout.trim() } else { stderr.trim() }
+                ))
+            } else {
+                Err(format!(
+                    "MySQL config validation FAILED\nError: {}",
+                    if stderr.trim().is_empty() { stdout.trim() } else { stderr.trim() }
+                ))
+            }
+        }
+        Err(e) => Err(format!("Failed to run MySQL config validation: {}", e)),
+    }
+}
+
+#[tauri::command]
 pub async fn create_directory_structure() -> Result<String, String> {
     // Ensure all user-data directories exist (Phase 1.8).
     // Binaries are not created here; they ship inside the install dir.

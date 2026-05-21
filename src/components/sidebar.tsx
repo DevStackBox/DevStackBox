@@ -9,6 +9,8 @@ import {
   Server,
   ChevronLeft,
   ChevronRight,
+  Users,
+  SquareTerminal,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -51,6 +53,12 @@ export function Sidebar({
       available: true,
     },
     {
+      id: "mysql-users",
+      label: t("navigation.mysqlUsers", "MySQL Users"),
+      icon: Users,
+      available: true,
+    },
+    {
       id: "projects",
       label: t("navigation.projects"),
       icon: FolderOpen,
@@ -60,6 +68,12 @@ export function Sidebar({
       id: "logs",
       label: t("navigation.logs"),
       icon: FileText,
+      available: true,
+    },
+    {
+      id: "terminal",
+      label: t("navigation.terminal", "Terminal"),
+      icon: SquareTerminal,
       available: true,
     },
     {

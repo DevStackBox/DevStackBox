@@ -10,6 +10,7 @@ export const TAURI_COMMANDS = {
     startAllServices: "start_all_services",
     stopAllServices: "stop_all_services",
     testApacheConfig: "test_apache_config",
+    testMysqlConfig: "test_mysql_config",
     createDirectoryStructure: "create_directory_structure",
     getAutostart: "get_autostart",
     setAutostart: "set_autostart",
@@ -32,6 +33,10 @@ export const TAURI_COMMANDS = {
     listMysqlDatabases: "list_mysql_databases",
     listMysqlDatabasesDetailed: "list_mysql_databases_detailed",
     restoreMysqlDatabase: "restore_mysql_database",
+    listMysqlUsers: "list_mysql_users",
+    createMysqlUser: "create_mysql_user",
+    dropMysqlUser: "drop_mysql_user",
+    setMysqlUserPassword: "set_mysql_user_password",
     openPhpTerminal: "open_php_terminal",
   },
   php: {
@@ -53,5 +58,13 @@ export const TAURI_COMMANDS = {
     hideToTray: "hide_to_tray",
     quitApp: "quit_app",
     setTooltip: "set_tray_tooltip",
+  },
+  terminal: {
+    spawn: "spawn_terminal",
+    sendInput: "send_terminal_input",
+    kill: "kill_terminal_session",
+  },
+  security: {
+    analyze: "analyze_security",
   },
 } as const;

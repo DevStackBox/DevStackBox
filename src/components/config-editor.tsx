@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
+import Editor from "@monaco-editor/react";
 import {
   Dialog,
   DialogContent,
@@ -10,10 +11,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { safeInvoke } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
+import { useTheme } from "@/components/theme-provider";
 import {
   Save,
   RotateCcw,
@@ -32,10 +33,18 @@ interface ConfigEditorProps {
 export function ConfigEditor({ isOpen, onClose, service }: ConfigEditorProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { theme } = useTheme();
   const [config, setConfig] = useState("");
   const [originalConfig, setOriginalConfig] = useState("");
   const [loading, setLoading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+
+  const monacoTheme =
+    theme === "dark" ||
+    (theme === "system" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches)
+      ? "vs-dark"
+      : "vs";
 
   const loadConfig = async () => {
     setLoading(true);
@@ -76,21 +85,23 @@ export function ConfigEditor({ isOpen, onClose, service }: ConfigEditorProps) {
         setHasChanges(false);
       }
 
-      // Auto-validate Apache config after save (Phase 3.3).
-      if (service === "apache") {
+      // Auto-validate Apache/MySQL config after save.
+      if (service === "apache" || service === "mysql") {
+        const command =
+          service === "apache"
+            ? TAURI_COMMANDS.system.testApacheConfig
+            : TAURI_COMMANDS.system.testMysqlConfig;
         try {
-          const validation = await safeInvoke<string>(
-            TAURI_COMMANDS.system.testApacheConfig,
-          );
+          const validation = await safeInvoke<string>(command);
           if (validation) {
             toast({
-              title: t("config.validate.passed", "Apache config valid"),
+              title: t("config.validate.passed", "Config valid"),
               description: validation,
             });
           }
         } catch (validationError) {
           toast({
-            title: t("config.validate.failed", "Apache config invalid"),
+            title: t("config.validate.failed", "Config invalid"),
             description: `${validationError}`,
             variant: "destructive",
           });
@@ -108,21 +119,23 @@ export function ConfigEditor({ isOpen, onClose, service }: ConfigEditorProps) {
   };
 
   const validateConfig = async () => {
-    if (service !== "apache") return;
+    if (service !== "apache" && service !== "mysql") return;
     setLoading(true);
     try {
-      const result = await safeInvoke<string>(
-        TAURI_COMMANDS.system.testApacheConfig,
-      );
+      const command =
+        service === "apache"
+          ? TAURI_COMMANDS.system.testApacheConfig
+          : TAURI_COMMANDS.system.testMysqlConfig;
+      const result = await safeInvoke<string>(command);
       if (result) {
         toast({
-          title: t("config.validate.passed", "Apache config valid"),
+          title: t("config.validate.passed", "Config valid"),
           description: result,
         });
       }
     } catch (error) {
       toast({
-        title: t("config.validate.failed", "Apache config invalid"),
+        title: t("config.validate.failed", "Config invalid"),
         description: `${error}`,
         variant: "destructive",
       });
@@ -239,17 +252,27 @@ export function ConfigEditor({ isOpen, onClose, service }: ConfigEditorProps) {
             </motion.div>
           )}
 
-          <div className="relative">
-            <Textarea
+          <div
+            className="rounded-md border overflow-hidden"
+            style={{ height: 480 }}
+          >
+            <Editor
+              height="480px"
+              language="ini"
+              theme={monacoTheme}
               value={config}
-              onChange={(e) => handleConfigChange(e.target.value)}
-              className="font-mono text-sm min-h-[500px] resize-none"
-              placeholder={
-                loading
-                  ? t("common.loading", "Loading...")
-                  : t("config.placeholder", "Configuration will appear here...")
-              }
-              disabled={loading}
+              onChange={(value) => handleConfigChange(value ?? "")}
+              options={{
+                fontSize: 13,
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                wordWrap: "on",
+                lineNumbers: "on",
+                readOnly: loading,
+                tabSize: 4,
+                renderLineHighlight: "line",
+                automaticLayout: true,
+              }}
             />
           </div>
         </div>
@@ -264,7 +287,7 @@ export function ConfigEditor({ isOpen, onClose, service }: ConfigEditorProps) {
             <Download className="h-4 w-4 mr-2" />
             {t("config.backup", "Backup")}
           </Button>
-          {service === "apache" && (
+          {(service === "apache" || service === "mysql") && (
             <Button
               variant="outline"
               size="sm"
