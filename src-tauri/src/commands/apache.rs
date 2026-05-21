@@ -92,9 +92,13 @@ pub async fn start_apache() -> Result<bool, String> {
         if has_unc {
             println!("ssl.conf contains UNC paths - removing and regenerating ssl.conf");
             let _ = std::fs::remove_file(&ssl_conf_path);
-            // Auto-repair: regenerate ssl.conf with correct paths if certs exist.
-            crate::commands::ssl::repair_ssl_conf();
         }
+    }
+    // If ssl.conf is absent but certs already exist (e.g. it was deleted by
+    // the migration above, or the file was lost), regenerate it automatically
+    // so HTTPS comes back without the user having to click "Enable SSL" again.
+    if !ssl_conf_path.exists() {
+        crate::commands::ssl::repair_ssl_conf();
     }
 
     // Ensure php.ini has session.save_path and extension_dir set correctly
@@ -109,6 +113,11 @@ pub async fn start_apache() -> Result<bool, String> {
     ensure_port_available(80, "Apache")?;
 
     // Run config syntax test first so we get a clear error message.
+    // NOTE: on some Apache Lounge Win64 builds mod_ssl causes httpd -t to
+    // crash with an access violation (0xC0000005) even though Apache starts
+    // fine in normal mode.  We therefore only treat the test as a hard
+    // failure when it produces actual error text.  A crash with no output is
+    // silently skipped - the real startup below will catch genuine problems.
     match create_hidden_command(&apache_path.to_string_lossy())
         .arg("-f")
         .arg(&config_path)
@@ -120,15 +129,17 @@ pub async fn start_apache() -> Result<bool, String> {
             if !output.status.success() {
                 let stderr = String::from_utf8_lossy(&output.stderr);
                 let stdout = String::from_utf8_lossy(&output.stdout);
-                return Err(format!(
-                    "Apache configuration test failed:\n{}{}",
-                    stderr,
-                    if !stdout.is_empty() {
-                        format!("\n{}", stdout)
-                    } else {
-                        String::new()
-                    }
-                ));
+                let error_text = format!("{}{}", stderr, stdout);
+                // Only abort if there is actual diagnostic text.  A blank
+                // result means httpd -t itself crashed (e.g. mod_ssl AV on
+                // Windows); in that case proceed and let Apache self-report.
+                if !error_text.trim().is_empty() {
+                    return Err(format!(
+                        "Apache configuration test failed: {}",
+                        error_text.trim()
+                    ));
+                }
+                println!("httpd -t exited non-zero with no output (likely mod_ssl AV) - proceeding with start");
             }
         }
         Err(e) => return Err(format!("Failed to test Apache configuration: {}", e)),
@@ -148,33 +159,32 @@ pub async fn start_apache() -> Result<bool, String> {
 
     sleep(Duration::from_secs(2)).await;
 
-    // Check if the process already exited (crash / immediate error).
+    // Apache mpm_winnt spawns a worker child process and the parent may exit
+    // shortly after (including with an AV crash code on some Apache Lounge
+    // Win64 builds).  Treat a parent exit as non-fatal and let the port check
+    // below decide whether the server is actually up.
     match child.try_wait() {
         Ok(Some(status)) => {
-            return Err(format!(
-                "Apache exited immediately after starting (exit code: {}). \
-                 Check the Apache error log for details.",
-                status
-                    .code()
-                    .map(|c| c.to_string())
-                    .unwrap_or_else(|| "unknown".into())
-            ));
+            println!(
+                "Apache parent process exited (code: {}) — checking port 80 for worker process",
+                status.code().map(|c| c.to_string()).unwrap_or_else(|| "unknown".into())
+            );
         }
-        Ok(None) => {} // still running — good
+        Ok(None) => {} // parent still running — good
         Err(e) => {
             eprintln!("Could not query Apache child status: {}", e);
         }
     }
 
-    // Verify it is actually listening on port 80.
+    // Verify the worker is actually listening on port 80.
     match create_hidden_command("netstat").arg("-ano").output() {
         Ok(netstat_output) => {
             let output_str = String::from_utf8_lossy(&netstat_output.stdout);
             if output_str.contains(":80 ") || output_str.contains(":80\t") {
                 Ok(true)
             } else {
-                Err("Apache process is running but port 80 is not listening yet. \
-                     It may still be starting up."
+                Err("Apache did not start: port 80 is not listening. \
+                     Check the Apache error log for details."
                     .to_string())
             }
         }
