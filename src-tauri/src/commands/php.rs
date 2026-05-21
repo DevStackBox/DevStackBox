@@ -10,7 +10,7 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 
 use crate::types::{PHPVersionInfo, ServiceInfo};
-use crate::utils::paths::{get_installation_path, to_apache_path, user_sessions_dir};
+use crate::utils::paths::{get_installation_path, to_apache_path, user_config_dir, user_sessions_dir};
 
 // Branches we surface in the UI. The bundled default is 8.3; the others are
 // downloadable on demand (Roadmap Phase 3.1).
@@ -193,8 +193,6 @@ fn enable_essential_extensions(content: String, ext_dir: &std::path::Path) -> St
 // so it can be committed to git and distributed through the installer
 // without containing any machine-specific paths.
 pub fn patch_php_ini() {
-    use crate::utils::paths::user_config_dir;
-
     // Locate the bundled (template) php.ini from the installation directory.
     let template_ini = {
         let current = php_root().join("current").join("php.ini");
