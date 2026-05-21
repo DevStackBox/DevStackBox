@@ -31,24 +31,24 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ## Core Infrastructure
 
-| Feature                        | Status | Notes                                                                                                                         |
-| ------------------------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| Tauri 2 setup                  | DONE   | v2.1, tray-icon, updater plugins                                                                                              |
-| Vite + React 18                | DONE   |                                                                                                                               |
-| Tailwind CSS                   | DONE   | v3, compiled to ~27KB                                                                                                         |
-| shadcn/ui                      | DONE   | Components in `src/components/ui/`                                                                                            |
-| Framer Motion                  | DONE   | v11                                                                                                                           |
-| i18next (EN + HI)              | DONE   | `locales/en.json` and `locales/hi.json`                                                                                       |
-| Dark / Light mode              | DONE   | Tailwind + shadcn theme system                                                                                                |
-| safeInvoke() wrapper           | DONE   | Browser mode fallback works                                                                                                   |
-| MSI installer                  | DONE   | 288.9 MB                                                                                                                      |
-| NSIS installer                 | DONE   | 147.7 MB                                                                                                                      |
-| GitHub Actions CI/CD           | DONE   | Builds on push to main                                                                                                        |
-| App version constant           | DONE   | `src/lib/version.ts`                                                                                                          |
-| Shared TypeScript types        | DONE   | `src/types/services.ts`                                                                                                       |
-| TAURI_COMMANDS constants       | DONE   | `src/lib/commands.ts` grouped (system/services/php/config/tray); zero hardcoded command strings remain in frontend components |
-| Bundled stack (Apache+PHP+DB)  | DONE   | All core binaries ship in installer - no internet required                                                                    |
-| First-launch onboarding screen | DONE   | Welcome dialog with one-click "Start all services"; remembered in localStorage                                                |
+| Feature                        | Status | Notes                                                                                                                                               |
+| ------------------------------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tauri 2 setup                  | DONE   | v2.1, tray-icon, updater plugins                                                                                                                    |
+| Vite + React 18                | DONE   |                                                                                                                                                     |
+| Tailwind CSS                   | DONE   | v3, compiled to ~27KB                                                                                                                               |
+| shadcn/ui                      | DONE   | Components in `src/components/ui/`                                                                                                                  |
+| Framer Motion                  | DONE   | v11                                                                                                                                                 |
+| i18next (EN + HI)              | DONE   | `locales/en.json` and `locales/hi.json`                                                                                                             |
+| Dark / Light mode              | DONE   | Tailwind + shadcn theme system                                                                                                                      |
+| safeInvoke() wrapper           | DONE   | Browser mode fallback works                                                                                                                         |
+| MSI installer                  | DONE   | 288.9 MB                                                                                                                                            |
+| NSIS installer                 | DONE   | 147.7 MB                                                                                                                                            |
+| GitHub Actions CI/CD           | DONE   | Builds on push to main                                                                                                                              |
+| App version constant           | DONE   | `src/lib/version.ts`                                                                                                                                |
+| Shared TypeScript types        | DONE   | `src/types/services.ts`                                                                                                                             |
+| TAURI_COMMANDS constants       | DONE   | `src/lib/commands.ts` grouped (system/services/php/config/tray/terminal/security/ssl); zero hardcoded command strings remain in frontend components |
+| Bundled stack (Apache+PHP+DB)  | DONE   | All core binaries ship in installer - no internet required                                                                                          |
+| First-launch onboarding screen | DONE   | Welcome dialog with one-click "Start all services"; remembered in localStorage                                                                      |
 
 ---
 
@@ -66,7 +66,7 @@ Update this file every time a feature changes status. Do not maintain feature st
 | Apache config test        | DONE   | `test_apache_config` runs `httpd -t`                                                                                                                     |
 | Apache config auto-create | DONE   | Creates `config/httpd.conf` if missing                                                                                                                   |
 | Apache 32-bit detection   | DONE   | Warns user if 32-bit Apache on 64-bit build                                                                                                              |
-| PHP status check          | DONE   | Checks if `php/8.3/php.exe` exists                                                                                                                       |
+| PHP status check          | DONE   | Checks `php/current/php.exe` first (active junction), falls back to `php/8.3/php.exe`; runs `php --version` to surface the actual version string         |
 | PHP as service start/stop | STUB   | `toggle_php` returns true immediately                                                                                                                    |
 | PHP CGI / FastCGI         | DONE   | `ScriptAlias /php/ php/current/` + `Action php-script` in httpd.conf; `php/current` junction auto-follows active version; phpMyAdmin reuses same handler |
 | Bulk start all services   | DONE   | `start_all_services` Tauri command + Dashboard Start All button                                                                                          |
@@ -171,15 +171,15 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ## System Tray
 
-| Feature                     | Status  | Notes                                                                                                |
-| --------------------------- | ------- | ---------------------------------------------------------------------------------------------------- |
-| Tray icon appears           | DONE    | Tauri tray-icon plugin                                                                               |
-| Minimize to tray            | DONE    | X close button hides to tray (CloseRequested intercepted in `lib.rs`); first-time OS notification shown via `notify.ts` |
-| Tray context menu           | DONE    | Show / Hide / Toggle MySQL / Toggle Apache / Quit; wired to same start-stop pipeline as the UI      |
-| Tray click opens app        | DONE    | Left-click on tray icon shows the main window (`lib.rs`)                                             |
-| Tray service status display | DONE    | `set_tray_tooltip` updated every 5s by `ServiceManager` with Apache/MySQL/PHP state                  |
-| Tray service start/stop     | DONE    | Tray menu emits `tray-toggle-service`; `ServiceManager` routes to the same toggle pipeline as the UI |
-| Notifications from tray     | DONE    | Service start/stop and crash notifications via `src/lib/notify.ts`                                   |
+| Feature                     | Status | Notes                                                                                                                   |
+| --------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------- |
+| Tray icon appears           | DONE   | Tauri tray-icon plugin                                                                                                  |
+| Minimize to tray            | DONE   | X close button hides to tray (CloseRequested intercepted in `lib.rs`); first-time OS notification shown via `notify.ts` |
+| Tray context menu           | DONE   | Show / Hide / Toggle MySQL / Toggle Apache / Quit; wired to same start-stop pipeline as the UI                          |
+| Tray click opens app        | DONE   | Left-click on tray icon shows the main window (`lib.rs`)                                                                |
+| Tray service status display | DONE   | `set_tray_tooltip` updated every 5s by `ServiceManager` with Apache/MySQL/PHP state                                     |
+| Tray service start/stop     | DONE   | Tray menu emits `tray-toggle-service`; `ServiceManager` routes to the same toggle pipeline as the UI                    |
+| Notifications from tray     | DONE   | Service start/stop and crash notifications via `src/lib/notify.ts`                                                      |
 
 ---
 
@@ -188,9 +188,9 @@ Update this file every time a feature changes status. Do not maintain feature st
 | Feature                         | Status  | Notes                                                                                                                                                     |
 | ------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Tauri updater plugin configured | DONE    | `tauri-plugin-updater` in Cargo.toml                                                                                                                      |
-| Update check on startup         | PARTIAL | `auto-updater.tsx` component exists                                                                                                                       |
-| Install update prompt           | PARTIAL | UI exists, flow not fully tested                                                                                                                          |
-| Update from GitHub Releases     | PLANNED | Needs `tauri.conf.json` updater endpoint                                                                                                                  |
+| Update check on startup         | DONE    | `auto-updater.tsx` checks on launch (2s delay) and every 6h; respects `autoCheckUpdates` pref; toast shown when up to date on manual check                |
+| Install update prompt           | DONE    | Dialog shows current vs new version, release notes, bytes-accurate progress bar, install-and-relaunch                                                     |
+| Update from GitHub Releases     | PARTIAL | Code + CI ready (`release.yml` uses `tauri-action` with signing). Needs `TAURI_PRIVATE_KEY` + `TAURI_KEY_PASSWORD` secrets added to GitHub repo settings  |
 | Auto-check updates toggle       | DONE    | Settings page switch persisted to `localStorage.devstackbox.settings.autoCheckUpdates`; `auto-updater.tsx` honours it (poll on launch + every 6h when on) |
 
 ---

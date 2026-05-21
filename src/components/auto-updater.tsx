@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -14,6 +14,7 @@ import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { APP_VERSION } from "@/lib/version";
 import { isTauri } from "@/lib/tauri";
+import { useToast } from "@/hooks/use-toast";
 
 export function AutoUpdater() {
   const { t } = useTranslation();
@@ -24,6 +25,7 @@ export function AutoUpdater() {
   const [showDialog, setShowDialog] = useState(false);
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const checkForUpdates = async (showNotification = false) => {
     if (!isTauri()) {
@@ -42,8 +44,10 @@ export function AutoUpdater() {
         setUpdateAvailable(true);
         setShowDialog(true);
       } else if (showNotification) {
-        // Show "up to date" notification - you can add a toast here
-        console.log("App is up to date");
+        toast({
+          title: t("updater.upToDate"),
+          description: `v${APP_VERSION} ${t("updater.latestVersion")}`,
+        });
       }
     } catch (error) {
       console.error("Failed to check for updates:", error);
@@ -53,11 +57,15 @@ export function AutoUpdater() {
     }
   };
 
+  // Accumulate downloaded bytes so the progress bar reflects real total progress.
+  const downloadedRef = useRef(0);
+
   const downloadAndInstall = async () => {
     if (!updateInfo || !isTauri()) return;
 
     setDownloading(true);
     setError(null);
+    downloadedRef.current = 0;
 
     try {
       const { relaunch } = await import("@tauri-apps/plugin-process");
@@ -65,14 +73,24 @@ export function AutoUpdater() {
       await updateInfo.downloadAndInstall((event: any) => {
         switch (event.event) {
           case "Started":
+            downloadedRef.current = 0;
             setDownloadProgress(0);
             break;
-          case "Progress":
-            const progress = Math.round(
-              (event.data.chunkLength / event.data.contentLength) * 100,
-            );
+          case "Progress": {
+            downloadedRef.current += event.data.chunkLength;
+            const total = event.data.contentLength;
+            const progress =
+              total > 0
+                ? Math.min(
+                    99,
+                    Math.round((downloadedRef.current / total) * 100),
+                  )
+                : downloadedRef.current > 0
+                  ? 50
+                  : 0;
             setDownloadProgress(progress);
             break;
+          }
           case "Finished":
             setDownloadProgress(100);
             break;

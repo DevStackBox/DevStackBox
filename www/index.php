@@ -44,8 +44,8 @@
 
         <div class="links">
             <a href="phpinfo.php">PHP Info</a>
-            <a href="../phpmyadmin/" target="_blank">phpMyAdmin</a>
-            <a href="test.html">Test Page</a>
+            <a href="/phpmyadmin/" target="_blank">phpMyAdmin</a>
+            <a href="test.php">Test Page</a>
         </div>
 
         <div class="info">

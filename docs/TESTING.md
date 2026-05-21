@@ -6,7 +6,7 @@
 
 ## Current State
 
-DevStackBox has no automated test suite. All testing is currently manual. This document defines what to test and how — and sets the roadmap for adding automated tests.
+DevStackBox has no automated test suite. All testing is currently manual. This document defines what to test and how - and sets the roadmap for adding automated tests.
 
 ---
 

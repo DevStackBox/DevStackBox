@@ -18,7 +18,7 @@ It is NOT a universal developer infrastructure platform. Scope is intentionally 
 - MySQL (bundled portable distribution)
 - phpMyAdmin
 
-No Docker, no Redis, no PostgreSQL, no Node runtime manager — not in v1.
+No Docker, no Redis, no PostgreSQL, no Node runtime manager - not in v1.
 
 **Installer Philosophy:**
 
@@ -49,11 +49,11 @@ Do NOT require users to download core components on first launch. Bad first-laun
 
 ## Current State: v0.1.6
 
-The project has strong architecture and documentation but is in the "dangerous middle stage" — features exist but stability is incomplete. The next phase is stabilization, not new features.
+The project has strong architecture and documentation but is in the "dangerous middle stage" - features exist but stability is incomplete. The next phase is stabilization, not new features.
 
 ---
 
-## Phase 1 — Core Stability (Current Priority)
+## Phase 1 - Core Stability (Current Priority)
 
 **Goal:** Make what exists actually work reliably. Fix nothing is broken silently.  
 **Do NOT start Phase 2 until all Phase 1 items are done.**
@@ -130,7 +130,7 @@ See `docs/UPDATES_AND_MIGRATIONS.md` for the full architecture.
 
 ---
 
-## Phase 2 — Modularize Backend [DONE]
+## Phase 2 - Modularize Backend [DONE]
 
 **Goal:** Split `lib.rs` (~1600 lines) into maintainable modules.  
 Do this as a dedicated refactor task. Do NOT mix with feature work.
@@ -156,7 +156,7 @@ src-tauri/src/
 
 ---
 
-## Phase 3 — Make It Actually Usable
+## Phase 3 - Make It Actually Usable
 
 **Goal:** Core features work end-to-end without workarounds.
 
@@ -196,7 +196,7 @@ src-tauri/src/
 
 ---
 
-## Phase 4 — Installer & Distribution
+## Phase 4 - Installer & Distribution
 
 **Goal:** Reliable installation on real user machines.
 
@@ -218,7 +218,7 @@ src-tauri/src/
 
 ### 4.3 Auto-Updater
 
-**Prerequisites — do not start this until ALL are complete:**
+**Prerequisites - do not start this until ALL are complete:**
 
 - Phase 1.8 (App/Data directory separation) is done
 - `get_installation_path()` returns deterministic, stable paths
@@ -245,7 +245,7 @@ See `docs/UPDATES_AND_MIGRATIONS.md` for the full architecture and checklist.
 
 ---
 
-## Phase 5 — Developer Experience Polish
+## Phase 5 - Developer Experience Polish
 
 **Goal:** Make DevStackBox noticeably better than XAMPP/WAMP for daily use.
 
@@ -274,7 +274,7 @@ See `docs/UPDATES_AND_MIGRATIONS.md` for the full architecture and checklist.
 
 ---
 
-## Phase 6 — UI Workspace Refresh
+## Phase 6 - UI Workspace Refresh
 
 **Goal:** Evolve the UI from "stacked web cards" to a focused desktop workspace.
 Driven by the v0.1.6 product review: less vertical scrolling, status-first cards,
@@ -360,8 +360,8 @@ DevStackBox uses **MySQL** as its bundled database server.
 
 | Version | Goal                                                                                                            |
 | ------- | --------------------------------------------------------------------------------------------------------------- |
-| v0.1.6  | Current — architecture and docs complete, builds work                                                           |
-| v0.2.0  | Phase 1 + 2 — stable backend, no dead code, app/data dirs separated, zero Rust warnings                         |
-| v0.3.0  | Phase 3 — additional PHP downloader, real-time logs, virtual hosts, crash recovery                              |
-| v0.4.0  | Phase 4 — MSI reliability, code signing, safe auto-update enabled                                               |
-| v1.0.0  | Phase 5 + 6 — HTTPS localhost, tray polish, startup-on-login, workspace UI refresh, real Settings, useful About |
+| v0.1.6  | Current - architecture and docs complete, builds work                                                           |
+| v0.2.0  | Phase 1 + 2 - stable backend, no dead code, app/data dirs separated, zero Rust warnings                         |
+| v0.3.0  | Phase 3 - additional PHP downloader, real-time logs, virtual hosts, crash recovery                              |
+| v0.4.0  | Phase 4 - MSI reliability, code signing, safe auto-update enabled                                               |
+| v1.0.0  | Phase 5 + 6 - HTTPS localhost, tray polish, startup-on-login, workspace UI refresh, real Settings, useful About |

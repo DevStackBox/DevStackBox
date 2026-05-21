@@ -109,7 +109,7 @@ When the auto-updater is active (Phase 4.3+), updates must follow this exact flo
 ```
 1. Check GitHub Releases for new version
        |
-2. Prompt user: "v0.1.7 available — Update Now / Later"
+2. Prompt user: "v0.1.7 available - Update Now / Later"
        |
 3. User confirms update
        |

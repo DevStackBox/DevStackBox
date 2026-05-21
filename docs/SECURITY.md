@@ -9,7 +9,7 @@
 | Version  | Security Fixes          |
 | -------- | ----------------------- |
 | v0.1.6+  | Yes                     |
-| < v0.1.6 | No — update immediately |
+| < v0.1.6 | No - update immediately |
 
 ---
 
@@ -148,7 +148,7 @@ When reading or writing files based on service name:
 **User guidance:**
 
 - If SmartScreen blocks the installer: click "More info" → "Run anyway"
-- If antivirus flags the binary: the installer is downloaded from GitHub Releases — verify the SHA-256 hash listed on the release page before running
+- If antivirus flags the binary: the installer is downloaded from GitHub Releases - verify the SHA-256 hash listed on the release page before running
 - Add the DevStackBox installation directory to antivirus exclusions if it repeatedly flags service binaries
 
 **Future plan:** Add code signing (see `docs/ROADMAP.md` Phase 4.4). Until then, publish SHA-256 hashes on every GitHub Release.

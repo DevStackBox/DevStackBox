@@ -1,4 +1,4 @@
-# ADR 002 — Use Tailwind CSS + shadcn/ui for Styling
+# ADR 002 - Use Tailwind CSS + shadcn/ui for Styling
 
 **Status:** Accepted  
 **Date:** 2024
@@ -36,8 +36,8 @@ DevStackBox needs a consistent, maintainable UI with:
 
 ## Decision Rationale
 
-1. **shadcn/ui is not a dependency** — it generates components into `src/components/ui/`. The code is owned by the project. No external package to break.
-2. **Tailwind dark mode** works perfectly with shadcn/ui's CSS variable approach — one `dark` class on `<html>` switches the entire theme.
+1. **shadcn/ui is not a dependency** - it generates components into `src/components/ui/`. The code is owned by the project. No external package to break.
+2. **Tailwind dark mode** works perfectly with shadcn/ui's CSS variable approach - one `dark` class on `<html>` switches the entire theme.
 3. **Radix UI primitives** under shadcn/ui handle accessibility (keyboard navigation, ARIA, focus management) without custom code.
 4. **Tree-shaking**: Tailwind purges unused classes. Final CSS bundle is tiny.
 5. **Industry adoption**: Both tools have massive community, active development, and extensive docs.
@@ -47,7 +47,7 @@ DevStackBox needs a consistent, maintainable UI with:
 ## Consequences
 
 - All styling must use Tailwind classes. No `style={}` props or `*.module.css` files except `globals.css`.
-- New UI components must be added via `npx shadcn add <component>` — never manually created or copied from other sources.
+- New UI components must be added via `npx shadcn add <component>` - never manually created or copied from other sources.
 - The `src/components/ui/` directory is auto-generated. Do NOT manually edit files there.
 - Dark mode is implemented via Tailwind's `dark:` prefix. Every new UI element must include `dark:` variants.
 - Framer Motion is used for all animations (ADR 001 note: CSS animations are not used).

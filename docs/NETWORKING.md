@@ -10,7 +10,7 @@
 | ----------- | ---------------------------------- | ------------------- | ------------- |
 | Apache HTTP | 80                                 | `config/httpd.conf` | `Listen 80`   |
 | MySQL       | 3306                               | `config/my.cnf`     | `port = 3306` |
-| phpMyAdmin  | (served through Apache on port 80) | —                   | —             |
+| phpMyAdmin  | (served through Apache on port 80) | -                   | -             |
 
 ---
 
@@ -104,7 +104,7 @@ Windows Defender Firewall may prompt to allow Apache and MySQL on first launch.
 **Expected behavior:**
 
 - First time Apache starts: Windows Firewall dialog asks "Allow httpd.exe to communicate on network?"
-- Click "Allow access" — only for Private networks, NOT public networks
+- Click "Allow access" - only for Private networks, NOT public networks
 - Same for MySQL's `mysqld.exe`
 
 If you accidentally deny the firewall prompt:
@@ -153,7 +153,7 @@ Default credentials:
 If phpMyAdmin shows "Cannot connect to MySQL server":
 
 1. Check MySQL is running (green status in DevStackBox)
-2. Check `phpmyadmin/config.inc.php` — `$cfg['Servers'][$i]['host']` should be `127.0.0.1`
+2. Check `phpmyadmin/config.inc.php` - `$cfg['Servers'][$i]['host']` should be `127.0.0.1`
 3. Check MySQL port is 3306 (default)
 
 ---
@@ -172,7 +172,7 @@ DevStackBox does NOT modify this file unless you use the virtual hosts feature (
 
 ---
 
-## Virtual Hosts (Phase 3 — Not Yet Available)
+## Virtual Hosts (Phase 3 - Not Yet Available)
 
 When virtual hosts are added, DevStackBox will:
 
@@ -198,7 +198,7 @@ When virtual hosts are added, DevStackBox will:
 
 ---
 
-## HTTPS / SSL (Phase 5 — Not Yet Available)
+## HTTPS / SSL (Phase 5 - Not Yet Available)
 
 Local HTTPS for `localhost` and virtual hosts is planned for Phase 5. The approach will be:
 

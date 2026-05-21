@@ -1,4 +1,4 @@
-# ADR 003 — No Global State Manager
+# ADR 003 - No Global State Manager
 
 **Status:** Accepted  
 **Date:** 2024
@@ -15,7 +15,7 @@ Do not use Redux, Zustand, Jotai, or any other global state manager. Use React's
 
 Frontend state in DevStackBox is:
 
-- Service statuses (running/stopped) — polled every 5 seconds
+- Service statuses (running/stopped) - polled every 5 seconds
 - UI state (sidebar open, modals open, current page)
 - Config content (per editor session)
 - Settings (theme, language)
@@ -45,7 +45,7 @@ Frontend state in DevStackBox is:
 ## Consequences
 
 - State is managed at the component level or in `App.tsx` for app-wide state
-- Service polling lives exclusively in `service-manager.tsx` — do not create other polling loops
+- Service polling lives exclusively in `service-manager.tsx` - do not create other polling loops
 - If the app grows significantly in complexity, reconsider Zustand (lightweight, no boilerplate)
 - Theme and language are exceptions: they use i18next (language) and a `useTheme` hook (theme) which act as app-wide state
 

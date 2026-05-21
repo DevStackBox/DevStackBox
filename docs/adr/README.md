@@ -31,4 +31,4 @@ When adding a new ADR:
 2. Add it to the index above
 3. Use the status: Accepted / Deprecated / Superseded
 
-Status "Superseded" means a newer ADR replaced this one — link to the replacement.
+Status "Superseded" means a newer ADR replaced this one - link to the replacement.

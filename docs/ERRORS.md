@@ -15,7 +15,7 @@ When you see an error in the UI or logs, find it here first.
 
 **Fix:**
 
-1. Open the Debug panel (dev builds only) — it shows what path was resolved
+1. Open the Debug panel (dev builds only) - it shows what path was resolved
 2. Check that `apache/bin/httpd.exe`, `mysql/bin/mysqld.exe`, or `php/8.3/php.exe` exist
 3. If they are missing, re-run `scripts/prepare-binaries.ps1` or copy from your XAMPP installation
 4. If the path looks wrong (pointing to `C:\xampp\htdocs\DevStackBox` in a production install), see `docs/KNOWN_ISSUES.md` ISSUE-009
@@ -96,7 +96,7 @@ Remove-Item "mysql\data\<hostname>.pid" -ErrorAction SilentlyContinue
 
 1. Check `mysql/data/<hostname>.err` for `[ERROR]` or `Shutdown` messages
 2. If InnoDB crash recovery fails, restore from backup (`config-backups/`)
-3. Restart MySQL — it usually recovers on its own
+3. Restart MySQL - it usually recovers on its own
 
 ---
 
@@ -173,7 +173,7 @@ Remove-Item "mysql\data\<hostname>.pid" -ErrorAction SilentlyContinue
 **Fix:**
 
 1. Use the PHP Version Selector to install the missing version
-2. Note: PHP download is currently a stub — see `docs/KNOWN_ISSUES.md` ISSUE-003
+2. Note: PHP download is currently a stub - see `docs/KNOWN_ISSUES.md` ISSUE-003
 
 ---
 
@@ -221,7 +221,7 @@ See `docs/MSI_TROUBLESHOOTING.md` for more detail.
 
 1. Open DevTools (`Ctrl+Shift+I`)
 2. Check the Console tab for JavaScript errors
-3. Common cause: missing asset file — re-run `pnpm install && pnpm tauri build`
+3. Common cause: missing asset file - re-run `pnpm install && pnpm tauri build`
 
 ---
 
@@ -263,15 +263,15 @@ All three version files must be identical. See `docs/RELEASE_PROCESS.md` Step 2.
 
 Most common causes:
 
-1. Emoji characters in `.yml` file (PowerShell encoding issue) — remove all emoji
-2. Version format with hyphen/letters (MSI rejects it) — use clean semver
-3. Dependency download failure — re-run the job
+1. Emoji characters in `.yml` file (PowerShell encoding issue) - remove all emoji
+2. Version format with hyphen/letters (MSI rejects it) - use clean semver
+3. Dependency download failure - re-run the job
 
 ---
 
 ## Getting More Help
 
-1. Check `docs/KNOWN_ISSUES.md` — your issue may be documented there
+1. Check `docs/KNOWN_ISSUES.md` - your issue may be documented there
 2. Use the Debug panel in dev builds to inspect path resolution
 3. Check the relevant log file in `logs/`
 4. Open a GitHub Issue: [ProgrammerNomad/DevStackBox issues](https://github.com/ProgrammerNomad/DevStackBox/issues)

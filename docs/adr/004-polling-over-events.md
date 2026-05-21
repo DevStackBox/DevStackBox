@@ -1,4 +1,4 @@
-# ADR 004 — Use Polling for Service Status (Not Event Streaming)
+# ADR 004 - Use Polling for Service Status (Not Event Streaming)
 
 **Status:** Accepted  
 **Date:** 2024
@@ -42,7 +42,7 @@ The frontend needs to know if services are running so it can show accurate statu
 - `service-manager.tsx` is the ONLY place that polls service status. No other component may create its own polling loop.
 - The polling interval is 5 seconds. Do NOT make it faster (wastes CPU) or slower (UX feels broken).
 - Service crashes are detected within 5 seconds of happening.
-- Tauri Channels should be used for log streaming when that feature is implemented (see `docs/ROADMAP.md` Phase 3.2). This ADR does not prevent using channels for log streaming — just for service status.
+- Tauri Channels should be used for log streaming when that feature is implemented (see `docs/ROADMAP.md` Phase 3.2). This ADR does not prevent using channels for log streaming - just for service status.
 
 ---
 

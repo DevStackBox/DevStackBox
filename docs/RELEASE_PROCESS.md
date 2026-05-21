@@ -12,11 +12,11 @@
 | Minor | New working feature added           | `0.1.6` → `0.2.0` |
 | Major | Breaking changes or large milestone | `0.x.x` → `1.0.0` |
 
-Version format: `X.Y.Z` — always clean semver. No hyphens, no pre-release text. (MSI requirement)
+Version format: `X.Y.Z` - always clean semver. No hyphens, no pre-release text. (MSI requirement)
 
 ---
 
-## Step 1 — Pre-Release Checks
+## Step 1 - Pre-Release Checks
 
 Before changing any version number, verify:
 
@@ -28,7 +28,7 @@ Before changing any version number, verify:
 
 ---
 
-## Step 2 — Version Bump
+## Step 2 - Version Bump
 
 Change version in ALL THREE files at the same time:
 
@@ -65,12 +65,12 @@ grep '"version"' src-tauri/tauri.conf.json
 
 ---
 
-## Step 3 — Update CHANGELOG.md
+## Step 3 - Update CHANGELOG.md
 
 Add an entry at the top:
 
 ```markdown
-## v0.1.7 — 2026-MM-DD
+## v0.1.7 - 2026-MM-DD
 
 ### Fixed
 
@@ -89,7 +89,7 @@ Keep the format consistent. Do not delete old entries.
 
 ---
 
-## Step 4 — Build Release
+## Step 4 - Build Release
 
 ```bash
 pnpm tauri build
@@ -108,7 +108,7 @@ If the build fails:
 
 ---
 
-## Step 5 — Smoke Tests
+## Step 5 - Smoke Tests
 
 Run this checklist on the **MSI installer** (not dev mode) on a clean Windows 11 machine or VM:
 
@@ -144,7 +144,7 @@ Run this checklist on the **MSI installer** (not dev mode) on a clean Windows 11
 
 ---
 
-## Step 6 — Generate SHA-256 Hashes
+## Step 6 - Generate SHA-256 Hashes
 
 Generate hashes for both installers (required for security transparency):
 
@@ -157,7 +157,7 @@ Include these in the GitHub Release description.
 
 ---
 
-## Step 7 — GitHub Release
+## Step 7 - GitHub Release
 
 1. Create a git tag:
 
@@ -178,7 +178,7 @@ Include these in the GitHub Release description.
 
 ---
 
-## Step 8 — Post-Release
+## Step 8 - Post-Release
 
 - [ ] Verify the download links in the GitHub Release page work
 - [ ] Update `README.md` version badge if necessary
@@ -203,8 +203,8 @@ The updater flow is not active yet. See `docs/KNOWN_ISSUES.md` ISSUE-011.
 
 | Problem                             | Fix                                                          |
 | ----------------------------------- | ------------------------------------------------------------ |
-| MSI refuses to install              | Version has hyphens or letters — use clean semver only       |
+| MSI refuses to install              | Version has hyphens or letters - use clean semver only       |
 | Build fails with "version mismatch" | One of the three version files is different                  |
-| Antivirus blocks installer          | Publish SHA-256 hash — users can verify and allow            |
-| GitHub Actions build fails          | Check for emoji in .yml files — see KNOWN_ISSUES.md          |
+| Antivirus blocks installer          | Publish SHA-256 hash - users can verify and allow            |
+| GitHub Actions build fails          | Check for emoji in .yml files - see KNOWN_ISSUES.md          |
 | MSI is larger than expected         | Check that `src-tauri/target/` was not accidentally included |

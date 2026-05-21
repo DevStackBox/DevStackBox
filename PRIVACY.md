@@ -1,4 +1,4 @@
-# Privacy Policy — DevStackBox
+# Privacy Policy - DevStackBox
 
 **DevStackBox is a local developer tool. Your data stays on your machine.**
 

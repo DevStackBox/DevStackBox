@@ -136,7 +136,7 @@ DevStackBox/
 ## 📦 5. Binary Management
 
 - **Default PHP:** Only **PHP 8.3** is bundled by default.
-- **Other Binaries:** Downloadable on demand via the in-app distribution installer—do not bundle extra binaries by default.
+- **Other Binaries:** Downloadable on demand via the in-app distribution installer-do not bundle extra binaries by default.
 
 ---
 

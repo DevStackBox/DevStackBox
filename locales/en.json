@@ -92,6 +92,7 @@
     "downloading": "Downloading...",
     "installAndRestart": "Installing and restarting...",
     "upToDate": "You are up to date",
+    "latestVersion": "is the latest version.",
     "checkingForUpdates": "Checking for updates..."
   }
 }

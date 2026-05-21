@@ -201,7 +201,7 @@ export function ServicesPage({
         currentPhpVersion={currentPhpVersion}
       />
 
-      {/* Developer Tools — quick-launch items that are not services */}
+      {/* Developer Tools - quick-launch items that are not services */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">
           <hr className="flex-1 border-border" />

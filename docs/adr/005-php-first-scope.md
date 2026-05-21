@@ -1,4 +1,4 @@
-# ADR 005 — PHP-Only Scope for v1
+# ADR 005 - PHP-Only Scope for v1
 
 **Status:** Accepted  
 **Date:** 2025

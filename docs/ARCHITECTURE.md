@@ -201,7 +201,7 @@ These rules are architectural, not optional style preferences.
 
 This is critical for reliable auto-updates. Violating this causes update-related data loss.
 
-### Two separate roots — NEVER mix them
+### Two separate roots - NEVER mix them
 
 **App Root (replaceable during updates):**
 

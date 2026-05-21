@@ -12,9 +12,9 @@ DevStackBox bundles Apache, PHP, MySQL, and phpMyAdmin binaries alongside user d
 
 If the updater replaces files in the installation directory, it risks overwriting:
 
-- MySQL `data/` — destroying all user databases permanently
-- Runtime config files — resetting all user customizations
-- User web projects in `www/` — destroying active project files
+- MySQL `data/` - destroying all user databases permanently
+- Runtime config files - resetting all user customizations
+- User web projects in `www/` - destroying active project files
 
 This has caused catastrophic data loss in similar tools (early WAMP, older MAMP versions, some XAMPP configurations).
 

@@ -98,7 +98,7 @@ Read this before designing or modifying any UI component.
 
 ### Design Philosophy
 
-DevStackBox must feel like a **native desktop utility** — like Docker Desktop, GitHub Desktop, or Warp.  
+DevStackBox must feel like a **native desktop utility** - like Docker Desktop, GitHub Desktop, or Warp.  
 It must NOT look like: a web admin panel, a cPanel clone, analytics dashboard, or enterprise CMS.
 
 This mindset changes everything. When in doubt, ask: "does this look like a desktop app or a website?"
@@ -117,8 +117,8 @@ Do NOT show everything at once. Overloaded UIs drive users away.
 - Two-panel layout: fixed sidebar (220-260px) + main content area
 - Top bar: app title, version badge, auto updater, language switcher, theme toggle
 - Command palette: keyboard-driven via `Ctrl+P` in the current implementation
-- Sidebar: EXACTLY 6 items in the current app — Dashboard, Services, Projects, Logs, Settings, About
-- Main area: card-based, spacious, clean — no dense tables, no charts
+- Sidebar: EXACTLY 6 items in the current app - Dashboard, Services, Projects, Logs, Settings, About
+- Main area: card-based, spacious, clean - no dense tables, no charts
 
 See ARCHITECTURE.md for the full layout diagram.
 
@@ -140,8 +140,8 @@ Colors: green = running, red = stopped, yellow = warning/starting.
 - Do NOT put logs, configs, services, and stats all on one screen at once
 - Do NOT use rainbow colors, gradients, neon accents, or gaming aesthetics
 - Do NOT use mobile-style UI patterns (bottom nav, full-screen modals for simple actions)
-- Do NOT add charts or analytics — this is a utility, not a dashboard
-- Do NOT design for web browsers — design for a desktop window
+- Do NOT add charts or analytics - this is a utility, not a dashboard
+- Do NOT design for web browsers - design for a desktop window
 
 ### Command Palette
 

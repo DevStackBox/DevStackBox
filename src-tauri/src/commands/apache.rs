@@ -73,7 +73,7 @@ pub async fn start_apache() -> Result<bool, String> {
         // the current template version (2), regenerate the default config so that
         // new modules / directives are picked up without requiring a manual delete.
         let needs_regen = std::fs::read_to_string(&config_path)
-            .map(|content| !content.contains("# configVersion: 3"))
+            .map(|content| !content.contains("# configVersion: 4"))
             .unwrap_or(false);
         if needs_regen {
             println!("httpd.conf is from an older configVersion - regenerating default config");
@@ -166,11 +166,11 @@ pub async fn start_apache() -> Result<bool, String> {
     match child.try_wait() {
         Ok(Some(status)) => {
             println!(
-                "Apache parent process exited (code: {}) — checking port 80 for worker process",
+                "Apache parent process exited (code: {}) - checking port 80 for worker process",
                 status.code().map(|c| c.to_string()).unwrap_or_else(|| "unknown".into())
             );
         }
-        Ok(None) => {} // parent still running — good
+        Ok(None) => {} // parent still running - good
         Err(e) => {
             eprintln!("Could not query Apache child status: {}", e);
         }
@@ -255,7 +255,7 @@ pub async fn create_default_apache_config() -> Result<(), String> {
     let user_config_apache = crate::utils::paths::to_apache_path(&user_config_dir());
 
     let config_content = format!(
-        r#"# configVersion: 3
+        r#"# configVersion: 4
 # Apache Configuration for DevStackBox
 # Managed by DevStackBox. Edits to this file are preserved across upgrades
 # unless the configVersion is bumped, which triggers a migration.
@@ -285,7 +285,7 @@ DocumentRoot "{}"
     Options Indexes FollowSymLinks
     AllowOverride All
     Require all granted
-    DirectoryIndex index.html index.htm index.php
+    DirectoryIndex index.php index.html index.htm
 </Directory>
 
 # MIME Types
