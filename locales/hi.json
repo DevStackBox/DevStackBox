@@ -28,7 +28,9 @@
     "settings": "सेटिंग्स",
     "about": "के बारे में",
     "mysqlUsers": "MySQL Users",
-    "terminal": "Terminal"
+    "terminal": "Terminal",
+    "security": "Security",
+    "ssl": "HTTPS / SSL"
   },
   "app": {
     "title": "डेवस्टैकबॉक्स",

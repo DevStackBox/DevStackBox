@@ -241,11 +241,11 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ## Security & Analyzer
 
-| Feature                         | Status  | Notes                                                                             |
-| ------------------------------- | ------- | --------------------------------------------------------------------------------- |
-| Bug reporting via GitHub Issues | DONE    | `bug-report-dialog.tsx` opens a pre-filled GitHub issue with environment metadata |
-| Security config analyzer        | PLANNED |                                                                                   |
-| HTTPS / SSL for local sites     | PLANNED |                                                                                   |
+| Feature                         | Status | Notes                                                                                                                                                                                                                                                                                                                                                                           |
+| ------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bug reporting via GitHub Issues | DONE   | `bug-report-dialog.tsx` opens a pre-filled GitHub issue with environment metadata                                                                                                                                                                                                                                                                                               |
+| Security config analyzer        | DONE   | `security.tsx` page + `analyze_security` Rust command. Checks PHP ini, Apache conf, MySQL (anonymous users, remote root, empty root password, test DB). Findings grouped by severity (error/warning/info) with expandable details and recommendations.                                                                                                                          |
+| HTTPS / SSL for local sites     | DONE   | Local Root CA architecture. `get_ssl_status`, `generate_ssl_cert`, `enable_ssl`, `disable_ssl` Tauri commands. `generate_ssl_cert` creates a 4096-bit `DevStackBox Local CA` (20-year, `config/ssl/ca.crt`) then signs a 2048-bit localhost cert (`config/ssl/localhost.crt`) with SAN for `localhost`, `127.0.0.1`, `::1`. User imports `ca.crt` into Windows trusted roots once - all future per-host certs are trusted automatically. `enable_ssl` writes `ssl.conf` with `mod_ssl` + `mod_socache_shmcb` and port-443 VirtualHost; Include appended to httpd.conf. `disable_ssl` removes the Include (cert files kept). Frontend shows CA status row and displays `ca_path` in trust instructions. |
 
 ---
 

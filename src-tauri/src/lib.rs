@@ -31,6 +31,7 @@ use crate::commands::system::{
     test_mysql_config,
 };
 use crate::commands::security::analyze_security;
+use crate::commands::ssl::{disable_ssl, enable_ssl, generate_ssl_cert, get_ssl_status};
 use crate::commands::terminal::{kill_terminal_session, send_terminal_input, spawn_terminal, TerminalSessions};
 use crate::commands::tray::{hide_to_tray, quit_app, set_tray_tooltip, show_main_window};
 use crate::utils::paths::ensure_user_data_dirs;
@@ -95,7 +96,11 @@ pub fn run() {
             spawn_terminal,
             send_terminal_input,
             kill_terminal_session,
-            analyze_security
+            analyze_security,
+            get_ssl_status,
+            generate_ssl_cert,
+            enable_ssl,
+            disable_ssl
         ])
         .setup(|app| {
             println!("DevStackBox setup complete, setting up system tray...");

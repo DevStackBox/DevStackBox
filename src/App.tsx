@@ -23,6 +23,8 @@ import {
   AboutPage,
   MySQLUsersPage,
   TerminalPage,
+  SecurityPage,
+  SslPage,
 } from "./pages";
 import { Toaster } from "@/components/ui/toaster";
 import type { ServiceName } from "@/types/services";
@@ -170,6 +172,12 @@ function App() {
 
       case "terminal":
         return <TerminalPage />;
+
+      case "security":
+        return <SecurityPage />;
+
+      case "ssl":
+        return <SslPage />;
 
       case "settings":
         return <SettingsPage />;

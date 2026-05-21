@@ -40,18 +40,26 @@ const SEVERITY_META = {
   warning: {
     label: "Warning",
     icon: AlertTriangle,
-    badgeClass: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/30",
+    badgeClass:
+      "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/30",
     rowClass: "border-l-4 border-l-yellow-500",
   },
   info: {
     label: "Info",
     icon: Info,
-    badgeClass: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30",
+    badgeClass:
+      "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30",
     rowClass: "border-l-4 border-l-blue-500",
   },
 } as const;
 
-function FindingRow({ finding, index }: { finding: SecurityFinding; index: number }) {
+function FindingRow({
+  finding,
+  index,
+}: {
+  finding: SecurityFinding;
+  index: number;
+}) {
   const [expanded, setExpanded] = useState(false);
   const meta = SEVERITY_META[finding.severity];
   const Icon = meta.icon;
@@ -101,7 +109,9 @@ function FindingRow({ finding, index }: { finding: SecurityFinding; index: numbe
               <p className="text-muted-foreground">{finding.description}</p>
               <div className="rounded bg-muted/50 px-3 py-2">
                 <span className="font-semibold text-foreground">Fix: </span>
-                <span className="text-muted-foreground">{finding.recommendation}</span>
+                <span className="text-muted-foreground">
+                  {finding.recommendation}
+                </span>
               </div>
             </div>
           </motion.div>
@@ -144,7 +154,9 @@ export function SecurityPage() {
     setLoading(true);
     setError(null);
     try {
-      const result = await invoke<SecurityFinding[]>(TAURI_COMMANDS.security.analyze);
+      const result = await invoke<SecurityFinding[]>(
+        TAURI_COMMANDS.security.analyze,
+      );
       setFindings(result);
     } catch (err) {
       setError(String(err));
@@ -154,7 +166,8 @@ export function SecurityPage() {
   };
 
   const errors = findings?.filter((f) => f.severity === "error").length ?? 0;
-  const warnings = findings?.filter((f) => f.severity === "warning").length ?? 0;
+  const warnings =
+    findings?.filter((f) => f.severity === "warning").length ?? 0;
   const infos = findings?.filter((f) => f.severity === "info").length ?? 0;
   const allClear = findings !== null && findings.length === 0;
 
@@ -167,18 +180,27 @@ export function SecurityPage() {
             Security Analyzer
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Scans PHP, Apache, and MySQL configurations for common security issues.
+            Scans PHP, Apache, and MySQL configurations for common security
+            issues.
           </p>
         </div>
         <Button onClick={runAnalysis} disabled={loading}>
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-          {loading ? "Scanning..." : findings === null ? "Run Scan" : "Scan Again"}
+          <RefreshCw
+            className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+          />
+          {loading
+            ? "Scanning..."
+            : findings === null
+              ? "Run Scan"
+              : "Scan Again"}
         </Button>
       </div>
 
       {error && (
         <Card className="border-destructive">
-          <CardContent className="pt-4 pb-4 text-destructive text-sm">{error}</CardContent>
+          <CardContent className="pt-4 pb-4 text-destructive text-sm">
+            {error}
+          </CardContent>
         </Card>
       )}
 
@@ -207,7 +229,11 @@ export function SecurityPage() {
       {findings !== null && findings.length > 0 && (
         <div className="space-y-2">
           {findings.map((finding, i) => (
-            <FindingRow key={`${finding.service}-${i}`} finding={finding} index={i} />
+            <FindingRow
+              key={`${finding.service}-${i}`}
+              finding={finding}
+              index={i}
+            />
           ))}
         </div>
       )}

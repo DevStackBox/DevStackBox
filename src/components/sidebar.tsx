@@ -11,6 +11,8 @@ import {
   ChevronRight,
   Users,
   SquareTerminal,
+  ShieldAlert,
+  Lock,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -74,6 +76,18 @@ export function Sidebar({
       id: "terminal",
       label: t("navigation.terminal", "Terminal"),
       icon: SquareTerminal,
+      available: true,
+    },
+    {
+      id: "security",
+      label: t("navigation.security", "Security"),
+      icon: ShieldAlert,
+      available: true,
+    },
+    {
+      id: "ssl",
+      label: t("navigation.ssl", "HTTPS / SSL"),
+      icon: Lock,
       available: true,
     },
     {

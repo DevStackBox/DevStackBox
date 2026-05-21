@@ -6,3 +6,5 @@ export { SettingsPage } from "./settings";
 export { AboutPage } from "./about";
 export { MySQLUsersPage } from "./mysql-users";
 export { TerminalPage } from "./terminal";
+export { SecurityPage } from "./security";
+export { SslPage } from "./ssl";

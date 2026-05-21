@@ -28,7 +28,9 @@
     "settings": "Settings",
     "about": "About",
     "mysqlUsers": "MySQL Users",
-    "terminal": "Terminal"
+    "terminal": "Terminal",
+    "security": "Security",
+    "ssl": "HTTPS / SSL"
   },
   "app": {
     "title": "DevStackBox",
