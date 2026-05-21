@@ -510,18 +510,54 @@ pub async fn open_php_terminal(version: String) -> Result<String, String> {
 
     #[cfg(windows)]
     {
+        use std::os::windows::process::CommandExt;
+        // CREATE_NEW_CONSOLE (0x10) forces a new visible console window even
+        // when spawned from a GUI process (Tauri has no inherited console).
+        const CREATE_NEW_CONSOLE: u32 = 0x00000010;
+
         let php_dir = php_exe
             .parent()
             .ok_or_else(|| "Failed to resolve PHP directory".to_string())?;
 
+        // Locate Composer in common places alongside the app.
+        let composer_locations = [
+            base_path.join("composer.bat"),
+            base_path.join("composer.phar"),
+            base_path.join("composer").join("composer.bat"),
+            base_path.join("composer").join("composer.phar"),
+            php_dir.join("composer.bat"),
+            php_dir.join("composer.phar"),
+        ];
+        let composer_hint = match composer_locations.iter().find(|p| p.exists()) {
+            Some(p) if p.extension().is_some_and(|e| e == "bat") => {
+                // composer.bat is directly callable
+                format!(
+                    "set PATH={}\\;%%PATH%% && echo Composer: {}",
+                    p.parent().unwrap().display(),
+                    p.display()
+                )
+            }
+            Some(p) => {
+                // composer.phar — call via php
+                format!("echo Composer phar: {} (run with: php \"{}\")", p.display(), p.display())
+            }
+            None => format!(
+                "echo Composer not found. Place composer.phar in {}",
+                base_path.display()
+            ),
+        };
+
         let command = format!(
-            "cd /d \"{}\" && set PATH={}\\;%%PATH%% && php --version",
-            base_path.display(),
-            php_dir.display()
+            "cd /d \"{base}\" && set PATH={php}\\;%%PATH%% && {composer} && echo. && echo PHP {version} terminal ready  ^(type 'php -v' or 'php composer.phar'^)",
+            base = base_path.display(),
+            php = php_dir.display(),
+            composer = composer_hint,
+            version = version,
         );
 
         Command::new("cmd")
             .args(["/K", &command])
+            .creation_flags(CREATE_NEW_CONSOLE)
             .spawn()
             .map_err(|e| format!("Failed to open terminal: {}", e))?;
     }
@@ -533,68 +569,6 @@ pub async fn open_php_terminal(version: String) -> Result<String, String> {
     }
 
     Ok(format!("Opened PHP {} terminal", version))
-}
-
-#[tauri::command]
-pub async fn open_composer_terminal(version: String) -> Result<String, String> {
-    let base_path = get_installation_path();
-    let php_exe = php_branch_exe(&version);
-
-    if !php_exe.exists() {
-        return Err(format!("PHP {} is not installed", version));
-    }
-
-    #[cfg(windows)]
-    {
-        let php_dir = php_exe
-            .parent()
-            .ok_or_else(|| "Failed to resolve PHP directory".to_string())?;
-
-        // Look for composer in common locations: install root, php dir, or a
-        // dedicated composer/ sub-folder next to the app.
-        let composer_locations = [
-            base_path.join("composer.bat"),
-            base_path.join("composer.phar"),
-            base_path.join("composer").join("composer.bat"),
-            base_path.join("composer").join("composer.phar"),
-            php_dir.join("composer.bat"),
-            php_dir.join("composer.phar"),
-        ];
-        let composer_path = composer_locations.iter().find(|p| p.exists());
-
-        let composer_hint = match composer_path {
-            Some(p) => format!(
-                "echo Composer found at {} && set COMPOSER_BIN={}",
-                p.display(),
-                p.display()
-            ),
-            None => format!(
-                "echo Composer not found. Download it to {}\\composer.phar then run: php composer.phar",
-                base_path.display()
-            ),
-        };
-
-        let command = format!(
-            "cd /d \"{}\" && set PATH={}\\;%%PATH%% && {} && echo. && echo PHP {} is ready. Type 'php composer.phar' or 'composer' to use Composer.",
-            base_path.display(),
-            php_dir.display(),
-            composer_hint,
-            version
-        );
-
-        Command::new("cmd")
-            .args(["/K", &command])
-            .spawn()
-            .map_err(|e| format!("Failed to open terminal: {}", e))?;
-    }
-
-    #[cfg(not(windows))]
-    {
-        let _ = base_path;
-        return Err("open_composer_terminal is currently implemented for Windows only".to_string());
-    }
-
-    Ok(format!("Opened Composer terminal for PHP {}", version))
 }
 
 // -- PHP Extensions ----------------------------------------------------------

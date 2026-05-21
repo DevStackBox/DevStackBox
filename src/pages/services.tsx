@@ -10,8 +10,6 @@ import {
   Play,
   Square,
   Terminal,
-  PackageCheck,
-  Globe,
   Wrench,
 } from "lucide-react";
 import { safeInvoke, isTauri } from "@/lib/tauri";
@@ -115,55 +113,15 @@ export function ServicesPage({
 
   const [toolLoading, setToolLoading] = useState<string | null>(null);
 
-  const openPhpTerminal = async () => {
-    setToolLoading("php");
+  const openTerminal = async () => {
+    setToolLoading("terminal");
     try {
       await safeInvoke(TAURI_COMMANDS.services.openPhpTerminal, {
         version: currentPhpVersion,
       });
     } catch (err) {
       toast({
-        title: t("tools.phpTerminalFailed", "Failed to open PHP terminal"),
-        description: String(err),
-        variant: "destructive",
-      });
-    } finally {
-      setToolLoading(null);
-    }
-  };
-
-  const openComposerTerminal = async () => {
-    setToolLoading("composer");
-    try {
-      await safeInvoke(TAURI_COMMANDS.services.openComposerTerminal, {
-        version: currentPhpVersion,
-      });
-    } catch (err) {
-      toast({
-        title: t(
-          "tools.composerTerminalFailed",
-          "Failed to open Composer terminal",
-        ),
-        description: String(err),
-        variant: "destructive",
-      });
-    } finally {
-      setToolLoading(null);
-    }
-  };
-
-  const openPhpMyAdmin = async () => {
-    setToolLoading("phpmyadmin");
-    try {
-      if (isTauri()) {
-        const { open } = await import("@tauri-apps/plugin-shell");
-        await open("http://localhost/phpmyadmin");
-      } else {
-        window.open("http://localhost/phpmyadmin", "_blank");
-      }
-    } catch (err) {
-      toast({
-        title: t("tools.phpMyAdminFailed", "Failed to open phpMyAdmin"),
+        title: t("tools.terminalFailed", "Failed to open terminal"),
         description: String(err),
         variant: "destructive",
       });
@@ -257,32 +215,14 @@ export function ServicesPage({
           <Button
             variant="outline"
             size="sm"
-            onClick={openPhpTerminal}
-            disabled={toolLoading === "php"}
+            onClick={openTerminal}
+            disabled={toolLoading === "terminal"}
           >
             <Terminal className="mr-2 h-4 w-4" />
-            {t("tools.phpTerminal", "PHP Terminal")}
+            {t("tools.terminal", "Terminal")}
             <Badge variant="secondary" className="ml-2 font-mono text-xs">
-              {currentPhpVersion}
+              PHP {currentPhpVersion}
             </Badge>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={openComposerTerminal}
-            disabled={toolLoading === "composer"}
-          >
-            <PackageCheck className="mr-2 h-4 w-4" />
-            {t("tools.composerTerminal", "Composer Terminal")}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={openPhpMyAdmin}
-            disabled={toolLoading === "phpmyadmin"}
-          >
-            <Globe className="mr-2 h-4 w-4" />
-            {t("tools.phpMyAdmin", "phpMyAdmin")}
           </Button>
         </div>
       </div>

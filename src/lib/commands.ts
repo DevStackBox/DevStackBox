@@ -33,7 +33,6 @@ export const TAURI_COMMANDS = {
     listMysqlDatabasesDetailed: "list_mysql_databases_detailed",
     restoreMysqlDatabase: "restore_mysql_database",
     openPhpTerminal: "open_php_terminal",
-    openComposerTerminal: "open_composer_terminal",
   },
   php: {
     getVersions: "get_php_versions",

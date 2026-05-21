@@ -22,8 +22,7 @@ use crate::commands::mysql::{
 };
 use crate::commands::php::{
     download_php_version, get_php_status, get_php_versions, list_php_extensions,
-    open_composer_terminal, open_php_terminal, switch_php_version, toggle_php,
-    toggle_php_extension,
+    open_php_terminal, switch_php_version, toggle_php, toggle_php_extension,
 };
 use crate::commands::system::{
     check_binaries, create_directory_structure, debug_installation, debug_paths, get_autostart,
@@ -68,7 +67,6 @@ pub fn run() {
             list_mysql_databases_detailed,
             restore_mysql_database,
             open_php_terminal,
-            open_composer_terminal,
             get_service_logs,
             read_config,
             update_config,
