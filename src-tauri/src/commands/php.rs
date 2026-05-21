@@ -105,13 +105,98 @@ async fn update_php_config(_version: &str) -> Result<(), String> {
     Ok(())
 }
 
+// Extensions required for phpMyAdmin and Laravel projects.  Each entry is
+// (extension_name, dll_filename).  Only extensions whose DLL actually exists
+// in the active PHP ext/ directory are activated; missing ones are skipped.
+const ESSENTIAL_EXTENSIONS: &[(&str, &str)] = &[
+    ("mysqli",     "php_mysqli.dll"),
+    ("pdo_mysql",  "php_pdo_mysql.dll"),
+    ("mbstring",   "php_mbstring.dll"),
+    ("openssl",    "php_openssl.dll"),
+    ("curl",       "php_curl.dll"),
+    ("gd",         "php_gd.dll"),
+    ("zip",        "php_zip.dll"),
+    ("intl",       "php_intl.dll"),
+    ("fileinfo",   "php_fileinfo.dll"),
+    ("exif",       "php_exif.dll"),
+    ("sockets",    "php_sockets.dll"),
+    ("sodium",     "php_sodium.dll"),
+];
+
+// Scans `content` for each essential extension and enables it if:
+// - the DLL exists in `ext_dir`
+// - no un-commented `extension=NAME` line already exists
+// If a commented-out `;extension=...NAME...` line is found it is uncommented,
+// otherwise `extension=NAME` is appended at the end.
+fn enable_essential_extensions(content: String, ext_dir: &std::path::Path) -> String {
+    let mut result = content;
+
+    for (name, dll) in ESSENTIAL_EXTENSIONS {
+        // Skip if DLL is not present in this PHP build.
+        if !ext_dir.join(dll).exists() {
+            continue;
+        }
+
+        // Check if already actively enabled (line not starting with ;).
+        let already_active = result.lines().any(|l| {
+            let t = l.trim();
+            !t.starts_with(';')
+                && (t.eq_ignore_ascii_case(&format!("extension={}", name))
+                    || t.eq_ignore_ascii_case(&format!("extension={}.so", name))
+                    || t.eq_ignore_ascii_case(&format!("extension=php_{}.dll", name))
+                    || t.eq_ignore_ascii_case(&format!("extension={}", dll)))
+        });
+        if already_active {
+            continue;
+        }
+
+        // Try to uncomment an existing commented line for this extension.
+        let lower_name = name.to_ascii_lowercase();
+        let uncommented = {
+            let mut found = false;
+            let new: String = result
+                .lines()
+                .map(|l| {
+                    let t = l.trim();
+                    if !found
+                        && t.starts_with(';')
+                        && t.to_ascii_lowercase().contains(&format!("extension={}", lower_name))
+                    {
+                        found = true;
+                        format!("extension={}\n", name)
+                    } else {
+                        format!("{}\n", l)
+                    }
+                })
+                .collect();
+            if found { Some(new) } else { None }
+        };
+
+        if let Some(new_content) = uncommented {
+            result = new_content;
+        } else {
+            // Extension not mentioned at all - append it.
+            result.push_str(&format!("extension={}\n", name));
+        }
+    }
+
+    result
+}
+
 // Ensures the active PHP's php.ini has the minimum settings required for
-// DevStackBox to work (session path, extension_dir).  Called by start_apache
-// so every Apache start self-heals a broken php.ini without touching settings
-// the user has customised.
+// DevStackBox to work (session path, extension_dir, essential extensions).
+// Called by start_apache on every start.
+//
+// IMPORTANT: this function writes to the USER CONFIG directory
+// (%LOCALAPPDATA%\DevStackBox\config\php.ini), never to the installation
+// directory.  This keeps the bundled php/*/php.ini pristine and unmodified
+// so it can be committed to git and distributed through the installer
+// without containing any machine-specific paths.
 pub fn patch_php_ini() {
-    // Determine the active php.ini path.
-    let php_ini = {
+    use crate::utils::paths::user_config_dir;
+
+    // Locate the bundled (template) php.ini from the installation directory.
+    let template_ini = {
         let current = php_root().join("current").join("php.ini");
         if current.exists() {
             current
@@ -120,8 +205,20 @@ pub fn patch_php_ini() {
         }
     };
 
-    if !php_ini.exists() {
+    if !template_ini.exists() {
         return;
+    }
+
+    // The user-specific php.ini lives in the user config dir so it is
+    // never committed to the repository or bundled in the installer.
+    let php_ini = user_config_dir().join("php.ini");
+
+    // Seed from the bundled template on first run.
+    if !php_ini.exists() {
+        if let Err(e) = std::fs::copy(&template_ini, &php_ini) {
+            println!("Failed to copy php.ini template: {}", e);
+            return;
+        }
     }
 
     let content = match std::fs::read_to_string(&php_ini) {
@@ -129,8 +226,11 @@ pub fn patch_php_ini() {
         Err(_) => return,
     };
 
-    // Determine the extension dir (always the bundled PHP's ext/ folder).
-    let ext_dir = php_ini
+    // Extension dir: absolute path pointing to the installation's ext/ folder.
+    // Absolute is required here because this php.ini lives in a different
+    // directory from the PHP binaries.  The path is runtime-computed from the
+    // actual install location, so it is correct on every user's machine.
+    let ext_dir = template_ini
         .parent()
         .map(|p| p.join("ext"))
         .unwrap_or_else(|| php_root().join("8.3").join("ext"));
@@ -170,7 +270,9 @@ pub fn patch_php_ini() {
             continue;
         }
 
-        // Replace commented-out or wrong extension_dir.
+        // Replace commented-out or wrong extension_dir with an absolute path
+        // to the installation's ext/ folder.  Absolute is correct here because
+        // this php.ini is in user_config_dir, not next to the PHP binaries.
         if trimmed.starts_with(';') && trimmed.contains("extension_dir") && trimmed.contains("ext") {
             new_content.push_str(line);
             new_content.push('\n');
@@ -204,8 +306,11 @@ pub fn patch_php_ini() {
         ));
     }
 
+    // Enable essential extensions if not already active.
+    new_content = enable_essential_extensions(new_content, &ext_dir);
+
     let _ = std::fs::write(&php_ini, new_content);
-    println!("php.ini patched: session.save_path={} extension_dir={}", sessions_str, ext_dir_str);
+    println!("php.ini patched at user config dir: session.save_path={} extension_dir={}", sessions_str, ext_dir_str);
 }
 
 #[tauri::command]

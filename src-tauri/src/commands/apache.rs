@@ -73,7 +73,7 @@ pub async fn start_apache() -> Result<bool, String> {
         // the current template version (2), regenerate the default config so that
         // new modules / directives are picked up without requiring a manual delete.
         let needs_regen = std::fs::read_to_string(&config_path)
-            .map(|content| !content.contains("# configVersion: 2"))
+            .map(|content| !content.contains("# configVersion: 3"))
             .unwrap_or(false);
         if needs_regen {
             println!("httpd.conf is from an older configVersion - regenerating default config");
@@ -81,17 +81,19 @@ pub async fn start_apache() -> Result<bool, String> {
         }
     }
 
-    // If ssl.conf exists but contains the \\?\ UNC prefix (written by an older
-    // enable_ssl that used canonicalize), delete it so Apache doesn't reject it.
-    // The user can re-enable SSL from the HTTPS/SSL page to get a clean ssl.conf.
+    // If ssl.conf exists but contains a \\?\ / //?/ UNC prefix (written by an
+    // older enable_ssl that used canonicalize), delete it and immediately
+    // regenerate it with correct paths so the user doesn't have to do anything.
     let ssl_conf_path = user_config_dir().join("ssl.conf");
     if ssl_conf_path.exists() {
         let has_unc = std::fs::read_to_string(&ssl_conf_path)
-            .map(|c| c.contains("///?/") || c.contains(r"\\?\"))
+            .map(|c| c.contains("//?/") || c.contains(r"\\?\"))
             .unwrap_or(false);
         if has_unc {
-            println!("ssl.conf contains UNC paths - removing stale ssl.conf (re-enable SSL from the UI)");
+            println!("ssl.conf contains UNC paths - removing and regenerating ssl.conf");
             let _ = std::fs::remove_file(&ssl_conf_path);
+            // Auto-repair: regenerate ssl.conf with correct paths if certs exist.
+            crate::commands::ssl::repair_ssl_conf();
         }
     }
 
@@ -239,8 +241,11 @@ pub async fn create_default_apache_config() -> Result<(), String> {
     let logs_root = user_logs_dir();
     let phpmyadmin_root = install_path.join("phpmyadmin");
 
+    // user_config_dir path formatted for Apache.
+    let user_config_apache = crate::utils::paths::to_apache_path(&user_config_dir());
+
     let config_content = format!(
-        r#"# configVersion: 2
+        r#"# configVersion: 3
 # Apache Configuration for DevStackBox
 # Managed by DevStackBox. Edits to this file are preserved across upgrades
 # unless the configVersion is bumped, which triggers a migration.
@@ -283,6 +288,10 @@ Action php-script /php/php-cgi.exe
 AddHandler php-script .php
 AddType application/x-httpd-php .php
 
+# Tell PHP-CGI where to find its php.ini.  The user-config php.ini is written
+# to the user data dir so it never pollutes the installation directory.
+SetEnv PHPRC "{user_config}/"
+
 <Directory "{}/php/current">
     AllowOverride None
     Options ExecCGI
@@ -311,7 +320,8 @@ IncludeOptional "{}/ssl.conf"
         logs_root.display().to_string().replace("\\", "/"),
         logs_root.display().to_string().replace("\\", "/"),
         user_config_dir().display().to_string().replace("\\", "/"),
-        user_config_dir().display().to_string().replace("\\", "/")
+        user_config_dir().display().to_string().replace("\\", "/"),
+        user_config = user_config_apache
     );
 
     let phpmyadmin_config = format!(

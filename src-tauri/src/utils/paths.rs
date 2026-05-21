@@ -58,9 +58,9 @@ pub fn get_installation_path() -> PathBuf {
         }
     }
 
-    // Try common installation paths in order of preference
+    // Try common installation paths as a last resort before falling back
+    // to the current directory.  Do NOT add developer-specific shortcuts here.
     let possible_paths = [
-        PathBuf::from("C:\\dsb"),
         PathBuf::from("C:\\Program Files\\DevStackBox"),
         PathBuf::from("C:\\DevStackBox"),
     ];
