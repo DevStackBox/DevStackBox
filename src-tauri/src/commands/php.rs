@@ -10,7 +10,7 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 
 use crate::types::{PHPVersionInfo, ServiceInfo};
-use crate::utils::paths::get_installation_path;
+use crate::utils::paths::{get_installation_path, to_apache_path, user_sessions_dir};
 
 // Branches we surface in the UI. The bundled default is 8.3; the others are
 // downloadable on demand (Roadmap Phase 3.1).
@@ -103,6 +103,109 @@ async fn update_php_config(_version: &str) -> Result<(), String> {
     // which switch_php_version already does via mklink /J.
     // Apache picks up the change on next restart - no conf rewrite needed.
     Ok(())
+}
+
+// Ensures the active PHP's php.ini has the minimum settings required for
+// DevStackBox to work (session path, extension_dir).  Called by start_apache
+// so every Apache start self-heals a broken php.ini without touching settings
+// the user has customised.
+pub fn patch_php_ini() {
+    // Determine the active php.ini path.
+    let php_ini = {
+        let current = php_root().join("current").join("php.ini");
+        if current.exists() {
+            current
+        } else {
+            php_root().join("8.3").join("php.ini")
+        }
+    };
+
+    if !php_ini.exists() {
+        return;
+    }
+
+    let content = match std::fs::read_to_string(&php_ini) {
+        Ok(c) => c,
+        Err(_) => return,
+    };
+
+    // Determine the extension dir (always the bundled PHP's ext/ folder).
+    let ext_dir = php_ini
+        .parent()
+        .map(|p| p.join("ext"))
+        .unwrap_or_else(|| php_root().join("8.3").join("ext"));
+    let ext_dir_str = to_apache_path(&ext_dir);
+
+    // Sessions go under the user data root so PHP CGI can always write there.
+    let sessions_str = to_apache_path(&user_sessions_dir());
+
+    let mut new_content = String::with_capacity(content.len() + 256);
+    let mut session_save_path_set = false;
+    let mut extension_dir_set = false;
+
+    for line in content.lines() {
+        let trimmed = line.trim();
+
+        // Replace commented-out or wrong session.save_path.
+        if trimmed.starts_with(';') && trimmed.contains("session.save_path") {
+            // Skip the comment line - we'll append the real value below.
+            new_content.push_str(line);
+            new_content.push('\n');
+            if !session_save_path_set {
+                new_content.push_str(&format!(
+                    "session.save_path = \"{}\"\n",
+                    sessions_str
+                ));
+                session_save_path_set = true;
+            }
+            continue;
+        }
+        if trimmed.starts_with("session.save_path") {
+            // Overwrite any existing value with the correct path.
+            new_content.push_str(&format!(
+                "session.save_path = \"{}\"\n",
+                sessions_str
+            ));
+            session_save_path_set = true;
+            continue;
+        }
+
+        // Replace commented-out or wrong extension_dir.
+        if trimmed.starts_with(';') && trimmed.contains("extension_dir") && trimmed.contains("ext") {
+            new_content.push_str(line);
+            new_content.push('\n');
+            if !extension_dir_set {
+                new_content.push_str(&format!("extension_dir = \"{}\"\n", ext_dir_str));
+                extension_dir_set = true;
+            }
+            continue;
+        }
+        if trimmed.starts_with("extension_dir") {
+            new_content.push_str(&format!("extension_dir = \"{}\"\n", ext_dir_str));
+            extension_dir_set = true;
+            continue;
+        }
+
+        new_content.push_str(line);
+        new_content.push('\n');
+    }
+
+    // Append if the directives were never encountered.
+    if !session_save_path_set {
+        new_content.push_str(&format!(
+            "\n; Added by DevStackBox\nsession.save_path = \"{}\"\n",
+            sessions_str
+        ));
+    }
+    if !extension_dir_set {
+        new_content.push_str(&format!(
+            "\n; Added by DevStackBox\nextension_dir = \"{}\"\n",
+            ext_dir_str
+        ));
+    }
+
+    let _ = std::fs::write(&php_ini, new_content);
+    println!("php.ini patched: session.save_path={} extension_dir={}", sessions_str, ext_dir_str);
 }
 
 #[tauri::command]

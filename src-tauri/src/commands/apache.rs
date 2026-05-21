@@ -4,6 +4,7 @@ use std::process::Command;
 use std::time::Duration;
 use tokio::time::sleep;
 
+use crate::commands::php::patch_php_ini;
 use crate::types::ServiceInfo;
 use crate::utils::paths::{
     get_installation_path, get_user_data_root, user_config_dir, user_logs_dir, user_www_dir,
@@ -93,6 +94,13 @@ pub async fn start_apache() -> Result<bool, String> {
             let _ = std::fs::remove_file(&ssl_conf_path);
         }
     }
+
+    // Ensure php.ini has session.save_path and extension_dir set correctly
+    // so phpMyAdmin and PHP apps work without manual php.ini editing.
+    patch_php_ini();
+
+    // Seed the www dir with default files if it is still empty.
+    seed_www_dir(&base_path);
 
     // Phase 5.2 - fail fast with a clear message if port 80 is taken
     // (commonly by IIS, Skype, or another web server).
@@ -349,8 +357,49 @@ Alias /pma "{}"
     std::fs::write(config_dir.join("httpd.conf"), config_content).map_err(|e| e.to_string())?;
     std::fs::write(config_dir.join("phpmyadmin.conf"), phpmyadmin_config).map_err(|e| e.to_string())?;
 
+    // Seed the user www dir with default files if it is empty.
+    seed_www_dir(&install_path);
+
     let _ = data_root;
     Ok(())
+}
+
+// Copies default web files from {install_path}/www/ into the user www dir so
+// that http://localhost/ serves something useful on first run.  Files are only
+// written if they do not already exist, so user edits are never overwritten.
+fn seed_www_dir(install_path: &std::path::Path) {
+    let www_dst = user_www_dir();
+    let www_src = install_path.join("www");
+
+    if !www_src.exists() {
+        // Fallback: write a minimal index.html so Apache returns 200 instead of 404.
+        let fallback = www_dst.join("index.html");
+        if !fallback.exists() {
+            let _ = std::fs::write(
+                &fallback,
+                "<!DOCTYPE html><html><head><title>DevStackBox</title></head>\
+                 <body><h1>DevStackBox is running</h1>\
+                 <p>Place your PHP projects in this folder.</p>\
+                 <p><a href=\"/phpmyadmin/\">phpMyAdmin</a></p></body></html>\n",
+            );
+        }
+        return;
+    }
+
+    // Copy every file from install www/ that doesn't already exist in user www/.
+    if let Ok(entries) = std::fs::read_dir(&www_src) {
+        for entry in entries.flatten() {
+            let src_path = entry.path();
+            if src_path.is_file() {
+                if let Some(name) = src_path.file_name() {
+                    let dst_path = www_dst.join(name);
+                    if !dst_path.exists() {
+                        let _ = std::fs::copy(&src_path, &dst_path);
+                    }
+                }
+            }
+        }
+    }
 }
 
 async fn get_apache_version() -> Option<String> {

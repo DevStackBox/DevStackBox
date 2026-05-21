@@ -127,6 +127,18 @@ pub fn user_mysql_data_dir() -> PathBuf {
     p
 }
 
+pub fn user_tmp_dir() -> PathBuf {
+    let p = get_user_data_root().join("tmp");
+    let _ = std::fs::create_dir_all(&p);
+    p
+}
+
+pub fn user_sessions_dir() -> PathBuf {
+    let p = user_tmp_dir().join("sessions");
+    let _ = std::fs::create_dir_all(&p);
+    p
+}
+
 // Converts a path to a forward-slash string safe for Apache config files.
 //
 // Windows canonicalize() prepends \\?\ (extended-length path prefix) which
