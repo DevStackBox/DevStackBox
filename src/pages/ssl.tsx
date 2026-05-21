@@ -110,8 +110,9 @@ export function SslPage() {
             HTTPS / SSL
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Local Root CA signs certificates for localhost and future virtual hosts.
-            Trust the CA once in Windows - all generated certs are automatically trusted.
+            Local Root CA signs certificates for localhost and future virtual
+            hosts. Trust the CA once in Windows - all generated certs are
+            automatically trusted.
           </p>
         </div>
         <Button
@@ -182,7 +183,7 @@ export function SslPage() {
                   <Separator />
                   <div className="pt-1 space-y-1">
                     <p className="text-xs text-muted-foreground font-mono break-all">
-                      CA:   {status.ca_path}
+                      CA: {status.ca_path}
                     </p>
                     {status.cert_exists && (
                       <p className="text-xs text-muted-foreground font-mono break-all">
@@ -209,8 +210,8 @@ export function SslPage() {
             </CardTitle>
             <CardDescription className="text-xs">
               Creates a Local Root CA (DevStackBox Local CA) then signs a
-              10-year localhost certificate with it. Re-run to regenerate
-              the localhost cert without touching the CA.
+              10-year localhost certificate with it. Re-run to regenerate the
+              localhost cert without touching the CA.
             </CardDescription>
           </CardHeader>
           <CardContent className="mt-auto pt-2">
@@ -294,11 +295,13 @@ export function SslPage() {
       {/* Trust instructions */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">Trust the Root CA in Windows (one-time)</CardTitle>
+          <CardTitle className="text-sm">
+            Trust the Root CA in Windows (one-time)
+          </CardTitle>
           <CardDescription className="text-xs">
-            Import the CA certificate once. Every certificate DevStackBox generates
-            - for localhost and future virtual hosts - is then trusted automatically.
-            No more browser warnings.
+            Import the CA certificate once. Every certificate DevStackBox
+            generates - for localhost and future virtual hosts - is then trusted
+            automatically. No more browser warnings.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -323,8 +326,8 @@ export function SslPage() {
             </li>
             <li>
               Browse to{" "}
-              <span className="font-mono text-foreground">ca.crt</span>{" "}
-              (path shown below) and complete the import wizard.
+              <span className="font-mono text-foreground">ca.crt</span> (path
+              shown below) and complete the import wizard.
             </li>
             <li>
               Restart your browser. All DevStackBox HTTPS sites will be trusted
