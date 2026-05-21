@@ -89,6 +89,11 @@ async fn check_active_php_version(version: &str) -> bool {
             }
         }
     }
+    // No junction exists yet (fresh install). The bundled default "8.3" is
+    // considered active as long as its exe is present.
+    if version == "8.3" {
+        return php_branch_exe("8.3").exists();
+    }
     false
 }
 

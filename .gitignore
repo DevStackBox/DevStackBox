@@ -51,6 +51,8 @@ apache/logs/
 # PHP runtime files ONLY (keep all binaries)
 php/*/tmp/
 php/*/sessions/
+# php/current is a Windows junction created at runtime - never commit it
+php/current
 
 # Backup files (keep one version in git)
 *.backup
@@ -110,3 +112,6 @@ src-tauri/phpmyadmin/
 src-tauri/www/
 src-tauri/config/
 apache-backup-32bit/*
+/php/8.4
+/php/8.2
+/php/8.1

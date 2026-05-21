@@ -357,6 +357,14 @@ export function PHPVersionSelector({
             const notes = BRANCH_NOTES[v.version];
             const p = progress[v.version];
             const isDownloading = isDownloadingStage(p);
+            // Derive active state: trust backend flag first; fall back to
+            // comparing against the currentVersion prop so that fresh installs
+            // (where php/current junction does not exist yet) still correctly
+            // mark the running version as active.
+            const vResolved = {
+              ...v,
+              is_active: v.is_active || v.version === currentVersion,
+            };
             return (
               <motion.div
                 key={v.version}
@@ -364,7 +372,9 @@ export function PHPVersionSelector({
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.15, delay: index * 0.04 }}
                 className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 ${
-                  v.is_active ? "border-primary bg-primary/5" : "bg-card"
+                  vResolved.is_active
+                    ? "border-primary bg-primary/5"
+                    : "bg-card"
                 }`}
               >
                 {/* Left: version + description */}
@@ -378,7 +388,7 @@ export function PHPVersionSelector({
                         {t("php.bundled", "Bundled")}
                       </Badge>
                     )}
-                    {renderStatusBadge(v)}
+                    {renderStatusBadge(vResolved)}
                   </div>
                   {notes && (
                     <p className="text-xs text-muted-foreground mt-0.5 leading-tight">
@@ -402,7 +412,7 @@ export function PHPVersionSelector({
                 </div>
 
                 {/* Right: action button */}
-                <div className="shrink-0">{renderAction(v)}</div>
+                <div className="shrink-0">{renderAction(vResolved)}</div>
               </motion.div>
             );
           })}
