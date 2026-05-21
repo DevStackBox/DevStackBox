@@ -1,9 +1,11 @@
 import { useTranslation } from "react-i18next";
+import { useState } from "react";
 import { Code, FileText } from "lucide-react";
 import { ServiceCard } from "./service-card";
 import { Badge } from "@/components/ui/badge";
 import { ServiceOverflowMenu } from "./service-overflow-menu";
 import { ServiceActions } from "./service-actions";
+import { PhpExtensionsDialog } from "@/components/php-extensions-dialog";
 import {
   ContextMenuContent,
   ContextMenuItem,
@@ -38,6 +40,7 @@ export function PHPService({
   onSelect,
 }: PHPServiceProps) {
   const { t } = useTranslation();
+  const [extensionsOpen, setExtensionsOpen] = useState(false);
 
   const openPhpInfo = () => {
     window.open("http://localhost/phpinfo.php", "_blank");
@@ -105,6 +108,10 @@ export function PHPService({
                       ]
                     : []),
                   {
+                    label: t("actions.extensions", "Extensions"),
+                    onSelect: () => setExtensionsOpen(true),
+                  },
+                  {
                     label: t("actions.composer", "Composer"),
                     onSelect: openComposer,
                   },
@@ -146,6 +153,9 @@ export function PHPService({
           <ContextMenuItem onSelect={openPhpInfo}>
             {t("actions.phpinfo", "PHP Info")}
           </ContextMenuItem>
+          <ContextMenuItem onSelect={() => setExtensionsOpen(true)}>
+            {t("actions.extensions", "Extensions")}
+          </ContextMenuItem>
           {onOpenTerminal && (
             <ContextMenuItem onSelect={onOpenTerminal}>
               {t("actions.terminal", "Terminal")}
@@ -185,6 +195,11 @@ export function PHPService({
           layout="grid"
         />
       </div>
+      <PhpExtensionsDialog
+        isOpen={extensionsOpen}
+        onClose={() => setExtensionsOpen(false)}
+        version={currentVersion}
+      />
     </ServiceCard>
   );
 }

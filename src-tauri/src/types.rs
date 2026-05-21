@@ -40,3 +40,14 @@ pub struct SystemInfo {
     pub mysql_version: Option<String>,
     pub php_versions: Vec<String>,
 }
+
+/// One PHP extension row for the Extensions UI.
+/// `name` is the bare extension name (e.g. "curl", "gd"), `enabled` reflects
+/// whether `extension=<name>` is currently uncommented in `php.ini`, and
+/// `dll_present` reports whether `ext/php_<name>.dll` ships with the version.
+#[derive(serde::Serialize)]
+pub struct PhpExtension {
+    pub name: String,
+    pub enabled: bool,
+    pub dll_present: bool,
+}

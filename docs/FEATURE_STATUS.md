@@ -130,13 +130,13 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ## PHP Version Management
 
-| Feature                       | Status  | Notes                                                                                                                                                               |
-| ----------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| List PHP versions (installed) | DONE    | `get_php_versions` scans `php/` dir                                                                                                                                 |
-| PHP version selector UI       | DONE    | `php-version-selector.tsx`                                                                                                                                          |
-| Switch PHP version            | DONE    | Creates `php/current` junction (Windows)                                                                                                                            |
-| Download PHP version          | DONE    | `download_php_version` streams the real zip from windows.php.net, extracts to `php/{branch}/`, writes a default `php.ini`, and emits `php-download-progress` events |
-| PHP Extension management      | PLANNED | Enable/disable extensions in php.ini                                                                                                                                |
+| Feature                       | Status | Notes                                                                                                                                                                                                                                                                |
+| ----------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| List PHP versions (installed) | DONE   | `get_php_versions` scans `php/` dir                                                                                                                                                                                                                                  |
+| PHP version selector UI       | DONE   | `php-version-selector.tsx`                                                                                                                                                                                                                                           |
+| Switch PHP version            | DONE   | Creates `php/current` junction (Windows)                                                                                                                                                                                                                             |
+| Download PHP version          | DONE   | `download_php_version` streams the real zip from windows.php.net, extracts to `php/{branch}/`, writes a default `php.ini`, and emits `php-download-progress` events                                                                                                  |
+| PHP Extension management      | DONE   | `list_php_extensions` / `toggle_php_extension` Tauri commands rewrite `php.ini` (comment / uncomment / append `extension=NAME`); `PhpExtensionsDialog` opened from the PHP card overflow + context menu shows a searchable list of `ext/*.dll` with a Switch per row |
 
 ---
 

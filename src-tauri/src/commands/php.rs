@@ -529,3 +529,187 @@ pub async fn open_php_terminal(version: String) -> Result<String, String> {
 
     Ok(format!("Opened PHP {} terminal", version))
 }
+
+// -- PHP Extensions ----------------------------------------------------------
+
+/// Resolve a potentially full version string ("8.3.31") to the installed
+/// branch directory name ("8.3").  Strategy: try exact first, then
+/// major.minor prefix, then walk installed dirs for the longest prefix match.
+fn resolve_branch(version: &str) -> String {
+    let exact = php_branch_dir(version);
+    if exact.exists() {
+        return version.to_string();
+    }
+    // Try major.minor (first two dot-separated components).
+    let parts: Vec<&str> = version.splitn(3, '.').collect();
+    if parts.len() >= 2 {
+        let mm = format!("{}.{}", parts[0], parts[1]);
+        if php_branch_dir(&mm).exists() {
+            return mm;
+        }
+    }
+    // Fall back to scanning php/ for any dir that has version as a prefix.
+    if let Ok(entries) = std::fs::read_dir(php_root()) {
+        for entry in entries.flatten() {
+            if let Some(name) = entry.file_name().to_str() {
+                if version.starts_with(name) || name.starts_with(version) {
+                    return name.to_string();
+                }
+            }
+        }
+    }
+    version.to_string()
+}
+
+/// Strip a single trailing semicolon-comment and surrounding whitespace from
+/// the value side of an `extension=<name>` directive.
+/// e.g. `mbstring      ; depends on iconv` -> `mbstring`.
+fn extract_ext_value(raw: &str) -> String {
+    let no_comment = raw.split(';').next().unwrap_or("").trim();
+    // Some inis use `extension="curl"`; strip quotes.
+    no_comment.trim_matches('"').trim().to_string()
+}
+
+/// Returns Some(("extension"|"zend_extension", value, was_commented)) if the
+/// trimmed line is an extension directive, otherwise None.
+fn parse_ext_line(line: &str) -> Option<(&'static str, String, bool)> {
+    let trimmed = line.trim_start();
+    let (was_commented, rest) = if let Some(stripped) = trimmed.strip_prefix(';') {
+        (true, stripped.trim_start())
+    } else {
+        (false, trimmed)
+    };
+    let (kind, after_kw) = if let Some(after) = rest.strip_prefix("zend_extension") {
+        ("zend_extension", after)
+    } else if let Some(after) = rest.strip_prefix("extension") {
+        ("extension", after)
+    } else {
+        return None;
+    };
+    let after_eq = after_kw.trim_start().strip_prefix('=')?;
+    let value = extract_ext_value(after_eq);
+    if value.is_empty() {
+        return None;
+    }
+    Some((kind, value, was_commented))
+}
+
+#[tauri::command]
+pub async fn list_php_extensions(version: String) -> Result<Vec<crate::types::PhpExtension>, String>
+{
+    use std::collections::BTreeMap;
+
+    // The frontend may pass a full version string like "8.3.31" while the
+    // directory is "php/8.3".  Resolve to the best matching installed dir.
+    let branch = resolve_branch(&version);
+    let branch_dir = php_branch_dir(&branch);
+    if !branch_dir.exists() {
+        return Err(format!("PHP {} is not installed", version));
+    }
+
+    // 1. Discover DLLs shipped in ext/.
+    let mut map: BTreeMap<String, crate::types::PhpExtension> = BTreeMap::new();
+    let ext_dir = branch_dir.join("ext");
+    if let Ok(entries) = fs::read_dir(&ext_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            let Some(stem) = path.file_stem().and_then(|s| s.to_str()) else {
+                continue;
+            };
+            let Some(ext) = path.extension().and_then(|s| s.to_str()) else {
+                continue;
+            };
+            if !ext.eq_ignore_ascii_case("dll") {
+                continue;
+            }
+            let name = stem.strip_prefix("php_").unwrap_or(stem).to_string();
+            map.insert(
+                name.clone(),
+                crate::types::PhpExtension {
+                    name,
+                    enabled: false,
+                    dll_present: true,
+                },
+            );
+        }
+    }
+
+    let ini_path = branch_dir.join("php.ini");
+    if ini_path.exists() {
+        let contents = fs::read_to_string(&ini_path).map_err(|e| e.to_string())?;
+        for line in contents.lines() {
+            if let Some((_kind, value, was_commented)) = parse_ext_line(line) {
+                let entry = map
+                    .entry(value.clone())
+                    .or_insert_with(|| crate::types::PhpExtension {
+                        name: value,
+                        enabled: false,
+                        dll_present: false,
+                    });
+                if !was_commented {
+                    entry.enabled = true;
+                }
+            }
+        }
+    }
+
+    Ok(map.into_values().collect())
+}
+
+#[tauri::command]
+pub async fn toggle_php_extension(
+    version: String,
+    name: String,
+    enable: bool,
+) -> Result<bool, String> {
+    let branch = resolve_branch(&version);
+    let branch_dir = php_branch_dir(&branch);
+    let ini_path = branch_dir.join("php.ini");
+    if !ini_path.exists() {
+        return Err(format!("php.ini not found for PHP {}", version));
+    }
+
+    let contents = fs::read_to_string(&ini_path).map_err(|e| e.to_string())?;
+    let mut out_lines: Vec<String> = Vec::with_capacity(contents.lines().count() + 1);
+    let mut found = false;
+
+    for line in contents.lines() {
+        if let Some((kind, value, was_commented)) = parse_ext_line(line) {
+            if value.eq_ignore_ascii_case(&name) {
+                found = true;
+                let new_line = if enable {
+                    if was_commented {
+                        format!("{}={}", kind, value)
+                    } else {
+                        line.to_string()
+                    }
+                } else if was_commented {
+                    line.to_string()
+                } else {
+                    format!(";{}={}", kind, value)
+                };
+                out_lines.push(new_line);
+                continue;
+            }
+        }
+        out_lines.push(line.to_string());
+    }
+
+    if !found && enable {
+        // No existing directive to toggle; append a fresh one so the user can
+        // enable extensions that ship as DLLs but were never listed in php.ini.
+        if !out_lines.last().map(|l| l.is_empty()).unwrap_or(false) {
+            out_lines.push(String::new());
+        }
+        out_lines.push(format!("extension={}", name));
+    }
+
+    let mut joined = out_lines.join("\n");
+    // Preserve trailing newline behaviour.
+    if contents.ends_with('\n') && !joined.ends_with('\n') {
+        joined.push('\n');
+    }
+    fs::write(&ini_path, joined).map_err(|e| e.to_string())?;
+    Ok(true)
+}
+

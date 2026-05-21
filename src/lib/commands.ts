@@ -38,6 +38,8 @@ export const TAURI_COMMANDS = {
     getVersions: "get_php_versions",
     switchVersion: "switch_php_version",
     downloadVersion: "download_php_version",
+    listExtensions: "list_php_extensions",
+    toggleExtension: "toggle_php_extension",
   },
   config: {
     read: "read_config",
