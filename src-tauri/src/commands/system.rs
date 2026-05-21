@@ -307,3 +307,128 @@ pub async fn create_directory_structure() -> Result<String, String> {
 
     Ok("Directory structure and default web files created successfully".to_string())
 }
+
+/// Registry key + value name used for "launch DevStackBox at user login".
+/// Stored under `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, which
+/// does not require admin rights. Shelling out to `reg.exe` avoids adding
+/// a `winreg` dependency.
+const AUTOSTART_KEY: &str = r"HKCU\Software\Microsoft\Windows\CurrentVersion\Run";
+const AUTOSTART_VALUE: &str = "DevStackBox";
+
+#[tauri::command]
+pub async fn get_autostart() -> Result<bool, String> {
+    let output = create_hidden_command("reg")
+        .args(["query", AUTOSTART_KEY, "/v", AUTOSTART_VALUE])
+        .output()
+        .map_err(|e| format!("Failed to query registry: {}", e))?;
+    // `reg query` exits non-zero with code 1 when the value is missing.
+    Ok(output.status.success())
+}
+
+#[tauri::command]
+pub async fn set_autostart(enabled: bool) -> Result<bool, String> {
+    if enabled {
+        let exe = env::current_exe()
+            .map_err(|e| format!("Failed to resolve current exe: {}", e))?;
+        // Quote the exe path so paths with spaces (e.g. Program Files) work.
+        let quoted = format!("\"{}\"", exe.display());
+        let output = create_hidden_command("reg")
+            .args([
+                "add",
+                AUTOSTART_KEY,
+                "/v",
+                AUTOSTART_VALUE,
+                "/t",
+                "REG_SZ",
+                "/d",
+                &quoted,
+                "/f",
+            ])
+            .output()
+            .map_err(|e| format!("Failed to write registry: {}", e))?;
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).trim().to_string());
+        }
+    } else {
+        let output = create_hidden_command("reg")
+            .args(["delete", AUTOSTART_KEY, "/v", AUTOSTART_VALUE, "/f"])
+            .output()
+            .map_err(|e| format!("Failed to delete registry value: {}", e))?;
+        // Deleting a non-existent value returns exit code 1; treat that as
+        // already-disabled rather than an error.
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr).to_lowercase();
+            if !stderr.contains("unable to find") && !stderr.contains("cannot find") {
+                return Err(String::from_utf8_lossy(&output.stderr).trim().to_string());
+            }
+        }
+    }
+    Ok(enabled)
+}
+
+/// Run an executable with a single argument and return its trimmed stdout
+/// (or stderr fallback) on success. None on any failure.
+fn read_version(exe: &std::path::Path, arg: &str) -> Option<String> {
+    if !exe.exists() {
+        return None;
+    }
+    let output = create_hidden_command(&exe.to_string_lossy())
+        .arg(arg)
+        .output()
+        .ok()?;
+    let mut text = String::from_utf8_lossy(&output.stdout).to_string();
+    if text.trim().is_empty() {
+        text = String::from_utf8_lossy(&output.stderr).to_string();
+    }
+    // Most tools return multi-line banners; the first non-empty line is enough.
+    text.lines()
+        .map(|l| l.trim())
+        .find(|l| !l.is_empty())
+        .map(|s| s.to_string())
+}
+
+#[tauri::command]
+pub async fn get_system_info() -> Result<crate::types::SystemInfo, String> {
+    let base_path = get_installation_path();
+    let httpd = base_path.join("apache").join("bin").join("httpd.exe");
+    let mysqld = base_path.join("mysql").join("bin").join("mysqld.exe");
+    let php_root = base_path.join("php");
+
+    let mut php_versions: Vec<String> = Vec::new();
+    if let Ok(entries) = std::fs::read_dir(&php_root) {
+        for entry in entries.flatten() {
+            if entry.path().is_dir() {
+                if let Some(name) = entry.file_name().to_str() {
+                    php_versions.push(name.to_string());
+                }
+            }
+        }
+    }
+    php_versions.sort();
+
+    // Pull the host Windows version from `cmd /c ver` (e.g. "Microsoft Windows
+    // [Version 10.0.22631.4317]"). Cheap and dependency-free.
+    let os_version = create_hidden_command("cmd")
+        .args(["/c", "ver"])
+        .output()
+        .ok()
+        .and_then(|o| {
+            let s = String::from_utf8_lossy(&o.stdout).to_string();
+            s.lines()
+                .map(|l| l.trim())
+                .find(|l| !l.is_empty())
+                .map(|s| s.to_string())
+        })
+        .unwrap_or_else(|| "Windows".to_string());
+
+    Ok(crate::types::SystemInfo {
+        os: std::env::consts::OS.to_string(),
+        arch: std::env::consts::ARCH.to_string(),
+        os_version,
+        app_version: env!("CARGO_PKG_VERSION").to_string(),
+        tauri_version: "2.x".to_string(),
+        apache_version: read_version(&httpd, "-v"),
+        mysql_version: read_version(&mysqld, "--version"),
+        php_versions,
+    })
+}

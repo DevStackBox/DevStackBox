@@ -383,10 +383,7 @@ export function DatabasesPage() {
                     </ContextMenuItem>
                     <ContextMenuItem onSelect={() => openInPhpMyAdmin(db.name)}>
                       <ExternalLink className="mr-2 h-4 w-4" />
-                      {t(
-                        "databases.openInPhpMyAdmin",
-                        "Open in phpMyAdmin",
-                      )}
+                      {t("databases.openInPhpMyAdmin", "Open in phpMyAdmin")}
                     </ContextMenuItem>
                     <ContextMenuSeparator />
                     <ContextMenuItem onSelect={() => copyName(db.name)}>

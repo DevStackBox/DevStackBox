@@ -113,18 +113,18 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ## Log Viewer
 
-| Feature                         | Status  | Notes                                                                                                                  |
-| ------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Read log file (last 1000 lines) | DONE    | `get_service_logs` command                                                                                             |
-| LogViewer component (static)    | DONE    | Renders text, no streaming                                                                                             |
-| Log display on services page    | DONE    | Uses `LogViewer` with search and copy/download actions                                                                 |
-| Real-time log streaming         | DONE    | Frontend polls `get_service_logs` every 2s while auto-refresh is on. Tauri Channel streaming still planned for Phase 4 |
-| Log filtering / search          | DONE    | Search bar in `LogViewer` filters lines in place                                                                       |
-| Log tabs per service            | DONE    | shadcn `Tabs` on services page switches MySQL / Apache / PHP                                                           |
-| Dedicated Logs page             | DONE    | `pages/logs.tsx` provides a top-level Logs route with the same tabs and search                                         |
-| Log auto-scroll toggle          | DONE    | Auto-scroll checkbox in `LogViewer` header, independent from the 2s poll toggle                                        |
-| Terminal-style log viewer       | DONE    | Styled `<pre>` (mono, zinc-950 terminal bg, per-line coloring for ERROR/WARN/INFO/DEBUG)                              |
-| Sticky log search bar           | DONE    | Search row is `sticky top-0` inside `LogViewer` with `backdrop-blur` so it stays visible while scrolling               |
+| Feature                         | Status | Notes                                                                                                                  |
+| ------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------- |
+| Read log file (last 1000 lines) | DONE   | `get_service_logs` command                                                                                             |
+| LogViewer component (static)    | DONE   | Renders text, no streaming                                                                                             |
+| Log display on services page    | DONE   | Uses `LogViewer` with search and copy/download actions                                                                 |
+| Real-time log streaming         | DONE   | Frontend polls `get_service_logs` every 2s while auto-refresh is on. Tauri Channel streaming still planned for Phase 4 |
+| Log filtering / search          | DONE   | Search bar in `LogViewer` filters lines in place                                                                       |
+| Log tabs per service            | DONE   | shadcn `Tabs` on services page switches MySQL / Apache / PHP                                                           |
+| Dedicated Logs page             | DONE   | `pages/logs.tsx` provides a top-level Logs route with the same tabs and search                                         |
+| Log auto-scroll toggle          | DONE   | Auto-scroll checkbox in `LogViewer` header, independent from the 2s poll toggle                                        |
+| Terminal-style log viewer       | DONE   | Styled `<pre>` (mono, zinc-950 terminal bg, per-line coloring for ERROR/WARN/INFO/DEBUG)                               |
+| Sticky log search bar           | DONE   | Search row is `sticky top-0` inside `LogViewer` with `backdrop-blur` so it stays visible while scrolling               |
 
 ---
 
@@ -142,17 +142,17 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ## Database Management
 
-| Feature                     | Status  | Notes                                                                                                  |
-| --------------------------- | ------- | ------------------------------------------------------------------------------------------------------ |
-| phpMyAdmin integration      | DONE    | Served via Apache at `/phpmyadmin`                                                                     |
-| MySQL database backup (all) | DONE    | `backup_mysql_database` using mysqldump                                                                |
-| MySQL user management UI    | PLANNED |                                                                                                        |
-| Database list               | DONE    | `list_mysql_databases` lists user databases on the Databases page                                      |
+| Feature                     | Status  | Notes                                                                                                                   |
+| --------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------- |
+| phpMyAdmin integration      | DONE    | Served via Apache at `/phpmyadmin`                                                                                      |
+| MySQL database backup (all) | DONE    | `backup_mysql_database` using mysqldump                                                                                 |
+| MySQL user management UI    | PLANNED |                                                                                                                         |
+| Database list               | DONE    | `list_mysql_databases` lists user databases on the Databases page                                                       |
 | Database list metadata      | DONE    | `list_mysql_databases_detailed` returns name + table count + size (data + index bytes) from `information_schema.tables` |
-| Database search             | DONE    | Sticky search input on the Databases page filters rows by name                                         |
-| Database row context menu   | DONE    | Right-click row -> Backup, Open in phpMyAdmin (deep link to ?db=NAME), Copy DB name                    |
-| Database-specific backup    | DONE    | `backup_mysql_database_named` per-database backup wired into Databases page                            |
-| Database restore            | DONE    | `restore_mysql_database` accepts SQL piped from a `.sql` file picked in the UI                         |
+| Database search             | DONE    | Sticky search input on the Databases page filters rows by name                                                          |
+| Database row context menu   | DONE    | Right-click row -> Backup, Open in phpMyAdmin (deep link to ?db=NAME), Copy DB name                                     |
+| Database-specific backup    | DONE    | `backup_mysql_database_named` per-database backup wired into Databases page                                             |
+| Database restore            | DONE    | `restore_mysql_database` accepts SQL piped from a `.sql` file picked in the UI                                          |
 
 ---
 
@@ -185,36 +185,36 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ## Auto-Update
 
-| Feature                         | Status  | Notes                                                                                                               |
-| ------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------- |
-| Tauri updater plugin configured | DONE    | `tauri-plugin-updater` in Cargo.toml                                                                                |
-| Update check on startup         | PARTIAL | `auto-updater.tsx` component exists                                                                                 |
-| Install update prompt           | PARTIAL | UI exists, flow not fully tested                                                                                    |
-| Update from GitHub Releases     | PLANNED | Needs `tauri.conf.json` updater endpoint                                                                            |
-| Auto-check updates toggle       | PLANNED | Settings page switch persisted to `localStorage`; `auto-updater.tsx` honours it (poll on launch + every 6h when on) |
+| Feature                         | Status  | Notes                                                                                                                                                     |
+| ------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tauri updater plugin configured | DONE    | `tauri-plugin-updater` in Cargo.toml                                                                                                                      |
+| Update check on startup         | PARTIAL | `auto-updater.tsx` component exists                                                                                                                       |
+| Install update prompt           | PARTIAL | UI exists, flow not fully tested                                                                                                                          |
+| Update from GitHub Releases     | PLANNED | Needs `tauri.conf.json` updater endpoint                                                                                                                  |
+| Auto-check updates toggle       | DONE    | Settings page switch persisted to `localStorage.devstackbox.settings.autoCheckUpdates`; `auto-updater.tsx` honours it (poll on launch + every 6h when on) |
 
 ---
 
 ## Settings & Preferences
 
-| Feature                         | Status  | Notes                                                                      |
-| ------------------------------- | ------- | -------------------------------------------------------------------------- |
-| Settings page                   | PLANNED | New `src/pages/settings.tsx` replaces the inline placeholder in `App.tsx`  |
-| Theme preference                | PLANNED | Inline ThemeToggle inside Settings (uses existing `ThemeProvider`)         |
-| Language preference             | PLANNED | Inline LanguageSwitcher inside Settings (uses existing i18next setup)      |
-| Launch on Windows startup       | PLANNED | `tauri-plugin-autostart`; `set_autostart` / `get_autostart` Tauri commands |
-| Auto-check updates (preference) | PLANNED | See Auto-Update table                                                      |
-| Config shortcuts (Apache/MySQL) | PLANNED | Moved from App.tsx into Settings page as a compact 2-column row            |
+| Feature                         | Status | Notes                                                                                                      |
+| ------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------- |
+| Settings page                   | DONE   | `src/pages/settings.tsx` replaces the inline placeholder in `App.tsx`                                      |
+| Theme preference                | DONE   | Inline shadcn `Select` (light/dark/system) inside Settings (uses `useTheme`)                               |
+| Language preference             | DONE   | Inline shadcn `Select` (English / Hindi) inside Settings (i18next.changeLanguage)                          |
+| Launch on Windows startup       | DONE   | `get_autostart` / `set_autostart` Tauri commands write `HKCU\...\Run\DevStackBox` via `reg.exe` (no admin) |
+| Auto-check updates (preference) | DONE   | See Auto-Update table                                                                                      |
+| Config shortcuts (Apache/MySQL) | DONE   | Settings page shows a 3-button row (Apache/MySQL/PHP) that opens the shared ConfigEditor modal             |
 
 ---
 
 ## About
 
-| Feature                  | Status  | Notes                                                                                                  |
-| ------------------------ | ------- | ------------------------------------------------------------------------------------------------------ |
-| About page (basic)       | DONE    | App version + author + GitHub/Docs/BugReport buttons (inline in `App.tsx` today)                       |
-| About page (extracted)   | PLANNED | Move into `src/pages/about.tsx`                                                                        |
-| System Information block | PLANNED | New `get_system_info` Tauri command surfaces OS, Tauri version, app version, Apache/MySQL/PHP versions |
+| Feature                  | Status | Notes                                                                                                                                                                                       |
+| ------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| About page (basic)       | DONE   | App version + author + GitHub/Docs/BugReport buttons (inline in `App.tsx` today)                                                                                                            |
+| About page (extracted)   | DONE   | `src/pages/about.tsx` (AboutPage); `App.tsx` `case 'about'` delegates to it                                                                                                                 |
+| System Information block | DONE   | `get_system_info` Tauri command surfaces OS/arch, Windows version, app + Tauri version, Apache/MySQL/PHP versions; About page renders them in a definition list with Skeleton while loading |
 
 ---
 

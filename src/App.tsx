@@ -1,16 +1,8 @@
 import { useState, useEffect } from "react";
 import { safeInvoke, isTauri, getMockBinariesStatus } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
-import { Server, FolderOpen, Info, Copy, Check } from "lucide-react";
+import { FolderOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -19,28 +11,29 @@ import { AutoUpdater } from "./components/auto-updater";
 import { Sidebar } from "./components/sidebar";
 import { Breadcrumb } from "./components/breadcrumb";
 import { OnboardingDialog } from "./components/onboarding-dialog";
-import { BugReportDialog } from "./components/bug-report-dialog";
 import { CommandPalette } from "./components/command-palette";
 import { PHPVersionSelector } from "./components/php-version-selector";
 import { ConfigEditor } from "./components/config-editor";
-import { DashboardPage, ServicesPage, LogsPage, DatabasesPage } from "./pages";
-import { APP_VERSION } from "@/lib/version";
+import {
+  DashboardPage,
+  ServicesPage,
+  LogsPage,
+  DatabasesPage,
+  SettingsPage,
+  AboutPage,
+} from "./pages";
 import { Toaster } from "@/components/ui/toaster";
-import { useToast } from "@/hooks/use-toast";
 import type { ServiceName } from "@/types/services";
 import "./lib/i18n";
 
 function App() {
   const { t } = useTranslation();
-  const { toast } = useToast();
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [phpVersionSelectorOpen, setPhpVersionSelectorOpen] = useState(false);
-  const [copiedPath, setCopiedPath] = useState<string | null>(null);
   const [configEditorOpen, setConfigEditorOpen] = useState(false);
   const [configService, setConfigService] = useState<ServiceName>("mysql");
-  const [configView, setConfigView] = useState<"apache" | "mysql" | null>(null);
   // Single source of truth for the Logs page: when the user clicks the
   // "Logs" item from any service card (dashboard or services), we set
   // this and navigate to the Logs page so the matching tab opens.
@@ -48,16 +41,6 @@ function App() {
     "apache",
   );
 
-  // Copy path to clipboard helper
-  const copyToClipboard = (path: string, label: string) => {
-    navigator.clipboard.writeText(path);
-    setCopiedPath(path);
-    toast({
-      title: "Copied!",
-      description: `${label} copied to clipboard`,
-    });
-    setTimeout(() => setCopiedPath(null), 2000);
-  };
   const [currentPhpVersion, setCurrentPhpVersion] = useState("8.3");
 
   // Handler to open config editor for a specific service
@@ -181,256 +164,10 @@ function App() {
         return <DatabasesPage />;
 
       case "settings":
-        return (
-          <div className="space-y-6">
-            <h2 className="text-3xl font-bold">{t("navigation.settings")}</h2>
-
-            {configView === "apache" ? (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setConfigView(null)}
-                    >
-                      ← Back
-                    </Button>
-                    <div>
-                      <CardTitle>Apache Configuration</CardTitle>
-                      <CardDescription>
-                        Configure Apache HTTP server settings
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium">
-                      Configuration File
-                    </label>
-                    <div className="flex items-center gap-2 mt-2">
-                      <p className="text-sm text-muted-foreground flex-1">
-                        config/httpd.conf
-                      </p>
-                      <Button
-                        onClick={() =>
-                          copyToClipboard(
-                            "config/httpd.conf",
-                            "Apache config path",
-                          )
-                        }
-                        variant="ghost"
-                        size="sm"
-                        className="h-7"
-                      >
-                        {copiedPath === "config/httpd.conf" ? (
-                          <Check className="h-3 w-3 text-green-500" />
-                        ) : (
-                          <Copy className="h-3 w-3" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Document Root</label>
-                    <div className="flex items-center gap-2 mt-2">
-                      <p className="text-sm text-muted-foreground flex-1">
-                        www/
-                      </p>
-                      <Button
-                        onClick={() =>
-                          copyToClipboard("www/", "Document root path")
-                        }
-                        variant="ghost"
-                        size="sm"
-                        className="h-7"
-                      >
-                        {copiedPath === "www/" ? (
-                          <Check className="h-3 w-3 text-green-500" />
-                        ) : (
-                          <Copy className="h-3 w-3" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Port</label>
-                    <p className="text-sm text-muted-foreground mt-2">80</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : configView === "mysql" ? (
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setConfigView(null)}
-                    >
-                      ← Back
-                    </Button>
-                    <div>
-                      <CardTitle>MySQL Configuration</CardTitle>
-                      <CardDescription>
-                        Configure MySQL database server settings
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium">
-                      Configuration File
-                    </label>
-                    <div className="flex items-center gap-2 mt-2">
-                      <p className="text-sm text-muted-foreground flex-1">
-                        config/my.cnf
-                      </p>
-                      <Button
-                        onClick={() =>
-                          copyToClipboard("config/my.cnf", "MySQL config path")
-                        }
-                        variant="ghost"
-                        size="sm"
-                        className="h-7"
-                      >
-                        {copiedPath === "config/my.cnf" ? (
-                          <Check className="h-3 w-3 text-green-500" />
-                        ) : (
-                          <Copy className="h-3 w-3" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">
-                      Data Directory
-                    </label>
-                    <div className="flex items-center gap-2 mt-2">
-                      <p className="text-sm text-muted-foreground flex-1">
-                        mysql/data
-                      </p>
-                      <Button
-                        onClick={() =>
-                          copyToClipboard("mysql/data", "Data directory path")
-                        }
-                        variant="ghost"
-                        size="sm"
-                        className="h-7"
-                      >
-                        {copiedPath === "mysql/data" ? (
-                          <Check className="h-3 w-3 text-green-500" />
-                        ) : (
-                          <Copy className="h-3 w-3" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Port</label>
-                    <p className="text-sm text-muted-foreground mt-2">3306</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Configuration</CardTitle>
-                    <CardDescription>
-                      Manage server configuration files
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <Button
-                        variant="outline"
-                        onClick={() => setConfigView("apache")}
-                        className="h-20 flex flex-col gap-2"
-                      >
-                        <Server className="h-5 w-5" />
-                        Apache Config
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => setConfigView("mysql")}
-                        className="h-20 flex flex-col gap-2"
-                      >
-                        <Server className="h-5 w-5" />
-                        MySQL Config
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <EmptyState
-                  icon={Info}
-                  title="Advanced Settings Coming Soon"
-                  description="Configure application preferences, auto-start options, update channels, and more. Feature planned for Phase 2."
-                />
-              </div>
-            )}
-          </div>
-        );
+        return <SettingsPage onOpenConfig={handleOpenConfig} />;
 
       case "about":
-        return (
-          <div className="space-y-6">
-            <h2 className="text-3xl font-bold">{t("navigation.about")}</h2>
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("app.title")}</CardTitle>
-                <CardDescription>{t("app.description")}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="font-semibold">Version: {APP_VERSION}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Built with Tauri, React, and Rust
-                  </p>
-                </div>
-                <div>
-                  <p className="font-semibold">Author: Nomad Programmer</p>
-                  <p className="text-sm text-muted-foreground">
-                    shiv@srapsware.com
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <AutoUpdater />
-                  <BugReportDialog />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      window.open(
-                        "https://github.com/ProgrammerNomad/DevStackBox",
-                        "_blank",
-                        "noopener,noreferrer",
-                      )
-                    }
-                  >
-                    GitHub
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      window.open(
-                        "https://github.com/ProgrammerNomad/DevStackBox/wiki",
-                        "_blank",
-                        "noopener,noreferrer",
-                      )
-                    }
-                  >
-                    Documentation
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        );
+        return <AboutPage />;
 
       default:
         return (

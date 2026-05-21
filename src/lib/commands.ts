@@ -11,6 +11,9 @@ export const TAURI_COMMANDS = {
     stopAllServices: "stop_all_services",
     testApacheConfig: "test_apache_config",
     createDirectoryStructure: "create_directory_structure",
+    getAutostart: "get_autostart",
+    setAutostart: "set_autostart",
+    getSystemInfo: "get_system_info",
   },
   services: {
     getApacheStatus: "get_apache_status",

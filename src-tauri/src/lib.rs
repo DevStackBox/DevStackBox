@@ -25,8 +25,8 @@ use crate::commands::php::{
     toggle_php,
 };
 use crate::commands::system::{
-    check_binaries, create_directory_structure, debug_installation, debug_paths,
-    start_all_services, stop_all_services, test_apache_config,
+    check_binaries, create_directory_structure, debug_installation, debug_paths, get_autostart,
+    get_system_info, set_autostart, start_all_services, stop_all_services, test_apache_config,
 };
 use crate::commands::tray::{hide_to_tray, quit_app, set_tray_tooltip, show_main_window};
 use crate::utils::paths::ensure_user_data_dirs;
@@ -72,6 +72,9 @@ pub fn run() {
             list_config_backups,
             restore_config_backup,
             create_directory_structure,
+            get_autostart,
+            set_autostart,
+            get_system_info,
             show_main_window,
             hide_to_tray,
             set_tray_tooltip,

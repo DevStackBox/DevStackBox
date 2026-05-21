@@ -27,3 +27,16 @@ pub struct DatabaseInfo {
     pub table_count: u64,
     pub size_bytes: u64,
 }
+
+/// Diagnostic snapshot shown on the About page.
+#[derive(serde::Serialize)]
+pub struct SystemInfo {
+    pub os: String,
+    pub arch: String,
+    pub os_version: String,
+    pub app_version: String,
+    pub tauri_version: String,
+    pub apache_version: Option<String>,
+    pub mysql_version: Option<String>,
+    pub php_versions: Vec<String>,
+}

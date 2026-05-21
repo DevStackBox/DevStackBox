@@ -89,15 +89,23 @@ export function AutoUpdater() {
   };
 
   useEffect(() => {
+    // Respect the user's "auto-check for updates" preference. The Settings
+    // page writes this key; default behaviour stays opt-in by being true.
+    const autoCheck =
+      localStorage.getItem("devstackbox.settings.autoCheckUpdates") !== "false";
+    if (!autoCheck) {
+      return;
+    }
+
     // Check for updates on app start (silent)
     const startupCheck = setTimeout(() => {
       checkForUpdates(false);
     }, 2000); // Delay to let app fully load
 
-    // Check for updates every 2 hours for testing (reduce from 6 hours)
+    // Re-check every 6 hours while the app is open.
     const interval = setInterval(
       () => checkForUpdates(false),
-      2 * 60 * 60 * 1000,
+      6 * 60 * 60 * 1000,
     );
 
     return () => {
