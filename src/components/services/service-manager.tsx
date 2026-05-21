@@ -305,6 +305,31 @@ export function ServiceManager({
     };
   }, []);
 
+  // Show a one-time system notification when the window is hidden to the tray
+  // via the X close button.  The notification fires while the webview is still
+  // active (emitted before window.hide() in lib.rs) so the OS can display it
+  // even after the window disappears.
+  useEffect(() => {
+    if (!isTauri()) return;
+    let unlisten: (() => void) | undefined;
+    (async () => {
+      const { listen } = await import("@tauri-apps/api/event");
+      unlisten = await listen("window-hidden-to-tray", () => {
+        const SHOWN_KEY = "devstackbox.tray.hideNoticeShown";
+        if (!localStorage.getItem(SHOWN_KEY)) {
+          localStorage.setItem(SHOWN_KEY, "1");
+          void notify(
+            "DevStackBox is still running",
+            "The app is minimized to the system tray. Click the tray icon to restore it.",
+          );
+        }
+      });
+    })();
+    return () => {
+      if (unlisten) unlisten();
+    };
+  }, []);
+
   const containerClassName = compact
     ? "grid grid-cols-1 md:grid-cols-3 gap-4"
     : "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6";

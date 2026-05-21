@@ -174,8 +174,8 @@ Update this file every time a feature changes status. Do not maintain feature st
 | Feature                     | Status  | Notes                                                                                                |
 | --------------------------- | ------- | ---------------------------------------------------------------------------------------------------- |
 | Tray icon appears           | DONE    | Tauri tray-icon plugin                                                                               |
-| Minimize to tray            | PARTIAL | Basic minimize works                                                                                 |
-| Tray context menu           | PARTIAL | Basic menu configured in `lib.rs`                                                                    |
+| Minimize to tray            | DONE    | X close button hides to tray (CloseRequested intercepted in `lib.rs`); first-time OS notification shown via `notify.ts` |
+| Tray context menu           | DONE    | Show / Hide / Toggle MySQL / Toggle Apache / Quit; wired to same start-stop pipeline as the UI      |
 | Tray click opens app        | DONE    | Left-click on tray icon shows the main window (`lib.rs`)                                             |
 | Tray service status display | DONE    | `set_tray_tooltip` updated every 5s by `ServiceManager` with Apache/MySQL/PHP state                  |
 | Tray service start/stop     | DONE    | Tray menu emits `tray-toggle-service`; `ServiceManager` routes to the same toggle pipeline as the UI |

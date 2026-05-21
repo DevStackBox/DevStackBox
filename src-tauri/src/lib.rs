@@ -181,6 +181,18 @@ pub fn run() {
             println!("System tray initialized successfully!");
             Ok(())
         })
+        .on_window_event(|window, event| {
+            // Intercept the native close button (X) so the app hides to the
+            // system tray instead of exiting.  The user can quit via the
+            // tray context menu "Quit" item.
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                // Tell the frontend BEFORE hiding so the notification can
+                // be dispatched while the webview is still active.
+                let _ = window.emit("window-hidden-to-tray", ());
+                window.hide().unwrap_or_default();
+                api.prevent_close();
+            }
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
