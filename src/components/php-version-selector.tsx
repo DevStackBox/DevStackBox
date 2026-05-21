@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import {
   Download,
   Check,
-  AlertCircle,
   Loader2,
   RefreshCw,
   PackageCheck,
@@ -18,13 +17,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { safeInvoke, isTauri } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
@@ -296,25 +288,24 @@ export function PHPVersionSelector({
     const p = progress[v.version];
     if (isDownloadingStage(p)) {
       return (
-        <Button disabled className="w-full">
-          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+        <Button disabled size="sm">
+          <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
           {t("php.stage." + p!.stage, p!.stage)}
-          {p!.total > 0 && p!.stage === "downloading" ? ` ${p!.percent}%` : ""}
         </Button>
       );
     }
     if (v.is_active) {
       return (
-        <Button disabled className="w-full">
-          <Check className="w-4 h-4 mr-2" />
-          {t("php.activeVersion", "Active Version")}
+        <Button disabled size="sm" variant="secondary">
+          <Check className="w-3.5 h-3.5 mr-1.5" />
+          {t("php.activeVersion", "Active")}
         </Button>
       );
     }
     if (v.installed) {
       return (
-        <Button className="w-full" onClick={() => handleActivate(v.version)}>
-          <Check className="w-4 h-4 mr-2" />
+        <Button size="sm" onClick={() => handleActivate(v.version)}>
+          <Check className="w-3.5 h-3.5 mr-1.5" />
           {t("php.activate", "Activate")}
         </Button>
       );
@@ -322,28 +313,28 @@ export function PHPVersionSelector({
     return (
       <Button
         variant="outline"
-        className="w-full"
+        size="sm"
         onClick={() => handleDownload(v.version)}
       >
-        <Download className="w-4 h-4 mr-2" />
-        {t("php.downloadAndInstall", "Download & Install")}
+        <Download className="w-3.5 h-3.5 mr-1.5" />
+        {t("php.download", "Download")}
       </Button>
     );
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {t("php.title", "PHP Version Manager")}
-            <Badge variant="outline">
-              {t("php.current", "Current")}: {currentVersion}
+            <Badge variant="outline" className="font-mono">
+              {currentVersion}
             </Badge>
             <Button
               variant="ghost"
               size="icon"
-              className="ml-auto h-7 w-7"
+              className="h-7 w-7"
               onClick={loadVersions}
               disabled={loading}
               title={t("actions.refresh", "Refresh")}
@@ -356,89 +347,65 @@ export function PHPVersionSelector({
           <DialogDescription>
             {t(
               "php.description",
-              "PHP 8.2 ships with DevStackBox. Other versions are downloaded on demand from windows.php.net and installed alongside it.",
+              "PHP 8.3 ships with DevStackBox. Other versions are downloaded on demand from windows.php.net and installed alongside it.",
             )}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+        <div className="flex flex-col gap-1 mt-2">
           {versions.map((v, index) => {
             const notes = BRANCH_NOTES[v.version];
             const p = progress[v.version];
+            const isDownloading = isDownloadingStage(p);
             return (
               <motion.div
                 key={v.version}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.15, delay: index * 0.04 }}
+                className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 ${
+                  v.is_active ? "border-primary bg-primary/5" : "bg-card"
+                }`}
               >
-                <Card className={v.is_active ? "ring-2 ring-primary" : ""}>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        PHP {v.version}
-                        {v.version === BUNDLED_DEFAULT_VERSION && (
-                          <Badge variant="outline" className="text-xs">
-                            {t("php.bundled", "Bundled")}
-                          </Badge>
-                        )}
-                      </CardTitle>
-                      {renderStatusBadge(v)}
+                {/* Left: version + description */}
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="font-semibold text-sm">
+                      PHP {v.version}
+                    </span>
+                    {v.version === BUNDLED_DEFAULT_VERSION && (
+                      <Badge variant="outline" className="text-xs h-4 px-1">
+                        {t("php.bundled", "Bundled")}
+                      </Badge>
+                    )}
+                    {renderStatusBadge(v)}
+                  </div>
+                  {notes && (
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-tight">
+                      {notes.description}
+                    </p>
+                  )}
+                  {isDownloading && (
+                    <div className="mt-1.5 space-y-0.5">
+                      <Progress value={p?.percent ?? 0} className="h-1.5" />
+                      <p className="text-xs text-muted-foreground">
+                        {p?.message ?? t("php.stage." + p!.stage, p!.stage)}
+                        {p?.total && p.total > 0 && p.stage === "downloading"
+                          ? ` (${p.percent}%)`
+                          : ""}
+                      </p>
                     </div>
-                    {notes && (
-                      <CardDescription>{notes.description}</CardDescription>
-                    )}
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {notes && (
-                      <div>
-                        <h4 className="font-medium mb-2 text-sm">
-                          {t("php.keyFeatures", "Key features:")}
-                        </h4>
-                        <ul className="text-sm text-muted-foreground space-y-1">
-                          {notes.features.map((f, idx) => (
-                            <li key={idx} className="flex items-center gap-2">
-                              <span className="w-1 h-1 bg-current rounded-full" />
-                              {f}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                  )}
+                  {p?.stage === "error" && (
+                    <p className="text-xs text-destructive mt-1">{p.message}</p>
+                  )}
+                </div>
 
-                    {isDownloadingStage(p) && (
-                      <div className="space-y-1">
-                        <Progress value={p?.percent ?? 0} />
-                        <p className="text-xs text-muted-foreground">
-                          {p?.message ?? t("php.stage." + p!.stage, p!.stage)}
-                        </p>
-                      </div>
-                    )}
-                    {p?.stage === "error" && (
-                      <p className="text-xs text-destructive">{p.message}</p>
-                    )}
-
-                    {renderAction(v)}
-                  </CardContent>
-                </Card>
+                {/* Right: action button */}
+                <div className="shrink-0">{renderAction(v)}</div>
               </motion.div>
             );
           })}
-        </div>
-
-        <div className="mt-6 p-4 bg-muted rounded-lg">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="w-5 h-5 text-muted-foreground mt-0.5" />
-            <div className="text-sm text-muted-foreground">
-              <p className="font-medium mb-1">{t("php.noteTitle", "Note:")}</p>
-              <p>
-                {t(
-                  "php.noteBody",
-                  "Downloaded PHP versions live in the php/ folder next to the bundled 8.3. Switching versions points the php/current junction at the selected branch and does not affect your projects in www/.",
-                )}
-              </p>
-            </div>
-          </div>
         </div>
       </DialogContent>
     </Dialog>
