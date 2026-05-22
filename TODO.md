@@ -11,6 +11,7 @@
 - [ ] Migrate `src/components/command-palette.tsx` `onPageChange` prop to `useNavigate()`
 - [ ] Migrate `src/pages/dashboard.tsx` internal navigation calls to `useNavigate()`
 - [ ] Migrate `src/pages/services.tsx` internal navigation calls to `useNavigate()`
+- [ ] Define route metadata object (path, title, icon) for every route - single source of truth used by breadcrumbs, command palette, page titles, and future navigation search
 
 ## Phase 2 - Sidebar Trim to 8 Items
 *Parallel with Phase 1.*
@@ -23,6 +24,7 @@
 *Depends on Phase 1.*
 
 - [ ] Create `src/components/service-workspace-layout.tsx` - shared sticky sub-nav (NavLink-based, tab-styled) + `<Outlet />`
+- [ ] Create `src/components/service-workspace-header.tsx` - reusable workspace header (icon, title, status badge, top-level actions) shared across Apache, MySQL, PHP, Databases, and Settings workspaces
 
 Apache workspace (`/services/apache/*`):
 - [ ] `src/pages/services/apache/layout.tsx` - tabs: Overview, Logs, Config, Virtual Hosts, SSL
@@ -33,7 +35,7 @@ Apache workspace (`/services/apache/*`):
 - [ ] `src/pages/services/apache/ssl.tsx` - content moved from `src/pages/ssl.tsx`
 
 MySQL workspace (`/services/mysql/*`):
-- [ ] `src/pages/services/mysql/layout.tsx` - tabs: Overview, Logs
+- [ ] `src/pages/services/mysql/layout.tsx` - tabs: Overview, Logs (service-focused; database management lives in the top-level Databases workspace)
 - [ ] `src/pages/services/mysql/index.tsx` - status, start/stop, uptime, memory
 
 PHP workspace (`/services/php/*`):
@@ -70,12 +72,14 @@ Cleanup:
 - [ ] `src/pages/dashboard.tsx` - service cards show status + health + uptime only, remove per-service config dialogs and management actions
 - [ ] Dashboard card click navigates to service workspace
 - [ ] Keep on dashboard: status badges, uptime, Start All/Stop All, virtual hosts summary, recent activity strip
+- [ ] Target: entire dashboard visible on one screen with minimal or no scrolling
 
 ## Phase 6 - Security: Actionable Findings
 *Independent.*
 
 - [ ] Add `fixAction?: () => void` to `FindingRow` component in `src/pages/security.tsx`
 - [ ] Add "Fix Automatically" button to applicable findings (e.g. `display_errors=On`, missing root password)
+- [ ] Show a "Preview changes" confirmation dialog before applying any automatic fix - never silently modify config files
 - [ ] Severity colors: critical = red/destructive, warning = amber, info = blue using shadcn/ui `Badge` variants
 
 ## Phase 7 - Terminal Quick Launch Bar
@@ -83,6 +87,7 @@ Cleanup:
 
 - [ ] Add top bar with quick-launch buttons to `src/pages/terminal.tsx`: PowerShell, CMD, PHP CLI, Composer, MySQL CLI, Git Bash
 - [ ] Each button calls `spawn_terminal` with correct shell preset and opens a new tab
+- [ ] Support multiple named terminal tabs (already partially in TerminalPage - ensure tab add/close/rename works cleanly)
 
 ## Phase 8 - Settings: Backup Sub-route + New Options
 *Depends on Phase 1.*
@@ -92,5 +97,16 @@ Cleanup:
 - [ ] Create `src/pages/settings/backup.tsx` - full-app backup & restore (content from `src/pages/backup.tsx`)
 - [ ] Add new General settings: Auto-start Apache, Auto-start MySQL, Minimize to tray on close, Update channel
 - [ ] Wire new settings to existing `get_autostart`/`set_autostart` Tauri commands
+- [ ] Rule: Settings must contain ONLY app behavior (theme, language, tray, update channel, autostart). Config editors (httpd.conf, php.ini, my.cnf) must stay inside their respective service workspaces - never in Settings.
 - [ ] Delete `src/pages/settings.tsx` after content moved
 - [ ] Delete `src/pages/backup.tsx` after content moved
+
+## Consistency & Polish Rules
+*Apply across all phases. These matter more than new features at this stage.*
+
+- [ ] Breadcrumb depth: max 2 levels (e.g., "Apache > SSL"). Never go deeper than 3. Avoid verbose trails like "Dashboard > Services > Apache > SSL > Certificates > Edit".
+- [ ] All workspace pages must use `service-workspace-header.tsx` - no one-off headers
+- [ ] Button hierarchy is consistent everywhere: primary action (filled), secondary (outline), destructive (red) - same placement rules on every page
+- [ ] Terminology is locked: PHP status is "Ready" / "Installed" (never "Running"). Services are "started" / "stopped" (never "online" / "offline").
+- [ ] Spacing and layout grid is consistent across all workspace pages - no page should feel visually heavier than another
+- [ ] No new sidebar items - every new feature must fit into an existing workspace as a sub-route or contextual action
