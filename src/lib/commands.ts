@@ -73,4 +73,12 @@ export const TAURI_COMMANDS = {
     enable: "enable_ssl",
     disable: "disable_ssl",
   },
+  vhosts: {
+    list: "list_vhosts",
+    add: "add_vhost",
+    remove: "remove_vhost",
+    toggle: "toggle_vhost",
+    getHostsEntries: "get_hosts_entries",
+    updateHostsEntry: "update_hosts_entry",
+  },
 } as const;

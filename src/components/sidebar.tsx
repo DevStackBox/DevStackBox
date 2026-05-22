@@ -13,6 +13,7 @@ import {
   SquareTerminal,
   ShieldAlert,
   Lock,
+  Globe,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -88,6 +89,12 @@ export function Sidebar({
       id: "ssl",
       label: t("navigation.ssl", "HTTPS / SSL"),
       icon: Lock,
+      available: true,
+    },
+    {
+      id: "vhosts",
+      label: t("navigation.vhosts", "Virtual Hosts"),
+      icon: Globe,
       available: true,
     },
     {

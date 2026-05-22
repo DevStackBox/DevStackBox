@@ -25,6 +25,7 @@ import {
   TerminalPage,
   SecurityPage,
   SslPage,
+  VhostsPage,
 } from "./pages";
 import { Toaster } from "@/components/ui/toaster";
 import type { ServiceName } from "@/types/services";
@@ -178,6 +179,9 @@ function App() {
 
       case "ssl":
         return <SslPage />;
+
+      case "vhosts":
+        return <VhostsPage />;
 
       case "settings":
         return <SettingsPage />;

@@ -11,3 +11,4 @@ pub mod ssl;
 pub mod system;
 pub mod terminal;
 pub mod tray;
+pub mod vhosts;

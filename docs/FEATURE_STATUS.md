@@ -249,11 +249,23 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ---
 
+## Virtual Host Management
+
+| Feature                                    | Status  | Notes                                                                                                                                                                         |
+| ------------------------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| List / add / remove vhosts via UI          | DONE    | `list_vhosts`, `add_vhost`, `remove_vhost`, `toggle_vhost` Tauri commands; `src/commands/vhosts.rs`                                                                           |
+| vhosts.json store + vhosts.conf generation | DONE    | Definitions persisted in `%LOCALAPPDATA%\DevStackBox\config\vhosts.json`; `vhosts.conf` auto-regenerated and included via `IncludeOptional` in `httpd.conf` (configVersion 5) |
+| Enable / disable per-vhost toggle          | DONE    | Toggled vhosts are removed from `vhosts.conf`; re-enabled ones are added back                                                                                                 |
+| Windows hosts file management              | DONE    | `get_hosts_entries` reads DevStackBox marker block; `update_hosts_entry` writes/removes `127.0.0.1 domain` via elevated PowerShell (UAC prompt)                               |
+| Show active vhosts on dashboard            | DONE    | Dashboard card lists all configured vhosts with enabled/disabled badge and a Manage link to the vhosts page                                                                   |
+| HTTPS per virtual host                     | PLANNED | Extend SSL feature to sign per-vhost certs                                                                                                                                    |
+
+---
+
 ## Planned Future Features (Not Scheduled)
 
 - Mail testing (Mailhog)
 - Portable mode
-- Virtual host management (`.test` domains)
 - Bundled tools (curl, git, node, npm)
 - Full backup/restore (www + databases + configs)
 

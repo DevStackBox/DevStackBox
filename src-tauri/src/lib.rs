@@ -32,6 +32,7 @@ use crate::commands::system::{
 };
 use crate::commands::security::analyze_security;
 use crate::commands::ssl::{disable_ssl, enable_ssl, generate_ssl_cert, get_ssl_status};
+use crate::commands::vhosts::{add_vhost, get_hosts_entries, list_vhosts, remove_vhost, toggle_vhost, update_hosts_entry};
 use crate::commands::terminal::{kill_terminal_session, send_terminal_input, spawn_terminal, TerminalSessions};
 use crate::commands::tray::{hide_to_tray, quit_app, set_tray_tooltip, show_main_window};
 use crate::utils::paths::ensure_user_data_dirs;
@@ -100,7 +101,13 @@ pub fn run() {
             get_ssl_status,
             generate_ssl_cert,
             enable_ssl,
-            disable_ssl
+            disable_ssl,
+            list_vhosts,
+            add_vhost,
+            remove_vhost,
+            toggle_vhost,
+            get_hosts_entries,
+            update_hosts_entry
         ])
         .setup(|app| {
             println!("DevStackBox setup complete, setting up system tray...");

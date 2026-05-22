@@ -30,7 +30,8 @@
     "mysqlUsers": "MySQL Users",
     "terminal": "Terminal",
     "security": "Security",
-    "ssl": "HTTPS / SSL"
+    "ssl": "HTTPS / SSL",
+    "vhosts": "Virtual Hosts"
   },
   "app": {
     "title": "DevStackBox",
@@ -94,5 +95,31 @@
     "upToDate": "You are up to date",
     "latestVersion": "is the latest version.",
     "checkingForUpdates": "Checking for updates..."
+  },
+  "vhosts": {
+    "title": "Virtual Hosts",
+    "description": "Manage local development domains served by Apache.",
+    "addVhost": "Add Virtual Host",
+    "domainLabel": "Domain",
+    "domainPlaceholder": "myapp.test",
+    "docRootLabel": "Document Root",
+    "docRootPlaceholder": "Path to site files",
+    "noVhosts": "No virtual hosts configured yet.",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "hostsFileSection": "Windows Hosts File",
+    "hostsFileDesc": "For \"myapp.test\" to resolve in a browser, add it to the Windows hosts file. This requires administrator (UAC) permission.",
+    "addToHosts": "Add to hosts",
+    "removeFromHosts": "Remove from hosts",
+    "inHosts": "In hosts file",
+    "notInHosts": "Not in hosts file",
+    "removeVhost": "Remove",
+    "confirmRemoveTitle": "Remove Virtual Host",
+    "confirmRemoveDesc": "Remove the virtual host for {{domain}}? This does not delete the document root folder.",
+    "uacWarning": "Windows will ask for administrator permission to modify the hosts file.",
+    "loadError": "Failed to load virtual hosts",
+    "addError": "Failed to add virtual host",
+    "removeError": "Failed to remove virtual host",
+    "hostsError": "Failed to update hosts file"
   }
 }

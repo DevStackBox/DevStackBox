@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
@@ -6,8 +6,15 @@ import { ServiceManager, type ServiceStatus } from "@/components/services";
 import { ErrorLogPreview } from "@/components/error-log-preview";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TAURI_COMMANDS } from "@/lib/commands";
-import { Play, Square, Server, Loader2 } from "lucide-react";
+import { Play, Square, Server, Loader2, Globe, ArrowRight } from "lucide-react";
+
+interface VhostEntry {
+  domain: string;
+  doc_root: string;
+  enabled: boolean;
+}
 
 interface DashboardPageProps {
   onOpenPHPVersionSelector: () => void;
@@ -33,6 +40,13 @@ export function DashboardPage({
     php: ServiceStatus;
   } | null>(null);
   const [bulkBusy, setBulkBusy] = useState<"start" | "stop" | null>(null);
+  const [vhosts, setVhosts] = useState<VhostEntry[]>([]);
+
+  useEffect(() => {
+    invoke<VhostEntry[]>(TAURI_COMMANDS.vhosts.list)
+      .then((v) => setVhosts(v ?? []))
+      .catch(() => {});
+  }, []);
 
   const runningCount = statuses
     ? [statuses.apache.running, statuses.mysql.running].filter(Boolean).length
@@ -144,6 +158,54 @@ export function DashboardPage({
         currentPhpVersion={currentPhpVersion}
         onStatusesChange={setStatuses}
       />
+
+      {/* Virtual hosts summary */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between py-3 px-4">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Globe className="w-4 h-4" />
+            Virtual Hosts
+          </CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs gap-1"
+            onClick={() => onPageChange("vhosts")}
+          >
+            Manage
+            <ArrowRight className="w-3 h-3" />
+          </Button>
+        </CardHeader>
+        <CardContent className="px-4 pb-4">
+          {vhosts.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              No virtual hosts configured.
+            </p>
+          ) : (
+            <div className="space-y-1">
+              {vhosts.slice(0, 5).map((v) => (
+                <div
+                  key={v.domain}
+                  className="flex items-center justify-between text-sm"
+                >
+                  <span className="font-mono">{v.domain}</span>
+                  <Badge
+                    variant={v.enabled ? "default" : "secondary"}
+                    className="text-xs h-5"
+                  >
+                    {v.enabled ? "Enabled" : "Disabled"}
+                  </Badge>
+                </div>
+              ))}
+              {vhosts.length > 5 && (
+                <p className="text-xs text-muted-foreground pt-1">
+                  +{vhosts.length - 5} more
+                </p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Recent log activity (capped inside the component) */}
       <ErrorLogPreview />

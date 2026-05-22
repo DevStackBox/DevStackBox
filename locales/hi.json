@@ -30,7 +30,8 @@
     "mysqlUsers": "MySQL Users",
     "terminal": "Terminal",
     "security": "Security",
-    "ssl": "HTTPS / SSL"
+    "ssl": "HTTPS / SSL",
+    "vhosts": "Virtual Hosts"
   },
   "app": {
     "title": "डेवस्टैकबॉक्स",
@@ -94,5 +95,31 @@
     "upToDate": "आप नवीनतम संस्करण पर हैं",
     "latestVersion": "नवीनतम संस्करण है।",
     "checkingForUpdates": "अपडेट की जांच की जा रही है..."
+  },
+  "vhosts": {
+    "title": "Virtual Hosts",
+    "description": "Apache द्वारा serve किए जाने वाले local development domains प्रबंधित करें।",
+    "addVhost": "Virtual Host जोड़ें",
+    "domainLabel": "Domain",
+    "domainPlaceholder": "myapp.test",
+    "docRootLabel": "Document Root",
+    "docRootPlaceholder": "साइट फ़ाइलों का पथ",
+    "noVhosts": "अभी तक कोई virtual host कॉन्फ़िगर नहीं।",
+    "enabled": "सक्षम",
+    "disabled": "अक्षम",
+    "hostsFileSection": "Windows Hosts File",
+    "hostsFileDesc": "\"myapp.test\" को ब्राउज़र में resolve करने के लिए, इसे Windows hosts file में जोड़ें। इसके लिए administrator (UAC) अनुमति आवश्यक है।",
+    "addToHosts": "Hosts में जोड़ें",
+    "removeFromHosts": "Hosts से हटाएं",
+    "inHosts": "Hosts file में है",
+    "notInHosts": "Hosts file में नहीं",
+    "removeVhost": "हटाएं",
+    "confirmRemoveTitle": "Virtual Host हटाएं",
+    "confirmRemoveDesc": "{{domain}} के लिए virtual host हटाएं? यह document root फ़ोल्डर को नहीं हटाता।",
+    "uacWarning": "Windows, hosts file संशोधित करने के लिए administrator अनुमति मांगेगा।",
+    "loadError": "Virtual hosts लोड करने में विफल",
+    "addError": "Virtual host जोड़ने में विफल",
+    "removeError": "Virtual host हटाने में विफल",
+    "hostsError": "Hosts file अपडेट करने में विफल"
   }
 }

@@ -182,10 +182,10 @@ src-tauri/src/
 
 ### 3.3 Virtual Hosts (Local Domains)
 
-- [ ] Add/remove vhosts via UI (`myapp.local`, `shop.local`)
-- [ ] Auto-edit `apache/conf/extra/httpd-vhosts.conf`
-- [ ] Edit Windows `hosts` file (requires elevation prompt)
-- [ ] Show all active virtual hosts on dashboard
+- [x] Add/remove vhosts via UI (`myapp.local`, `shop.local`)
+- [x] Auto-edit `apache/conf/extra/httpd-vhosts.conf`
+- [x] Edit Windows `hosts` file (requires elevation prompt)
+- [x] Show all active virtual hosts on dashboard
 
 ### 3.4 Process Supervision (Crash Recovery) [PARTIAL]
 

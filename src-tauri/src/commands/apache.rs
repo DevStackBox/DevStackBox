@@ -73,7 +73,7 @@ pub async fn start_apache() -> Result<bool, String> {
         // the current template version (2), regenerate the default config so that
         // new modules / directives are picked up without requiring a manual delete.
         let needs_regen = std::fs::read_to_string(&config_path)
-            .map(|content| !content.contains("# configVersion: 4"))
+            .map(|content| !content.contains("# configVersion: 5"))
             .unwrap_or(false);
         if needs_regen {
             println!("httpd.conf is from an older configVersion - regenerating default config");
@@ -255,7 +255,7 @@ pub async fn create_default_apache_config() -> Result<(), String> {
     let user_config_apache = crate::utils::paths::to_apache_path(&user_config_dir());
 
     let config_content = format!(
-        r#"# configVersion: 4
+        r#"# configVersion: 5
 # Apache Configuration for DevStackBox
 # Managed by DevStackBox. Edits to this file are preserved across upgrades
 # unless the configVersion is bumped, which triggers a migration.
@@ -320,6 +320,8 @@ ServerSignature Off
 IncludeOptional "{}/phpmyadmin.conf"
 # SSL Configuration (optional - enabled via HTTPS/SSL page)
 IncludeOptional "{}/ssl.conf"
+# Virtual Hosts (optional - managed via Virtual Hosts page)
+IncludeOptional "{}/vhosts.conf"
 "#,
         apache_root.display().to_string().replace("\\", "/"),
         logs_root.display().to_string().replace("\\", "/"),
@@ -329,6 +331,7 @@ IncludeOptional "{}/ssl.conf"
         install_path.display().to_string().replace("\\", "/"),
         logs_root.display().to_string().replace("\\", "/"),
         logs_root.display().to_string().replace("\\", "/"),
+        user_config_dir().display().to_string().replace("\\", "/"),
         user_config_dir().display().to_string().replace("\\", "/"),
         user_config_dir().display().to_string().replace("\\", "/"),
         user_config = user_config_apache
