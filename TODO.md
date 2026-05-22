@@ -1,256 +1,96 @@
-# DevStackBox - TODO List
-
-**Project Version**: v0.1.6  
-**Last Updated**: February 10, 2026  
-**Latest Session**: Major refactoring and feature completion
-
----
-
-## ✅ COMPLETED TODAY (Feb 10, 2026)
-
-### 1. ✅ Fixed Duplicate Code & Interfaces
-
-- **DONE**: Created shared `src/types/services.ts` with all type definitions
-- **DONE**: Removed duplicate `ServiceStatus` interface from 3 files
-- **DONE**: All service components now import from shared types
-- **Impact**: Better type safety, maintainability, and no duplication
-
-### 2. ✅ Added Missing Tauri Commands
-
-- **DONE**: `read_config` - Read configuration files for any service
-- **DONE**: `update_config` - Save config with automatic backup
-- **DONE**: `backup_config` - Create manual config backups
-- **DONE**: `list_config_backups` - List all backups for a service
-- **DONE**: `restore_config_backup` - Restore from backup
-- **DONE**: All commands added to invoke_handler
-- **Impact**: Full config management system now functional
-
-### 3. ✅ Created Config Editor Component
-
-- **DONE**: New `ConfigEditor` component with full functionality
-- **DONE**: Syntax-aware textarea for .conf, .ini files
-- **DONE**: Automatic backup before save
-- **DONE**: Unsaved changes warning
-- **DONE**: Support for MySQL, Apache, PHP configs
-- **DONE**: Integrated into App.tsx and ServicesPage
-- **Impact**: Users can now edit configs from UI
-
-### 4. ✅ Documentation Cleanup
-
-- **DONE**: Removed CHANGELOG.md, CONTRIBUTING.md, PROJECT_ANALYSIS.md, ROADMAP.md
-- **DONE**: Kept only README.md, LICENSE, MCP_ANALYSIS_AND_ROADMAP.md, TODO.md
-- **Impact**: Cleaner, focused documentation structure
-
-### 5. ✅ Marked service_manager.rs as Legacy
-
-- **DONE**: Commented out module import in lib.rs
-- **DONE**: Added TODO comment explaining it's unused
-- **DONE**: Documented that lib.rs has all functionality
-- **Impact**: Clear indication this is dead code for future cleanup
-
----
-
-## 🚨 Critical Issues (High Priority)
-
-## 🚨 Critical Issues Remaining (High Priority)
-
-### 1. Fix Rust Compiler Warnings
-
-- [ ] Fix 20+ "variables can be used directly in format! string" warnings (Clippy)
-- [ ] Fix 5+ "borrowed expression implements required traits" warnings
-- [ ] Fix needless_borrows_for_generic_args warnings
-- [ ] Note: service_manager.rs warnings resolved (module disabled)
-      Real-time tailing with WebSocket or polling
-
-### 4. Config Editor Enhancements
-
-- [x] Basic config editor with syntax highlighting (Textarea-based)
-- [x] Automatic backup before save
-- [x] Read/write/backup/restore functionality
-- [ ] Add Monaco Editor for advanced syntax highlighting
-- [ ] Add config validation (Apache -t, MySQL --help)
-- [ ] Add line numbers and error markers
-
-### 5. Service Manager Integration
-
-- [x] MySQL start/stop/status fully functional
-- [x] Apache start/stop/status functional (lib.rs implementation)
-- [ ] Test Apache on different ports
-- [ ] Verify Apache virtual host configuration
-- [ ] Test PHP integration with Apacheache/PHP logs
-
-### 6. Config Editor with Monaco
-
-- [ ] Install Monaco editor dependency
-- [ ] Create config-editor component with syntax highlighting
-- [ ] Add backup before save feature
-- [ ] Add validation for .conf and .ini files
-- [ ] Support dark/light theme in editor
-- [ ] Wire up to Tauri commands
-
-### 7. Apache Integration
-
-- [ ] Expose Apache commands from service_manager.rs to lib.rs
-- [ ] Test start/stop/status for Apache service
-- [ ] Fix Apache binary detection (64-bit vs 32-bit)
-- [ ] Verify port 80 listening after start
-- [ ] Add proper error handling
-
----
-
----
-
-## 🎯 Refactoring Tasks (Low Priority)
-
-### 6. Code Optimization
-
-- [x] **ServiceStatus interface**: Moved to shared types ✅
-- [x] **Type definitions**: Centralized in src/types/services.ts ✅
-- [ ] **Service action buttons**: Extract common patterns into hooks
-- [ ] **Path resolution**: Consolidate get_installation_path/get_project_root (used 15+ times)
-- [ ] **Process checking**: Create reusable utilities for is_process_running
-
-### 7. Component Cleanup
-
-- [ ] Extract common service card logic into base component
-- [ ] Create useService hook for shared service logic
-- [ ] Reduc
-
----
-
-## 🚀 Planned Features (Low Priority)
-
-### 10. System Tray
-
-- [ 8Complete SystemTrayPage.tsx implementation (currently placeholder)
-- [ ] Wire up tray icon events
-- [ ] Add minimize to tray functionality
-- [ ] Add quick actions menu
-
-### 9. Auto-Updater
-
-- [ ] Test auto-updater with GitHub Releases
-- [ ] Add update notification UI
-- [ ] Implement download progress tracking
-- [ ] Add release notes display
-
-### 10. Multiple PHP Versions
-
-- [ ] Complete download_php_version implementation (currently placeholder)
-- [ ] Add PHP version switcher UI
-- [ ] Test PHP version switching
-- [ ] Update httpd.conf automatically on PHP version change
-
-### 11. Database Management
-
-- [ ] Add backup/restore database UI
-- [ ] Implement one-click database export
-- [ ] Add database user management
-- [ ] Add SSL/secure connection support
-
-### 12. Apache Virtual Hosts
-
-- [ ] Add vhost management UI
-- [ ] Support custom domains (e.g., myapp.test)
-- [ ] Implement HTTPS/SSL for local sites
-- [ ] Auto-generate SSL certificates
-
-### 13. Developer Tools
-
-- [ ] Add integrated terminal with PHP CLI
-- [ ] Add Composer integration
-- [ ] Add mail testing tools (Mailhog)
-- [ ] Add project templates/scaffolding
-- [ ] Bundle common tools (curl, git, node, npm)
-
----
-
-## 📝 Documentation Tasks
-
-### 14. Update Documentation
-
-- [x] Clean up markdown files (removed 4 redundant files)
-- [ ] Update README.md with v0.1.6 features
-- [ ] Add troubleshooting guide for common issues
-- [ ] Document build process for contributors
-- [ ] Add API documentation for Tauri commands
-- [ ] Create user guide for features
-
----
-
-## 🐛 Known Bugs
-
-5
-
-### 17. Bug Fixes
-
-- [ ] Verify MySQL data initialization on first run
-- [ ] Fix Apache config path detection in installed versions
-- [ ] Handle process permission errors gracefully
-- [ ] Fix file path encoding issues with spaces
-- [ ] Test on Windows 64-bit with 32-bit Apache
-
----
-
-- Today's Work)
-
-### Core Features
-
-- ✅ MySQL service start/stop/status
-- ✅ Apache service start/stop/status (lib.rs implementation)
-- ✅ phpMyAdmin integration
-- ✅ Modern UI with Tailwind + shadcn/ui + Framer Motion
-- ✅ Dark/light mode support
-- ✅ Multilanguage (English & Hindi)
-- ✅ MSI & NSIS installers
-- ✅ GitHub Actions CI/CD
-- ✅ Clean semantic versioning
-- ✅ Build optimization (288.9MB MSI, 147.7MB NSIS)
-
-### Today's Improvements (Feb 10, 2026)
-
-- ✅ Created shared types system (src/types/services.ts)
-- ✅ Removed duplicate ServiceStatus interfaces (3 files)
-- ✅ Added config management Tauri commands (read/update/backup/restore)
-- ✅ Created ConfigEditor component with backup support
-- ✅ Wired config editor throughout the app
-- ✅ Cleaned up documentation (4 MD files removed)
-- ✅ Documented service_manager.rs as legacy/unused
-- ✅ Updated TODO.md with progress tracking
-
----
-
-## 📊 Progress Summary
-
-**Completed Today**: 5 major tasks
-
-- Fixed duplicate code
-- Added 5 new Tauri commands
-- Created config editor system
-- Documentation cleanup
-- Code organization
-
-**Critical Issues Remaining**: 2 tasks (Rust warnings, service_manager.rs decision)
-**Features In Progress**: 5 tasks
-**Planned Features**: 6 tasks
-**Documentation**: 4 tasks remaining
-**Bug Fixes**: 5 tasks
-
-**Overall Progress**: ~55% Complete (up from 40%!)
-
----
-
-## 🎯 Next Priority Actions
-
-1. **Fix Rust Compiler Warnings** - Clean up Clippy warnings for production readiness
-2. **Delete service_manager.rs** - Remove 195 lines of dead code
-3. **Test Config Editor** - Ensure backup/restore works correctly
-4. **Enhance Logs Viewer** - Add real-time updates and better UI
-5. **Install Rust/Cargo** - Enable dev server for live testing
-
----
-
-**Last Updated**: February 10, 2026
-**Status**: Active development, major refactoring session completed
-**Next Session**: Focus on Rust warnings and testing config editor functionality
-**Next Steps**: Focus on fixing critical issues (#1-3), then implement missing Tauri commands (#4), followed by logs viewer and config editor (#5-6).
+# DevStackBox TODO
+
+## Phase 1 - React Router + Core Routing Refactor
+*All other phases depend on this.*
+
+- [ ] Add `react-router-dom` dependency (`pnpm add react-router-dom`)
+- [ ] Wrap `src/App.tsx` root in `<HashRouter>`, replace `currentPage` state + `renderPage()` switch with `<Routes>/<Route>` declarations
+- [ ] Keep non-routing global state in App.tsx (`sidebarCollapsed`, `commandPaletteOpen`, `configEditorOpen`, etc.)
+- [ ] Migrate `src/components/sidebar.tsx` onClick navigation to `<NavLink>`
+- [ ] Migrate `src/components/breadcrumb.tsx` to `useLocation` + `useMatches` for dynamic breadcrumb trail
+- [ ] Migrate `src/components/command-palette.tsx` `onPageChange` prop to `useNavigate()`
+- [ ] Migrate `src/pages/dashboard.tsx` internal navigation calls to `useNavigate()`
+- [ ] Migrate `src/pages/services.tsx` internal navigation calls to `useNavigate()`
+
+## Phase 2 - Sidebar Trim to 8 Items
+*Parallel with Phase 1.*
+
+- [ ] Remove `mysql-users`, `ssl`, `vhosts`, `backup`, `projects` from `menuItems` array in `src/components/sidebar.tsx`
+- [ ] Keep exactly: Dashboard, Services, Databases, Logs, Terminal, Security, Settings, About
+- [ ] Add sub-navigation translation keys to `locales/en.json` and `locales/hi.json`
+
+## Phase 3 - Service Workspace Pages
+*Depends on Phase 1.*
+
+- [ ] Create `src/components/service-workspace-layout.tsx` - shared sticky sub-nav (NavLink-based, tab-styled) + `<Outlet />`
+
+Apache workspace (`/services/apache/*`):
+- [ ] `src/pages/services/apache/layout.tsx` - tabs: Overview, Logs, Config, Virtual Hosts, SSL
+- [ ] `src/pages/services/apache/index.tsx` - service status, start/stop, uptime, phpMyAdmin link
+- [ ] `src/pages/services/apache/logs.tsx` - reuse `LogViewer` with service="apache"
+- [ ] `src/pages/services/apache/config.tsx` - `ConfigEditor` logic for httpd.conf
+- [ ] `src/pages/services/apache/vhosts.tsx` - content moved from `src/pages/vhosts.tsx`
+- [ ] `src/pages/services/apache/ssl.tsx` - content moved from `src/pages/ssl.tsx`
+
+MySQL workspace (`/services/mysql/*`):
+- [ ] `src/pages/services/mysql/layout.tsx` - tabs: Overview, Logs
+- [ ] `src/pages/services/mysql/index.tsx` - status, start/stop, uptime, memory
+
+PHP workspace (`/services/php/*`):
+- [ ] `src/pages/services/php/layout.tsx` - tabs: Overview, Extensions, Config
+- [ ] `src/pages/services/php/index.tsx` - version badge, switcher CTA, "Ready"/"Installed" status (not "Running")
+- [ ] `src/pages/services/php/extensions.tsx` - PHP extensions list
+- [ ] `src/pages/services/php/config.tsx` - php.ini editor
+
+Databases workspace (`/databases/*`):
+- [ ] `src/pages/databases/layout.tsx` - tabs: Databases, Users, Backups
+- [ ] `src/pages/databases/index.tsx` - databases list (current `databases.tsx` content)
+- [ ] `src/pages/databases/users.tsx` - content moved from `mysql-users.tsx`
+- [ ] `src/pages/databases/backups.tsx` - MySQL per-database backup/restore
+
+Cleanup:
+- [ ] Delete `src/pages/vhosts.tsx` after content moved
+- [ ] Delete `src/pages/ssl.tsx` after content moved
+- [ ] Delete `src/pages/mysql-users.tsx` after content moved
+- [ ] Delete `src/pages/databases.tsx` after content moved (replaced by workspace index)
+
+## Phase 4 - Services Page: Open Details Navigation
+*Depends on Phase 1 + Phase 3.*
+
+- [ ] Add "Open Details" button on Apache, MySQL, PHP cards in `src/pages/services.tsx` navigating to `/services/apache`, `/services/mysql`, `/services/php`
+- [ ] Reduce card inline actions to: Start/Stop, Open (browser), Details only
+- [ ] Remove phpMyAdmin as standalone service card; add as utility link in Apache workspace overview
+- [ ] Update `src/components/services/service-card.tsx` to support minimal action variant
+- [ ] Update `src/components/services/service-actions.tsx` to support minimal action variant
+
+## Phase 5 - Dashboard Simplification
+*Depends on Phase 1. Parallel with Phase 3.*
+
+- [ ] `src/components/error-log-preview.tsx` - reduce from 8 lines to 5 lines max, add "Open Full Logs" link to `/logs`
+- [ ] `src/pages/dashboard.tsx` - service cards show status + health + uptime only, remove per-service config dialogs and management actions
+- [ ] Dashboard card click navigates to service workspace
+- [ ] Keep on dashboard: status badges, uptime, Start All/Stop All, virtual hosts summary, recent activity strip
+
+## Phase 6 - Security: Actionable Findings
+*Independent.*
+
+- [ ] Add `fixAction?: () => void` to `FindingRow` component in `src/pages/security.tsx`
+- [ ] Add "Fix Automatically" button to applicable findings (e.g. `display_errors=On`, missing root password)
+- [ ] Severity colors: critical = red/destructive, warning = amber, info = blue using shadcn/ui `Badge` variants
+
+## Phase 7 - Terminal Quick Launch Bar
+*Independent.*
+
+- [ ] Add top bar with quick-launch buttons to `src/pages/terminal.tsx`: PowerShell, CMD, PHP CLI, Composer, MySQL CLI, Git Bash
+- [ ] Each button calls `spawn_terminal` with correct shell preset and opens a new tab
+
+## Phase 8 - Settings: Backup Sub-route + New Options
+*Depends on Phase 1.*
+
+- [ ] Create `src/pages/settings/layout.tsx` - tabs: General, Backup & Restore
+- [ ] Create `src/pages/settings/index.tsx` - current `settings.tsx` content (theme, language, autostart)
+- [ ] Create `src/pages/settings/backup.tsx` - full-app backup & restore (content from `src/pages/backup.tsx`)
+- [ ] Add new General settings: Auto-start Apache, Auto-start MySQL, Minimize to tray on close, Update channel
+- [ ] Wire new settings to existing `get_autostart`/`set_autostart` Tauri commands
+- [ ] Delete `src/pages/settings.tsx` after content moved
+- [ ] Delete `src/pages/backup.tsx` after content moved
