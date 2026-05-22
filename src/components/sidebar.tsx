@@ -14,6 +14,7 @@ import {
   ShieldAlert,
   Lock,
   Globe,
+  HardDriveDownload,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -95,6 +96,12 @@ export function Sidebar({
       id: "vhosts",
       label: t("navigation.vhosts", "Virtual Hosts"),
       icon: Globe,
+      available: true,
+    },
+    {
+      id: "backup",
+      label: t("navigation.backup", "Backup & Restore"),
+      icon: HardDriveDownload,
       available: true,
     },
     {

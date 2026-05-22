@@ -262,12 +262,24 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ---
 
+## Full Backup & Restore
+
+| Feature | Status | Notes |
+| ------- | ------ | ----- |
+| Create full backup zip | DONE | `create_full_backup` - zips config/, www/, mysql/all-databases.sql (mysqldump); returns `mysql_included` flag |
+| List saved backups | DONE | `list_full_backups` - scans backups/full/*.zip, returns filename/size/date |
+| Restore from backup | DONE | `restore_full_backup` - extracts config + www, pipes SQL to mysql.exe; path-traversal protected |
+| Delete backup | DONE | `delete_full_backup` - validated to backups/full/ only |
+| Open backups folder | DONE | `open_backups_folder` - opens Explorer at backups/full/ |
+| MySQL-skipped warning | DONE | Returns `mysql_included: false` when MySQL is not running; UI shows warning banner |
+
+---
+
 ## Planned Future Features (Not Scheduled)
 
 - Mail testing (Mailhog)
 - Portable mode
 - Bundled tools (curl, git, node, npm)
-- Full backup/restore (www + databases + configs)
 
 ---
 

@@ -28,6 +28,7 @@ export const TAURI_COMMANDS = {
     toggleMysql: "toggle_mysql",
     togglePhp: "toggle_php",
     getServiceLogs: "get_service_logs",
+    logCrashEvent: "log_crash_event",
     backupMysqlDatabase: "backup_mysql_database",
     backupMysqlDatabaseNamed: "backup_mysql_database_named",
     listMysqlDatabases: "list_mysql_databases",
@@ -80,5 +81,12 @@ export const TAURI_COMMANDS = {
     toggle: "toggle_vhost",
     getHostsEntries: "get_hosts_entries",
     updateHostsEntry: "update_hosts_entry",
+  },
+  backup: {
+    createFull: "create_full_backup",
+    listFull: "list_full_backups",
+    restoreFull: "restore_full_backup",
+    deleteFull: "delete_full_backup",
+    openFolder: "open_backups_folder",
   },
 } as const;

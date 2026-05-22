@@ -9,3 +9,4 @@ export { TerminalPage } from "./terminal";
 export { SecurityPage } from "./security";
 export { SslPage } from "./ssl";
 export { VhostsPage } from "./vhosts";
+export { BackupPage } from "./backup";

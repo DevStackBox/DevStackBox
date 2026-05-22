@@ -131,6 +131,11 @@ export function ServiceManager({
             `${label} stopped unexpectedly`,
             "Open DevStackBox to view logs and restart the service.",
           );
+          // Phase 3.4: persist crash event to crash.log with a timestamp.
+          void safeInvoke(TAURI_COMMANDS.services.logCrashEvent, {
+            service: name,
+            timestamp: new Date().toISOString(),
+          });
         }
         prevRunningRef.current[name] = isRunning;
       });

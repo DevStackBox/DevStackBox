@@ -192,7 +192,17 @@ src-tauri/src/
 - [x] Detect when Apache, MySQL, or PHP crashes (frontend `ServiceManager` polls `get_*_status` every 5s and compares running transitions)
 - [x] Show crash notification in UI (destructive toast when a service flips from running to stopped without the user pressing toggle)
 - [x] Offer one-click restart from the crash toast (`ToastAction` calls the same toggle pipeline)
-- [ ] Log crash event with timestamp
+- [x] Log crash event with timestamp
+
+### 3.5 Full Backup & Restore [DONE]
+
+- [x] Create full backup zip (`create_full_backup`) - includes config/, www/, and MySQL all-databases dump if MySQL is running
+- [x] List saved backups (`list_full_backups`) - sorted newest first with filename, size, and date
+- [x] Restore from backup (`restore_full_backup`) - extracts config + www, re-imports MySQL SQL; path-traversal protected
+- [x] Delete backup (`delete_full_backup`) - validates path is inside backups/full/ before deleting
+- [x] Open backups folder in Explorer (`open_backups_folder`)
+- [x] Frontend warning when MySQL was not running during backup (`mysql_included: false`)
+- [x] Restore confirmation dialog warns user to back up current state first
 
 ---
 

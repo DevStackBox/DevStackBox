@@ -15,7 +15,8 @@ use crate::commands::apache::{get_apache_status, start_apache, stop_apache, togg
 use crate::commands::config::{
     backup_config, list_config_backups, read_config, restore_config_backup, update_config,
 };
-use crate::commands::logs::get_service_logs;
+use crate::commands::fullbackup::{create_full_backup, delete_full_backup, list_full_backups, open_backups_folder, restore_full_backup};
+use crate::commands::logs::{get_service_logs, log_crash_event};
 use crate::commands::mysql::{
     backup_mysql_database, backup_mysql_database_named, create_mysql_user, drop_mysql_user,
     get_mysql_status, list_mysql_databases, list_mysql_databases_detailed, list_mysql_users,
@@ -81,6 +82,7 @@ pub fn run() {
             set_mysql_user_password,
             open_php_terminal,
             get_service_logs,
+            log_crash_event,
             read_config,
             update_config,
             backup_config,
@@ -107,7 +109,12 @@ pub fn run() {
             remove_vhost,
             toggle_vhost,
             get_hosts_entries,
-            update_hosts_entry
+            update_hosts_entry,
+            create_full_backup,
+            list_full_backups,
+            restore_full_backup,
+            delete_full_backup,
+            open_backups_folder
         ])
         .setup(|app| {
             println!("DevStackBox setup complete, setting up system tray...");
