@@ -1,4 +1,4 @@
-﻿// Full application backup and restore commands.
+// Full application backup and restore commands.
 //
 // Backup layout inside the zip archive:
 //   manifest.json              - version info + content list
@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 use tauri::Emitter;
 use zip::write::SimpleFileOptions;
 
-use crate::utils::paths::{get_installation_path, user_backups_dir, user_config_dir, user_www_dir};
+use crate::utils::paths::{get_installation_path, get_mysql_client_exe, get_mysqldump_exe, user_backups_dir, user_config_dir, user_www_dir};
 use crate::utils::process::create_hidden_command;
 
 // -------------------------------------------------------------------------
@@ -177,10 +177,7 @@ pub async fn create_full_backup(
 
     // --- mysql/all-databases.sql ----------------------------------------
     emit(&app, "mysql", 70, "Backing up MySQL databases...");
-    let mysql_dump_path = get_installation_path()
-        .join("mysql")
-        .join("bin")
-        .join("mysqldump.exe");
+    let mysql_dump_path = get_mysqldump_exe(&get_installation_path());
     let mut mysql_included = false;
     if mysql_dump_path.exists() {
         match create_hidden_command(&mysql_dump_path.to_string_lossy())
@@ -377,10 +374,7 @@ pub async fn restore_full_backup(
             });
 
         if let Some(sql) = sql_data {
-            let mysql_exe = get_installation_path()
-                .join("mysql")
-                .join("bin")
-                .join("mysql.exe");
+            let mysql_exe = get_mysql_client_exe(&get_installation_path());
             if mysql_exe.exists() && !sql.is_empty() {
                 use std::process::Stdio;
                 let mut child = create_hidden_command(&mysql_exe.to_string_lossy())

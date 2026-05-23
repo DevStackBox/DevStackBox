@@ -53,6 +53,12 @@ pub fn get_installation_path() -> PathBuf {
                 return parent.to_path_buf();
             }
 
+            // Flat layout: NSIS resource bundler strips the bin/ subdirectory.
+            if parent.join("apache").join("httpd.exe").exists() {
+                println!("Found server components (flat layout) at exe location: {}", parent.display());
+                return parent.to_path_buf();
+            }
+
             // Legacy fallback: older installs may have resources at $INSTDIR\_up_\apache\
             let up = parent.join("_up_");
             if up.join("apache").join("bin").join("httpd.exe").exists() {
@@ -76,7 +82,9 @@ pub fn get_installation_path() -> PathBuf {
     ];
 
     for path in &possible_paths {
-        if path.join("apache").join("bin").join("httpd.exe").exists() {
+        if path.join("apache").join("bin").join("httpd.exe").exists()
+            || path.join("apache").join("httpd.exe").exists()
+        {
             println!("Found server components at: {}", path.display());
             return path.clone();
         }
@@ -189,4 +197,67 @@ pub fn ensure_user_data_dirs() {
         "DevStackBox user data root: {}",
         get_user_data_root().display()
     );
+}
+
+// Binary path helpers that work with both the standard layout (bin/ subdirectory)
+// and the flat layout produced by Tauri's NSIS resource bundler (no bin/ subdirectory).
+
+/// Returns the httpd.exe path under the given base install directory.
+/// Checks apache/bin/httpd.exe first (dev / standard), then apache/httpd.exe (flat NSIS install).
+pub fn get_apache_exe(base: &PathBuf) -> PathBuf {
+    let with_bin = base.join("apache").join("bin").join("httpd.exe");
+    if with_bin.exists() {
+        return with_bin;
+    }
+    base.join("apache").join("httpd.exe")
+}
+
+/// Returns the mysqld.exe path under the given base install directory.
+/// Checks mysql/bin/mysqld.exe first (dev / standard), then mysql/mysqld.exe (flat NSIS install).
+pub fn get_mysqld_exe(base: &PathBuf) -> PathBuf {
+    let with_bin = base.join("mysql").join("bin").join("mysqld.exe");
+    if with_bin.exists() {
+        return with_bin;
+    }
+    base.join("mysql").join("mysqld.exe")
+}
+
+/// Returns the mysql.exe client path under the given base install directory.
+/// Checks mysql/bin/mysql.exe first (dev / standard), then mysql/mysql.exe (flat NSIS install).
+pub fn get_mysql_client_exe(base: &PathBuf) -> PathBuf {
+    let with_bin = base.join("mysql").join("bin").join("mysql.exe");
+    if with_bin.exists() {
+        return with_bin;
+    }
+    base.join("mysql").join("mysql.exe")
+}
+
+/// Returns the mysql binary directory under the given base install directory.
+/// Returns mysql/bin if mysqld.exe is found there, otherwise mysql/ (flat NSIS install).
+pub fn get_mysql_bin_dir(base: &PathBuf) -> PathBuf {
+    let with_bin = base.join("mysql").join("bin");
+    if with_bin.join("mysqld.exe").exists() {
+        return with_bin;
+    }
+    base.join("mysql")
+}
+
+/// Returns the mysqldump.exe path under the given base install directory.
+/// Checks mysql/bin/mysqldump.exe first (dev / standard), then mysql/mysqldump.exe (flat NSIS install).
+pub fn get_mysqldump_exe(base: &PathBuf) -> PathBuf {
+    let with_bin = base.join("mysql").join("bin").join("mysqldump.exe");
+    if with_bin.exists() {
+        return with_bin;
+    }
+    base.join("mysql").join("mysqldump.exe")
+}
+
+/// Returns the openssl.exe path under the given base install directory.
+/// Checks apache/bin/openssl.exe first (dev / standard), then apache/openssl.exe (flat NSIS install).
+pub fn get_openssl_exe(base: &PathBuf) -> PathBuf {
+    let with_bin = base.join("apache").join("bin").join("openssl.exe");
+    if with_bin.exists() {
+        return with_bin;
+    }
+    base.join("apache").join("openssl.exe")
 }

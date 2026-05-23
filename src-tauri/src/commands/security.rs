@@ -5,7 +5,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::utils::paths::{get_installation_path, user_config_dir};
+use crate::utils::paths::{get_installation_path, get_mysql_client_exe, user_config_dir};
 use crate::utils::process::create_hidden_command;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -175,7 +175,7 @@ fn check_apache(findings: &mut Vec<SecurityFinding>) {
 
 fn run_mysql_scalar(query: &str) -> Option<String> {
     let base_path = get_installation_path();
-    let mysql_path = base_path.join("mysql").join("bin").join("mysql.exe");
+    let mysql_path = get_mysql_client_exe(&base_path);
     if !mysql_path.exists() {
         return None;
     }

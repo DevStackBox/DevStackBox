@@ -12,7 +12,7 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-use crate::utils::paths::{get_installation_path, to_apache_path, user_config_dir, user_logs_dir, user_www_dir};
+use crate::utils::paths::{get_installation_path, get_openssl_exe, to_apache_path, user_config_dir, user_logs_dir, user_www_dir};
 use crate::utils::process::create_hidden_command;
 
 // ── types ─────────────────────────────────────────────────────────────────────
@@ -31,10 +31,7 @@ pub struct SslStatus {
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 fn openssl_exe() -> PathBuf {
-    get_installation_path()
-        .join("apache")
-        .join("bin")
-        .join("openssl.exe")
+    get_openssl_exe(&get_installation_path())
 }
 
 fn ssl_dir() -> PathBuf {

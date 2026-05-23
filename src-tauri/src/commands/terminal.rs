@@ -12,7 +12,7 @@ use std::process::{Child, ChildStdin, Stdio};
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter};
 
-use crate::utils::paths::get_installation_path;
+use crate::utils::paths::{get_installation_path, get_mysql_bin_dir};
 
 // ── shared state ─────────────────────────────────────────────────────────────
 
@@ -85,7 +85,7 @@ pub async fn spawn_terminal(
 
     // Build PATH that includes php/current and mysql/bin so CLI tools work.
     let php_path = base_path.join("php").join("current");
-    let mysql_bin = base_path.join("mysql").join("bin");
+    let mysql_bin = get_mysql_bin_dir(&base_path);
     let existing_path = std::env::var("PATH").unwrap_or_default();
     let new_path = format!(
         "{};{};{}",

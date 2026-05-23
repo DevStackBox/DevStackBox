@@ -7,7 +7,8 @@ use tokio::time::sleep;
 use crate::commands::php::patch_php_ini;
 use crate::types::ServiceInfo;
 use crate::utils::paths::{
-    get_installation_path, get_user_data_root, user_config_dir, user_logs_dir, user_www_dir,
+    get_apache_exe, get_installation_path, get_user_data_root, user_config_dir, user_logs_dir,
+    user_www_dir,
 };
 use crate::utils::process::{
     create_hidden_command, ensure_port_available, find_our_processes, is_32bit_executable,
@@ -15,10 +16,8 @@ use crate::utils::process::{
 };
 
 fn apache_exe_path() -> std::path::PathBuf {
-    get_installation_path()
-        .join("apache")
-        .join("bin")
-        .join("httpd.exe")
+    let base = get_installation_path();
+    get_apache_exe(&base)
 }
 
 #[tauri::command]
@@ -42,7 +41,7 @@ pub async fn get_apache_status() -> Result<ServiceInfo, String> {
 pub async fn start_apache() -> Result<bool, String> {
     let base_path = get_installation_path();
 
-    let apache_path = base_path.join("apache").join("bin").join("httpd.exe");
+    let apache_path = get_apache_exe(&base_path);
     if !apache_path.exists() {
         return Err(format!(
             "Apache binary not found at {}. Please ensure Apache is installed.",
@@ -449,7 +448,7 @@ fn seed_www_dir() {
 
 async fn get_apache_version() -> Option<String> {
     let base_path = get_installation_path();
-    let apache_path = base_path.join("apache").join("bin").join("httpd.exe");
+    let apache_path = get_apache_exe(&base_path);
 
     if !apache_path.exists() {
         return None;

@@ -7,8 +7,8 @@ use std::path::PathBuf;
 use crate::commands::apache::{start_apache, stop_apache};
 use crate::commands::mysql::{start_mysql, stop_mysql};
 use crate::utils::paths::{
-    ensure_user_data_dirs, get_installation_path, get_user_data_root, user_config_dir,
-    user_www_dir,
+    ensure_user_data_dirs, get_apache_exe, get_installation_path, get_mysqld_exe,
+    get_user_data_root, user_config_dir, user_www_dir,
 };
 use crate::utils::process::{create_hidden_command, is_32bit_executable};
 
@@ -18,10 +18,10 @@ pub async fn check_binaries() -> Result<HashMap<String, bool>, String> {
 
     let base_path = get_installation_path();
 
-    let mysql_path = base_path.join("mysql").join("bin").join("mysqld.exe");
+    let mysql_path = get_mysqld_exe(&base_path);
     binaries.insert("mysql".to_string(), mysql_path.exists());
 
-    let apache_path = base_path.join("apache").join("bin").join("httpd.exe");
+    let apache_path = get_apache_exe(&base_path);
     binaries.insert("apache".to_string(), apache_path.exists());
 
     let php_path = base_path.join("php").join("8.3").join("php.exe");
@@ -42,11 +42,11 @@ pub async fn debug_paths() -> Result<HashMap<String, String>, String> {
     );
     paths.insert("base_path".to_string(), base_path.display().to_string());
 
-    let mysql_path = base_path.join("mysql").join("bin").join("mysqld.exe");
+    let mysql_path = get_mysqld_exe(&base_path);
     paths.insert("mysql_path".to_string(), mysql_path.display().to_string());
     paths.insert("mysql_exists".to_string(), mysql_path.exists().to_string());
 
-    let apache_path = base_path.join("apache").join("bin").join("httpd.exe");
+    let apache_path = get_apache_exe(&base_path);
     paths.insert("apache_path".to_string(), apache_path.display().to_string());
     paths.insert("apache_exists".to_string(), apache_path.exists().to_string());
 
@@ -74,8 +74,8 @@ pub async fn debug_installation() -> Result<HashMap<String, String>, String> {
         install_path.display().to_string(),
     );
 
-    let apache_bin = install_path.join("apache").join("bin").join("httpd.exe");
-    let mysql_bin = install_path.join("mysql").join("bin").join("mysqld.exe");
+    let apache_bin = get_apache_exe(&install_path);
+    let mysql_bin = get_mysqld_exe(&install_path);
     let php_bin = install_path.join("php").join("8.3").join("php.exe");
     let phpmyadmin_index = install_path.join("phpmyadmin").join("index.php");
 
@@ -181,7 +181,7 @@ pub async fn debug_installation() -> Result<HashMap<String, String>, String> {
     for path in &common_paths {
         let path_buf = PathBuf::from(path);
         let exists = path_buf.exists();
-        let apache_in_path = path_buf.join("apache").join("bin").join("httpd.exe").exists();
+        let apache_in_path = get_apache_exe(&path_buf).exists();
         debug_info.insert(
             format!("path_{}_status", path.replace("\\", "_").replace(":", "")),
             format!("dir_exists: {}, apache_exists: {}", exists, apache_in_path),
@@ -232,7 +232,7 @@ pub async fn start_all_services() -> Result<String, String> {
 #[tauri::command]
 pub async fn test_apache_config() -> Result<String, String> {
     let base_path = get_installation_path();
-    let apache_path = base_path.join("apache").join("bin").join("httpd.exe");
+    let apache_path = get_apache_exe(&base_path);
     let config_path = user_config_dir().join("httpd.conf");
 
     if !apache_path.exists() {
@@ -288,7 +288,7 @@ pub async fn test_apache_config() -> Result<String, String> {
 #[tauri::command]
 pub async fn test_mysql_config() -> Result<String, String> {
     let base_path = get_installation_path();
-    let mysqld_path = base_path.join("mysql").join("bin").join("mysqld.exe");
+    let mysqld_path = get_mysqld_exe(&base_path);
     let config_path = user_config_dir().join("my.cnf");
 
     if !mysqld_path.exists() {
@@ -436,8 +436,8 @@ fn read_version(exe: &std::path::Path, arg: &str) -> Option<String> {
 #[tauri::command]
 pub async fn get_system_info() -> Result<crate::types::SystemInfo, String> {
     let base_path = get_installation_path();
-    let httpd = base_path.join("apache").join("bin").join("httpd.exe");
-    let mysqld = base_path.join("mysql").join("bin").join("mysqld.exe");
+    let httpd = get_apache_exe(&base_path);
+    let mysqld = get_mysqld_exe(&base_path);
     let php_root = base_path.join("php");
 
     let mut php_versions: Vec<String> = Vec::new();

@@ -6,17 +6,15 @@ use std::time::Duration;
 use tokio::time::sleep;
 
 use crate::types::ServiceInfo;
-use crate::utils::paths::{get_installation_path, user_config_dir, user_mysql_data_dir};
+use crate::utils::paths::{get_installation_path, get_mysql_client_exe, get_mysqld_exe, get_mysqldump_exe, user_config_dir, user_mysql_data_dir};
 use crate::utils::process::{
     create_hidden_command, ensure_port_available, find_our_processes, is_our_process_running,
     kill_pid,
 };
 
 fn mysqld_exe_path() -> std::path::PathBuf {
-    get_installation_path()
-        .join("mysql")
-        .join("bin")
-        .join("mysqld.exe")
+    let base = get_installation_path();
+    get_mysqld_exe(&base)
 }
 
 #[tauri::command]
@@ -38,7 +36,7 @@ async fn initialize_mysql_data() -> Result<(), String> {
     let base_path = get_installation_path();
 
     let data_dir = user_mysql_data_dir();
-    let mysql_bin_path = base_path.join("mysql").join("bin").join("mysqld.exe");
+    let mysql_bin_path = get_mysqld_exe(&base_path);
 
     let mysql_dir = data_dir.join("mysql");
     if !mysql_dir.exists() {
@@ -63,7 +61,7 @@ async fn initialize_mysql_data() -> Result<(), String> {
 pub async fn start_mysql() -> Result<bool, String> {
     let base_path = get_installation_path();
 
-    let mysql_path = base_path.join("mysql").join("bin").join("mysqld.exe");
+    let mysql_path = get_mysqld_exe(&base_path);
     if !mysql_path.exists() {
         return Err(format!(
             "MySQL binary not found at {}. Please ensure MySQL is installed.",
@@ -183,8 +181,8 @@ default-character-set=utf8mb4
 }
 
 async fn get_mysql_version() -> Option<String> {
-    let base_path = crate::utils::paths::get_project_root().ok()?;
-    let mysql_path = base_path.join("mysql").join("bin").join("mysqld.exe");
+    let base_path = get_installation_path();
+    let mysql_path = get_mysqld_exe(&base_path);
 
     if !mysql_path.exists() {
         return None;
@@ -219,7 +217,7 @@ pub async fn toggle_mysql() -> Result<bool, String> {
 #[tauri::command]
 pub async fn backup_mysql_database() -> Result<String, String> {
     let base_path = get_installation_path();
-    let mysql_dump_path = base_path.join("mysql").join("bin").join("mysqldump.exe");
+    let mysql_dump_path = get_mysqldump_exe(&base_path);
 
     if !mysql_dump_path.exists() {
         return Err(format!(
@@ -259,7 +257,7 @@ pub async fn backup_mysql_database() -> Result<String, String> {
 #[tauri::command]
 pub async fn list_mysql_databases() -> Result<Vec<String>, String> {
     let base_path = get_installation_path();
-    let mysql_path = base_path.join("mysql").join("bin").join("mysql.exe");
+    let mysql_path = get_mysql_client_exe(&base_path);
 
     if !mysql_path.exists() {
         return Err(format!("mysql not found at {}", mysql_path.display()));
@@ -299,7 +297,7 @@ pub async fn list_mysql_databases() -> Result<Vec<String>, String> {
 #[tauri::command]
 pub async fn list_mysql_databases_detailed() -> Result<Vec<crate::types::DatabaseInfo>, String> {
     let base_path = get_installation_path();
-    let mysql_path = base_path.join("mysql").join("bin").join("mysql.exe");
+    let mysql_path = get_mysql_client_exe(&base_path);
 
     if !mysql_path.exists() {
         return Err(format!("mysql not found at {}", mysql_path.display()));
@@ -366,7 +364,7 @@ pub async fn backup_mysql_database_named(database: String) -> Result<String, Str
     }
 
     let base_path = get_installation_path();
-    let mysql_dump_path = base_path.join("mysql").join("bin").join("mysqldump.exe");
+    let mysql_dump_path = get_mysqldump_exe(&base_path);
 
     if !mysql_dump_path.exists() {
         return Err(format!(
@@ -412,7 +410,7 @@ pub async fn restore_mysql_database(sql: String) -> Result<String, String> {
     }
 
     let base_path = get_installation_path();
-    let mysql_path = base_path.join("mysql").join("bin").join("mysql.exe");
+    let mysql_path = get_mysql_client_exe(&base_path);
 
     if !mysql_path.exists() {
         return Err(format!("mysql not found at {}", mysql_path.display()));
@@ -452,7 +450,7 @@ pub async fn restore_mysql_database(sql: String) -> Result<String, String> {
 
 fn run_mysql_query(query: &str) -> Result<String, String> {
     let base_path = get_installation_path();
-    let mysql_path = base_path.join("mysql").join("bin").join("mysql.exe");
+    let mysql_path = get_mysql_client_exe(&base_path);
 
     if !mysql_path.exists() {
         return Err(format!("mysql not found at {}", mysql_path.display()));
