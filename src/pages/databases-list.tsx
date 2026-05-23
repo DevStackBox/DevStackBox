@@ -217,25 +217,25 @@ export function DatabasesPage() {
     >
       <div className="flex items-center justify-end gap-2">
         <Button
-            variant="outline"
-            size="sm"
-            onClick={loadDatabases}
-            disabled={loading}
-          >
-            <RefreshCw
-              className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
-            />
-            {t("actions.refresh", "Refresh")}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => openExternalUrl("http://localhost/phpmyadmin")}
-          >
-            <ExternalLink className="mr-2 h-4 w-4" />
-            {t("databases.openPhpMyAdmin", "phpMyAdmin")}
-          </Button>
-        </div>
+          variant="outline"
+          size="sm"
+          onClick={loadDatabases}
+          disabled={loading}
+        >
+          <RefreshCw
+            className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
+          />
+          {t("actions.refresh", "Refresh")}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => openExternalUrl("http://localhost/phpmyadmin")}
+        >
+          <ExternalLink className="mr-2 h-4 w-4" />
+          {t("databases.openPhpMyAdmin", "phpMyAdmin")}
+        </Button>
+      </div>
 
       <Card>
         <CardHeader>

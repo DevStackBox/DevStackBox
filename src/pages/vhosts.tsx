@@ -191,22 +191,22 @@ export function VhostsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-end gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={loadAll}
-            disabled={loading}
-          >
-            <RefreshCw
-              className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
-            />
-            Refresh
-          </Button>
-          <Button size="sm" onClick={() => setAddOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" />
-            {t("vhosts.addVhost")}
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={loadAll}
+          disabled={loading}
+        >
+          <RefreshCw
+            className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
+          />
+          Refresh
+        </Button>
+        <Button size="sm" onClick={() => setAddOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          {t("vhosts.addVhost")}
+        </Button>
+      </div>
 
       {/* Action feedback */}
       {actionMsg && (

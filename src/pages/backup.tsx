@@ -201,31 +201,31 @@ export function BackupPage() {
       className="space-y-4"
     >
       <div className="flex flex-wrap items-center justify-end gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleOpenFolder}
-            disabled={busy}
-          >
-            <FolderOpen className="mr-2 h-4 w-4" />
-            Open Folder
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={loadBackups}
-            disabled={busy || loading}
-          >
-            <RefreshCw
-              className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
-            />
-            Refresh
-          </Button>
-          <Button size="sm" onClick={handleCreate} disabled={busy}>
-            <Plus className="mr-2 h-4 w-4" />
-            {creating ? "Creating..." : "Create Backup"}
-          </Button>
-        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleOpenFolder}
+          disabled={busy}
+        >
+          <FolderOpen className="mr-2 h-4 w-4" />
+          Open Folder
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={loadBackups}
+          disabled={busy || loading}
+        >
+          <RefreshCw
+            className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
+          />
+          Refresh
+        </Button>
+        <Button size="sm" onClick={handleCreate} disabled={busy}>
+          <Plus className="mr-2 h-4 w-4" />
+          {creating ? "Creating..." : "Create Backup"}
+        </Button>
+      </div>
 
       {/* Progress card */}
       {progress && (
@@ -349,8 +349,8 @@ export function BackupPage() {
               with the contents of{" "}
               <span className="font-mono">{confirmRestore?.filename}</span>. If
               MySQL data was included, all current databases will be replaced.
-              Consider creating a fresh backup of your current state first.
-              This cannot be undone.
+              Consider creating a fresh backup of your current state first. This
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -178,21 +178,21 @@ export function MySQLUsersPage() {
     >
       <div className="flex items-center justify-end gap-2">
         <Button
-            variant="outline"
-            size="sm"
-            onClick={loadUsers}
-            disabled={loading}
-          >
-            <RefreshCw
-              className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
-            />
-            {t("actions.refresh", "Refresh")}
-          </Button>
-          <Button size="sm" onClick={() => setCreateOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            {t("mysql.users.addUser", "Add User")}
-          </Button>
-        </div>
+          variant="outline"
+          size="sm"
+          onClick={loadUsers}
+          disabled={loading}
+        >
+          <RefreshCw
+            className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
+          />
+          {t("actions.refresh", "Refresh")}
+        </Button>
+        <Button size="sm" onClick={() => setCreateOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          {t("mysql.users.addUser", "Add User")}
+        </Button>
+      </div>
 
       <div className="rounded-md border">
         <Table>
