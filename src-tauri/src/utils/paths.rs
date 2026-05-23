@@ -42,9 +42,9 @@ pub fn get_installation_path() -> PathBuf {
     }
 
     // Try to get the path from the installed location.
-    // When Tauri bundles resources using array syntax with "../" paths, the files
-    // land in a "_up_" subdirectory next to the exe (e.g. $INSTDIR\_up_\apache\).
-    // Check both the direct path and the _up_ subdirectory.
+    // Resources are bundled with explicit destination mappings in tauri.conf.json,
+    // so they land directly at $INSTDIR\apache\, $INSTDIR\mysql\, etc. (no _up_\ prefix).
+    // The _up_\ fallback is kept for compatibility with any older installs.
     if let Ok(exe_path) = env::current_exe() {
         if let Some(parent) = exe_path.parent() {
             // Direct: resources at $INSTDIR\apache\
@@ -53,7 +53,7 @@ pub fn get_installation_path() -> PathBuf {
                 return parent.to_path_buf();
             }
 
-            // Tauri array-resource path: resources at $INSTDIR\_up_\apache\
+            // Legacy fallback: older installs may have resources at $INSTDIR\_up_\apache\
             let up = parent.join("_up_");
             if up.join("apache").join("bin").join("httpd.exe").exists() {
                 println!("Found server components at _up_ location: {}", up.display());
@@ -69,10 +69,9 @@ pub fn get_installation_path() -> PathBuf {
         }
     }
 
-    // Try common installation paths as a last resort before falling back
-    // to the current directory.  Install path is strictly C:\DevStackBox per ARCH-001.
+    // Try common installation paths as a last resort.
+    // ARCH-001: install root is strictly C:\DevStackBox.
     let possible_paths = [
-        PathBuf::from("C:\\DevStackBox\\_up_"),
         PathBuf::from("C:\\DevStackBox"),
     ];
 

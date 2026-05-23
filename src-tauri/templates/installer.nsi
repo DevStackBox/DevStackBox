@@ -1,4 +1,4 @@
-﻿Unicode true
+Unicode true
 ManifestDPIAware true
 ; Add in `dpiAwareness` `PerMonitorV2` to manifest for Windows 10 1607+ (note this should not affect lower versions since they should be able to ignore this and pick up `dpiAware` `true` set by `ManifestDPIAware true`)
 ; Currently undocumented on NSIS's website but is in the Docs folder of source tree, see
@@ -80,11 +80,11 @@ Name "${PRODUCTNAME}"
 BrandingText "${COPYRIGHT}"
 OutFile "${OUTFILE}"
 
-; We don't actually use this value as default install path,
-; it's just for nsis to append the product name folder in the directory selector
-; https://nsis.sourceforge.io/Reference/InstallDir
+; ARCH-001: DevStackBox always installs to C:\DevStackBox
+; PLACEHOLDER_INSTALL_DIR is kept so the perMachine RestorePreviousInstallLocation
+; comparison in utils.nsh does not error; the real path is set below and in .onInit.
 !define PLACEHOLDER_INSTALL_DIR "placeholder\${PRODUCTNAME}"
-InstallDir "${PLACEHOLDER_INSTALL_DIR}"
+InstallDir "C:\DevStackBox"
 
 VIProductVersion "${VERSIONWITHBUILD}"
 VIAddVersionKey "ProductName" "${PRODUCTNAME}"
@@ -385,7 +385,9 @@ Function PageLeaveReinstall
 FunctionEnd
 
 ; 5. Choose install directory page
-!define MUI_PAGE_CUSTOMFUNCTION_PRE SkipIfPassive
+; ARCH-001: FixAndSkipDirPage forces C:\DevStackBox and skips the page entirely.
+; DevStackBox is a fixed-path infrastructure tool — no user-selectable install dir.
+!define MUI_PAGE_CUSTOMFUNCTION_PRE FixAndSkipDirPage
 !insertmacro MUI_PAGE_DIRECTORY
 
 ; 6. Start menu shortcut page
@@ -424,6 +426,9 @@ FunctionEnd
 ; 1. Confirm uninstall page
 Var DeleteAppDataCheckbox
 Var DeleteAppDataCheckboxState
+; ARCH-001: Track whether to preserve C:\DevStackBox\www on uninstall
+Var KeepWwwCheckbox
+Var KeepWwwCheckboxState
 !define /ifndef WS_EX_LAYOUTRTL         0x00400000
 !define MUI_PAGE_CUSTOMFUNCTION_SHOW un.ConfirmShow
 Function un.ConfirmShow ; Add add a `Delete app data` check box
@@ -454,10 +459,20 @@ Function un.ConfirmShow ; Add add a `Delete app data` check box
   Pop $DeleteAppDataCheckbox
   SendMessage $HWNDPARENT ${WM_GETFONT} 0 0 $1
   SendMessage $DeleteAppDataCheckbox ${WM_SETFONT} $1 1
+  ; ARCH-001: Add "Keep website files" checkbox below Delete app data, checked by default
+  IntOp $5 128 * $2
+  IntOp $5 $5 / 96
+  System::Call 'user32::CreateWindowEx(i r3, w "${__NSD_CheckBox_CLASS}", w "$(keepWwwFiles)", i ${__NSD_CheckBox_STYLE}, i r4, i r5, i r6, i r7, p r1, i0, i0, i0) i .s'
+  Pop $KeepWwwCheckbox
+  SendMessage $HWNDPARENT ${WM_GETFONT} 0 0 $1
+  SendMessage $KeepWwwCheckbox ${WM_SETFONT} $1 1
+  SendMessage $KeepWwwCheckbox ${BM_SETCHECK} 1 0
 FunctionEnd
 !define MUI_PAGE_CUSTOMFUNCTION_LEAVE un.ConfirmLeave
 Function un.ConfirmLeave
   SendMessage $DeleteAppDataCheckbox ${BM_GETCHECK} 0 0 $DeleteAppDataCheckboxState
+  ; ARCH-001: Read www protection checkbox state
+  SendMessage $KeepWwwCheckbox ${BM_GETCHECK} 0 0 $KeepWwwCheckboxState
 FunctionEnd
 !define MUI_PAGE_CUSTOMFUNCTION_PRE un.SkipIfPassive
 !insertmacro MUI_UNPAGE_CONFIRM
@@ -473,6 +488,8 @@ FunctionEnd
 {{#each language_files}}
   !include "{{this}}"
 {{/each}}
+; ARCH-001: DevStackBox uninstaller string
+LangString keepWwwFiles ${LANG_ENGLISH} "Keep website files in C:\DevStackBox\www (recommended)"
 
 Function .onInit
   ${GetOptions} $CMDLINE "/P" $PassiveMode
@@ -496,10 +513,9 @@ Function .onInit
 
   !insertmacro SetContext
 
-  ${If} $INSTDIR == "${PLACEHOLDER_INSTALL_DIR}"
-    ; ARCH-001: DevStackBox always installs to C:\DevStackBox
-    StrCpy $INSTDIR "C:\DevStackBox"
-  ${EndIf}
+  ; ARCH-001: force install dir unconditionally so RestorePreviousInstallLocation
+  ; (called via MULTIUSER_INSTALLMODE_FUNCTION inside SetContext) cannot override it.
+  StrCpy $INSTDIR "C:\DevStackBox"
 
 
   !if "${INSTALLMODE}" == "both"
@@ -755,6 +771,10 @@ Function un.onInit
   ${IfNot} ${Errors}
     StrCpy $UpdateMode 1
   ${EndIf}
+  ; ARCH-001: In passive/silent mode there is no dialog, default to keeping www
+  ${If} $PassiveMode = 1
+    StrCpy $KeepWwwCheckboxState 1
+  ${EndIf}
 FunctionEnd
 
 Section Uninstall
@@ -764,6 +784,13 @@ Section Uninstall
   !endif
 
   !insertmacro CheckIfAppIsRunning "${MAINBINARYNAME}.exe" "${PRODUCTNAME}"
+
+  ; ARCH-001: Temporarily rename www so the Delete loops below cannot touch its contents.
+  ; It will be moved back after deletion. Skipped during updates (www always preserved).
+  ${If} $KeepWwwCheckboxState = 1
+  ${AndIf} $UpdateMode <> 1
+    Rename "$INSTDIR\www" "$INSTDIR\_www_keep"
+  ${EndIf}
 
   ; Delete the app directory and its content from disk
   ; Copy main executable
@@ -797,6 +824,14 @@ Section Uninstall
 
   ; Delete uninstaller
   Delete "$INSTDIR\uninstall.exe"
+
+  ; ARCH-001: Restore www before directory cleanup - RMDir will then skip it (non-empty)
+  ${If} $KeepWwwCheckboxState = 1
+  ${AndIf} $UpdateMode <> 1
+    ${If} ${FileExists} "$INSTDIR\_www_keep\*.*"
+      Rename "$INSTDIR\_www_keep" "$INSTDIR\www"
+    ${EndIf}
+  ${EndIf}
 
   {{#each resources_ancestors}}
   RMDir /REBOOTOK "$INSTDIR\\{{this}}"
@@ -893,6 +928,12 @@ Function SkipIfPassive
 FunctionEnd
 Function un.SkipIfPassive
   ${IfThen} $PassiveMode = 1  ${|} Abort ${|}
+FunctionEnd
+
+; ARCH-001: force install dir to C:\DevStackBox and skip the directory page entirely.
+Function FixAndSkipDirPage
+  StrCpy $INSTDIR "C:\DevStackBox"
+  Abort
 FunctionEnd
 
 Function CreateOrUpdateStartMenuShortcut
