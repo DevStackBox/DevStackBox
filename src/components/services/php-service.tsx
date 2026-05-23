@@ -92,6 +92,14 @@ export function PHPService({
             groups={[
               {
                 items: [
+                  {
+                    label: t("actions.workspace", "Workspace"),
+                    onSelect: () => navigate(ROUTES.php.path),
+                  },
+                ],
+              },
+              {
+                items: [
                   ...(onVersionSelect
                     ? [
                         {
@@ -153,7 +161,11 @@ export function PHPService({
       contextMenu={
         <ContextMenuContent className="w-56">
           <ContextMenuLabel>{title}</ContextMenuLabel>
-          <ContextMenuSeparator />
+          <ContextMenuSeparator />{" "}
+          <ContextMenuItem onSelect={() => navigate(ROUTES.php.path)}>
+            {t("actions.workspace", "Workspace")}
+          </ContextMenuItem>
+          <ContextMenuSeparator />{" "}
           {onVersionSelect && (
             <ContextMenuItem onSelect={onVersionSelect} disabled={loading}>
               {t("actions.changeVersion", "Change Version")}

@@ -1,5 +1,7 @@
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { Server } from "lucide-react";
+import { ROUTES } from "@/lib/routes";
 import { openExternalUrl } from "@/lib/tauri";
 import { ServiceCard } from "./service-card";
 import { StatusBadge } from "./status-badge";
@@ -40,6 +42,7 @@ export function ApacheService({
   onSelect,
 }: ApacheServiceProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const openApache = () => {
     openExternalUrl("http://localhost");
@@ -101,6 +104,14 @@ export function ApacheService({
             groups={[
               {
                 items: [
+                  {
+                    label: t("actions.workspace", "Workspace"),
+                    onSelect: () => navigate(ROUTES.apache.path),
+                  },
+                ],
+              },
+              {
+                items: [
                   ...(onOpenConfig
                     ? [
                         {
@@ -142,6 +153,10 @@ export function ApacheService({
       contextMenu={
         <ContextMenuContent className="w-56">
           <ContextMenuLabel>{title}</ContextMenuLabel>
+          <ContextMenuSeparator />
+          <ContextMenuItem onSelect={() => navigate(ROUTES.apache.path)}>
+            {t("actions.workspace", "Workspace")}
+          </ContextMenuItem>
           <ContextMenuSeparator />
           <ContextMenuItem onSelect={onToggle} disabled={loading}>
             {status.running

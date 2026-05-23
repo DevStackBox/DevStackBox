@@ -166,7 +166,10 @@ export function AutoUpdater({ mode = "button" }: AutoUpdaterProps) {
           />
           {t("updater.checkUpdates")}
           {updateAvailable && (
-            <Badge variant="destructive" className="ml-2 h-5 min-w-5 px-1 text-xs">
+            <Badge
+              variant="destructive"
+              className="ml-2 h-5 min-w-5 px-1 text-xs"
+            >
               !
             </Badge>
           )}

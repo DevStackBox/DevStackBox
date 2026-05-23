@@ -1,5 +1,7 @@
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { Database } from "lucide-react";
+import { ROUTES } from "@/lib/routes";
 import { useToast } from "@/hooks/use-toast";
 import { openExternalUrl } from "@/lib/tauri";
 import { ServiceCard } from "./service-card";
@@ -43,6 +45,7 @@ export function MySQLService({
   onSelect,
 }: MySQLServiceProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   const openPhpMyAdmin = () => {
@@ -116,6 +119,14 @@ export function MySQLService({
             groups={[
               {
                 items: [
+                  {
+                    label: t("actions.workspace", "Workspace"),
+                    onSelect: () => navigate(ROUTES.mysql.path),
+                  },
+                ],
+              },
+              {
+                items: [
                   ...(onOpenConfig
                     ? [
                         {
@@ -165,6 +176,10 @@ export function MySQLService({
       contextMenu={
         <ContextMenuContent className="w-56">
           <ContextMenuLabel>{title}</ContextMenuLabel>
+          <ContextMenuSeparator />
+          <ContextMenuItem onSelect={() => navigate(ROUTES.mysql.path)}>
+            {t("actions.workspace", "Workspace")}
+          </ContextMenuItem>
           <ContextMenuSeparator />
           <ContextMenuItem onSelect={onToggle} disabled={loading}>
             {status.running
