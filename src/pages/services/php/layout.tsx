@@ -35,7 +35,7 @@ export function PhpLayout() {
           title={t("navigation.php", "PHP")}
           description={t(
             "workspace.php.description",
-            "PHP runtime — version, extensions, and php.ini.",
+            "PHP runtime - version, extensions, and php.ini.",
           )}
         />
       }

@@ -1,5 +1,5 @@
 /**
- * Route metadata — single source of truth for navigation, breadcrumbs,
+ * Route metadata - single source of truth for navigation, breadcrumbs,
  * command palette, and page titles. See TODO Phase 1.
  */
 import {
@@ -238,7 +238,7 @@ export const ROUTES = {
   },
 } as const satisfies Record<string, RouteMeta>;
 
-/** Sidebar items — the canonical 8 top-level workspaces. */
+/** Sidebar items - the canonical 8 top-level workspaces. */
 export const SIDEBAR_ROUTES = [
   ROUTES.dashboard,
   ROUTES.services,
@@ -250,7 +250,7 @@ export const SIDEBAR_ROUTES = [
   ROUTES.about,
 ] as const;
 
-/** Lookup by path — returns metadata or undefined. */
+/** Lookup by path - returns metadata or undefined. */
 export function getRouteByPath(path: string): RouteMeta | undefined {
   return Object.values(ROUTES).find((r) => r.path === path);
 }

@@ -115,7 +115,7 @@ export function BackupPage() {
       );
       const msg = result.mysql_included
         ? `Backup saved: ${result.path}`
-        : `Backup created but MySQL databases were NOT included — MySQL was not running. Start MySQL and create another backup to include database data.`;
+        : `Backup created but MySQL databases were NOT included - MySQL was not running. Start MySQL and create another backup to include database data.`;
       setFeedback({ ok: result.mysql_included, message: msg });
       await loadBackups();
     } catch (err) {
@@ -268,12 +268,12 @@ export function BackupPage() {
             </li>
             <li>All files in your web root (www/)</li>
             <li>
-              MySQL databases via mysqldump (all-databases.sql) — requires MySQL
+              MySQL databases via mysqldump (all-databases.sql) - requires MySQL
               to be running
             </li>
           </ul>
           <p className="text-xs text-muted-foreground mt-2">
-            Binaries (Apache, PHP, MySQL) are not included — they can be
+            Binaries (Apache, PHP, MySQL) are not included - they can be
             reinstalled.
           </p>
         </CardContent>

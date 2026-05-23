@@ -87,7 +87,7 @@ export function PhpOverviewPage() {
               <CardDescription>
                 {t(
                   "php.description",
-                  "PHP is a runtime invoked by Apache — it does not run as a background service.",
+                  "PHP is a runtime invoked by Apache - it does not run as a background service.",
                 )}
               </CardDescription>
             </div>

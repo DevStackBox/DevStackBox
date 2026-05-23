@@ -11,7 +11,7 @@ interface WorkspaceLogViewerProps {
 }
 
 /**
- * Reusable log viewer panel for service workspaces — wraps LogViewer with
+ * Reusable log viewer panel for service workspaces - wraps LogViewer with
  * polling + refresh behavior identical to the standalone Logs page.
  */
 export function WorkspaceLogViewer({ service }: WorkspaceLogViewerProps) {
