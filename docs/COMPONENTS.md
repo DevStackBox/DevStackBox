@@ -35,8 +35,6 @@ Before writing a new component, check this file to see if one already exists tha
 | `PHPVersionSelector` | `components/php-version-selector.tsx`     | PHP version picker modal                 | No (service-specific)     |
 | `DebugPanel`         | `components/DebugPanel.tsx`               | Dev-only debug info panel                | No (dev only)             |
 | `WindowControls`     | `components/WindowControls.tsx`           | Custom title bar buttons                 | No (app-level)            |
-| `SystemTrayButton`   | `components/SystemTrayButton.tsx`         | Minimize to tray button                  | Yes                       |
-| `SystemTrayStatus`   | `components/SystemTrayStatus.tsx`         | Tray-area status indicator               | Yes                       |
 | `ServiceManager`     | `components/services/service-manager.tsx` | Polls + manages all services             | No (orchestrator)         |
 | `ServiceCard`        | `components/services/service-card.tsx`    | Single service display card              | Yes                       |
 | `ServiceActions`     | `components/services/service-actions.tsx` | Start/Stop/Open buttons                  | Yes                       |
@@ -50,15 +48,16 @@ Before writing a new component, check this file to see if one already exists tha
 
 ## Pages
 
-| Page Component   | File                       | Route                 | Status       |
-| ---------------- | -------------------------- | --------------------- | ------------ |
-| `DashboardPage`  | `pages/dashboard.tsx`      | `dashboard` (default) | Working      |
-| `ServicesPage`   | `pages/services.tsx`       | `services`            | Partial      |
-| `Projects`       | `App.tsx` inline branch    | `projects`            | Placeholder  |
-| `Logs`           | `App.tsx` inline branch    | `logs`                | Placeholder  |
-| `Settings`       | `App.tsx` inline branch    | `settings`            | Partial      |
-| `About`          | `App.tsx` inline branch    | `about`               | Working      |
-| `SystemTrayPage` | `pages/SystemTrayPage.tsx` | not mounted           | Experimental |
+| Page Component  | File                       | Route                 | Status  |
+| --------------- | -------------------------- | --------------------- | ------- |
+| `DashboardPage` | `pages/dashboard.tsx`      | `/`                   | Working |
+| `ServicesPage`  | `pages/services.tsx`       | `/services`           | Working |
+| `LogsLayout`    | `pages/logs/layout.tsx`    | `/logs/*`             | Working |
+| `SettingsPage`  | `pages/settings/index.tsx` | `/settings`           | Working |
+| `BackupPage`    | `pages/settings/backup.tsx`| `/settings/backup`    | Working |
+| `AboutPage`     | `pages/about.tsx`          | `/about`              | Working |
+| `SecurityPage`  | `pages/security.tsx`       | `/security`           | Working |
+| `TerminalLayout`| `pages/terminal/layout.tsx`| `/terminal/*`         | Working |
 
 ---
 
@@ -67,15 +66,12 @@ Before writing a new component, check this file to see if one already exists tha
 ### App.tsx (Root)
 
 **File:** `src/App.tsx`  
-**Purpose:** Top-level application shell. Handles page routing, keyboard shortcuts, modal states.  
+**Purpose:** Top-level application shell. Hosts `HashRouter`, app chrome, keyboard shortcuts, and shared modal state.  
 **State managed here:**
 
-- `currentPage` - which page is shown
 - `sidebarCollapsed` - sidebar collapsed state
 - `commandPaletteOpen` - Ctrl+P modal open
-- `phpVersionSelectorOpen` - PHP version modal open
-- `configEditorOpen` - config editor modal open
-- `configService` - which service's config is being edited
+- `currentPhpVersion` - active PHP version badge state
 
 **Do NOT add feature logic to App.tsx.** It should only handle layout and routing.
 
@@ -118,15 +114,13 @@ Before writing a new component, check this file to see if one already exists tha
 
 ```ts
 interface SidebarProps {
-  currentPage: string;
-  onPageChange: (page: string) => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
 }
 ```
 
-**Pages registered:** dashboard, services, projects, logs, settings, about  
-**Rule:** Add new pages here and in `App.tsx`.
+**Pages registered:** comes from `SIDEBAR_ROUTES` in `src/lib/routes.ts`.  
+**Rule:** Add new top-level pages through `src/lib/routes.ts` and `App.tsx` routes together.
 
 ---
 
