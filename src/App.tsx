@@ -1,4 +1,11 @@
 import { useState, useEffect } from "react";
+import {
+  HashRouter,
+  Routes,
+  Route,
+  useNavigate,
+  Navigate,
+} from "react-router-dom";
 import { safeInvoke, isTauri, getMockBinariesStatus } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
 import { FolderOpen } from "lucide-react";
@@ -17,51 +24,64 @@ import { ConfigEditor } from "./components/config-editor";
 import {
   DashboardPage,
   ServicesPage,
-  LogsPage,
-  DatabasesPage,
-  SettingsPage,
+  LogsLayout,
+  LogsApachePage,
+  LogsMysqlPage,
+  LogsPhpPage,
   AboutPage,
-  MySQLUsersPage,
   TerminalPage,
   SecurityPage,
-  SslPage,
-  VhostsPage,
-  BackupPage,
 } from "./pages";
+import { ApacheLayout } from "./pages/services/apache/layout";
+import { ApacheOverviewPage } from "./pages/services/apache";
+import { ApacheLogsPage } from "./pages/services/apache/logs";
+import { ApacheConfigPage } from "./pages/services/apache/config";
+import { ApacheVhostsPage } from "./pages/services/apache/vhosts";
+import { ApacheSslPage } from "./pages/services/apache/ssl";
+import { MysqlLayout } from "./pages/services/mysql/layout";
+import { MysqlOverviewPage } from "./pages/services/mysql";
+import { MysqlLogsPage } from "./pages/services/mysql/logs";
+import { PhpLayout } from "./pages/services/php/layout";
+import { PhpOverviewPage } from "./pages/services/php";
+import { PhpExtensionsPage } from "./pages/services/php/extensions";
+import { PhpConfigPage } from "./pages/services/php/config";
+import { DatabasesLayout } from "./pages/databases/layout";
+import { DatabasesPage as DatabasesIndexPage } from "./pages/databases";
+import { MySQLUsersPage as DatabasesUsersPage } from "./pages/databases/users";
+import { DatabasesBackupsPage } from "./pages/databases/backups";
+import { SettingsLayout } from "./pages/settings/layout";
+import { SettingsPage as SettingsIndexPage } from "./pages/settings";
+import { BackupPage as SettingsBackupPage } from "./pages/settings/backup";
 import { Toaster } from "@/components/ui/toaster";
 import type { ServiceName } from "@/types/services";
+import { ROUTES } from "@/lib/routes";
 import "./lib/i18n";
 
-function App() {
+function AppShell() {
   const { t } = useTranslation();
-  const [currentPage, setCurrentPage] = useState("dashboard");
+  const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [phpVersionSelectorOpen, setPhpVersionSelectorOpen] = useState(false);
   const [configEditorOpen, setConfigEditorOpen] = useState(false);
   const [configService, setConfigService] = useState<ServiceName>("mysql");
-  // Single source of truth for the Logs page: when the user clicks the
-  // "Logs" item from any service card (dashboard or services), we set
-  // this and navigate to the Logs page so the matching tab opens.
-  const [logsService, setLogsService] = useState<"apache" | "mysql" | "php">(
-    "apache",
-  );
-
   const [currentPhpVersion, setCurrentPhpVersion] = useState("8.3");
 
-  // Handler to open config editor for a specific service
   const handleOpenConfig = (service: ServiceName) => {
-    setConfigService(service);
-    setConfigEditorOpen(true);
+    if (service === "apache") navigate(ROUTES.apacheConfig.path);
+    else if (service === "php") navigate(ROUTES.phpConfig.path);
+    else {
+      setConfigService(service);
+      setConfigEditorOpen(true);
+    }
   };
 
-  // Handler: jump to the Logs page on the requested service tab.
   const handleViewLogs = (service: "apache" | "mysql" | "php") => {
-    setLogsService(service);
-    setCurrentPage("logs");
+    if (service === "apache") navigate(ROUTES.logsApache.path);
+    else if (service === "mysql") navigate(ROUTES.logsMysql.path);
+    else navigate(ROUTES.logsPHP.path);
   };
 
-  // Initialize app and check binaries
   useEffect(() => {
     initializeApp();
   }, []);
@@ -74,27 +94,12 @@ function App() {
         );
         return;
       }
-
       const binaries =
         (await safeInvoke<Record<string, boolean>>(
           TAURI_COMMANDS.system.checkBinaries,
         )) || getMockBinariesStatus();
       console.log("Binary status:", binaries);
 
-      if (!binaries.mysql) {
-        console.warn("MySQL binary not found at mysql/bin/mysqld.exe");
-      }
-      if (!binaries.apache) {
-        console.warn("Apache binary not found at apache/bin/httpd.exe");
-      }
-      if (!binaries["php8.3"]) {
-        console.warn("PHP 8.3 binary not found at php/8.3/php.exe");
-      }
-
-      // Resolve the active PHP branch from the backend so the UI does not
-      // hardcode "8.3". `get_php_versions` returns each branch with an
-      // `is_active` flag (set by the `php/current` junction). Fall back to
-      // the first installed branch, then to the existing default.
       try {
         const versions = await safeInvoke<
           Array<{ version: string; is_active: boolean; installed: boolean }>
@@ -113,12 +118,10 @@ function App() {
     }
   };
 
-  // Stub function for command palette - services are now managed by individual pages
   const handleServiceToggle = (service: string) => {
     console.log(`Toggle ${service} service`);
   };
 
-  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "p") {
@@ -126,151 +129,181 @@ function App() {
         setCommandPaletteOpen(true);
       }
     };
-
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const renderPage = () => {
-    switch (currentPage) {
-      case "services":
-        return (
-          <ServicesPage
-            currentPhpVersion={currentPhpVersion}
-            onOpenPHPVersionSelector={() => setPhpVersionSelectorOpen(true)}
-            onOpenConfig={handleOpenConfig}
-            onViewLogs={handleViewLogs}
-          />
-        );
+  return (
+    <div className="min-h-screen bg-background">
+      <Sidebar
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+      />
 
-      case "projects":
-        return (
-          <div className="space-y-6">
-            <h2 className="text-3xl font-bold">{t("navigation.projects")}</h2>
-            <EmptyState
-              icon={FolderOpen}
-              title="Project Management Coming Soon"
-              description="Create and manage your PHP projects with virtual hosts, SSL certificates, and automatic configuration. This feature is currently under development."
-              action={{
-                label: "View Roadmap",
-                onClick: () =>
-                  window.open(
-                    "https://github.com/ProgrammerNomad/DevStackBox/blob/main/ROADMAP.md",
-                    "_blank",
-                  ),
-              }}
-            />
+      <div
+        className={`transition-all duration-200 ${
+          sidebarCollapsed ? "ml-16" : "ml-64"
+        }`}
+      >
+        <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+            <Breadcrumb />
+            <div className="flex items-center gap-2">
+              <AutoUpdater />
+              <LanguageSwitcher />
+              <ThemeToggle />
+            </div>
           </div>
-        );
+        </header>
 
-      case "logs":
-        return <LogsPage initialService={logsService} />;
+        <main className="container mx-auto px-4 py-6">
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <DashboardPage
+                  onOpenPHPVersionSelector={() =>
+                    setPhpVersionSelectorOpen(true)
+                  }
+                  onOpenConfig={handleOpenConfig}
+                  onViewLogs={handleViewLogs}
+                  currentPhpVersion={currentPhpVersion}
+                />
+              }
+            />
+            <Route
+              path="/services"
+              element={
+                <ServicesPage
+                  currentPhpVersion={currentPhpVersion}
+                  onOpenPHPVersionSelector={() =>
+                    setPhpVersionSelectorOpen(true)
+                  }
+                  onOpenConfig={handleOpenConfig}
+                  onViewLogs={handleViewLogs}
+                />
+              }
+            />
 
-      case "databases":
-        return <DatabasesPage />;
+            <Route path="/services/apache" element={<ApacheLayout />}>
+              <Route index element={<ApacheOverviewPage />} />
+              <Route path="logs" element={<ApacheLogsPage />} />
+              <Route path="config" element={<ApacheConfigPage />} />
+              <Route path="vhosts" element={<ApacheVhostsPage />} />
+              <Route path="ssl" element={<ApacheSslPage />} />
+            </Route>
 
-      case "mysql-users":
-        return <MySQLUsersPage />;
+            <Route path="/services/mysql" element={<MysqlLayout />}>
+              <Route index element={<MysqlOverviewPage />} />
+              <Route path="logs" element={<MysqlLogsPage />} />
+            </Route>
 
-      case "terminal":
-        return <TerminalPage />;
+            <Route path="/services/php" element={<PhpLayout />}>
+              <Route index element={<PhpOverviewPage />} />
+              <Route path="extensions" element={<PhpExtensionsPage />} />
+              <Route path="config" element={<PhpConfigPage />} />
+            </Route>
 
-      case "security":
-        return <SecurityPage />;
+            <Route path="/databases" element={<DatabasesLayout />}>
+              <Route index element={<DatabasesIndexPage />} />
+              <Route path="users" element={<DatabasesUsersPage />} />
+              <Route path="backups" element={<DatabasesBackupsPage />} />
+            </Route>
 
-      case "ssl":
-        return <SslPage />;
+            <Route path="/logs" element={<LogsLayout />}>
+              <Route index element={<Navigate to="apache" replace />} />
+              <Route path="apache" element={<LogsApachePage />} />
+              <Route path="mysql" element={<LogsMysqlPage />} />
+              <Route path="php" element={<LogsPhpPage />} />
+            </Route>
+            <Route path="/terminal" element={<TerminalPage />} />
+            <Route path="/security" element={<SecurityPage />} />
 
-      case "vhosts":
-        return <VhostsPage />;
+            <Route path="/settings" element={<SettingsLayout />}>
+              <Route index element={<SettingsIndexPage />} />
+              <Route path="backup" element={<SettingsBackupPage />} />
+            </Route>
 
-      case "backup":
-        return <BackupPage />;
+            <Route path="/about" element={<AboutPage />} />
 
-      case "settings":
-        return <SettingsPage />;
+            {/* Legacy redirects from the old flat sidebar */}
+            <Route
+              path="/mysql-users"
+              element={<Navigate to={ROUTES.databasesUsers.path} replace />}
+            />
+            <Route
+              path="/ssl"
+              element={<Navigate to={ROUTES.apacheSsl.path} replace />}
+            />
+            <Route
+              path="/vhosts"
+              element={<Navigate to={ROUTES.apacheVhosts.path} replace />}
+            />
+            <Route
+              path="/backup"
+              element={<Navigate to={ROUTES.settingsBackup.path} replace />}
+            />
+            <Route
+              path="/projects"
+              element={
+                <div className="space-y-6">
+                  <h2 className="text-3xl font-bold">
+                    {t("navigation.projects")}
+                  </h2>
+                  <EmptyState
+                    icon={FolderOpen}
+                    title="Project Management Coming Soon"
+                    description="Create and manage your PHP projects with virtual hosts, SSL certificates, and automatic configuration."
+                    action={{
+                      label: "View Roadmap",
+                      onClick: () =>
+                        window.open(
+                          "https://github.com/ProgrammerNomad/DevStackBox/blob/main/ROADMAP.md",
+                          "_blank",
+                        ),
+                    }}
+                  />
+                </div>
+              }
+            />
 
-      case "about":
-        return <AboutPage />;
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
+      </div>
 
-      default:
-        return (
-          <DashboardPage
-            onOpenPHPVersionSelector={() => setPhpVersionSelectorOpen(true)}
-            onPageChange={setCurrentPage}
-            onOpenConfig={handleOpenConfig}
-            onViewLogs={handleViewLogs}
-            currentPhpVersion={currentPhpVersion}
-          />
-        );
-    }
-  };
+      <CommandPalette
+        isOpen={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        onServiceToggle={handleServiceToggle}
+      />
 
+      <PHPVersionSelector
+        isOpen={phpVersionSelectorOpen}
+        onClose={() => setPhpVersionSelectorOpen(false)}
+        currentVersion={currentPhpVersion}
+        onVersionChange={setCurrentPhpVersion}
+      />
+
+      <ConfigEditor
+        isOpen={configEditorOpen}
+        onClose={() => setConfigEditorOpen(false)}
+        service={configService}
+      />
+
+      <Toaster />
+
+      <OnboardingDialog onOpenServices={() => navigate(ROUTES.services.path)} />
+    </div>
+  );
+}
+
+function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="devstackbox-ui-theme">
-      <div className="min-h-screen bg-background">
-        <Sidebar
-          currentPage={currentPage}
-          onPageChange={setCurrentPage}
-          collapsed={sidebarCollapsed}
-          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-        />
-
-        {/* Main Content */}
-        <div
-          className={`transition-all duration-200 ${
-            sidebarCollapsed ? "ml-16" : "ml-64"
-          }`}
-        >
-          {/* Top Bar */}
-          <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-              <Breadcrumb
-                currentPage={currentPage}
-                onPageChange={setCurrentPage}
-              />
-
-              <div className="flex items-center gap-2">
-                <AutoUpdater />
-                <LanguageSwitcher />
-                <ThemeToggle />
-              </div>
-            </div>
-          </header>
-
-          {/* Page Content */}
-          <main className="container mx-auto px-4 py-6">{renderPage()}</main>
-        </div>
-
-        {/* Command Palette */}
-        <CommandPalette
-          isOpen={commandPaletteOpen}
-          onClose={() => setCommandPaletteOpen(false)}
-          onPageChange={setCurrentPage}
-          onServiceToggle={handleServiceToggle}
-        />
-
-        {/* PHP Version Selector */}
-        <PHPVersionSelector
-          isOpen={phpVersionSelectorOpen}
-          onClose={() => setPhpVersionSelectorOpen(false)}
-          currentVersion={currentPhpVersion}
-          onVersionChange={setCurrentPhpVersion}
-        />
-
-        {/* Config Editor */}
-        <ConfigEditor
-          isOpen={configEditorOpen}
-          onClose={() => setConfigEditorOpen(false)}
-          service={configService}
-        />
-
-        {/* Toast Notifications */}
-        <Toaster />
-
-        {/* First-launch onboarding */}
-        <OnboardingDialog onOpenServices={() => setCurrentPage("services")} />
-      </div>
+      <HashRouter>
+        <AppShell />
+      </HashRouter>
     </ThemeProvider>
   );
 }

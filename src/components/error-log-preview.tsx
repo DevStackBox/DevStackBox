@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { AlertTriangle, RefreshCw, FileText } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { AlertTriangle, RefreshCw, FileText, ArrowRight } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -16,7 +17,7 @@ import { cn } from "@/lib/utils";
 
 type LogService = "apache" | "mysql" | "php";
 
-const MAX_LINES = 8;
+const MAX_LINES = 5;
 
 function tailLines(text: string, count: number): string[] {
   return text
@@ -31,6 +32,7 @@ function looksLikeError(line: string): boolean {
 
 export function ErrorLogPreview() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [service, setService] = useState<LogService>("apache");
   const [lines, setLines] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -119,7 +121,7 @@ export function ErrorLogPreview() {
             <span>{message}</span>
           </div>
         ) : (
-          <div className="max-h-48 overflow-auto rounded-md border bg-muted/30 font-mono text-xs">
+          <div className="max-h-40 overflow-auto rounded-md border bg-muted/30 font-mono text-xs">
             {lines.map((line, i) => (
               <div
                 key={i}
@@ -135,6 +137,17 @@ export function ErrorLogPreview() {
             ))}
           </div>
         )}
+        <div className="flex justify-end">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1 text-xs"
+            onClick={() => navigate("/logs")}
+          >
+            {t("dashboard.errorLog.openFull", "Open Full Logs")}
+            <ArrowRight className="h-3 w-3" />
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

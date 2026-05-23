@@ -8,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -25,6 +24,10 @@ import { TAURI_COMMANDS } from "@/lib/commands";
 import i18n from "@/lib/i18n";
 
 const AUTO_CHECK_KEY = "devstackbox.settings.autoCheckUpdates";
+const AUTOSTART_APACHE_KEY = "devstackbox.settings.autoStartApache";
+const AUTOSTART_MYSQL_KEY = "devstackbox.settings.autoStartMysql";
+const MINIMIZE_TO_TRAY_KEY = "devstackbox.settings.minimizeToTray";
+const UPDATE_CHANNEL_KEY = "devstackbox.settings.updateChannel";
 
 interface SettingsPageProps {}
 
@@ -37,6 +40,22 @@ export function SettingsPage({}: SettingsPageProps) {
   const [autoCheck, setAutoCheck] = useState<boolean>(
     () => localStorage.getItem(AUTO_CHECK_KEY) !== "false",
   );
+  const [autoStartApache, setAutoStartApache] = useState<boolean>(
+    () => localStorage.getItem(AUTOSTART_APACHE_KEY) === "true",
+  );
+  const [autoStartMysql, setAutoStartMysql] = useState<boolean>(
+    () => localStorage.getItem(AUTOSTART_MYSQL_KEY) === "true",
+  );
+  const [minimizeToTray, setMinimizeToTray] = useState<boolean>(
+    () => localStorage.getItem(MINIMIZE_TO_TRAY_KEY) !== "false",
+  );
+  const [updateChannel, setUpdateChannel] = useState<string>(
+    () => localStorage.getItem(UPDATE_CHANNEL_KEY) ?? "stable",
+  );
+
+  const persistBool = (key: string, value: boolean) => {
+    localStorage.setItem(key, String(value));
+  };
 
   // Read the current autostart status on mount so the toggle matches reality.
   useEffect(() => {
@@ -262,6 +281,122 @@ export function SettingsPage({}: SettingsPageProps) {
               </div>
             </div>
             <Switch checked={autoCheck} onCheckedChange={handleAutoCheck} />
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <div className="text-sm font-medium">
+                {t("settings.updateChannel", "Update channel")}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {t(
+                  "settings.updateChannelDesc",
+                  "Stable receives signed releases. Beta receives pre-releases.",
+                )}
+              </div>
+            </div>
+            <Select
+              value={updateChannel}
+              onValueChange={(v) => {
+                setUpdateChannel(v);
+                localStorage.setItem(UPDATE_CHANNEL_KEY, v);
+                toast({
+                  title: t("settings.updateChannelSet", "Update channel set"),
+                  description: t(
+                    "settings.updateChannelHint",
+                    "Takes effect on the next update check.",
+                  ),
+                });
+              }}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="stable">
+                  {t("settings.channelStable", "Stable")}
+                </SelectItem>
+                <SelectItem value="beta">
+                  {t("settings.channelBeta", "Beta")}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Power className="h-5 w-5" />
+            {t("settings.services", "Services on app launch")}
+          </CardTitle>
+          <CardDescription>
+            {t(
+              "settings.servicesDesc",
+              "Automatically start selected services when DevStackBox opens. Applies on next launch.",
+            )}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <div className="text-sm font-medium">
+                {t("settings.autoStartApache", "Auto-start Apache")}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {t(
+                  "settings.autoStartApacheDesc",
+                  "Start the HTTP server when DevStackBox launches.",
+                )}
+              </div>
+            </div>
+            <Switch
+              checked={autoStartApache}
+              onCheckedChange={(v) => {
+                setAutoStartApache(v);
+                persistBool(AUTOSTART_APACHE_KEY, v);
+              }}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <div className="text-sm font-medium">
+                {t("settings.autoStartMysql", "Auto-start MySQL")}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {t(
+                  "settings.autoStartMysqlDesc",
+                  "Start the database server when DevStackBox launches.",
+                )}
+              </div>
+            </div>
+            <Switch
+              checked={autoStartMysql}
+              onCheckedChange={(v) => {
+                setAutoStartMysql(v);
+                persistBool(AUTOSTART_MYSQL_KEY, v);
+              }}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <div className="text-sm font-medium">
+                {t("settings.minimizeToTray", "Minimize to tray on close")}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {t(
+                  "settings.minimizeToTrayDesc",
+                  "Keep services running in the background when the window closes.",
+                )}
+              </div>
+            </div>
+            <Switch
+              checked={minimizeToTray}
+              onCheckedChange={(v) => {
+                setMinimizeToTray(v);
+                persistBool(MINIMIZE_TO_TRAY_KEY, v);
+              }}
+            />
           </div>
         </CardContent>
       </Card>

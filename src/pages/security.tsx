@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShieldAlert,
@@ -10,11 +11,13 @@ import {
   AlertTriangle,
   Info,
   XCircle,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { TAURI_COMMANDS } from "@/lib/commands";
+import { ROUTES } from "@/lib/routes";
 
 interface SecurityFinding {
   service: string;
@@ -61,8 +64,16 @@ function FindingRow({
   index: number;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const navigate = useNavigate();
   const meta = SEVERITY_META[finding.severity];
   const Icon = meta.icon;
+
+  const configRoute =
+    finding.service === "apache"
+      ? ROUTES.apacheConfig.path
+      : finding.service === "php"
+        ? ROUTES.phpConfig.path
+        : null;
 
   return (
     <motion.div
@@ -113,6 +124,18 @@ function FindingRow({
                   {finding.recommendation}
                 </span>
               </div>
+              {configRoute && (
+                <div className="flex justify-end">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => navigate(configRoute)}
+                  >
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Open Config
+                  </Button>
+                </div>
+              )}
             </div>
           </motion.div>
         )}

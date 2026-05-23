@@ -1,32 +1,19 @@
+import { Fragment } from "react";
 import { ChevronRight, Home } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
+import { getBreadcrumbTrail } from "@/lib/routes";
 
 interface BreadcrumbProps {
-  currentPage: string;
-  onPageChange: (page: string) => void;
   className?: string;
 }
 
-const PAGE_LABEL_KEYS: Record<string, string> = {
-  dashboard: "navigation.dashboard",
-  services: "navigation.services",
-  databases: "navigation.databases",
-  projects: "navigation.projects",
-  logs: "navigation.logs",
-  settings: "navigation.settings",
-  about: "navigation.about",
-};
-
-export function Breadcrumb({
-  currentPage,
-  onPageChange,
-  className,
-}: BreadcrumbProps) {
+export function Breadcrumb({ className }: BreadcrumbProps) {
   const { t } = useTranslation();
-  const isDashboard = currentPage === "dashboard";
-  const labelKey = PAGE_LABEL_KEYS[currentPage] ?? "navigation.dashboard";
-  const label = t(labelKey);
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const trail = getBreadcrumbTrail(pathname);
 
   return (
     <nav
@@ -36,27 +23,41 @@ export function Breadcrumb({
         className,
       )}
     >
-      <button
-        type="button"
-        onClick={() => onPageChange("dashboard")}
-        className={cn(
-          "inline-flex items-center gap-1 rounded px-1.5 py-0.5 transition-colors",
-          "hover:bg-accent hover:text-foreground",
-          isDashboard && "text-foreground",
-        )}
-      >
-        <Home className="h-3.5 w-3.5" />
-        <span>{t("navigation.dashboard")}</span>
-      </button>
-      {!isDashboard && (
-        <>
-          <ChevronRight
-            className="mx-1 h-3.5 w-3.5 text-muted-foreground/60"
-            aria-hidden="true"
-          />
-          <span className="font-medium text-foreground">{label}</span>
-        </>
-      )}
+      {trail.map((node, idx) => {
+        const isLast = idx === trail.length - 1;
+        const isRoot = node.path === "/";
+        const label = t(node.labelKey, node.defaultLabel);
+        return (
+          <Fragment key={node.path}>
+            {idx > 0 && (
+              <ChevronRight
+                className="mx-1 h-3.5 w-3.5 text-muted-foreground/60"
+                aria-hidden="true"
+              />
+            )}
+            {isLast ? (
+              <span className="font-medium text-foreground inline-flex items-center gap-1">
+                {isRoot && <Home className="h-3.5 w-3.5" />}
+                {label}
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => navigate(node.path)}
+                className={cn(
+                  "inline-flex items-center gap-1 rounded px-1.5 py-0.5 transition-colors",
+                  "hover:bg-accent hover:text-foreground",
+                )}
+              >
+                {isRoot && <Home className="h-3.5 w-3.5" />}
+                <span>{label}</span>
+              </button>
+            )}
+          </Fragment>
+        );
+      })}
     </nav>
   );
 }
+
+export default Breadcrumb;

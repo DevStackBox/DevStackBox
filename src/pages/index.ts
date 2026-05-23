@@ -1,8 +1,7 @@
 export { DashboardPage } from "./dashboard";
 export { ServicesPage } from "./services";
-export { LogsPage } from "./logs";
-export { DatabasesPage } from "./databases";
-export { SettingsPage } from "./settings";
+export { DatabasesPage } from "./databases-list";
+export { SettingsPage } from "./settings-general";
 export { AboutPage } from "./about";
 export { MySQLUsersPage } from "./mysql-users";
 export { TerminalPage } from "./terminal";
@@ -10,3 +9,7 @@ export { SecurityPage } from "./security";
 export { SslPage } from "./ssl";
 export { VhostsPage } from "./vhosts";
 export { BackupPage } from "./backup";
+export { LogsLayout } from "./logs/layout";
+export { LogsApachePage } from "./logs/apache";
+export { LogsMysqlPage } from "./logs/mysql";
+export { LogsPhpPage } from "./logs/php";

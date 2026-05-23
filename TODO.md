@@ -1,7 +1,8 @@
 # DevStackBox TODO
 
 ## Phase 1 - React Router + Core Routing Refactor
-*All other phases depend on this.*
+
+_All other phases depend on this._
 
 - [ ] Add `react-router-dom` dependency (`pnpm add react-router-dom`)
 - [ ] Wrap `src/App.tsx` root in `<HashRouter>`, replace `currentPage` state + `renderPage()` switch with `<Routes>/<Route>` declarations
@@ -14,19 +15,22 @@
 - [ ] Define route metadata object (path, title, icon) for every route - single source of truth used by breadcrumbs, command palette, page titles, and future navigation search
 
 ## Phase 2 - Sidebar Trim to 8 Items
-*Parallel with Phase 1.*
+
+_Parallel with Phase 1._
 
 - [ ] Remove `mysql-users`, `ssl`, `vhosts`, `backup`, `projects` from `menuItems` array in `src/components/sidebar.tsx`
 - [ ] Keep exactly: Dashboard, Services, Databases, Logs, Terminal, Security, Settings, About
 - [ ] Add sub-navigation translation keys to `locales/en.json` and `locales/hi.json`
 
 ## Phase 3 - Service Workspace Pages
-*Depends on Phase 1.*
+
+_Depends on Phase 1._
 
 - [ ] Create `src/components/service-workspace-layout.tsx` - shared sticky sub-nav (NavLink-based, tab-styled) + `<Outlet />`
 - [ ] Create `src/components/service-workspace-header.tsx` - reusable workspace header (icon, title, status badge, top-level actions) shared across Apache, MySQL, PHP, Databases, and Settings workspaces
 
 Apache workspace (`/services/apache/*`):
+
 - [ ] `src/pages/services/apache/layout.tsx` - tabs: Overview, Logs, Config, Virtual Hosts, SSL
 - [ ] `src/pages/services/apache/index.tsx` - service status, start/stop, uptime, phpMyAdmin link
 - [ ] `src/pages/services/apache/logs.tsx` - reuse `LogViewer` with service="apache"
@@ -35,29 +39,34 @@ Apache workspace (`/services/apache/*`):
 - [ ] `src/pages/services/apache/ssl.tsx` - content moved from `src/pages/ssl.tsx`
 
 MySQL workspace (`/services/mysql/*`):
+
 - [ ] `src/pages/services/mysql/layout.tsx` - tabs: Overview, Logs (service-focused; database management lives in the top-level Databases workspace)
 - [ ] `src/pages/services/mysql/index.tsx` - status, start/stop, uptime, memory
 
 PHP workspace (`/services/php/*`):
+
 - [ ] `src/pages/services/php/layout.tsx` - tabs: Overview, Extensions, Config
 - [ ] `src/pages/services/php/index.tsx` - version badge, switcher CTA, "Ready"/"Installed" status (not "Running")
 - [ ] `src/pages/services/php/extensions.tsx` - PHP extensions list
 - [ ] `src/pages/services/php/config.tsx` - php.ini editor
 
 Databases workspace (`/databases/*`):
+
 - [ ] `src/pages/databases/layout.tsx` - tabs: Databases, Users, Backups
 - [ ] `src/pages/databases/index.tsx` - databases list (current `databases.tsx` content)
 - [ ] `src/pages/databases/users.tsx` - content moved from `mysql-users.tsx`
 - [ ] `src/pages/databases/backups.tsx` - MySQL per-database backup/restore
 
 Cleanup:
+
 - [ ] Delete `src/pages/vhosts.tsx` after content moved
 - [ ] Delete `src/pages/ssl.tsx` after content moved
 - [ ] Delete `src/pages/mysql-users.tsx` after content moved
 - [ ] Delete `src/pages/databases.tsx` after content moved (replaced by workspace index)
 
 ## Phase 4 - Services Page: Open Details Navigation
-*Depends on Phase 1 + Phase 3.*
+
+_Depends on Phase 1 + Phase 3._
 
 - [ ] Add "Open Details" button on Apache, MySQL, PHP cards in `src/pages/services.tsx` navigating to `/services/apache`, `/services/mysql`, `/services/php`
 - [ ] Reduce card inline actions to: Start/Stop, Open (browser), Details only
@@ -66,7 +75,8 @@ Cleanup:
 - [ ] Update `src/components/services/service-actions.tsx` to support minimal action variant
 
 ## Phase 5 - Dashboard Simplification
-*Depends on Phase 1. Parallel with Phase 3.*
+
+_Depends on Phase 1. Parallel with Phase 3._
 
 - [ ] `src/components/error-log-preview.tsx` - reduce from 8 lines to 5 lines max, add "Open Full Logs" link to `/logs`
 - [ ] `src/pages/dashboard.tsx` - service cards show status + health + uptime only, remove per-service config dialogs and management actions
@@ -75,7 +85,8 @@ Cleanup:
 - [ ] Target: entire dashboard visible on one screen with minimal or no scrolling
 
 ## Phase 6 - Security: Actionable Findings
-*Independent.*
+
+_Independent._
 
 - [ ] Add `fixAction?: () => void` to `FindingRow` component in `src/pages/security.tsx`
 - [ ] Add "Fix Automatically" button to applicable findings (e.g. `display_errors=On`, missing root password)
@@ -83,14 +94,16 @@ Cleanup:
 - [ ] Severity colors: critical = red/destructive, warning = amber, info = blue using shadcn/ui `Badge` variants
 
 ## Phase 7 - Terminal Quick Launch Bar
-*Independent.*
+
+_Independent._
 
 - [ ] Add top bar with quick-launch buttons to `src/pages/terminal.tsx`: PowerShell, CMD, PHP CLI, Composer, MySQL CLI, Git Bash
 - [ ] Each button calls `spawn_terminal` with correct shell preset and opens a new tab
 - [ ] Support multiple named terminal tabs (already partially in TerminalPage - ensure tab add/close/rename works cleanly)
 
 ## Phase 8 - Settings: Backup Sub-route + New Options
-*Depends on Phase 1.*
+
+_Depends on Phase 1._
 
 - [ ] Create `src/pages/settings/layout.tsx` - tabs: General, Backup & Restore
 - [ ] Create `src/pages/settings/index.tsx` - current `settings.tsx` content (theme, language, autostart)
@@ -102,7 +115,8 @@ Cleanup:
 - [ ] Delete `src/pages/backup.tsx` after content moved
 
 ## Consistency & Polish Rules
-*Apply across all phases. These matter more than new features at this stage.*
+
+_Apply across all phases. These matter more than new features at this stage._
 
 - [ ] Breadcrumb depth: max 2 levels (e.g., "Apache > SSL"). Never go deeper than 3. Avoid verbose trails like "Dashboard > Services > Apache > SSL > Certificates > Edit".
 - [ ] All workspace pages must use `service-workspace-header.tsx` - no one-off headers

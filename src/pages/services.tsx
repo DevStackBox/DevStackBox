@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ServiceManager } from "@/components/services";
 import { Button } from "@/components/ui/button";
@@ -11,10 +12,15 @@ import {
   Square,
   Terminal,
   Wrench,
+  ArrowRight,
+  Server,
+  Database,
+  Code,
 } from "lucide-react";
 import { safeInvoke, isTauri } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
 import { useToast } from "@/hooks/use-toast";
+import { ROUTES } from "@/lib/routes";
 import type { ServiceName } from "@/types/services";
 
 interface ServicesPageProps {
@@ -33,6 +39,7 @@ export function ServicesPage({
 }: ServicesPageProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [bulkLoading, setBulkLoading] = useState<
     "start" | "stop" | "restart" | null
@@ -200,6 +207,43 @@ export function ServicesPage({
         onOpenPHPVersionSelector={onOpenPHPVersionSelector}
         currentPhpVersion={currentPhpVersion}
       />
+
+      {/* Per-service workspaces (Open Details) */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <Button
+          variant="outline"
+          className="h-auto justify-between py-3"
+          onClick={() => navigate(ROUTES.apache.path)}
+        >
+          <span className="flex items-center gap-2">
+            <Server className="h-4 w-4" />
+            {t("services.openApache", "Open Apache Workspace")}
+          </span>
+          <ArrowRight className="h-4 w-4 opacity-60" />
+        </Button>
+        <Button
+          variant="outline"
+          className="h-auto justify-between py-3"
+          onClick={() => navigate(ROUTES.mysql.path)}
+        >
+          <span className="flex items-center gap-2">
+            <Database className="h-4 w-4" />
+            {t("services.openMysql", "Open MySQL Workspace")}
+          </span>
+          <ArrowRight className="h-4 w-4 opacity-60" />
+        </Button>
+        <Button
+          variant="outline"
+          className="h-auto justify-between py-3"
+          onClick={() => navigate(ROUTES.php.path)}
+        >
+          <span className="flex items-center gap-2">
+            <Code className="h-4 w-4" />
+            {t("services.openPhp", "Open PHP Workspace")}
+          </span>
+          <ArrowRight className="h-4 w-4 opacity-60" />
+        </Button>
+      </div>
 
       {/* Developer Tools - quick-launch items that are not services */}
       <div className="space-y-2">

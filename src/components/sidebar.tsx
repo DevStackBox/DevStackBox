@@ -1,122 +1,19 @@
 import { motion } from "framer-motion";
-import {
-  LayoutDashboard,
-  Database,
-  FolderOpen,
-  FileText,
-  Settings,
-  Info,
-  Server,
-  ChevronLeft,
-  ChevronRight,
-  Users,
-  SquareTerminal,
-  ShieldAlert,
-  Lock,
-  Globe,
-  HardDriveDownload,
-} from "lucide-react";
+import { NavLink } from "react-router-dom";
+import { ChevronLeft, ChevronRight, Server } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { APP_VERSION } from "@/lib/version";
+import { SIDEBAR_ROUTES } from "@/lib/routes";
 
 interface SidebarProps {
-  currentPage: string;
-  onPageChange: (page: string) => void;
   collapsed: boolean;
   onToggleCollapse: () => void;
 }
 
-export function Sidebar({
-  currentPage,
-  onPageChange,
-  collapsed,
-  onToggleCollapse,
-}: SidebarProps) {
+export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
   const { t } = useTranslation();
-
-  const menuItems = [
-    {
-      id: "dashboard",
-      label: t("navigation.dashboard"),
-      icon: LayoutDashboard,
-      available: true,
-    },
-    {
-      id: "services",
-      label: t("navigation.services"),
-      icon: Server,
-      available: true,
-    },
-    {
-      id: "databases",
-      label: t("navigation.databases", "Databases"),
-      icon: Database,
-      available: true,
-    },
-    {
-      id: "mysql-users",
-      label: t("navigation.mysqlUsers", "MySQL Users"),
-      icon: Users,
-      available: true,
-    },
-    {
-      id: "projects",
-      label: t("navigation.projects"),
-      icon: FolderOpen,
-      available: false,
-    },
-    {
-      id: "logs",
-      label: t("navigation.logs"),
-      icon: FileText,
-      available: true,
-    },
-    {
-      id: "terminal",
-      label: t("navigation.terminal", "Terminal"),
-      icon: SquareTerminal,
-      available: true,
-    },
-    {
-      id: "security",
-      label: t("navigation.security", "Security"),
-      icon: ShieldAlert,
-      available: true,
-    },
-    {
-      id: "ssl",
-      label: t("navigation.ssl", "HTTPS / SSL"),
-      icon: Lock,
-      available: true,
-    },
-    {
-      id: "vhosts",
-      label: t("navigation.vhosts", "Virtual Hosts"),
-      icon: Globe,
-      available: true,
-    },
-    {
-      id: "backup",
-      label: t("navigation.backup", "Backup & Restore"),
-      icon: HardDriveDownload,
-      available: true,
-    },
-    {
-      id: "settings",
-      label: t("navigation.settings"),
-      icon: Settings,
-      available: true,
-    },
-    {
-      id: "about",
-      label: t("navigation.about"),
-      icon: Info,
-      available: true,
-    },
-  ];
 
   return (
     <motion.div
@@ -125,7 +22,6 @@ export function Sidebar({
       transition={{ duration: 0.3 }}
       className="fixed left-0 top-0 h-full bg-card border-r border-border z-50 flex flex-col"
     >
-      {/* Header */}
       <div className="p-4 border-b border-border flex items-center justify-between">
         {!collapsed && (
           <motion.div
@@ -157,28 +53,30 @@ export function Sidebar({
         </Button>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2">
-        {menuItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = currentPage === item.id;
-
+        {SIDEBAR_ROUTES.map((route) => {
+          const Icon = route.icon;
+          const label = t(route.labelKey, route.defaultLabel);
           return (
             <motion.div
-              key={item.id}
+              key={route.path}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <Button
-                variant={isActive ? "default" : "ghost"}
-                onClick={() => item.available && onPageChange(item.id)}
-                disabled={!item.available}
-                className={cn(
-                  "w-full justify-start relative",
-                  collapsed ? "px-2" : "px-3",
-                  !item.available && "opacity-50",
-                )}
-                size={collapsed ? "icon" : "default"}
+              <NavLink
+                to={route.path}
+                end={route.path === "/"}
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center w-full rounded-md text-sm font-medium transition-colors",
+                    collapsed
+                      ? "h-10 w-10 justify-center"
+                      : "h-10 px-3 justify-start",
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : "text-foreground hover:bg-accent hover:text-accent-foreground",
+                  )
+                }
               >
                 <Icon className={cn("h-4 w-4", !collapsed && "mr-2")} />
                 {!collapsed && (
@@ -187,21 +85,15 @@ export function Sidebar({
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.1 }}
                   >
-                    {item.label}
+                    {label}
                   </motion.span>
                 )}
-                {!item.available && !collapsed && (
-                  <Badge variant="outline" className="ml-auto text-xs">
-                    {t("common.comingSoon")}
-                  </Badge>
-                )}
-              </Button>
+              </NavLink>
             </motion.div>
           );
         })}
       </nav>
 
-      {/* Footer */}
       <div className="p-4 border-t border-border">
         {!collapsed && (
           <motion.div

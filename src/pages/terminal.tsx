@@ -3,7 +3,14 @@ import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { TerminalPanel } from "@/components/terminal-panel";
 import { Button } from "@/components/ui/button";
-import { Plus, Terminal, Database } from "lucide-react";
+import {
+  Plus,
+  Terminal,
+  Database,
+  Code,
+  Package,
+  GitBranch,
+} from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface TabSession {
@@ -55,14 +62,42 @@ export function TerminalPage() {
         <h2 className="text-3xl font-bold">
           {t("terminal.title", "Terminal")}
         </h2>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"
             size="sm"
-            onClick={() => addTab(t("terminal.shell", "Shell"))}
+            onClick={() =>
+              addTab(t("terminal.powershell", "PowerShell"), "powershell")
+            }
           >
-            <Plus className="mr-2 h-4 w-4" />
-            {t("terminal.newShell", "New Shell")}
+            <Terminal className="mr-2 h-4 w-4" />
+            {t("terminal.powershell", "PowerShell")}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => addTab(t("terminal.cmd", "CMD"), "cmd")}
+          >
+            <Terminal className="mr-2 h-4 w-4" />
+            {t("terminal.cmd", "CMD")}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => addTab(t("terminal.php", "PHP CLI"), "php -a")}
+          >
+            <Code className="mr-2 h-4 w-4" />
+            {t("terminal.phpCli", "PHP CLI")}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              addTab(t("terminal.composer", "Composer"), "composer")
+            }
+          >
+            <Package className="mr-2 h-4 w-4" />
+            {t("terminal.composer", "Composer")}
           </Button>
           <Button
             variant="outline"
@@ -77,10 +112,18 @@ export function TerminalPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => addTab(t("terminal.php", "PHP CLI"), "php -a")}
+            onClick={() => addTab(t("terminal.git", "Git Bash"), "bash")}
           >
-            <Terminal className="mr-2 h-4 w-4" />
-            {t("terminal.phpCli", "PHP CLI")}
+            <GitBranch className="mr-2 h-4 w-4" />
+            {t("terminal.gitBash", "Git Bash")}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => addTab(t("terminal.shell", "Shell"))}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            {t("terminal.newShell", "New Shell")}
           </Button>
         </div>
       </div>

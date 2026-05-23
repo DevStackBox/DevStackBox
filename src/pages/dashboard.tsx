@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ServiceManager, type ServiceStatus } from "@/components/services";
 import { ErrorLogPreview } from "@/components/error-log-preview";
@@ -8,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TAURI_COMMANDS } from "@/lib/commands";
+import { ROUTES } from "@/lib/routes";
 import { Play, Square, Server, Loader2, Globe, ArrowRight } from "lucide-react";
 
 interface VhostEntry {
@@ -18,7 +20,6 @@ interface VhostEntry {
 
 interface DashboardPageProps {
   onOpenPHPVersionSelector: () => void;
-  onPageChange: (page: string) => void;
   /** Single source of truth: route Config clicks to the shared editor. */
   onOpenConfig: (service: "apache" | "mysql" | "php") => void;
   /** Single source of truth: route Logs clicks to the Logs page. */
@@ -28,12 +29,12 @@ interface DashboardPageProps {
 
 export function DashboardPage({
   onOpenPHPVersionSelector,
-  onPageChange,
   onOpenConfig,
   onViewLogs,
   currentPhpVersion,
 }: DashboardPageProps) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [statuses, setStatuses] = useState<{
     apache: ServiceStatus;
     mysql: ServiceStatus;
@@ -138,7 +139,7 @@ export function DashboardPage({
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onPageChange("services")}
+            onClick={() => navigate(ROUTES.services.path)}
           >
             <Server className="mr-2 h-4 w-4" />
             {t("dashboard.actions.openServices", "Open Services")}
@@ -170,7 +171,7 @@ export function DashboardPage({
             variant="ghost"
             size="sm"
             className="h-7 text-xs gap-1"
-            onClick={() => onPageChange("vhosts")}
+            onClick={() => navigate(ROUTES.apacheVhosts.path)}
           >
             Manage
             <ArrowRight className="w-3 h-3" />
