@@ -1,6 +1,6 @@
 [package]
 name = "devstackbox"
-version = "0.1.6"
+version = "0.1.7"
 description = "A lightweight, portable, open-source local development environment for PHP developers"
 authors = ["Nomad Programmer <shiv@srapsware.com>"]
 edition = "2021"
@@ -25,7 +25,7 @@ tauri-plugin-opener = "2.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1.0", features = ["full"] }
-reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream", "json"] }
 futures-util = "0.3"
 zip = { version = "2", default-features = false, features = ["deflate"] }
 

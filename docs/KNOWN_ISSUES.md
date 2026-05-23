@@ -27,18 +27,24 @@ No open critical issues.
 
 **Priority:** HIGH
 **Files:** `src-tauri/tauri.conf.json`, GitHub repository secrets
-**Status:** Code ready, secrets missing
+**Status:** Keys generated; GitHub Secrets still need the private key pasted in
 
 **Description:**
-`tauri-plugin-updater` is installed, `auto-updater.tsx` is wired up, and `tauri.conf.json` points to the GitHub Releases `latest.json` endpoint. The remaining blocker is release signing configuration in GitHub.
+`tauri-plugin-updater` is installed, `auto-updater.tsx` is wired up, and `tauri.conf.json` points to the GitHub Releases `latest.json` endpoint.
 
-**Fix:**
+**Work done:**
+- Key pair generated with `pnpm tauri signer generate --ci`.
+- Private key saved to `%USERPROFILE%\.tauri\devstackbox.key` (local machine, not committed).
+- Public key updated in `src-tauri/tauri.conf.json`.
+- Local build signing configured via the `TAURI_SIGNING_PRIVATE_KEY_PATH` user env var.
+- Workflow updated to use Tauri v2 env var names: `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
 
-1. Run `pnpm tauri signer generate` locally.
-2. Add the private key as `TAURI_PRIVATE_KEY` in GitHub repository secrets.
-3. Add the password as `TAURI_KEY_PASSWORD` in GitHub repository secrets.
-4. Do not commit the private key or password to the repository.
-5. Publish a signed release build and test update flow from v0.1.6 to v0.1.7 or newer.
+**Remaining step:**
+Paste the private key content into GitHub repository secrets:
+1. Go to `https://github.com/ProgrammerNomad/DevStackBox/settings/secrets/actions`.
+2. Add secret `TAURI_SIGNING_PRIVATE_KEY` — value is the full content of `%USERPROFILE%\.tauri\devstackbox.key`.
+3. `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` can be left empty (key has no password).
+4. Do not commit the private key file or paste it anywhere in the repo.
 
 ---
 
@@ -65,19 +71,19 @@ The development workspace is working, but the MSI and NSIS installers still need
 
 **Priority:** HIGH
 **Files:** `src-tauri/src/commands/terminal.rs`, `src-tauri/src/utils/paths.rs`
-**Status:** Release-hardening fix needed
+**Status:** RESOLVED
 
 **Description:**
-`cargo check` passes, but `cargo clippy --all-targets -- -D warnings` fails under the current Rust toolchain because clippy now reports two warnings as errors:
+`cargo check` passes, but `cargo clippy --all-targets -- -D warnings` failed under the current Rust toolchain because clippy reported two warnings as errors:
 
-1. `TerminalSessions::new()` should have a matching `Default` implementation.
-2. `utils::paths` manually strips the `\\?\` prefix instead of using `strip_prefix`.
+1. `TerminalSessions::new()` lacked a matching `Default` implementation.
+2. `utils::paths` manually stripped the `\\?\` prefix instead of using `strip_prefix`.
 
-**Fix:**
+**Fix applied:**
 
-1. Add `impl Default for TerminalSessions { fn default() -> Self { Self::new() } }`.
-2. Replace manual prefix slicing with `strip_prefix`.
-3. Rerun `cargo clippy --all-targets -- -D warnings` from `src-tauri/`.
+1. Added `impl Default for TerminalSessions { fn default() -> Self { Self::new() } }` in `terminal.rs`.
+2. Replaced manual prefix slicing with `raw.strip_prefix(r"\\?\")` in `paths.rs`.
+3. `cargo clippy --all-targets -- -D warnings` now passes cleanly.
 
 ---
 
