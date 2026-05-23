@@ -762,6 +762,12 @@ Function un.onInit
 
   !insertmacro MUI_UNGETLANGUAGE
 
+  ; ARCH-001: Force uninstaller to always operate on C:\DevStackBox.
+  ; The uninstaller reads $INSTDIR from the registry at startup.
+  ; If a previous install wrote Program Files into the registry, the
+  ; uninstaller would silently target the wrong directory without this override.
+  StrCpy $INSTDIR "C:\DevStackBox"
+
   ${GetOptions} $CMDLINE "/P" $PassiveMode
   ${IfNot} ${Errors}
     StrCpy $PassiveMode 1
