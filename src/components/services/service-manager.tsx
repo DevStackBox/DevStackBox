@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { safeInvoke, isTauri, getMockServiceStatus } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
 import { motion } from "framer-motion";
@@ -13,6 +14,7 @@ import { ToastAction } from "@/components/ui/toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { notify, primeNotificationPermission } from "@/lib/notify";
+import { ROUTES } from "@/lib/routes";
 
 interface ServiceManagerProps {
   compact?: boolean;
@@ -47,6 +49,7 @@ export function ServiceManager({
   onSelectService,
 }: ServiceManagerProps) {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [services, setServices] = useState({
     apache: { running: false } as ServiceStatus,
     mysql: { running: false } as ServiceStatus,
@@ -240,43 +243,14 @@ export function ServiceManager({
     onViewLogs?.(service);
   };
 
-  // Handle database backup
-  const handleBackupDatabase = async () => {
-    try {
-      await safeInvoke(TAURI_COMMANDS.services.backupMysqlDatabase);
-      toast({
-        variant: "success",
-        title: "Backup Created",
-        description: "Database backup completed successfully",
-      });
-    } catch (error) {
-      console.error("Failed to backup database:", error);
-      toast({
-        variant: "destructive",
-        title: "Backup Failed",
-        description: "Failed to create database backup",
-      });
-    }
+  // Handle database backup - navigate to the Databases > Backups page (SSOT).
+  const handleBackupDatabase = () => {
+    navigate(ROUTES.databasesBackups.path);
   };
 
-  // Handle PHP terminal opening
-  const handleOpenTerminal = async () => {
-    try {
-      await safeInvoke(TAURI_COMMANDS.services.openPhpTerminal, {
-        version: currentPhpVersion,
-      });
-      toast({
-        title: "Terminal Opened",
-        description: `PHP ${currentPhpVersion} terminal launched`,
-      });
-    } catch (error) {
-      console.error("Failed to open PHP terminal:", error);
-      toast({
-        variant: "destructive",
-        title: "Terminal Error",
-        description: "Failed to open PHP terminal",
-      });
-    }
+  // Navigate to the in-app PHP CLI terminal tab.
+  const handleOpenTerminal = () => {
+    navigate(ROUTES.terminalPhp.path);
   };
 
   useEffect(() => {

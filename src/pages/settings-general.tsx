@@ -255,7 +255,7 @@ export function SettingsPage({}: SettingsPageProps) {
             )}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div>
               <div className="text-sm font-medium">

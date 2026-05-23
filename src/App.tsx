@@ -163,7 +163,7 @@ function AppShell() {
           <div className="container mx-auto px-4 py-3 flex items-center justify-between">
             <Breadcrumb />
             <div className="flex items-center gap-2">
-              <AutoUpdater />
+              <AutoUpdater mode="indicator" />
               <LanguageSwitcher />
               <ThemeToggle />
             </div>

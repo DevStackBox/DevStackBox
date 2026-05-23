@@ -16,7 +16,11 @@ import { APP_VERSION } from "@/lib/version";
 import { isTauri } from "@/lib/tauri";
 import { useToast } from "@/hooks/use-toast";
 
-export function AutoUpdater() {
+interface AutoUpdaterProps {
+  mode?: "button" | "indicator";
+}
+
+export function AutoUpdater({ mode = "button" }: AutoUpdaterProps) {
   const { t } = useTranslation();
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [updateInfo, setUpdateInfo] = useState<any>(null);
@@ -132,30 +136,42 @@ export function AutoUpdater() {
     };
   }, []);
 
+  // In indicator mode render nothing until an update is found. The component
+  // stays mounted so the startup check and 6-hour polling keep running.
+  if (mode === "indicator" && !updateAvailable) return null;
+
   return (
     <>
-      {/* Check Updates Button */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => checkForUpdates(true)}
-        disabled={checking}
-        className="relative"
-      >
-        <RefreshCw
-          className={`h-4 w-4 mr-2 ${checking ? "animate-spin" : ""}`}
-        />
-        {t("updater.checkUpdates")}
-
-        {updateAvailable && (
-          <Badge
-            variant="destructive"
-            className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center"
-          >
-            !
-          </Badge>
-        )}
-      </Button>
+      {mode === "indicator" ? (
+        // Header: icon-only button, only shown when an update is available.
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setShowDialog(true)}
+          className="text-primary"
+          title={t("updater.updateAvailable", "Update available")}
+        >
+          <Download className="h-4 w-4" />
+        </Button>
+      ) : (
+        // About page: always-visible Check Updates button.
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => checkForUpdates(true)}
+          disabled={checking}
+        >
+          <RefreshCw
+            className={`h-4 w-4 mr-2 ${checking ? "animate-spin" : ""}`}
+          />
+          {t("updater.checkUpdates")}
+          {updateAvailable && (
+            <Badge variant="destructive" className="ml-2 h-5 min-w-5 px-1 text-xs">
+              !
+            </Badge>
+          )}
+        </Button>
+      )}
 
       {/* Update Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>

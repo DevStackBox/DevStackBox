@@ -29,6 +29,8 @@ export function PhpExtensionsPage() {
   const [extensions, setExtensions] = useState<PhpExtension[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("");
+  // Resolved active PHP version - needed for both list and toggle commands.
+  const [activeVersion, setActiveVersion] = useState("8.3");
 
   const refresh = useCallback(async () => {
     if (!isTauri()) {
@@ -37,8 +39,17 @@ export function PhpExtensionsPage() {
     }
     setLoading(true);
     try {
+      // Resolve the currently active branch before listing extensions; the
+      // backend command requires a version string.
+      const versions = await safeInvoke<
+        { version: string; is_active: boolean }[]
+      >(TAURI_COMMANDS.php.getVersions);
+      const ver = versions?.find((v) => v.is_active)?.version ?? "8.3";
+      setActiveVersion(ver);
+
       const list = await safeInvoke<PhpExtension[]>(
         TAURI_COMMANDS.php.listExtensions,
+        { version: ver },
       );
       setExtensions(list ?? []);
     } catch (err) {
@@ -60,6 +71,7 @@ export function PhpExtensionsPage() {
     if (!isTauri()) return;
     try {
       await safeInvoke(TAURI_COMMANDS.php.toggleExtension, {
+        version: activeVersion,
         name: ext.name,
         enable: !ext.enabled,
       });
