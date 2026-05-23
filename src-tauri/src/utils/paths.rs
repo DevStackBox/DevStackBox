@@ -70,12 +70,10 @@ pub fn get_installation_path() -> PathBuf {
     }
 
     // Try common installation paths as a last resort before falling back
-    // to the current directory.  Do NOT add developer-specific shortcuts here.
+    // to the current directory.  Install path is strictly C:\DevStackBox per ARCH-001.
     let possible_paths = [
         PathBuf::from("C:\\DevStackBox\\_up_"),
         PathBuf::from("C:\\DevStackBox"),
-        PathBuf::from("C:\\Program Files\\DevStackBox\\_up_"),
-        PathBuf::from("C:\\Program Files\\DevStackBox"),
     ];
 
     for path in &possible_paths {

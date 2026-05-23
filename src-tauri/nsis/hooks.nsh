@@ -1,12 +1,18 @@
-; DevStackBox NSIS installer hooks
-; Forces C:\DevStackBox as the install directory.
-; customPreInstall runs after Tauri's registry/directory logic but before file extraction,
-; so it reliably overrides whatever INSTDIR was set to.
+; DevStackBox NSIS installer hooks (Tauri v2)
+;
+; Tauri v2 hook macros called by the bundler template:
+;   NSIS_HOOK_PREINSTALL  - runs just before file extraction
+;   NSIS_HOOK_POSTINSTALL - runs after all files are copied
+;
+; NOTE: customInit and customPreInstall are Tauri v1 names and are NEVER
+;       called by the Tauri v2 template - they were silently ignored.
+;
+; The install directory is primarily forced to C:\DevStackBox by the custom
+; template (src-tauri/templates/installer.nsi) in .onInit.
+; This hook is a safety net that fires right before file extraction.
 
-!macro customInit
+!macro NSIS_HOOK_PREINSTALL
+  ; ARCH-001: force install dir to C:\DevStackBox before file extraction.
   StrCpy $INSTDIR "C:\DevStackBox"
-!macroend
-
-!macro customPreInstall
-  StrCpy $INSTDIR "C:\DevStackBox"
+  SetOutPath "$INSTDIR"
 !macroend

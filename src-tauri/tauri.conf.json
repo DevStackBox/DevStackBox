@@ -61,6 +61,7 @@
         "fragmentPaths": ["wix/custom-install-dir.wxs"]
       },
       "nsis": {
+        "template": "templates/installer.nsi",
         "installMode": "perMachine",
         "installerHooks": "nsis/hooks.nsh",
         "displayLanguageSelector": false,
