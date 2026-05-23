@@ -146,8 +146,8 @@ pub fn user_sessions_dir() -> PathBuf {
 // converting backslashes to forward slashes.
 pub fn to_apache_path(p: &std::path::Path) -> String {
     let raw = p.to_string_lossy();
-    let stripped = if raw.starts_with(r"\\?\") {
-        raw[4..].to_string()
+    let stripped = if let Some(s) = raw.strip_prefix(r"\\?\") {
+        s.to_string()
     } else {
         raw.into_owned()
     };

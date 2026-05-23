@@ -28,6 +28,12 @@ impl TerminalSessions {
     }
 }
 
+impl Default for TerminalSessions {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub struct TerminalSession {
     stdin: ChildStdin,
     child: Child,
