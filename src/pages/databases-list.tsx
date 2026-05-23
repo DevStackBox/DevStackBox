@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import {
@@ -24,7 +24,6 @@ import { TAURI_COMMANDS } from "@/lib/commands";
 import {
   Database as DatabaseIcon,
   Download,
-  Upload,
   RefreshCw,
   ExternalLink,
   Search,
@@ -65,7 +64,6 @@ export function DatabasesPage() {
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const loadDatabases = async () => {
     setLoading(true);
@@ -127,58 +125,6 @@ export function DatabasesPage() {
     }
   };
 
-  const backupAll = async () => {
-    setBusy("__all__");
-    try {
-      const result = await safeInvoke<string>(
-        TAURI_COMMANDS.services.backupMysqlDatabase,
-      );
-      toast({
-        variant: "success",
-        title: t("databases.backupCreated", "Backup created"),
-        description: result ?? "OK",
-      });
-    } catch (err) {
-      toast({
-        variant: "destructive",
-        title: t("databases.backupFailed", "Backup failed"),
-        description: `${err}`,
-      });
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const onPickFile = () => fileInputRef.current?.click();
-
-  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setBusy("__restore__");
-    try {
-      const sql = await file.text();
-      const result = await safeInvoke<string>(
-        TAURI_COMMANDS.services.restoreMysqlDatabase,
-        { sql },
-      );
-      toast({
-        variant: "success",
-        title: t("databases.restoreCompleted", "Restore completed"),
-        description: result ?? file.name,
-      });
-      await loadDatabases();
-    } catch (err) {
-      toast({
-        variant: "destructive",
-        title: t("databases.restoreFailed", "Restore failed"),
-        description: `${err}`,
-      });
-    } finally {
-      setBusy(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  };
-
   const openInPhpMyAdmin = (name: string) => {
     openExternalUrl(
       `http://localhost/phpmyadmin/?db=${encodeURIComponent(name)}`,
@@ -236,43 +182,6 @@ export function DatabasesPage() {
           {t("databases.openPhpMyAdmin", "phpMyAdmin")}
         </Button>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("databases.actions", "Backup and restore")}</CardTitle>
-          <CardDescription>
-            {t(
-              "databases.actionsDesc",
-              "Full server backup uses mysqldump --all-databases. Restore reads any .sql file and pipes it to the mysql client.",
-            )}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          <Button onClick={backupAll} disabled={busy !== null}>
-            <Download className="mr-2 h-4 w-4" />
-            {busy === "__all__"
-              ? t("databases.backingUp", "Backing up...")
-              : t("databases.backupAll", "Backup all databases")}
-          </Button>
-          <Button
-            variant="outline"
-            onClick={onPickFile}
-            disabled={busy !== null}
-          >
-            <Upload className="mr-2 h-4 w-4" />
-            {busy === "__restore__"
-              ? t("databases.restoring", "Restoring...")
-              : t("databases.restoreSql", "Restore from .sql")}
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".sql,text/plain"
-            className="hidden"
-            onChange={onFileChange}
-          />
-        </CardContent>
-      </Card>
 
       <Card>
         <CardHeader>

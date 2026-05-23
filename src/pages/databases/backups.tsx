@@ -1,7 +1,7 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { RefreshCw, Download, HardDriveDownload } from "lucide-react";
+import { RefreshCw, Download, HardDriveDownload, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -53,6 +53,60 @@ export function DatabasesBackupsPage() {
     load();
   }, [load]);
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const backupAll = async () => {
+    setBusy("__all__");
+    try {
+      const result = await safeInvoke<string>(
+        TAURI_COMMANDS.services.backupMysqlDatabase,
+      );
+      toast({
+        variant: "success",
+        title: t("databases.backupCreated", "Backup created"),
+        description: result ?? "OK",
+      });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: t("databases.backupFailed", "Backup failed"),
+        description: `${err}`,
+      });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const onPickFile = () => fileInputRef.current?.click();
+
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBusy("__restore__");
+    try {
+      const sql = await file.text();
+      const result = await safeInvoke<string>(
+        TAURI_COMMANDS.services.restoreMysqlDatabase,
+        { sql },
+      );
+      toast({
+        variant: "success",
+        title: t("databases.restoreCompleted", "Restore completed"),
+        description: result ?? file.name,
+      });
+      await load();
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: t("databases.restoreFailed", "Restore failed"),
+        description: `${err}`,
+      });
+    } finally {
+      setBusy(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const backup = async (name: string) => {
     setBusy(name);
     try {
@@ -82,6 +136,43 @@ export function DatabasesBackupsPage() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
     >
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("databases.actions", "Backup and restore")}</CardTitle>
+          <CardDescription>
+            {t(
+              "databases.actionsDesc",
+              "Full server backup uses mysqldump --all-databases. Restore reads any .sql file and pipes it to the mysql client.",
+            )}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-2">
+          <Button onClick={backupAll} disabled={busy !== null}>
+            <Download className="mr-2 h-4 w-4" />
+            {busy === "__all__"
+              ? t("databases.backingUp", "Backing up...")
+              : t("databases.backupAll", "Backup all databases")}
+          </Button>
+          <Button
+            variant="outline"
+            onClick={onPickFile}
+            disabled={busy !== null}
+          >
+            <Upload className="mr-2 h-4 w-4" />
+            {busy === "__restore__"
+              ? t("databases.restoring", "Restoring...")
+              : t("databases.restoreSql", "Restore from .sql")}
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".sql,text/plain"
+            className="hidden"
+            onChange={onFileChange}
+          />
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between gap-3">
