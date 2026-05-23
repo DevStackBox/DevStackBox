@@ -27,6 +27,7 @@
   },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "targets": ["msi", "nsis"],
     "publisher": "Nomad Programmer",
     "icon": [
@@ -44,10 +45,10 @@
       "../config/**/*"
     ],
     "externalBin": [],
-    "copyright": "© 2025 Nomad Programmer",
+    "copyright": "© 2026 Nomad Programmer",
     "category": "DeveloperTool",
     "shortDescription": "Local PHP development environment",
-    "longDescription": "A lightweight, portable, open-source local development environment for PHP developers with Apache, MySQL, phpMyAdmin, and PHP 8.2",
+    "longDescription": "A lightweight, portable, open-source local development environment for PHP developers with Apache, MySQL, phpMyAdmin, and PHP 8.3",
     "windows": {
       "certificateThumbprint": null,
       "digestAlgorithm": "sha256",
