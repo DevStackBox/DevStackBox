@@ -8,16 +8,16 @@ import {
   RefreshCw,
   PackageCheck,
 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { safeInvoke, isTauri } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
 import { useToast } from "@/hooks/use-toast";
@@ -76,19 +76,7 @@ interface DownloadProgressPayload {
   message?: string | null;
 }
 
-interface PHPVersionSelectorProps {
-  isOpen: boolean;
-  onClose: () => void;
-  currentVersion: string;
-  onVersionChange: (version: string) => void;
-}
-
-export function PHPVersionSelector({
-  isOpen,
-  onClose,
-  currentVersion,
-  onVersionChange,
-}: PHPVersionSelectorProps) {
+export function PhpVersionsPage() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [versions, setVersions] = useState<PHPVersionInfo[]>([]);
@@ -101,13 +89,13 @@ export function PHPVersionSelector({
     setLoading(true);
     try {
       if (!isTauri()) {
-        // Browser mode fallback - show static list with 8.2 marked installed.
+        // Browser mode fallback - show static list with 8.3 as active.
         setVersions(
           ["8.4", "8.3", "8.2", "8.1"].map((v) => ({
             version: v,
             status: v === BUNDLED_DEFAULT_VERSION ? "installed" : "available",
             path: "",
-            is_active: v === currentVersion,
+            is_active: v === BUNDLED_DEFAULT_VERSION,
             installed: v === BUNDLED_DEFAULT_VERSION,
             download_url: "",
           })),
@@ -133,21 +121,16 @@ export function PHPVersionSelector({
     } finally {
       setLoading(false);
     }
-  }, [currentVersion, t, toast]);
+  }, [t, toast]);
 
-  // Load versions whenever the dialog opens.
+  // Load versions on mount.
   useEffect(() => {
-    if (isOpen) {
-      loadVersions();
-    } else {
-      // Clear stale progress when closed so a future open is clean.
-      setProgress({});
-    }
-  }, [isOpen, loadVersions]);
+    loadVersions();
+  }, [loadVersions]);
 
-  // Subscribe to backend download progress events while the dialog is open.
+  // Subscribe to backend download progress events while this page is mounted.
   useEffect(() => {
-    if (!isOpen || !isTauri()) return;
+    if (!isTauri()) return;
     let unlisten: (() => void) | undefined;
     let cancelled = false;
     (async () => {
@@ -179,7 +162,7 @@ export function PHPVersionSelector({
       cancelled = true;
       if (unlisten) unlisten();
     };
-  }, [isOpen, loadVersions]);
+  }, [loadVersions]);
 
   const handleDownload = async (version: string) => {
     // Optimistic UI marker so the card shows progress immediately.
@@ -238,11 +221,16 @@ export function PHPVersionSelector({
           throw new Error("Switch returned false");
         }
       }
-      onVersionChange(version);
+      // Notify App-level state so service card version badges update without a restart.
+      window.dispatchEvent(
+        new CustomEvent("devstackbox:php-version-changed", {
+          detail: { version },
+        }),
+      );
+      loadVersions();
       toast({
         title: t("php.activated", "PHP {{version}} is now active", { version }),
       });
-      onClose();
     } catch (err) {
       toast({
         title: t("php.activateFailed", "Failed to activate PHP {{version}}", {
@@ -256,6 +244,10 @@ export function PHPVersionSelector({
 
   const isDownloadingStage = (p?: DownloadProgressPayload) =>
     !!p && p.stage !== "complete" && p.stage !== "error";
+
+  // Derive current active version from backend state.
+  const currentVersion =
+    versions.find((v) => v.is_active)?.version ?? BUNDLED_DEFAULT_VERSION;
 
   const renderStatusBadge = (v: PHPVersionInfo) => {
     const p = progress[v.version];
@@ -323,101 +315,112 @@ export function PHPVersionSelector({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            {t("php.title", "PHP Version Manager")}
-            <Badge variant="outline" className="font-mono">
-              {currentVersion}
-            </Badge>
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+    >
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                {t("php.title", "PHP Version Manager")}
+                <Badge variant="outline" className="font-mono">
+                  {currentVersion}
+                </Badge>
+              </CardTitle>
+              <CardDescription>
+                {t(
+                  "php.versionDescription",
+                  "PHP 8.3 ships with DevStackBox. Other versions are downloaded on demand from windows.php.net and installed alongside it.",
+                )}
+              </CardDescription>
+            </div>
             <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
+              variant="outline"
+              size="sm"
               onClick={loadVersions}
               disabled={loading}
-              title={t("actions.refresh", "Refresh")}
             >
               <RefreshCw
-                className={`h-4 w-4 ${loading ? "animate-spin" : ""}`}
+                className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
               />
+              {t("actions.refresh", "Refresh")}
             </Button>
-          </DialogTitle>
-          <DialogDescription>
-            {t(
-              "php.description",
-              "PHP 8.3 ships with DevStackBox. Other versions are downloaded on demand from windows.php.net and installed alongside it.",
-            )}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="flex flex-col gap-1 mt-2">
-          {versions.map((v, index) => {
-            const notes = BRANCH_NOTES[v.version];
-            const p = progress[v.version];
-            const isDownloading = isDownloadingStage(p);
-            // Derive active state: trust backend flag first; fall back to
-            // comparing against the currentVersion prop so that fresh installs
-            // (where php/current junction does not exist yet) still correctly
-            // mark the running version as active.
-            const vResolved = {
-              ...v,
-              is_active: v.is_active || v.version === currentVersion,
-            };
-            return (
-              <motion.div
-                key={v.version}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.15, delay: index * 0.04 }}
-                className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 ${
-                  vResolved.is_active
-                    ? "border-primary bg-primary/5"
-                    : "bg-card"
-                }`}
-              >
-                {/* Left: version + description */}
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="font-semibold text-sm">
-                      PHP {v.version}
-                    </span>
-                    {v.version === BUNDLED_DEFAULT_VERSION && (
-                      <Badge variant="outline" className="text-xs h-4 px-1">
-                        {t("php.bundled", "Bundled")}
-                      </Badge>
-                    )}
-                    {renderStatusBadge(vResolved)}
-                  </div>
-                  {notes && (
-                    <p className="text-xs text-muted-foreground mt-0.5 leading-tight">
-                      {notes.description}
-                    </p>
-                  )}
-                  {isDownloading && (
-                    <div className="mt-1.5 space-y-0.5">
-                      <Progress value={p?.percent ?? 0} className="h-1.5" />
-                      <p className="text-xs text-muted-foreground">
-                        {p?.message ?? t("php.stage." + p!.stage, p!.stage)}
-                        {p?.total && p.total > 0 && p.stage === "downloading"
-                          ? ` (${p.percent}%)`
-                          : ""}
-                      </p>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-1">
+            {versions.map((v, index) => {
+              const notes = BRANCH_NOTES[v.version];
+              const p = progress[v.version];
+              const isDownloading = isDownloadingStage(p);
+              // Derive active state: trust backend flag first; fall back to
+              // comparing against derived currentVersion so fresh installs
+              // still correctly mark the running version as active.
+              const vResolved = {
+                ...v,
+                is_active: v.is_active || v.version === currentVersion,
+              };
+              return (
+                <motion.div
+                  key={v.version}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.15, delay: index * 0.04 }}
+                  className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 ${
+                    vResolved.is_active
+                      ? "border-primary bg-primary/5"
+                      : "bg-card"
+                  }`}
+                >
+                  {/* Left: version + description */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="font-semibold text-sm">
+                        PHP {v.version}
+                      </span>
+                      {v.version === BUNDLED_DEFAULT_VERSION && (
+                        <Badge variant="outline" className="text-xs h-4 px-1">
+                          {t("php.bundled", "Bundled")}
+                        </Badge>
+                      )}
+                      {renderStatusBadge(vResolved)}
                     </div>
-                  )}
-                  {p?.stage === "error" && (
-                    <p className="text-xs text-destructive mt-1">{p.message}</p>
-                  )}
-                </div>
+                    {notes && (
+                      <p className="text-xs text-muted-foreground mt-0.5 leading-tight">
+                        {notes.description}
+                      </p>
+                    )}
+                    {isDownloading && (
+                      <div className="mt-1.5 space-y-0.5">
+                        <Progress value={p?.percent ?? 0} className="h-1.5" />
+                        <p className="text-xs text-muted-foreground">
+                          {p?.message ?? t("php.stage." + p!.stage, p!.stage)}
+                          {p?.total && p.total > 0 && p.stage === "downloading"
+                            ? ` (${p.percent}%)`
+                            : ""}
+                        </p>
+                      </div>
+                    )}
+                    {p?.stage === "error" && (
+                      <p className="text-xs text-destructive mt-1">
+                        {p.message}
+                      </p>
+                    )}
+                  </div>
 
-                {/* Right: action button */}
-                <div className="shrink-0">{renderAction(vResolved)}</div>
-              </motion.div>
-            );
-          })}
-        </div>
-      </DialogContent>
-    </Dialog>
+                  {/* Right: action button */}
+                  <div className="shrink-0">{renderAction(vResolved)}</div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
+
+export default PhpVersionsPage;

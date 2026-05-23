@@ -17,7 +17,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PHPVersionSelector } from "@/components/php-version-selector";
 import { safeInvoke, isTauri } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
 import { ROUTES } from "@/lib/routes";
@@ -32,7 +31,6 @@ export function PhpOverviewPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [versions, setVersions] = useState<PhpVersion[]>([]);
-  const [selectorOpen, setSelectorOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!isTauri()) {
@@ -96,7 +94,10 @@ export function PhpOverviewPage() {
                 <RefreshCw className="mr-2 h-4 w-4" />
                 {t("actions.refresh", "Refresh")}
               </Button>
-              <Button size="sm" onClick={() => setSelectorOpen(true)}>
+              <Button
+                size="sm"
+                onClick={() => navigate(ROUTES.phpVersions.path)}
+              >
                 <SettingsIcon className="mr-2 h-4 w-4" />
                 {t("php.switchVersion", "Switch Version")}
               </Button>
@@ -175,16 +176,6 @@ export function PhpOverviewPage() {
           </CardContent>
         </Card>
       </div>
-
-      <PHPVersionSelector
-        isOpen={selectorOpen}
-        onClose={() => {
-          setSelectorOpen(false);
-          refresh();
-        }}
-        currentVersion={active?.version ?? ""}
-        onVersionChange={() => refresh()}
-      />
     </motion.div>
   );
 }

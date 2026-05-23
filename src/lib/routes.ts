@@ -19,6 +19,7 @@ import {
   FileCog,
   Code,
   GitBranch,
+  Layers,
   type LucideIcon,
 } from "lucide-react";
 
@@ -95,6 +96,13 @@ export const ROUTES = {
     icon: FileText,
     parent: "/services/mysql",
   },
+  mysqlConfig: {
+    path: "/services/mysql/config",
+    labelKey: "navigation.config",
+    defaultLabel: "Config",
+    icon: FileCog,
+    parent: "/services/mysql",
+  },
   php: {
     path: "/services/php",
     labelKey: "navigation.php",
@@ -114,6 +122,13 @@ export const ROUTES = {
     labelKey: "navigation.config",
     defaultLabel: "Config",
     icon: FileCog,
+    parent: "/services/php",
+  },
+  phpVersions: {
+    path: "/services/php/versions",
+    labelKey: "navigation.versions",
+    defaultLabel: "Versions",
+    icon: Layers,
     parent: "/services/php",
   },
   databases: {

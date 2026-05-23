@@ -1,4 +1,4 @@
-import { Database, FileText } from "lucide-react";
+import { Database, FileText, FileCog } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ServiceWorkspaceLayout } from "@/components/service-workspace-layout";
 import { ServiceWorkspaceHeader } from "@/components/service-workspace-header";
@@ -18,6 +18,11 @@ export function MysqlLayout() {
       to: ROUTES.mysqlLogs.path,
       label: t("navigation.logs", "Logs"),
       icon: FileText,
+    },
+    {
+      to: ROUTES.mysqlConfig.path,
+      label: t("navigation.config", "Config"),
+      icon: FileCog,
     },
   ];
 

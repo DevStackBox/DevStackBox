@@ -1,12 +1,12 @@
 import { useTranslation } from "react-i18next";
-import { useState } from "react";
 import { Code, FileText } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { openExternalUrl } from "@/lib/tauri";
 import { ServiceCard } from "./service-card";
 import { Badge } from "@/components/ui/badge";
 import { ServiceOverflowMenu } from "./service-overflow-menu";
 import { ServiceActions } from "./service-actions";
-import { PhpExtensionsDialog } from "@/components/php-extensions-dialog";
+import { ROUTES } from "@/lib/routes";
 import {
   ContextMenuContent,
   ContextMenuItem,
@@ -41,7 +41,7 @@ export function PHPService({
   onSelect,
 }: PHPServiceProps) {
   const { t } = useTranslation();
-  const [extensionsOpen, setExtensionsOpen] = useState(false);
+  const navigate = useNavigate();
 
   const openPhpInfo = () => {
     openExternalUrl("http://localhost/phpinfo.php");
@@ -111,7 +111,7 @@ export function PHPService({
                     : []),
                   {
                     label: t("actions.extensions", "Extensions"),
-                    onSelect: () => setExtensionsOpen(true),
+                    onSelect: () => navigate(ROUTES.phpExtensions.path),
                   },
                   {
                     label: t("actions.composer", "Composer"),
@@ -162,7 +162,7 @@ export function PHPService({
           <ContextMenuItem onSelect={openPhpInfo}>
             {t("actions.phpinfo", "PHP Info")}
           </ContextMenuItem>
-          <ContextMenuItem onSelect={() => setExtensionsOpen(true)}>
+          <ContextMenuItem onSelect={() => navigate(ROUTES.phpExtensions.path)}>
             {t("actions.extensions", "Extensions")}
           </ContextMenuItem>
           {onOpenTerminal && (
@@ -209,11 +209,6 @@ export function PHPService({
           layout="grid"
         />
       </div>
-      <PhpExtensionsDialog
-        isOpen={extensionsOpen}
-        onClose={() => setExtensionsOpen(false)}
-        version={currentVersion}
-      />
     </ServiceCard>
   );
 }

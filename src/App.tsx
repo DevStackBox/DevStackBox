@@ -19,8 +19,7 @@ import { Sidebar } from "./components/sidebar";
 import { Breadcrumb } from "./components/breadcrumb";
 import { OnboardingDialog } from "./components/onboarding-dialog";
 import { CommandPalette } from "./components/command-palette";
-import { PHPVersionSelector } from "./components/php-version-selector";
-import { ConfigEditor } from "./components/config-editor";
+
 import {
   DashboardPage,
   ServicesPage,
@@ -47,10 +46,12 @@ import { ApacheSslPage } from "./pages/services/apache/ssl";
 import { MysqlLayout } from "./pages/services/mysql/layout";
 import { MysqlOverviewPage } from "./pages/services/mysql";
 import { MysqlLogsPage } from "./pages/services/mysql/logs";
+import { MySqlConfigPage } from "./pages/services/mysql/config";
 import { PhpLayout } from "./pages/services/php/layout";
 import { PhpOverviewPage } from "./pages/services/php";
 import { PhpExtensionsPage } from "./pages/services/php/extensions";
 import { PhpConfigPage } from "./pages/services/php/config";
+import { PhpVersionsPage } from "./pages/services/php/versions";
 import { DatabasesLayout } from "./pages/databases/layout";
 import { DatabasesPage as DatabasesIndexPage } from "./pages/databases";
 import { MySQLUsersPage as DatabasesUsersPage } from "./pages/databases/users";
@@ -68,18 +69,12 @@ function AppShell() {
   const navigate = useNavigate();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
-  const [phpVersionSelectorOpen, setPhpVersionSelectorOpen] = useState(false);
-  const [configEditorOpen, setConfigEditorOpen] = useState(false);
-  const [configService, setConfigService] = useState<ServiceName>("mysql");
   const [currentPhpVersion, setCurrentPhpVersion] = useState("8.3");
 
   const handleOpenConfig = (service: ServiceName) => {
     if (service === "apache") navigate(ROUTES.apacheConfig.path);
     else if (service === "php") navigate(ROUTES.phpConfig.path);
-    else {
-      setConfigService(service);
-      setConfigEditorOpen(true);
-    }
+    else navigate(ROUTES.mysqlConfig.path);
   };
 
   const handleViewLogs = (service: "apache" | "mysql" | "php") => {
@@ -139,6 +134,19 @@ function AppShell() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  // Keep currentPhpVersion in sync when the user activates a version from
+  // the Versions page. The page dispatches this event after a successful
+  // switch so service card badges update without an app restart.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ version: string }>).detail;
+      setCurrentPhpVersion(detail.version);
+    };
+    window.addEventListener("devstackbox:php-version-changed", handler);
+    return () =>
+      window.removeEventListener("devstackbox:php-version-changed", handler);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       <Sidebar
@@ -169,7 +177,7 @@ function AppShell() {
               element={
                 <DashboardPage
                   onOpenPHPVersionSelector={() =>
-                    setPhpVersionSelectorOpen(true)
+                    navigate(ROUTES.phpVersions.path)
                   }
                   onOpenConfig={handleOpenConfig}
                   onViewLogs={handleViewLogs}
@@ -183,7 +191,7 @@ function AppShell() {
                 <ServicesPage
                   currentPhpVersion={currentPhpVersion}
                   onOpenPHPVersionSelector={() =>
-                    setPhpVersionSelectorOpen(true)
+                    navigate(ROUTES.phpVersions.path)
                   }
                   onOpenConfig={handleOpenConfig}
                   onViewLogs={handleViewLogs}
@@ -202,12 +210,14 @@ function AppShell() {
             <Route path="/services/mysql" element={<MysqlLayout />}>
               <Route index element={<MysqlOverviewPage />} />
               <Route path="logs" element={<MysqlLogsPage />} />
+              <Route path="config" element={<MySqlConfigPage />} />
             </Route>
 
             <Route path="/services/php" element={<PhpLayout />}>
               <Route index element={<PhpOverviewPage />} />
               <Route path="extensions" element={<PhpExtensionsPage />} />
               <Route path="config" element={<PhpConfigPage />} />
+              <Route path="versions" element={<PhpVersionsPage />} />
             </Route>
 
             <Route path="/databases" element={<DatabasesLayout />}>
@@ -290,19 +300,6 @@ function AppShell() {
         isOpen={commandPaletteOpen}
         onClose={() => setCommandPaletteOpen(false)}
         onServiceToggle={handleServiceToggle}
-      />
-
-      <PHPVersionSelector
-        isOpen={phpVersionSelectorOpen}
-        onClose={() => setPhpVersionSelectorOpen(false)}
-        currentVersion={currentPhpVersion}
-        onVersionChange={setCurrentPhpVersion}
-      />
-
-      <ConfigEditor
-        isOpen={configEditorOpen}
-        onClose={() => setConfigEditorOpen(false)}
-        service={configService}
       />
 
       <Toaster />

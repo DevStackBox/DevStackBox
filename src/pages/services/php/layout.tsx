@@ -1,4 +1,4 @@
-import { Server, Puzzle, FileCog } from "lucide-react";
+import { Server, Puzzle, FileCog, Layers } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ServiceWorkspaceLayout } from "@/components/service-workspace-layout";
 import { ServiceWorkspaceHeader } from "@/components/service-workspace-header";
@@ -21,8 +21,13 @@ export function PhpLayout() {
     },
     {
       to: ROUTES.phpConfig.path,
-      label: t("navigation.config", "Config"),
+      label: t("navigation.phpIni", "php.ini"),
       icon: FileCog,
+    },
+    {
+      to: ROUTES.phpVersions.path,
+      label: t("navigation.versions", "Versions"),
+      icon: Layers,
     },
   ];
 
