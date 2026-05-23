@@ -17,6 +17,8 @@ import {
   Users,
   Puzzle,
   FileCog,
+  Code,
+  GitBranch,
   type LucideIcon,
 } from "lucide-react";
 
@@ -166,6 +168,48 @@ export const ROUTES = {
     labelKey: "navigation.terminal",
     defaultLabel: "Terminal",
     icon: SquareTerminal,
+  },
+  terminalShell: {
+    path: "/terminal/shell",
+    labelKey: "terminal.shell",
+    defaultLabel: "Shell",
+    icon: SquareTerminal,
+    parent: "/terminal",
+  },
+  terminalPowershell: {
+    path: "/terminal/powershell",
+    labelKey: "terminal.powershell",
+    defaultLabel: "PowerShell",
+    icon: SquareTerminal,
+    parent: "/terminal",
+  },
+  terminalCmd: {
+    path: "/terminal/cmd",
+    labelKey: "terminal.cmd",
+    defaultLabel: "CMD",
+    icon: SquareTerminal,
+    parent: "/terminal",
+  },
+  terminalPhp: {
+    path: "/terminal/php-cli",
+    labelKey: "terminal.phpCli",
+    defaultLabel: "PHP CLI",
+    icon: Code,
+    parent: "/terminal",
+  },
+  terminalMysql: {
+    path: "/terminal/mysql-cli",
+    labelKey: "terminal.mysqlCli",
+    defaultLabel: "MySQL CLI",
+    icon: Database,
+    parent: "/terminal",
+  },
+  terminalGit: {
+    path: "/terminal/git",
+    labelKey: "terminal.gitBash",
+    defaultLabel: "Git Bash",
+    icon: GitBranch,
+    parent: "/terminal",
   },
   security: {
     path: "/security",
