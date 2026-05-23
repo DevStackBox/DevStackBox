@@ -48,16 +48,16 @@ Before writing a new component, check this file to see if one already exists tha
 
 ## Pages
 
-| Page Component  | File                       | Route                 | Status  |
-| --------------- | -------------------------- | --------------------- | ------- |
-| `DashboardPage` | `pages/dashboard.tsx`      | `/`                   | Working |
-| `ServicesPage`  | `pages/services.tsx`       | `/services`           | Working |
-| `LogsLayout`    | `pages/logs/layout.tsx`    | `/logs/*`             | Working |
-| `SettingsPage`  | `pages/settings/index.tsx` | `/settings`           | Working |
-| `BackupPage`    | `pages/settings/backup.tsx`| `/settings/backup`    | Working |
-| `AboutPage`     | `pages/about.tsx`          | `/about`              | Working |
-| `SecurityPage`  | `pages/security.tsx`       | `/security`           | Working |
-| `TerminalLayout`| `pages/terminal/layout.tsx`| `/terminal/*`         | Working |
+| Page Component   | File                        | Route              | Status  |
+| ---------------- | --------------------------- | ------------------ | ------- |
+| `DashboardPage`  | `pages/dashboard.tsx`       | `/`                | Working |
+| `ServicesPage`   | `pages/services.tsx`        | `/services`        | Working |
+| `LogsLayout`     | `pages/logs/layout.tsx`     | `/logs/*`          | Working |
+| `SettingsPage`   | `pages/settings/index.tsx`  | `/settings`        | Working |
+| `BackupPage`     | `pages/settings/backup.tsx` | `/settings/backup` | Working |
+| `AboutPage`      | `pages/about.tsx`           | `/about`           | Working |
+| `SecurityPage`   | `pages/security.tsx`        | `/security`        | Working |
+| `TerminalLayout` | `pages/terminal/layout.tsx` | `/terminal/*`      | Working |
 
 ---
 
