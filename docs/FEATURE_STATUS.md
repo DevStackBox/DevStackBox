@@ -12,9 +12,9 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 | Phase                        | Status | Notes                                                                                                                                                                                                                                                     |
 | ---------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Phase 1 - Core Stability     | DONE   | Items 1.1-1.8 complete. `cargo check` and `cargo clippy -D warnings` both clean.                                                                                                                                                                          |
+| Phase 1 - Core Stability     | DONE   | Items 1.1-1.8 complete. `cargo check` is clean; current toolchain clippy follow-up is tracked in KNOWN_ISSUES.md ISSUE-017.                                                                                                                               |
 | Phase 1.8 - User Data Root   | DONE   | Runtime data now lives in `%LOCALAPPDATA%\DevStackBox\` (override via `DEVSTACKBOX_DATA_DIR`).                                                                                                                                                            |
-| Phase 2 - Modularize Backend | DONE   | `lib.rs` reduced to ~150 lines. Commands split into `commands/{mysql,apache,php,config,logs,system,tray}.rs`; helpers in `utils/{paths,process}.rs`; shared types in `types.rs`; default web templates in `src-tauri/templates/`. Build and clippy clean. |
+| Phase 2 - Modularize Backend | DONE   | `lib.rs` reduced to ~150 lines. Commands split into `commands/{mysql,apache,php,config,logs,system,tray}.rs`; helpers in `utils/{paths,process}.rs`; shared types in `types.rs`; default web templates in `src-tauri/templates/`. Build check clean.        |
 
 ---
 

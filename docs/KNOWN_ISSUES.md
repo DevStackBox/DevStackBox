@@ -61,6 +61,26 @@ The development workspace is working, but the MSI and NSIS installers still need
 
 ---
 
+### ISSUE-017: `cargo clippy -D warnings` Fails on Current Toolchain
+
+**Priority:** HIGH
+**Files:** `src-tauri/src/commands/terminal.rs`, `src-tauri/src/utils/paths.rs`
+**Status:** Release-hardening fix needed
+
+**Description:**
+`cargo check` passes, but `cargo clippy --all-targets -- -D warnings` fails under the current Rust toolchain because clippy now reports two warnings as errors:
+
+1. `TerminalSessions::new()` should have a matching `Default` implementation.
+2. `utils::paths` manually strips the `\\?\` prefix instead of using `strip_prefix`.
+
+**Fix:**
+
+1. Add `impl Default for TerminalSessions { fn default() -> Self { Self::new() } }`.
+2. Replace manual prefix slicing with `strip_prefix`.
+3. Rerun `cargo clippy --all-targets -- -D warnings` from `src-tauri/`.
+
+---
+
 ## Medium Priority Issues
 
 ### ISSUE-015: phpMyAdmin 5.2.1 PHP 8.4 Compatibility

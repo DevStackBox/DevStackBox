@@ -49,7 +49,7 @@ Do NOT require users to download core components on first launch. Bad first-laun
 
 ## Current State: v0.1.7-dev
 
-Phases 1, 2, and 3 are complete. The focus is now Phase 4 (installer / distribution) and incremental Phase 5 polish. The codebase is stable: `cargo check`, `cargo clippy`, and `pnpm tsc --noEmit` are all clean with zero warnings.
+Phases 1, 2, and 3 are complete. The focus is now Phase 4 (installer / distribution) and incremental Phase 5 polish. Current validation: `cargo check` and `pnpm exec tsc --noEmit` are clean; `cargo clippy --all-targets -- -D warnings` has two release-hardening warnings tracked in `docs/KNOWN_ISSUES.md` ISSUE-017.
 
 ---
 
@@ -68,7 +68,7 @@ All Phase 1 items are complete. See FEATURE_STATUS.md and KNOWN_ISSUES.md for de
 
 - [x] Run `cargo clippy --fix` in `src-tauri/`
 - [x] Fix remaining `dead_code` warnings manually
-- [x] Build should be warning-free before Phase 2 begins (verified: `cargo check` and `cargo clippy --all-targets -- -D warnings` both clean)
+- [x] Build was warning-free before Phase 2 began; current toolchain clippy follow-up is tracked in KNOWN_ISSUES.md ISSUE-017
 
 ### 1.3 Fix Service Status Logic (Critical)
 
@@ -136,7 +136,7 @@ See `docs/UPDATES_AND_MIGRATIONS.md` for the full architecture.
 **Goal:** Split `lib.rs` (~1600 lines) into maintainable modules.  
 Do this as a dedicated refactor task. Do NOT mix with feature work.
 
-**Status:** Completed. `lib.rs` reduced from ~1900 lines to ~150 lines (module declarations + `run()` + tray setup). All commands extracted to `commands/{mysql,apache,php,config,logs,system,tray}.rs`. Path and process helpers extracted to `utils/{paths,process}.rs`. Shared types in `types.rs`. Default HTML/PHP templates moved out of Rust strings into `templates/default_*.{html,php}` and pulled in via `include_str!`. `cargo check`, `cargo clippy --all-targets -- -D warnings`, and `npx tsc --noEmit` all clean.
+**Status:** Completed. `lib.rs` reduced from ~1900 lines to ~150 lines (module declarations + `run()` + tray setup). All commands extracted to `commands/{mysql,apache,php,config,logs,system,tray}.rs`. Path and process helpers extracted to `utils/{paths,process}.rs`. Shared types in `types.rs`. Default HTML/PHP templates moved out of Rust strings into `templates/default_*.{html,php}` and pulled in via `include_str!`. `cargo check` and `pnpm exec tsc --noEmit` are clean; current clippy follow-up is tracked in KNOWN_ISSUES.md ISSUE-017.
 
 ### Target structure
 
