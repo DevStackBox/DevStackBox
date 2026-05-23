@@ -2,13 +2,13 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Fragment>
     <!-- Properties to override installation directory -->
-    <Property Id="APPLICATIONFOLDER" Value="C:\dsb\" />
-    <Property Id="ARPINSTALLLOCATION" Value="C:\dsb\" />
+    <Property Id="APPLICATIONFOLDER" Value="C:\DevStackBox\" />
+    <Property Id="ARPINSTALLLOCATION" Value="C:\DevStackBox\" />
     
     <!-- Custom action to set the folder before directory resolution -->
     <CustomAction Id="OverrideInstallDir" 
                   Property="APPLICATIONFOLDER" 
-                  Value="C:\dsb\" 
+                  Value="C:\DevStackBox\" 
                   Execute="immediate" />
     
     <CustomAction Id="SetARPLocation" 

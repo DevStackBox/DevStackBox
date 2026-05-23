@@ -106,7 +106,7 @@ pub async fn start_apache() -> Result<bool, String> {
     patch_php_ini();
 
     // Seed the www dir with default files if it is still empty.
-    seed_www_dir(&base_path);
+    seed_www_dir();
 
     // Phase 5.2 - fail fast with a clear message if port 80 is taken
     // (commonly by IIS, Skype, or another web server).
@@ -423,47 +423,27 @@ Alias /pma "{}"
     std::fs::write(config_dir.join("phpmyadmin.conf"), phpmyadmin_config).map_err(|e| e.to_string())?;
 
     // Seed the user www dir with default files if it is empty.
-    seed_www_dir(&install_path);
+    seed_www_dir();
 
     let _ = data_root;
     Ok(())
 }
 
-// Copies default web files from {install_path}/www/ into the user www dir so
-// that http://localhost/ serves something useful on first run.  Files are only
-// written if they do not already exist, so user edits are never overwritten.
-fn seed_www_dir(install_path: &std::path::Path) {
-    let www_dst = user_www_dir();
-    let www_src = install_path.join("www");
-
-    if !www_src.exists() {
-        // Fallback: write a minimal index.html so Apache returns 200 instead of 404.
-        let fallback = www_dst.join("index.html");
-        if !fallback.exists() {
-            let _ = std::fs::write(
-                &fallback,
-                "<!DOCTYPE html><html><head><title>DevStackBox</title></head>\
-                 <body><h1>DevStackBox is running</h1>\
-                 <p>Place your PHP projects in this folder.</p>\
-                 <p><a href=\"/phpmyadmin/\">phpMyAdmin</a></p></body></html>\n",
-            );
-        }
-        return;
-    }
-
-    // Copy every file from install www/ that doesn't already exist in user www/.
-    if let Ok(entries) = std::fs::read_dir(&www_src) {
-        for entry in entries.flatten() {
-            let src_path = entry.path();
-            if src_path.is_file() {
-                if let Some(name) = src_path.file_name() {
-                    let dst_path = www_dst.join(name);
-                    if !dst_path.exists() {
-                        let _ = std::fs::copy(&src_path, &dst_path);
-                    }
-                }
-            }
-        }
+// Ensures the web root directory exists and contains a minimal index.html.
+// In the current architecture, user_www_dir() points to the install-dir www/
+// so no file copying is needed — installer already placed files there.
+// Files are only written if absent, so user edits are never overwritten.
+fn seed_www_dir() {
+    let www_dir = user_www_dir();
+    let index = www_dir.join("index.html");
+    if !index.exists() {
+        let _ = std::fs::write(
+            &index,
+            "<!DOCTYPE html><html><head><title>DevStackBox</title></head>\
+             <body><h1>DevStackBox is running</h1>\
+             <p>Place your PHP projects in this folder.</p>\
+             <p><a href=\"/phpmyadmin/\">phpMyAdmin</a></p></body></html>\n",
+        );
     }
 }
 

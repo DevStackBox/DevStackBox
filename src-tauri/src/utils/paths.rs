@@ -115,8 +115,10 @@ pub fn user_logs_dir() -> PathBuf {
     p
 }
 
+/// Web root lives inside the install directory so developers can find it easily.
+/// All other mutable data (configs, logs, MySQL data, SSL) remains in LOCALAPPDATA.
 pub fn user_www_dir() -> PathBuf {
-    let p = get_user_data_root().join("www");
+    let p = get_installation_path().join("www");
     let _ = std::fs::create_dir_all(&p);
     p
 }

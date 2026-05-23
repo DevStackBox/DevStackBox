@@ -37,13 +37,13 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": [
-      "../mysql/**/*",
-      "../php/**/*",
-      "../phpmyadmin/**/*",
-      "../www/**/*",
-      "../config/**/*"
-    ],
+    "resources": {
+      "../apache/**/*": "apache/",
+      "../mysql/**/*": "mysql/",
+      "../php/**/*": "php/",
+      "../phpmyadmin/**/*": "phpmyadmin/",
+      "../www/**/*": "www/"
+    },
     "externalBin": [],
     "copyright": "© 2026 Nomad Programmer",
     "category": "DeveloperTool",
@@ -61,6 +61,8 @@
         "fragmentPaths": ["wix/custom-install-dir.wxs"]
       },
       "nsis": {
+        "installMode": "perMachine",
+        "installerHooks": "nsis/hooks.nsh",
         "displayLanguageSelector": false,
         "installerIcon": "icons/icon.ico",
         "languages": ["English"]
