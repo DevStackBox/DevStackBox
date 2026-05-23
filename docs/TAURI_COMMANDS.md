@@ -1,10 +1,10 @@
 # DevStackBox - Tauri Commands Reference
 
-**Single Source of Truth for all backend IPC commands.**  
-Every command that exists in `src-tauri/src/lib.rs` is documented here.  
+**Single source of truth for all backend IPC commands.**
+Every command registered in `src-tauri/src/lib.rs` (`generate_handler!`) is documented here.
 Every command name used in the frontend must match exactly what is listed here.
 
-**Rule:** Before writing `safeInvoke("some_command")` anywhere in the frontend, check this file first. If the command does not exist here, it does not exist in the backend.
+**Rule:** Before writing ``safeInvoke("some_command")`` anywhere in the frontend, check this file first. If the command is not listed here, it does not exist in the backend.
 
 ---
 
@@ -13,107 +13,164 @@ Every command name used in the frontend must match exactly what is listed here.
 1. Find the command you need in the table below.
 2. Check its parameters and return type.
 3. Use the exact command name string from the "Command Name" column.
-4. Add it to `src/lib/commands.ts:TAURI_COMMANDS` if it is not already there.
-5. Call it via `safeInvoke<ReturnType>("command_name", { params })`.
+4. If it is not already in `src/lib/commands.ts:TAURI_COMMANDS`, add it there.
+5. Call it via `safeInvoke<ReturnType>(TAURI_COMMANDS.group.commandName, { params })`.
 
 ---
 
 ## Frontend Constants File
 
-Shared command names are being centralized in `src/lib/commands.ts`. This should become the only place command name strings live.
-
-**Current state:** Service commands are already mapped in `TAURI_COMMANDS.services`. Config-related calls still need to be migrated from hardcoded strings.
+All command name strings are centralized in `src/lib/commands.ts` in the `TAURI_COMMANDS` constant.
+Do not use hardcoded command name strings in component files.
 
 **Pattern:**
 
 ```ts
-// src/lib/commands.ts
-export const TAURI_COMMANDS = {
-  services: {
-    getMysqlStatus: "get_mysql_status",
-    toggleMysql: "toggle_mysql",
-    getApacheStatus: "get_apache_status",
-    toggleApache: "toggle_apache",
-    getPhpStatus: "get_php_status",
-    togglePhp: "toggle_php",
-    getServiceLogs: "get_service_logs",
-    backupMysqlDatabase: "backup_mysql_database",
-    openPhpTerminal: "open_php_terminal",
-  },
-};
+const result = await safeInvoke<ReturnType>(
+  TAURI_COMMANDS.group.commandName,
+  { paramName: value },
+);
 ```
 
 ---
 
-## Command Reference Table
+## Command Reference
 
 ### System Commands
 
-| Command Name                 | Rust Function                  | Parameters | Returns                                                   | Status               | Used By                 |
-| ---------------------------- | ------------------------------ | ---------- | --------------------------------------------------------- | -------------------- | ----------------------- |
-| `check_binaries`             | `check_binaries()`             | none       | `HashMap<String, bool>` keys: `mysql`, `apache`, `php8.3` | Working              | `App.tsx`               |
-| `stop_all_services`          | `stop_all_services()`          | none       | `String` (summary message)                                | Working              | Not yet hooked up in UI |
-| `create_directory_structure` | `create_directory_structure()` | none       | `String` (success msg)                                    | Working              | Not yet called from UI  |
-| `debug_paths`                | `debug_paths()`                | none       | `HashMap<String, String>`                                 | Working (debug only) | `DebugPanel.tsx`        |
-| `debug_installation`         | `debug_installation()`         | none       | `HashMap<String, String>`                                 | Working (debug only) | `DebugPanel.tsx`        |
+| Command Name                 | Source File               | Parameters       | Returns                    | Notes                    |
+| ---------------------------- | ------------------------- | ---------------- | -------------------------- | ------------------------ |
+| `check_binaries`             | `commands/system.rs`      | none             | `HashMap<String, bool>`    | Keys: mysql, apache, php |
+| `debug_paths`                | `commands/system.rs`      | none             | `HashMap<String, String>`  | Debug only               |
+| `debug_installation`         | `commands/system.rs`      | none             | `HashMap<String, String>`  | Debug only               |
+| `start_all_services`         | `commands/system.rs`      | none             | `String` (summary)         |                          |
+| `stop_all_services`          | `commands/system.rs`      | none             | `String` (summary)         |                          |
+| `create_directory_structure` | `commands/system.rs`      | none             | `String`                   |                          |
+| `get_system_info`            | `commands/system.rs`      | none             | `SystemInfo`               | OS, versions, paths      |
+| `get_autostart`              | `commands/system.rs`      | none             | `bool`                     | Launch-on-login state    |
+| `set_autostart`              | `commands/system.rs`      | `enabled: bool`  | `String`                   |                          |
+
+### Tray / Window Commands
+
+| Command Name       | Source File         | Parameters        | Returns | Notes                       |
+| ------------------ | ------------------- | ----------------- | ------- | --------------------------- |
+| `show_main_window` | `commands/tray.rs`  | none              | `()`    |                             |
+| `hide_to_tray`     | `commands/tray.rs`  | none              | `()`    |                             |
+| `set_tray_tooltip` | `commands/tray.rs`  | `tooltip: String` | `()`    | Called on every status poll |
+| `quit_app`         | `commands/tray.rs`  | none              | `()`    |                             |
 
 ### MySQL Commands
 
-| Command Name            | Rust Function             | Parameters | Returns                   | Status  | Used By               |
-| ----------------------- | ------------------------- | ---------- | ------------------------- | ------- | --------------------- |
-| `start_mysql`           | `start_mysql()`           | none       | `bool`                    | Working | `service-manager.tsx` |
-| `stop_mysql`            | `stop_mysql()`            | none       | `bool`                    | Working | `service-manager.tsx` |
-| `get_mysql_status`      | `get_mysql_status()`      | none       | `ServiceInfo`             | Working | `service-manager.tsx` |
-| `toggle_mysql`          | `toggle_mysql()`          | none       | `bool` (new state)        | Working | `service-manager.tsx` |
-| `backup_mysql_database` | `backup_mysql_database()` | none       | `String` (path to backup) | Working | `service-manager.tsx` |
+| Command Name                    | Source File          | Parameters                                              | Returns                    | Notes               |
+| ------------------------------- | -------------------- | ------------------------------------------------------- | -------------------------- | ------------------- |
+| `start_mysql`                   | `commands/mysql.rs`  | none                                                    | `bool`                     |                     |
+| `stop_mysql`                    | `commands/mysql.rs`  | none                                                    | `bool`                     |                     |
+| `get_mysql_status`              | `commands/mysql.rs`  | none                                                    | `ServiceInfo`              |                     |
+| `toggle_mysql`                  | `commands/mysql.rs`  | none                                                    | `bool` (new running state) |                     |
+| `test_mysql_config`             | `commands/mysql.rs`  | none                                                    | `String`                   |                     |
+| `backup_mysql_database`         | `commands/mysql.rs`  | none                                                    | `String` (path)            | Dumps all databases |
+| `backup_mysql_database_named`   | `commands/mysql.rs`  | `database: String`                                      | `String` (path)            |                     |
+| `list_mysql_databases`          | `commands/mysql.rs`  | none                                                    | `String[]`                 |                     |
+| `list_mysql_databases_detailed` | `commands/mysql.rs`  | none                                                    | `DatabaseInfo[]`           | name + table count + size |
+| `restore_mysql_database`        | `commands/mysql.rs`  | `backup_path: String`                                   | `String`                   |                     |
+| `list_mysql_users`              | `commands/mysql.rs`  | none                                                    | `MySqlUser[]`              |                     |
+| `create_mysql_user`             | `commands/mysql.rs`  | `username: String`, `password: String`, `host: String`  | `String`                   |                     |
+| `drop_mysql_user`               | `commands/mysql.rs`  | `username: String`, `host: String`                      | `String`                   |                     |
+| `set_mysql_user_password`       | `commands/mysql.rs`  | `username: String`, `host: String`, `password: String`  | `String`                   |                     |
 
 ### Apache Commands
 
-| Command Name         | Rust Function          | Parameters | Returns            | Status  | Used By                |
-| -------------------- | ---------------------- | ---------- | ------------------ | ------- | ---------------------- |
-| `start_apache`       | `start_apache()`       | none       | `bool`             | Working | `service-manager.tsx`  |
-| `stop_apache`        | `stop_apache()`        | none       | `bool`             | Working | `service-manager.tsx`  |
-| `get_apache_status`  | `get_apache_status()`  | none       | `ServiceInfo`      | Working | `service-manager.tsx`  |
-| `toggle_apache`      | `toggle_apache()`      | none       | `bool` (new state) | Working | `service-manager.tsx`  |
-| `test_apache_config` | `test_apache_config()` | none       | `String`           | Working | Not yet called from UI |
+| Command Name         | Source File          | Parameters | Returns   | Notes           |
+| -------------------- | -------------------- | ---------- | --------- | --------------- |
+| `start_apache`       | `commands/apache.rs` | none       | `bool`    |                 |
+| `stop_apache`        | `commands/apache.rs` | none       | `bool`    |                 |
+| `get_apache_status`  | `commands/apache.rs` | none       | `ServiceInfo` |             |
+| `toggle_apache`      | `commands/apache.rs` | none       | `bool`    |                 |
+| `test_apache_config` | `commands/apache.rs` | none       | `String`  | Runs `httpd -t` |
 
 ### PHP Commands
 
-| Command Name           | Rust Function                                           | Parameters        | Returns            | Status                                                                                    | Used By                    |
-| ---------------------- | ------------------------------------------------------- | ----------------- | ------------------ | ----------------------------------------------------------------------------------------- | -------------------------- |
-| `get_php_status`       | `get_php_status()`                                      | none              | `ServiceInfo`      | Working                                                                                   | `service-manager.tsx`      |
-| `toggle_php`           | `toggle_php()`                                          | none              | `bool`             | Stub only                                                                                 | `service-manager.tsx`      |
-| `get_php_versions`     | `get_php_versions()`                                    | none              | `PHPVersionInfo[]` | Working                                                                                   | `php-version-selector.tsx` |
-| `switch_php_version`   | `switch_php_version(version)`                           | `version: String` | `bool`             | Working (Windows only)                                                                    | `php-version-selector.tsx` |
-| `download_php_version` | `download_php_version(app: AppHandle, version: String)` | `version: String` | `bool`             | Working - streams real PHP zip from windows.php.net; emits `php-download-progress` events | `php-version-selector.tsx` |
-| `open_php_terminal`    | `open_php_terminal(version)`                            | `version: String` | `String`           | Working (Windows only)                                                                    | `service-manager.tsx`      |
+| Command Name           | Source File       | Parameters                                              | Returns            | Notes                                   |
+| ---------------------- | ----------------- | ------------------------------------------------------- | ------------------ | --------------------------------------- |
+| `get_php_status`       | `commands/php.rs` | none                                                    | `ServiceInfo`      |                                         |
+| `toggle_php`           | `commands/php.rs` | none                                                    | `bool`             | Currently a stub                        |
+| `get_php_versions`     | `commands/php.rs` | none                                                    | `PHPVersionInfo[]` |                                         |
+| `switch_php_version`   | `commands/php.rs` | `version: String`                                       | `bool`             | Creates `php/current` junction via cmd  |
+| `download_php_version` | `commands/php.rs` | `version: String`                                       | `bool`             | Streams from windows.php.net; emits `php-download-progress` events |
+| `list_php_extensions`  | `commands/php.rs` | `version: String`                                       | `PHPExtension[]`   |                                         |
+| `toggle_php_extension` | `commands/php.rs` | `version: String`, `extension: String`, `enabled: bool` | `String`           |                                         |
+| `open_php_terminal`    | `commands/php.rs` | `version: String`                                       | `String`           | Opens Windows Terminal with PHP in PATH |
 
 ### Log Commands
 
-| Command Name       | Rust Function               | Parameters        | Returns                | Status  | Used By                  |
-| ------------------ | --------------------------- | ----------------- | ---------------------- | ------- | ------------------------ |
-| `get_service_logs` | `get_service_logs(service)` | `service: String` | `String` (log content) | Working | `services.tsx` (partial) |
+| Command Name       | Source File        | Parameters                           | Returns                | Notes                    |
+| ------------------ | ------------------ | ------------------------------------ | ---------------------- | ------------------------ |
+| `get_service_logs` | `commands/logs.rs` | `service: String`                    | `String` (log content) | Last N lines of log file |
+| `log_crash_event`  | `commands/logs.rs` | `service: String`, `message: String` | `String`               |                          |
 
 ### Config Commands
 
-| Command Name            | Rust Function                                 | Parameters                               | Returns                 | Status  | Used By             |
-| ----------------------- | --------------------------------------------- | ---------------------------------------- | ----------------------- | ------- | ------------------- |
-| `read_config`           | `read_config(service)`                        | `service: String`                        | `String` (file content) | Working | `config-editor.tsx` |
-| `update_config`         | `update_config(service, content)`             | `service: String`, `content: String`     | `String` (success msg)  | Working | `config-editor.tsx` |
-| `backup_config`         | `backup_config(service)`                      | `service: String`                        | `String` (backup path)  | Working | `config-editor.tsx` |
-| `list_config_backups`   | `list_config_backups(service)`                | `service: String`                        | `String[]`              | Working | `config-editor.tsx` |
-| `restore_config_backup` | `restore_config_backup(service, backup_name)` | `service: String`, `backup_name: String` | `String` (success msg)  | Working | `config-editor.tsx` |
+| Command Name            | Source File            | Parameters                               | Returns                 | Notes |
+| ----------------------- | ---------------------- | ---------------------------------------- | ----------------------- | ----- |
+| `read_config`           | `commands/config.rs`   | `service: String`                        | `String` (file content) |       |
+| `update_config`         | `commands/config.rs`   | `service: String`, `content: String`     | `String`                |       |
+| `backup_config`         | `commands/config.rs`   | `service: String`                        | `String` (backup path)  |       |
+| `list_config_backups`   | `commands/config.rs`   | `service: String`                        | `String[]`              |       |
+| `restore_config_backup` | `commands/config.rs`   | `service: String`, `backup_name: String` | `String`                |       |
+
+### Terminal Commands
+
+| Command Name            | Source File              | Parameters                                        | Returns  | Notes              |
+| ----------------------- | ------------------------ | ------------------------------------------------- | -------- | ------------------ |
+| `spawn_terminal`        | `commands/terminal.rs`   | `id: String`, `command: String`, `args: String[]` | `String` | Starts PTY session |
+| `send_terminal_input`   | `commands/terminal.rs`   | `id: String`, `input: String`                     | `String` |                    |
+| `kill_terminal_session` | `commands/terminal.rs`   | `id: String`                                      | `String` |                    |
+
+### Security Commands
+
+| Command Name      | Source File             | Parameters | Returns          | Notes                              |
+| ----------------- | ----------------------- | ---------- | ---------------- | ---------------------------------- |
+| `analyze_security`| `commands/security.rs`  | none       | `SecurityReport` | Checks config and file permissions |
+
+### SSL Commands
+
+| Command Name        | Source File       | Parameters | Returns    | Notes                                    |
+| ------------------- | ----------------- | ---------- | ---------- | ---------------------------------------- |
+| `get_ssl_status`    | `commands/ssl.rs` | none       | `SslStatus`|                                          |
+| `generate_ssl_cert` | `commands/ssl.rs` | none       | `String`   | Generates self-signed cert for localhost |
+| `enable_ssl`        | `commands/ssl.rs` | none       | `String`   | Updates httpd.conf to load ssl_module    |
+| `disable_ssl`       | `commands/ssl.rs` | none       | `String`   |                                          |
+
+### Virtual Host Commands
+
+| Command Name        | Source File            | Parameters                                              | Returns        | Notes                     |
+| ------------------- | ---------------------- | ------------------------------------------------------- | -------------- | ------------------------- |
+| `list_vhosts`       | `commands/vhosts.rs`   | none                                                    | `VhostEntry[]` |                           |
+| `add_vhost`         | `commands/vhosts.rs`   | `domain: String`, `root: String`, `php_version: String` | `String`       | Also writes vhosts.conf   |
+| `remove_vhost`      | `commands/vhosts.rs`   | `domain: String`                                        | `String`       |                           |
+| `toggle_vhost`      | `commands/vhosts.rs`   | `domain: String`, `enabled: bool`                       | `String`       |                           |
+| `get_hosts_entries` | `commands/vhosts.rs`   | none                                                    | `HostEntry[]`  | Reads Windows hosts file  |
+| `update_hosts_entry`| `commands/vhosts.rs`   | `domain: String`, `action: String`                      | `String`       | Requires elevation (UAC)  |
+
+### Full Backup Commands
+
+| Command Name          | Source File                | Parameters            | Returns         | Notes                                  |
+| --------------------- | -------------------------- | --------------------- | --------------- | -------------------------------------- |
+| `create_full_backup`  | `commands/fullbackup.rs`   | none                  | `BackupResult`  | Includes config/, www/, MySQL dump     |
+| `list_full_backups`   | `commands/fullbackup.rs`   | none                  | `BackupEntry[]` | Sorted newest-first                    |
+| `restore_full_backup` | `commands/fullbackup.rs`   | `backup_name: String` | `String`        | Path-traversal protected               |
+| `delete_full_backup`  | `commands/fullbackup.rs`   | `backup_name: String` | `String`        | Validates path is inside backups/full/ |
+| `open_backups_folder` | `commands/fullbackup.rs`   | none                  | `String`        | Opens Explorer at backups dir          |
 
 ---
 
 ## Shared Rust Types
 
-These structs are returned by commands. Their TypeScript equivalents are in `src/types/services.ts`.
+These structs are serialized to JSON. TypeScript equivalents are in `src/types/`.
 
 ### `ServiceInfo` (Rust) = `ServiceStatus` (TypeScript)
 
 ```rust
-// src-tauri/src/lib.rs
 #[derive(serde::Serialize)]
 struct ServiceInfo {
     running: bool,
@@ -123,24 +180,13 @@ struct ServiceInfo {
 }
 ```
 
-```ts
-// src/types/services.ts
-export interface ServiceStatus {
-  running: boolean;
-  pid?: number;
-  port?: number;
-  version?: string;
-}
-```
-
 ### `PHPVersionInfo` (Rust) = `PHPVersion` (TypeScript)
 
 ```rust
-// src-tauri/src/lib.rs
 #[derive(serde::Serialize)]
 struct PHPVersionInfo {
     version: String,
-    status: String,     // "installed" | "available" | "downloading"
+    status: String,       // "installed" | "available" | "downloading"
     path: String,
     is_active: bool,
     installed: bool,
@@ -152,73 +198,95 @@ struct PHPVersionInfo {
 
 ## Valid `service` Parameter Values
 
-Many commands accept a `service: String` parameter. Valid values are:
+Many commands accept a `service: String` parameter. Valid values:
 
-| Value                   | Maps to Config File      | Notes                    |
-| ----------------------- | ------------------------ | ------------------------ |
-| `"mysql"`               | `config/my.cnf`          |                          |
-| `"apache"` or `"httpd"` | `config/httpd.conf`      | Both are accepted        |
-| `"php"`                 | `php/8.3/php.ini`        | Hardcoded to 8.3 for now |
-| `"phpmyadmin"`          | `config/phpmyadmin.conf` |                          |
+| Value                   | Maps to Config File                                    | Notes          |
+| ----------------------- | ------------------------------------------------------ | -------------- |
+| `"mysql"`               | `%LOCALAPPDATA%\DevStackBox\config\my.cnf`             |                |
+| `"apache"` or `"httpd"` | `%LOCALAPPDATA%\DevStackBox\config\httpd.conf`         | Both accepted  |
+| `"php"`                 | `%LOCALAPPDATA%\DevStackBox\config\php.ini`            |                |
+| `"phpmyadmin"`          | `%LOCALAPPDATA%\DevStackBox\config\phpmyadmin.conf`    |                |
 
 ---
 
-## Commands Registered in invoke_handler
-
-The `run()` function in `lib.rs` registers all commands. If a command is not listed here, it cannot be called from the frontend:
+## Full `generate_handler!` Registration (lib.rs)
 
 ```rust
-// src-tauri/src/lib.rs -> run()
 tauri::generate_handler![
     check_binaries,
     debug_paths,
     debug_installation,
+    start_all_services,
     stop_all_services,
     test_apache_config,
+    test_mysql_config,
     get_mysql_status,
+    get_php_status,
+    get_apache_status,
     start_mysql,
     stop_mysql,
-    get_php_status,
+    start_apache,
+    stop_apache,
     get_php_versions,
     switch_php_version,
     download_php_version,
-    get_apache_status,
-    start_apache,
-    stop_apache,
+    list_php_extensions,
+    toggle_php_extension,
     toggle_mysql,
-    toggle_apache,
     toggle_php,
+    toggle_apache,
     backup_mysql_database,
+    backup_mysql_database_named,
+    list_mysql_databases,
+    list_mysql_databases_detailed,
+    restore_mysql_database,
+    list_mysql_users,
+    create_mysql_user,
+    drop_mysql_user,
+    set_mysql_user_password,
     open_php_terminal,
     get_service_logs,
+    log_crash_event,
     read_config,
     update_config,
     backup_config,
     list_config_backups,
     restore_config_backup,
     create_directory_structure,
+    get_autostart,
+    set_autostart,
+    get_system_info,
+    show_main_window,
+    hide_to_tray,
+    set_tray_tooltip,
+    quit_app,
+    spawn_terminal,
+    send_terminal_input,
+    kill_terminal_session,
+    analyze_security,
+    get_ssl_status,
+    generate_ssl_cert,
+    enable_ssl,
+    disable_ssl,
+    list_vhosts,
+    add_vhost,
+    remove_vhost,
+    toggle_vhost,
+    get_hosts_entries,
+    update_hosts_entry,
+    create_full_backup,
+    list_full_backups,
+    restore_full_backup,
+    delete_full_backup,
+    open_backups_folder,
 ]
 ```
 
 ---
 
-## Missing / Planned Commands
-
-These are commands the frontend calls or will need but do not yet exist in Rust:
-
-| Command Name           | Purpose                                    | Priority |
-| ---------------------- | ------------------------------------------ | -------- |
-| `get_logs_realtime`    | Stream log file tail via Tauri Channel     | High     |
-| `open_in_browser`      | Open URL in default browser                | Medium   |
-| `get_app_info`         | Return version, install path, memory usage | Medium   |
-| `check_port`           | Check if a specific port is in use         | Medium   |
-| `reset_mysql_password` | Reset MySQL root password                  | Low      |
-
----
-
 ## Adding a New Command
 
-1. Add the Rust function in `src-tauri/src/lib.rs`:
+1. Add the Rust function in the appropriate `commands/` module file:
 
    ```rust
    #[tauri::command]
@@ -227,14 +295,7 @@ These are commands the frontend calls or will need but do not yet exist in Rust:
    }
    ```
 
-2. Register it in `run()` at the bottom of `lib.rs`:
-
-   ```rust
-   tauri::generate_handler![
-       // ...existing commands...
-       my_new_command,
-   ]
-   ```
+2. Register it in `run()` inside `lib.rs` under `generate_handler!`.
 
 3. Add the constant to `src/lib/commands.ts`:
 
@@ -255,4 +316,4 @@ These are commands the frontend calls or will need but do not yet exist in Rust:
    );
    ```
 
-5. Update this document.
+5. Update this document with the new command entry.

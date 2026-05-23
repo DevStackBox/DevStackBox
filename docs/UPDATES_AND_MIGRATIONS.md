@@ -59,21 +59,38 @@ This is not theoretical. It has happened to real users of tools like XAMPP and W
 
 ---
 
-## Current State (v0.1.6)
+## Current State (v0.1.7-dev)
 
-**This separation does not exist yet.** Everything is currently in one directory:
+Phase 1.8 (App/Data Directory Separation) is **complete**. User data lives in
+`%LOCALAPPDATA%\DevStackBox\` and binaries remain inside the install directory.
 
 ```
-c:\xampp\htdocs\DevStackBox\  (or wherever installed)
+C:\Program Files\DevStackBox\   (install dir - safe to replace during updates)
+  DevStackBox.exe
   apache/
-  mysql/        <- binaries AND data/ mixed together
-  php/
-  config/
-  logs/
-  www/
+  php/8.1/, 8.2/, 8.3/, 8.4/
+  phpmyadmin/
+  resources/
+
+%LOCALAPPDATA%\DevStackBox\     (user data - NEVER touched by updater)
+  config/              <- runtime configs (httpd.conf, my.cnf, php.ini, etc.)
+  config-backups/      <- automatic config backups
+  logs/                <- Apache, MySQL, PHP error and access logs
+  mysql-data/          <- MySQL InnoDB data directory
+  www/                 <- user's PHP project files / web root
+  backups/             <- full backup zip files
+  sessions/            <- PHP session files
+  ssl/                 <- generated SSL certificates
 ```
 
-Fixing this is tracked in ROADMAP.md Phase 1.8. Do not enable auto-updates until Phase 1.8 is complete.
+Config versioning is active: all generated configs include a `# configVersion: N`
+header. The `start_apache` command checks this on every launch and regenerates the
+config when a newer template version is detected (currently v7).
+
+Auto-update backend code is in place (`tauri-plugin-updater`, `auto-updater.tsx`).
+The remaining blocker is GitHub Secrets (`TAURI_PRIVATE_KEY`, `TAURI_KEY_PASSWORD`)
+being added to the repository before the first signed release is published.
+See ROADMAP.md Phase 4.3 for the full checklist.
 
 ---
 

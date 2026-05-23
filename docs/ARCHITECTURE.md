@@ -1,6 +1,6 @@
 # DevStackBox - Architecture Overview
 
-**Version**: v0.1.6  
+**Version**: v0.1.7-dev  
 **Last Updated**: May 2026  
 **Single Source of Truth**: This file describes how all parts of DevStackBox connect. Update this file whenever you change the architecture.
 
@@ -31,37 +31,48 @@ DevStackBox/
 |   |-- globals.css             # Tailwind base imports only (do not add custom CSS here)
 |   |
 |   |-- pages/
-|   |   |-- dashboard.tsx       # Dashboard page - service overview
-|   |   |-- services.tsx        # Services page - start/stop controls + logs
-|   |   |-- SystemTrayPage.tsx  # System tray config page
-|   |   |-- index.ts            # Re-exports pages currently used by App.tsx
+|   |   |-- dashboard.tsx             # Dashboard page - service overview
+|   |   |-- services.tsx             # Services page - start/stop controls + logs
+|   |   |-- about.tsx                # About page with system info
+|   |   |-- security.tsx             # Security analyzer page
+|   |   |-- ssl.tsx                  # HTTPS / SSL management
+|   |   |-- vhosts.tsx               # Virtual host management
+|   |   |-- backup.tsx               # Full backup / restore
+|   |   |-- mysql-users.tsx          # MySQL user management
+|   |   |-- databases-list.tsx       # Databases overview
+|   |   |-- settings-general.tsx     # App settings
+|   |   |-- services/                # Per-service sub-pages (Apache/MySQL/PHP each have layout, index, logs, config)
+|   |   |-- databases/               # Database sub-pages (index, users, backups)
+|   |   |-- settings/                # Settings sub-pages (index, backup)
+|   |   |-- logs/                    # Log sub-pages per service (apache, mysql, php)
+|   |   |-- terminal/                # Embedded terminal sub-pages
+|   |   |-- index.ts                 # Re-exports pages used by App.tsx
 |   |
 |   |-- components/
-|   |   |-- ui/                 # shadcn/ui base components (DO NOT MODIFY)
-|   |   |-- services/           # Service-specific components
-|   |   |   |-- service-manager.tsx    # Polls status, handles start/stop for all services
-|   |   |   |-- service-card.tsx       # UI card for a single service
-|   |   |   |-- service-actions.tsx    # Buttons: Start, Stop, Open Browser
-|   |   |   |-- status-badge.tsx       # Running/Stopped badge
-|   |   |   |-- log-viewer.tsx         # Log display component
-|   |   |   |-- mysql-service.tsx      # MySQL-specific UI
-|   |   |   |-- apache-service.tsx     # Apache-specific UI
-|   |   |   |-- php-service.tsx        # PHP-specific UI
-|   |   |   |-- index.ts               # Re-exports all service components
+|   |   |-- ui/                      # shadcn/ui base components (DO NOT MODIFY)
+|   |   |-- services/                # Service-specific components
+|   |   |   |-- service-manager.tsx          # Polls status, handles start/stop for all services
+|   |   |   |-- service-card.tsx             # UI card for a single service
+|   |   |   |-- service-actions.tsx          # Buttons: Start, Stop, Open Browser
+|   |   |   |-- status-badge.tsx             # Running/Stopped badge
+|   |   |   |-- log-viewer.tsx               # Log display with search, auto-scroll, color coding
+|   |   |   |-- php-version-selector.tsx     # PHP version picker with download progress
+|   |   |   |-- php-extensions-dialog.tsx    # PHP extension enable/disable
+|   |   |   |-- service-overflow-menu.tsx    # Three-dot overflow actions per service card
+|   |   |   |-- index.ts                     # Re-exports all service components
 |   |   |
-|   |   |-- sidebar.tsx             # Main navigation sidebar
+|   |   |-- sidebar.tsx             # Main navigation sidebar (collapsible)
+|   |   |-- breadcrumb.tsx          # Topbar breadcrumb matching current route
 |   |   |-- command-palette.tsx     # Ctrl+P command palette
-|   |   |-- config-editor.tsx       # Config file editor
-|   |   |-- auto-updater.tsx        # Auto-update UI
+|   |   |-- auto-updater.tsx        # Auto-update UI (checks GitHub Releases)
 |   |   |-- language-switcher.tsx   # EN/HI switcher
 |   |   |-- theme-toggle.tsx        # Dark/Light toggle
 |   |   |-- theme-provider.tsx      # Theme context wrapper
-|   |   |-- php-version-selector.tsx # PHP version picker modal
-|   |   |-- DebugPanel.tsx          # Development debug panel
-|   |   |-- WindowControls.tsx      # Custom window buttons
-|   |   |-- SystemTrayButton.tsx    # Tray minimize button
-|   |   |-- SystemTrayStatus.tsx    # Tray status indicator
-|   |   |-- system-tray/            # System tray re-export helpers and notes
+|   |   |-- onboarding-dialog.tsx   # First-launch welcome dialog
+|   |   |-- bug-report-dialog.tsx   # Pre-filled GitHub Issue reporter
+|   |   |-- error-log-preview.tsx   # Dashboard log tail widget
+|   |   |-- terminal-panel.tsx      # xterm.js terminal panel
+|   |   |-- system-tray/            # System tray helper components
 |   |
 |   |-- hooks/
 |   |   |-- use-toast.ts            # Toast notification hook
@@ -72,16 +83,34 @@ DevStackBox/
 |   |   |-- i18n.ts                 # i18next setup
 |   |   |-- utils.ts                # cn() class merge helper (shadcn)
 |   |   |-- version.ts              # APP_VERSION constant
-|   |   |-- commands.ts             # TAURI_COMMANDS map (command name strings)
+|   |   |-- commands.ts             # TAURI_COMMANDS map (all command name strings)
+|   |   |-- routes.ts               # ROUTES map (all frontend route paths)
+|   |   |-- notify.ts               # Desktop notification helpers
 |   |
 |   |-- types/
 |       |-- services.ts             # Shared TypeScript types (ServiceStatus, ServiceName, etc.)
 |
 |-- src-tauri/                  # BACKEND (Rust + Tauri)
 |   |-- src/
-|   |   |-- main.rs             # Binary entry point (do not touch)
-|   |   |-- lib.rs              # ALL Tauri commands live here (~1600 lines)
-|   |   |-- service_manager.rs  # DEAD CODE - unused, do not use
+|   |   |-- main.rs                  # Binary entry point (do not touch)
+|   |   |-- lib.rs                   # Module declarations + run() only (~150 lines)
+|   |   |-- types.rs                 # Shared Rust types (ServiceInfo, PHPVersionInfo, etc.)
+|   |   |-- commands/
+|   |   |   |-- apache.rs            # start_apache, stop_apache, get_apache_status, config gen
+|   |   |   |-- mysql.rs             # start_mysql, stop_mysql, db/user management, backup
+|   |   |   |-- php.rs               # get_php_versions, switch_php_version, download, patch_php_ini
+|   |   |   |-- config.rs            # read_config, update_config, backup_config, restore
+|   |   |   |-- logs.rs              # get_service_logs, log_crash_event
+|   |   |   |-- system.rs            # check_binaries, get_system_info, start/stop_all, autostart
+|   |   |   |-- tray.rs              # show_main_window, hide_to_tray, set_tray_tooltip, quit_app
+|   |   |   |-- terminal.rs          # spawn_terminal, send_terminal_input, kill_terminal_session
+|   |   |   |-- security.rs          # analyze_security
+|   |   |   |-- ssl.rs               # get_ssl_status, generate_ssl_cert, enable_ssl, disable_ssl
+|   |   |   |-- vhosts.rs            # list_vhosts, add_vhost, remove_vhost, toggle_vhost, hosts file
+|   |   |   |-- fullbackup.rs        # create_full_backup, list/restore/delete_full_backup
+|   |   |-- utils/
+|   |   |   |-- paths.rs             # get_installation_path, user_config_dir, user_logs_dir, etc.
+|   |   |   |-- process.rs           # create_hidden_command, find_our_processes, kill_pid
 |   |
 |   |-- tauri.conf.json         # App config: window size, bundle targets, resources
 |   |-- Cargo.toml              # Rust dependencies
@@ -90,23 +119,33 @@ DevStackBox/
 |   |-- icons/                  # App icons
 |   |-- wix/                    # MSI installer customization
 |
-|-- config/                     # Service config files (runtime, not source)
-|   |-- my.cnf                  # MySQL config
-|   |-- httpd.conf              # Apache config
-|   |-- phpmyadmin.conf         # phpMyAdmin Apache config
+|-- config/                     # Dev-only template configs (tracked in git)
+|   |-- my.cnf                  # MySQL config template
+|   |-- httpd.conf              # Apache config template
+|   |-- phpmyadmin.conf         # phpMyAdmin config template
 |
 |-- locales/
 |   |-- en.json                 # English translations
 |   |-- hi.json                 # Hindi translations
 |
-|-- mysql/                      # MySQL binaries + data (bundled with app)
+|-- mysql/                      # MySQL binaries (bundled with app)
 |-- apache/                     # Apache binaries (bundled with app)
-|-- php/8.3/                    # PHP 8.3 binaries (bundled with app)
-|-- phpmyadmin/                 # phpMyAdmin PHP files (bundled with app)
-|-- www/                        # Web root - user's PHP projects go here
-|-- logs/                       # Runtime log files
-|-- config-backups/             # Automatic config backups
+|-- php/8.1/, 8.2/, 8.3/, 8.4/ # PHP binaries per version (8.3 bundled; others downloadable)
+|-- php/current                 # Windows junction pointing to active PHP version (runtime only)
+|-- phpmyadmin/                 # phpMyAdmin 5.2.1 PHP files (bundled)
+|-- www/                        # Default web root seed files (copied to user data on first run)
+|-- scripts/                    # Developer utility scripts (PowerShell / shell)
 |-- docs/                       # THIS FOLDER - All project documentation
+|
+|-- (User Data - NOT in the repo)
+    %LOCALAPPDATA%\DevStackBox\
+      config/                   # Runtime configs generated by the app
+      config-backups/           # Automatic config backups
+      logs/                     # Apache, MySQL, PHP runtime logs
+      mysql-data/               # MySQL data directory
+      www/                      # User's PHP projects / web root
+      backups/                  # Full backup zip files
+      sessions/                 # PHP session files
 ```
 
 ---
@@ -147,13 +186,10 @@ DevStackBox uses a fixed two-panel desktop app layout. Do not redesign this.
 - Command palette opens with `Ctrl+P`
 - Tray controls exist in dedicated components and hooks, but are not mounted in the current top bar
 
-**Sidebar currently contains these 6 items:**
-`Dashboard` / `Services` / `Projects` / `Logs` / `Settings` / `About`
+**Sidebar currently contains:**
+`Dashboard` / `Services` (Apache / MySQL / PHP sub-navigation) / `Databases` / `Logs` / `Terminal` / `Settings` / `About`
 
-**Availability today:**
-
-- `Dashboard`, `Services`, `Settings`, and `About` are active
-- `Projects` and `Logs` are present as placeholders and intentionally disabled in the sidebar
+All sidebar items are active. Each service has its own sub-pages: Overview, Logs, Config, and service-specific extras (PHP: Extensions, Versions; Apache: Virtual Hosts, SSL).
 
 Do not overload the sidebar with sub-items or collapsible trees.
 
@@ -274,22 +310,24 @@ Rust (lib.rs)
           --> listen("event-name", callback)         [Tauri event API]
 ```
 
-Currently this pattern is NOT yet used - all status is fetched by polling from the frontend. This is a known issue (see [KNOWN_ISSUES.md](KNOWN_ISSUES.md)).
+This pattern is used for progress and app-shell events such as PHP download progress, full backup/restore progress, terminal output, and tray actions. Service status and log refresh still use frontend polling for now.
 
 ---
 
 ## Service Path Resolution
 
-This is a critical and error-prone area. The function `get_installation_path()` in `lib.rs` determines where MySQL, Apache, and PHP binaries live. It checks in this order:
+This is a critical and error-prone area. Path helpers live in `src-tauri/src/utils/paths.rs`. `get_installation_path()` determines where MySQL, Apache, PHP, and phpMyAdmin binaries live. It checks in this order:
 
 1. `current_dir` if it contains `apache/bin/httpd.exe`
 2. `exe_parent` (installed app location)
 3. `exe_grandparent`
-4. Hardcoded fallbacks: `C:\xampp\htdocs\DevStackBox`, `C:\dsb`, `C:\Program Files\DevStackBox`, `C:\DevStackBox`
+4. Production fallbacks: `C:\dsb`, `C:\Program Files\DevStackBox`, `C:\DevStackBox`
 5. `current_dir` as final fallback
 
 **In development:** The app runs from `src-tauri/`, so paths resolve to `c:\xampp\htdocs\DevStackBox\`  
 **In production (installed):** The app resolves relative to the installer output directory
+
+Runtime data is separate from binaries and lives under `%LOCALAPPDATA%\DevStackBox\` unless `DEVSTACKBOX_DATA_DIR` is set.
 
 **Rule:** Never hardcode paths in the frontend. Always let the Rust backend resolve paths.
 
@@ -302,9 +340,7 @@ There is no global state manager (no Redux, Zustand, etc.). State is managed:
 - **Local component state**: `useState` in each page/component
 - **Service status polling**: `ServiceManager` component polls every 5 seconds via `safeInvoke`
 - **Theme**: React context via `ThemeProvider`
-- **Rust-side state**: Two global `LazyLock<Mutex<HashMap>>` in `lib.rs`:
-  - `SERVICE_STATUS` - tracks running/stopped state
-  - `SERVICE_PROCESSES` - tracks PIDs
+- **Rust-side state**: Runtime process truth comes from OS process checks, not a service status cache. Terminal sessions and other command-specific state stay inside their owning backend modules.
 
 **Rule:** Do not add a global state manager unless shared state between 3+ unrelated components becomes unmanageable.
 
@@ -329,7 +365,7 @@ Resources bundled into the installer are declared in `tauri.conf.json`:
 
 ## Adding a New Feature: Checklist
 
-1. **Rust backend command** (if needed): Add `#[tauri::command] async fn my_command()` to `lib.rs`, and add it to `invoke_handler` in `run()` at the bottom of `lib.rs`.
+1. **Rust backend command** (if needed): Add `#[tauri::command] async fn my_command()` to the owning module in `src-tauri/src/commands/`, then register it in the `invoke_handler` in `src-tauri/src/lib.rs`.
 2. **Frontend constant**: Add the command name to `TAURI_COMMANDS` in `src/lib/commands.ts`.
 3. **TypeScript types**: Add any new types to `src/types/services.ts`.
 4. **React component**: Create component in appropriate folder. Style with Tailwind + shadcn/ui only.
@@ -342,13 +378,13 @@ Resources bundled into the installer are declared in `tauri.conf.json`:
 
 | Decision                                | Reason                                                                          |
 | --------------------------------------- | ------------------------------------------------------------------------------- |
-| All Tauri commands in one `lib.rs`      | Simpler to maintain; `service_manager.rs` is legacy dead code                   |
+| Commands split by domain                | Keeps `lib.rs` small and places service logic in `src-tauri/src/commands/`      |
 | `safeInvoke` wrapper                    | Allows frontend to run in browser during development                            |
 | No custom CSS                           | Tailwind + shadcn/ui covers all needs; custom CSS causes theming bugs           |
-| Polling for service status              | Simpler than event streams; events are planned for future                       |
-| `config/` dir for runtime configs       | Keeps source and runtime config separate                                        |
+| Polling for service status              | Simple and reliable for current service cards; events are used for progress flows |
+| User data root for runtime configs      | Keeps source and runtime config separate under `%LOCALAPPDATA%\DevStackBox\`   |
 | `config-backups/` auto-backup           | Auto-backup before every config save prevents data loss                         |
 | Two-panel layout (sidebar + main)       | Standard desktop utility pattern; do not redesign                               |
 | Progressive disclosure in service UI    | Beginners see start/stop; experts expand for logs, config, PID                  |
-| App/data directory separation (planned) | Required for safe auto-updates; see docs/UPDATES_AND_MIGRATIONS.md              |
+| App/data directory separation           | Required for safe auto-updates; see docs/UPDATES_AND_MIGRATIONS.md              |
 | Installed mode only (no portable in v1) | Portable mode cannot support auto-updates reliably; adds architectural conflict |

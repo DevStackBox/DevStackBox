@@ -4,7 +4,7 @@
 Update this file every time a feature changes status. Do not maintain feature status in README.md, TODO.md, or CHANGELOG.md separately - those should reference this file.
 
 **Last Updated:** May 2026  
-**Current Version:** v0.1.6
+**Current Version:** v0.1.7-dev
 
 ---
 
@@ -69,6 +69,7 @@ Update this file every time a feature changes status. Do not maintain feature st
 | PHP status check          | DONE   | Checks `php/current/php.exe` first (active junction), falls back to `php/8.3/php.exe`; runs `php --version` to surface the actual version string         |
 | PHP as service start/stop | STUB   | `toggle_php` returns true immediately                                                                                                                    |
 | PHP CGI / FastCGI         | DONE   | `ScriptAlias /php/ php/current/` + `Action php-script` in httpd.conf; `php/current` junction auto-follows active version; phpMyAdmin reuses same handler |
+| PHP 8.4 CGI compatibility | DONE   | `patch_php_ini()` disables deprecated `session.sid_*` directives, forces `error_reporting = E_ALL & ~E_DEPRECATED & ~E_STRICT` and `html_errors = Off` to prevent CGI header corruption on PHP 8.4 |
 | Bulk start all services   | DONE   | `start_all_services` Tauri command + Dashboard Start All button                                                                                          |
 | Bulk stop all services    | DONE   | `stop_all_services` command + tray menu entry                                                                                                            |
 
@@ -146,7 +147,7 @@ Update this file every time a feature changes status. Do not maintain feature st
 | --------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------- |
 | phpMyAdmin integration      | DONE   | Served via Apache at `/phpmyadmin`                                                                                              |
 | MySQL database backup (all) | DONE   | `backup_mysql_database` using mysqldump                                                                                         |
-| MySQL user management UI    | DONE   | `list/create/drop/set_password` Tauri commands; `pages/mysql-users.tsx` table with Add/Set Password/Drop dialogs; sidebar entry |
+| MySQL user management UI    | DONE   | `list/create/drop/set_password` Tauri commands; Databases > Users sub-route has Add/Set Password/Drop dialogs                   |
 | Database list               | DONE   | `list_mysql_databases` lists user databases on the Databases page                                                               |
 | Database list metadata      | DONE   | `list_mysql_databases_detailed` returns name + table count + size (data + index bytes) from `information_schema.tables`         |
 | Database search             | DONE   | Sticky search input on the Databases page filters rows by name                                                                  |
@@ -199,7 +200,7 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 | Feature                         | Status | Notes                                                                                                        |
 | ------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------ |
-| Settings page                   | DONE   | `src/pages/settings.tsx` replaces the inline placeholder in `App.tsx`                                        |
+| Settings page                   | DONE   | `src/pages/settings/` nested routes provide General and Backup & Restore views                              |
 | Theme preference                | DONE   | Inline shadcn `Select` (light/dark/system) inside Settings (uses `useTheme`)                                 |
 | Language preference             | DONE   | Inline shadcn `Select` (English / Hindi) inside Settings (i18next.changeLanguage)                            |
 | Launch on Windows startup       | DONE   | `get_autostart` / `set_autostart` Tauri commands write `HKCU\...\Run\DevStackBox` via `reg.exe` (no admin)   |
@@ -212,8 +213,8 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 | Feature                  | Status | Notes                                                                                                                                                                                       |
 | ------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| About page (basic)       | DONE   | App version + author + GitHub/Docs/BugReport buttons (inline in `App.tsx` today)                                                                                                            |
-| About page (extracted)   | DONE   | `src/pages/about.tsx` (AboutPage); `App.tsx` `case 'about'` delegates to it                                                                                                                 |
+| About page (basic)       | DONE   | App version + author + GitHub/Docs/BugReport buttons                                                                                                                                        |
+| About page (extracted)   | DONE   | `src/pages/about.tsx` (AboutPage) is mounted through the router                                                                                                                             |
 | System Information block | DONE   | `get_system_info` Tauri command surfaces OS/arch, Windows version, app + Tauri version, Apache/MySQL/PHP versions; About page renders them in a definition list with Skeleton while loading |
 
 ---
@@ -254,10 +255,11 @@ Update this file every time a feature changes status. Do not maintain feature st
 | Feature                                    | Status  | Notes                                                                                                                                                                         |
 | ------------------------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | List / add / remove vhosts via UI          | DONE    | `list_vhosts`, `add_vhost`, `remove_vhost`, `toggle_vhost` Tauri commands; `src/commands/vhosts.rs`                                                                           |
-| vhosts.json store + vhosts.conf generation | DONE    | Definitions persisted in `%LOCALAPPDATA%\DevStackBox\config\vhosts.json`; `vhosts.conf` auto-regenerated and included via `IncludeOptional` in `httpd.conf` (configVersion 5) |
+| vhosts.json store + vhosts.conf generation | DONE    | Definitions persisted in `%LOCALAPPDATA%\DevStackBox\config\vhosts.json`; `vhosts.conf` auto-regenerated and included via `IncludeOptional` in `httpd.conf` (configVersion 7) |
 | Enable / disable per-vhost toggle          | DONE    | Toggled vhosts are removed from `vhosts.conf`; re-enabled ones are added back                                                                                                 |
 | Windows hosts file management              | DONE    | `get_hosts_entries` reads DevStackBox marker block; `update_hosts_entry` writes/removes `127.0.0.1 domain` via elevated PowerShell (UAC prompt)                               |
 | Show active vhosts on dashboard            | DONE    | Dashboard card lists all configured vhosts with enabled/disabled badge and a Manage link to the vhosts page                                                                   |
+| localhost always works with user vhosts    | DONE    | configVersion 7 template places localhost VirtualHost first with phpMyAdmin Alias inside, preventing name-based vhost mode from breaking `localhost/phpmyadmin`                |
 | HTTPS per virtual host                     | PLANNED | Extend SSL feature to sign per-vhost certs                                                                                                                                    |
 
 ---
@@ -285,8 +287,9 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 ## Version History Summary
 
-| Version         | Key Changes                                                            |
-| --------------- | ---------------------------------------------------------------------- |
-| v0.1.6          | MSI fixed, CSS restored, GitHub Actions fixed, both installers working |
-| v0.1.5          | Build system improvements                                              |
-| v0.1.0 - v0.1.4 | Early alpha, architecture setup                                        |
+| Version         | Key Changes                                                                                                               |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| v0.1.7-dev      | PHP 8.4 CGI compatibility (session.sid_*, error_reporting, html_errors); configVersion 7 vhost fix; .gitignore cleanup   |
+| v0.1.6          | MSI fixed, CSS restored, GitHub Actions fixed, both installers working                                                    |
+| v0.1.5          | Build system improvements                                                                                                 |
+| v0.1.0 - v0.1.4 | Early alpha, architecture setup                                                                                           |

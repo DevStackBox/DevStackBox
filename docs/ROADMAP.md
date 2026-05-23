@@ -47,16 +47,17 @@ Do NOT require users to download core components on first launch. Bad first-laun
 
 ---
 
-## Current State: v0.1.6
+## Current State: v0.1.7-dev
 
-The project has strong architecture and documentation but is in the "dangerous middle stage" - features exist but stability is incomplete. The next phase is stabilization, not new features.
+Phases 1, 2, and 3 are complete. The focus is now Phase 4 (installer / distribution) and incremental Phase 5 polish. The codebase is stable: `cargo check`, `cargo clippy`, and `pnpm tsc --noEmit` are all clean with zero warnings.
 
 ---
 
-## Phase 1 - Core Stability (Current Priority)
+## Phase 1 - Core Stability [DONE]
 
-**Goal:** Make what exists actually work reliably. Fix nothing is broken silently.  
-**Do NOT start Phase 2 until all Phase 1 items are done.**
+**Goal:** Make what exists actually work reliably.
+
+All Phase 1 items are complete. See FEATURE_STATUS.md and KNOWN_ISSUES.md for details.
 
 ### 1.1 Remove Dead Code
 
@@ -255,36 +256,36 @@ See `docs/UPDATES_AND_MIGRATIONS.md` for the full architecture and checklist.
 
 ---
 
-## Phase 5 - Developer Experience Polish
+## Phase 5 - Developer Experience Polish [PARTIAL]
 
 **Goal:** Make DevStackBox noticeably better than XAMPP/WAMP for daily use.
 
 ### 5.1 HTTPS Localhost
 
-- [ ] Auto-generate local certificate for `localhost`
-- [ ] Trust certificate in Windows certificate store (requires elevation)
-- [ ] Extend to virtual host domains
+- [x] Auto-generate local CA and local certificate for `localhost`
+- [ ] Automate trust/install flow for the local CA in Windows certificate store (requires elevation)
+- [ ] Extend certificate generation to virtual host domains
 
 ### 5.2 PHP Error Visibility
 
-- [ ] Surface Apache error log entries in the main UI
+- [x] Surface recent Apache/MySQL/PHP log entries in the main UI
 - [ ] Show PHP fatal errors with file/line
-- [ ] Port conflict detection before Apache starts (DONE - v0.1.6: `ensure_port_available` blocks startup with a clear message when port 80 or 3306 is taken)
+- [x] Port conflict detection before Apache/MySQL starts (`ensure_port_available` blocks startup with a clear message when port 80, 443, or 3306 is taken)
 
 ### 5.3 Tray Polish
 
-- [ ] Show service status in tray tooltip (DONE - v0.1.6: frontend pushes `set_tray_tooltip` on every 5s status poll)
-- [ ] Quick start/stop from tray menu without opening main window (DONE - v0.1.6: tray menu emits `tray-toggle-service`, `ServiceManager` routes to the same toggle pipeline as the UI)
-- [ ] Startup-on-login option
+- [x] Show service status in tray tooltip
+- [x] Quick start/stop from tray menu without opening main window
+- [x] Startup-on-login option
 
 ### 5.4 System Tray & Startup
 
-- [ ] Option to launch on Windows startup
-- [ ] Option to minimize to tray on window close
+- [x] Option to launch on Windows startup
+- [x] Option to minimize to tray on window close
 
 ---
 
-## Phase 6 - UI Workspace Refresh
+## Phase 6 - UI Workspace Refresh [DONE]
 
 **Goal:** Evolve the UI from "stacked web cards" to a focused desktop workspace.
 Driven by the v0.1.6 product review: less vertical scrolling, status-first cards,
@@ -292,45 +293,44 @@ contextual sub-panels, real preferences in Settings, useful About page.
 
 ### 6.1 Dashboard Slim-Down
 
-- [ ] Trim `src/pages/dashboard.tsx` to a single-screen overview at 1366x768
-- [ ] Keep: compact welcome, compact `ServiceManager`, Start All / Stop All / Open Services strip, capped recent activity feed
-- [ ] Remove: the 4 stat cards (Running Services / Uptime / PHP Version / Status) and the large 4-tile Quick Actions grid
-- [ ] Add `start_all_services` Tauri command (mirrors existing `stop_all_services`)
+- [x] Trim `src/pages/dashboard.tsx` toward a single-screen overview at 1366x768
+- [x] Keep compact welcome, compact `ServiceManager`, Start All / Stop All / Open Services strip, and capped recent activity feed
+- [x] Remove the 4 stat cards and the large 4-tile Quick Actions grid
+- [x] Add `start_all_services` Tauri command
 
 ### 6.2 Services Workspace Layout
 
-- [ ] Service cards: keep only Start/Stop + one "Open" action visible; move Config, Logs, Backup, Terminal, Copy connection, Change Version, WWW, Composer into a single shadcn `DropdownMenu` (`MoreHorizontal` trigger in the card header)
-- [ ] Add selection state (`selectedService` + `onSelectService`) to `ServiceManager`; selected card gets `ring-2 ring-primary`
-- [ ] New `src/components/services/service-workspace.tsx`: shadcn `Tabs` panel (Logs / Config / extras) that reflects the selected service
-- [ ] `src/pages/services.tsx` becomes top grid + bottom workspace
-- [ ] Persist last selection in `localStorage` key `devstackbox.services.selected`
+- [x] Service cards keep Start/Stop and one Open action visible; secondary actions live in a shadcn overflow menu
+- [x] Service details live under routed workspaces: `/services/apache`, `/services/mysql`, and `/services/php`
+- [x] Shared service workspace layout and header components support nested service pages
+- [x] Logs and config open as dedicated routes instead of a duplicate inline split panel
 
 ### 6.3 Databases Page Polish
 
-- [ ] New `list_mysql_databases_detailed` Tauri command (name + table count + size, single `information_schema.tables` query)
-- [ ] Each row renders "X tables \* Y MB" under the database name
-- [ ] Sticky search Input above the list filters by name
-- [ ] Right-click row context menu: Backup, Open in phpMyAdmin (`?db=NAME`), Copy DB name
+- [x] New `list_mysql_databases_detailed` Tauri command (name + table count + size, single `information_schema.tables` query)
+- [x] Each row renders table count and size under the database name
+- [x] Sticky search Input above the list filters by name
+- [x] Right-click row context menu: Backup, Open in phpMyAdmin (`?db=NAME`), Copy DB name
 
 ### 6.4 Terminal-Style Log Viewer
 
-- [ ] `src/components/services/log-viewer.tsx`: replace `Textarea` with a read-only `<pre>` (`font-mono text-xs leading-snug whitespace-pre-wrap bg-zinc-950 text-zinc-100 p-3 rounded-md min-h-[400px] max-h-[60vh] overflow-auto`)
-- [ ] Per-line coloring: `[ERROR]`/`error` -> red, `[WARN]`/`warning` -> amber, `[INFO]` -> sky
-- [ ] Search + auto-scroll + copy/download row becomes `sticky top-0 z-10 bg-background/95 backdrop-blur`
-- [ ] Trim outer padding in `src/pages/logs.tsx`
+- [x] `src/components/services/log-viewer.tsx` uses a read-only terminal-style `<pre>`
+- [x] Per-line coloring highlights error, warning, info, and debug lines
+- [x] Search + auto-scroll + copy/download row is sticky inside the viewer
+- [x] Dedicated Logs routes use the shared viewer
 
 ### 6.5 Real Settings Page
 
-- [ ] New `src/pages/settings.tsx` with sections: Appearance (Theme + Language), Startup (Launch on Windows startup), Updates (Check for updates automatically), Configuration shortcuts (compact Apache/MySQL tiles)
-- [ ] Install `tauri-plugin-autostart`; expose `set_autostart` / `get_autostart` Tauri commands
-- [ ] "Auto-check updates" stored in `localStorage` key `devstackbox.settings.autoCheckUpdates`; `auto-updater.tsx` honours it (poll on launch + every 6h when on)
-- [ ] Move inline settings JSX out of `App.tsx`
+- [x] Settings routes include Appearance, Language, Startup, Updates, and Backup & Restore
+- [x] `set_autostart` / `get_autostart` Tauri commands manage Windows startup via `reg.exe`
+- [x] "Auto-check updates" is stored in `localStorage` key `devstackbox.settings.autoCheckUpdates`; `auto-updater.tsx` honours it
+- [x] Inline settings JSX moved out of `App.tsx`
 
 ### 6.6 About Page System Info
 
-- [ ] Extract about case from `App.tsx` into `src/pages/about.tsx`
-- [ ] New `get_system_info` Tauri command: OS + arch (`std::env::consts`), OS version (`cmd /c ver`), Tauri version, app version, Apache version (`httpd -v`), MySQL version (`mysqld --version`), installed PHP versions
-- [ ] System Information card on About renders the result as a definition list with a loading skeleton
+- [x] Extract About page into `src/pages/about.tsx`
+- [x] New `get_system_info` Tauri command surfaces OS, arch, Windows version, app version, Tauri version, Apache version, MySQL version, and installed PHP versions
+- [x] System Information card on About renders the result as a definition list with a loading skeleton
 
 ---
 
@@ -368,10 +368,10 @@ DevStackBox uses **MySQL** as its bundled database server.
 
 ## Version Milestones
 
-| Version | Goal                                                                                                            |
-| ------- | --------------------------------------------------------------------------------------------------------------- |
-| v0.1.6  | Current - architecture and docs complete, builds work                                                           |
-| v0.2.0  | Phase 1 + 2 - stable backend, no dead code, app/data dirs separated, zero Rust warnings                         |
-| v0.3.0  | Phase 3 - additional PHP downloader, real-time logs, virtual hosts, crash recovery                              |
-| v0.4.0  | Phase 4 - MSI reliability, code signing, safe auto-update enabled                                               |
-| v1.0.0  | Phase 5 + 6 - HTTPS localhost, tray polish, startup-on-login, workspace UI refresh, real Settings, useful About |
+| Version   | Goal                                                                                                            |
+| --------- | --------------------------------------------------------------------------------------------------------------- |
+| v0.1.6    | Architecture and docs complete, MSI/NSIS builds working, zero dead code, zero Rust warnings                     |
+| v0.1.7    | PHP 8.4 CGI compatibility, configVersion 7 vhost fix, docs refresh                                             |
+| v0.2.0    | Phase 4 - MSI bundle verification, code signing, safe auto-update enabled                                       |
+| v0.3.0    | Phase 5 - HTTPS localhost, tray polish, startup-on-login, PHP error visibility                                  |
+| v1.0.0    | Phase 6 - workspace UI refresh, real Settings, useful About, all Phase 6 items done                            |
