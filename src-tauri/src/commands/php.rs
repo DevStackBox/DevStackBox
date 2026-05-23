@@ -286,6 +286,39 @@ pub fn patch_php_ini() {
             continue;
         }
 
+        // PHP 8.4 deprecation: these directives emit a startup deprecation
+        // notice, which (because html_errors defaults to On) produces a
+        // "<br />" before the CGI headers - corrupting every CGI response
+        // with "Bad header: <br />" and a 500 to the client.  Comment them
+        // out so PHP uses the modern defaults.
+        if (trimmed.starts_with("session.sid_length")
+            || trimmed.starts_with("session.sid_bits_per_character"))
+            && !trimmed.starts_with(';')
+        {
+            new_content.push_str("; ");
+            new_content.push_str(line);
+            new_content.push_str("  ; commented out by DevStackBox (deprecated in PHP 8.4)\n");
+            continue;
+        }
+
+        // Exclude E_DEPRECATED / E_STRICT from error_reporting. phpMyAdmin
+        // 5.x triggers thousands of deprecation notices on PHP 8.4 (vendor
+        // thecodingmachine/safe), which under CGI both corrupt headers and
+        // blow past max_execution_time during autoload.  Same default that
+        // XAMPP and WAMP use for production php.ini.
+        if trimmed.starts_with("error_reporting") && !trimmed.starts_with(';') {
+            new_content.push_str("error_reporting = E_ALL & ~E_DEPRECATED & ~E_STRICT\n");
+            continue;
+        }
+
+        // html_errors = On wraps every error in HTML <br />, which corrupts
+        // CGI responses (Apache reports "Bad header: <br />" and returns 500).
+        // Plain-text errors still go to the log; the response stays clean.
+        if trimmed.starts_with("html_errors") && !trimmed.starts_with(';') {
+            new_content.push_str("html_errors = Off\n");
+            continue;
+        }
+
         new_content.push_str(line);
         new_content.push('\n');
     }

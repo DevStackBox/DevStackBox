@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { motion } from "framer-motion";
 import {
   Globe,
+  Lock,
   Plus,
   Trash2,
   RefreshCw,
@@ -228,7 +229,52 @@ export function VhostsPage() {
         </motion.div>
       )}
 
-      {/* Virtual hosts table */}
+      {/* System virtual hosts */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Lock className="w-4 h-4" />
+            System Virtual Hosts
+          </CardTitle>
+          <CardDescription>
+            Always active and managed by DevStackBox. These cannot be modified.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Domain</TableHead>
+                <TableHead>Purpose</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Hosts File</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell className="font-mono font-medium">localhost</TableCell>
+                <TableCell className="text-sm text-muted-foreground">
+                  Default web root and phpMyAdmin
+                </TableCell>
+                <TableCell>
+                  <Badge variant="default" className="gap-1" title="Always active. Managed by DevStackBox.">
+                    <Lock className="w-3 h-3" />
+                    System
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-xs">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Built-in
+                  </div>
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* User virtual hosts table */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">

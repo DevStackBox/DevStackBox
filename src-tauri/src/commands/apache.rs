@@ -73,10 +73,10 @@ pub async fn start_apache() -> Result<bool, String> {
         // the current template version (2), regenerate the default config so that
         // new modules / directives are picked up without requiring a manual delete.
         let needs_regen = std::fs::read_to_string(&config_path)
-            .map(|content| !content.contains("# configVersion: 6"))
+            .map(|content| !content.contains("# configVersion: 7"))
             .unwrap_or(false);
         if needs_regen {
-            println!("httpd.conf is from an older configVersion - regenerating default config");
+            println!("Detected outdated Apache config (pre-v7). Migrating to configVersion 7...");
             create_default_apache_config().await?;
         }
     }
@@ -257,7 +257,7 @@ pub async fn create_default_apache_config() -> Result<(), String> {
     let www_root_str = www_root.display().to_string().replace('\\', "/");
 
     let config_content = format!(
-        r#"# configVersion: 6
+        r#"# configVersion: 7
 # Apache Configuration for DevStackBox
 # Managed by DevStackBox. Edits to this file are preserved across upgrades
 # unless the configVersion is bumped, which triggers a migration.
@@ -323,17 +323,41 @@ IncludeOptional "{}/phpmyadmin.conf"
 # SSL Configuration (optional - enabled via HTTPS/SSL page)
 IncludeOptional "{}/ssl.conf"
 # Default virtual host for localhost.
-# When user VirtualHosts are active (vhosts.conf), Apache uses name-based
-# selection; requests that match no ServerName fall back to the first defined
-# VirtualHost. Defining localhost first keeps http://localhost/ working.
+# This is always the FIRST VirtualHost. Once user vhosts are added, Apache
+# uses name-based selection; localhost must be first so http://localhost/
+# and http://localhost/phpmyadmin always work regardless of user vhosts.
 <VirtualHost *:80>
     ServerName localhost
+    ServerAlias 127.0.0.1
     DocumentRoot "{www_root_str}"
     <Directory "{www_root_str}">
         Options Indexes FollowSymLinks
         AllowOverride All
         Require all granted
         DirectoryIndex index.php index.html index.htm
+    </Directory>
+
+    # PHP handler - explicit inside VirtualHost so it is not subject to
+    # global-scope merge behavior in name-based virtual host mode.
+    AddHandler php-script .php
+    Action php-script /php/php-cgi.exe
+    AddType application/x-httpd-php .php
+
+    # phpMyAdmin - Alias inside VirtualHost because global-scope Alias
+    # directives are not reliably inherited in name-based vhost mode.
+    Alias /phpmyadmin "{pma_root}"
+    Alias /pma "{pma_root}"
+    <Directory "{pma_root}">
+        Options -Indexes +FollowSymLinks
+        AllowOverride None
+        DirectoryIndex index.php
+        Require all granted
+        <FilesMatch "\.php$">
+            SetHandler php-script
+        </FilesMatch>
+        <Files "config.inc.php">
+            Require all denied
+        </Files>
     </Directory>
 </VirtualHost>
 # Virtual Hosts (optional - managed via Virtual Hosts page)
@@ -351,7 +375,8 @@ IncludeOptional "{}/vhosts.conf"
         user_config_dir().display().to_string().replace("\\", "/"),
         user_config_dir().display().to_string().replace("\\", "/"),
         user_config = user_config_apache,
-        www_root_str = www_root_str
+        www_root_str = www_root_str,
+        pma_root = phpmyadmin_root.display().to_string().replace("\\", "/")
     );
 
     let phpmyadmin_config = format!(
