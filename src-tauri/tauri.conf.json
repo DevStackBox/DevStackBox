@@ -37,13 +37,13 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": {
-      "../apache/**/*": "apache/",
-      "../mysql/**/*": "mysql/",
-      "../php/**/*": "php/",
-      "../phpmyadmin/**/*": "phpmyadmin/",
-      "../www/**/*": "www/"
-    },
+    "resources": [
+      "../apache/**/*",
+      "../mysql/**/*",
+      "../php/**/*",
+      "../phpmyadmin/**/*",
+      "../www/**/*"
+    ],
     "externalBin": [],
     "copyright": "© 2026 Nomad Programmer",
     "category": "DeveloperTool",

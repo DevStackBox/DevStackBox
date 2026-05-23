@@ -41,12 +41,23 @@ pub fn get_installation_path() -> PathBuf {
         }
     }
 
-    // Try to get the path from the installed location
+    // Try to get the path from the installed location.
+    // When Tauri bundles resources using array syntax with "../" paths, the files
+    // land in a "_up_" subdirectory next to the exe (e.g. $INSTDIR\_up_\apache\).
+    // Check both the direct path and the _up_ subdirectory.
     if let Ok(exe_path) = env::current_exe() {
         if let Some(parent) = exe_path.parent() {
+            // Direct: resources at $INSTDIR\apache\
             if parent.join("apache").join("bin").join("httpd.exe").exists() {
                 println!("Found server components at exe location: {}", parent.display());
                 return parent.to_path_buf();
+            }
+
+            // Tauri array-resource path: resources at $INSTDIR\_up_\apache\
+            let up = parent.join("_up_");
+            if up.join("apache").join("bin").join("httpd.exe").exists() {
+                println!("Found server components at _up_ location: {}", up.display());
+                return up;
             }
 
             if let Some(grandparent) = parent.parent() {
@@ -61,8 +72,10 @@ pub fn get_installation_path() -> PathBuf {
     // Try common installation paths as a last resort before falling back
     // to the current directory.  Do NOT add developer-specific shortcuts here.
     let possible_paths = [
-        PathBuf::from("C:\\Program Files\\DevStackBox"),
+        PathBuf::from("C:\\DevStackBox\\_up_"),
         PathBuf::from("C:\\DevStackBox"),
+        PathBuf::from("C:\\Program Files\\DevStackBox\\_up_"),
+        PathBuf::from("C:\\Program Files\\DevStackBox"),
     ];
 
     for path in &possible_paths {
