@@ -101,20 +101,8 @@ export function SslPage() {
     run(() => invoke<string>(TAURI_COMMANDS.ssl.disable));
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Lock className="w-6 h-6" />
-            HTTPS / SSL
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Local Root CA signs certificates for localhost and future virtual
-            hosts. Trust the CA once in Windows - all generated certs are
-            automatically trusted.
-          </p>
-        </div>
+    <div className="space-y-6">
+      <div className="flex justify-end">
         <Button
           variant="outline"
           size="sm"

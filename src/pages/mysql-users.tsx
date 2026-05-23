@@ -176,12 +176,8 @@ export function MySQLUsersPage() {
       transition={{ duration: 0.2 }}
       className="space-y-6"
     >
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold">
-          {t("mysql.users.title", "MySQL Users")}
-        </h2>
-        <div className="flex items-center gap-2">
-          <Button
+      <div className="flex items-center justify-end gap-2">
+        <Button
             variant="outline"
             size="sm"
             onClick={loadUsers}
@@ -197,7 +193,6 @@ export function MySQLUsersPage() {
             {t("mysql.users.addUser", "Add User")}
           </Button>
         </div>
-      </div>
 
       <div className="rounded-md border">
         <Table>

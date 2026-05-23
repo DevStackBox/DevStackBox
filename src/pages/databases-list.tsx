@@ -215,20 +215,8 @@ export function DatabasesPage() {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            {t("navigation.databases", "Databases")}
-          </h1>
-          <p className="text-muted-foreground">
-            {t(
-              "pages.databases.description",
-              "Backup, restore and inspect your local MySQL databases.",
-            )}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
+      <div className="flex items-center justify-end gap-2">
+        <Button
             variant="outline"
             size="sm"
             onClick={loadDatabases}
@@ -248,7 +236,6 @@ export function DatabasesPage() {
             {t("databases.openPhpMyAdmin", "phpMyAdmin")}
           </Button>
         </div>
-      </div>
 
       <Card>
         <CardHeader>

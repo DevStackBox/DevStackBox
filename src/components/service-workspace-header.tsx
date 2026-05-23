@@ -4,7 +4,7 @@ import { type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ServiceWorkspaceHeaderProps {
-  icon: LucideIcon;
+  icon?: LucideIcon;
   title: string;
   description?: string;
   /** Optional status badge or summary chip (right side of title). */
@@ -19,7 +19,6 @@ interface ServiceWorkspaceHeaderProps {
  * workspaces. Keeps title, badge, and action placement consistent.
  */
 export function ServiceWorkspaceHeader({
-  icon: Icon,
   title,
   description,
   badge,
@@ -36,21 +35,16 @@ export function ServiceWorkspaceHeader({
         className,
       )}
     >
-      <div className="flex items-start gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <Icon className="h-5 w-5" />
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <h1 className="truncate text-3xl font-bold tracking-tight">
+            {title}
+          </h1>
+          {badge}
         </div>
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <h1 className="truncate text-2xl font-semibold tracking-tight">
-              {title}
-            </h1>
-            {badge}
-          </div>
-          {description && (
-            <p className="text-sm text-muted-foreground">{description}</p>
-          )}
-        </div>
+        {description && (
+          <p className="text-sm text-muted-foreground">{description}</p>
+        )}
       </div>
       {actions && (
         <div className="flex flex-wrap items-center gap-2">{actions}</div>

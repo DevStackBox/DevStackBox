@@ -59,9 +59,9 @@ export function TerminalPage() {
       className="flex flex-col gap-4 h-full"
     >
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold">
+        <h1 className="text-3xl font-bold tracking-tight">
           {t("terminal.title", "Terminal")}
-        </h2>
+        </h1>
         <div className="flex flex-wrap items-center gap-2">
           <Button
             variant="outline"

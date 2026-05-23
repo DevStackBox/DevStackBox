@@ -200,18 +200,7 @@ export function BackupPage() {
       transition={{ duration: 0.3 }}
       className="space-y-4"
     >
-      {/* Header */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Full Backup & Restore
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Back up your configuration files, web root, and MySQL databases into
-            a single zip archive.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center justify-end gap-2">
           <Button
             size="sm"
             variant="outline"
@@ -237,7 +226,6 @@ export function BackupPage() {
             {creating ? "Creating..." : "Create Backup"}
           </Button>
         </div>
-      </div>
 
       {/* Progress card */}
       {progress && (

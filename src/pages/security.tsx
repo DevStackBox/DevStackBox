@@ -195,14 +195,11 @@ export function SecurityPage() {
   const allClear = findings !== null && findings.length === 0;
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <ShieldAlert className="w-6 h-6" />
-            Security Analyzer
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
+          <h1 className="text-3xl font-bold tracking-tight">Security Analyzer</h1>
+          <p className="text-sm text-muted-foreground">
             Scans PHP, Apache, and MySQL configurations for common security
             issues.
           </p>

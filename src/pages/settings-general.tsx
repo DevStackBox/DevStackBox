@@ -137,18 +137,6 @@ export function SettingsPage({}: SettingsPageProps) {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          {t("navigation.settings", "Settings")}
-        </h1>
-        <p className="text-muted-foreground">
-          {t(
-            "pages.settings.description",
-            "Appearance, startup, updates and configuration shortcuts.",
-          )}
-        </p>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

@@ -78,7 +78,7 @@ export function AboutPage() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-3xl font-bold">{t("navigation.about")}</h2>
+      <h1 className="text-3xl font-bold tracking-tight">{t("navigation.about")}</h1>
 
       <Card>
         <CardHeader>

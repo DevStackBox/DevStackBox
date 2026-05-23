@@ -189,19 +189,8 @@ export function VhostsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Globe className="w-6 h-6" />
-            {t("vhosts.title")}
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {t("vhosts.description")}
-          </p>
-        </div>
-        <div className="flex gap-2">
+    <div className="space-y-6">
+      <div className="flex items-center justify-end gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -218,7 +207,6 @@ export function VhostsPage() {
             {t("vhosts.addVhost")}
           </Button>
         </div>
-      </div>
 
       {/* Action feedback */}
       {actionMsg && (
