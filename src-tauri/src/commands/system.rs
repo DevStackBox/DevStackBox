@@ -445,7 +445,9 @@ pub async fn get_system_info() -> Result<crate::types::SystemInfo, String> {
         for entry in entries.flatten() {
             if entry.path().is_dir() {
                 if let Some(name) = entry.file_name().to_str() {
-                    php_versions.push(name.to_string());
+                    if name != "current" {
+                        php_versions.push(name.to_string());
+                    }
                 }
             }
         }
