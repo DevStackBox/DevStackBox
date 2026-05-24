@@ -52,7 +52,8 @@ export function PHPService({
     console.log("Opening Composer interface...");
   };
 
-  // Primary action for PHP: open PHP Info (PHP is not a toggleable service).
+  const title = t("services.php.title", "PHP");
+
   const primaryActions = [
     {
       icon: <FileText className="h-4 w-4" />,
@@ -61,8 +62,6 @@ export function PHPService({
       variant: "outline" as const,
     },
   ];
-
-  const title = t("services.php.title", "PHP");
 
   return (
     <ServiceCard
@@ -218,7 +217,7 @@ export function PHPService({
           actions={primaryActions}
           loading={loading}
           compact={compact}
-          layout="grid"
+          layout="row"
         />
       </div>
     </ServiceCard>
