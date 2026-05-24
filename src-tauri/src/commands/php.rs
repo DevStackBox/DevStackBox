@@ -11,6 +11,7 @@ use tauri::{AppHandle, Emitter};
 
 use crate::types::{PHPVersionInfo, ServiceInfo};
 use crate::utils::paths::{get_installation_path, to_apache_path, user_config_dir, user_sessions_dir};
+use crate::utils::process::create_hidden_command;
 
 // Branches we surface in the UI. The bundled default is 8.3; the others are
 // downloadable on demand (Roadmap Phase 3.1).
@@ -389,7 +390,7 @@ pub async fn switch_php_version(version: String) -> Result<bool, String> {
     }
 
     // `mklink` is a cmd.exe builtin, not a standalone exe, so it must be invoked via `cmd /C`.
-    match Command::new("cmd")
+    match create_hidden_command("cmd")
         .args([
             "/C",
             "mklink",

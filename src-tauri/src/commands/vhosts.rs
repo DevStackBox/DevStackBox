@@ -75,6 +75,10 @@ fn generate_vhost_block(entry: &VhostEntry) -> String {
          \x20\x20\x20\x20\x20\x20\x20\x20DirectoryIndex index.php index.html index.htm\n\
          \x20\x20\x20\x20</Directory>\n\
          \n\
+         \x20\x20\x20\x20AddHandler php-script .php\n\
+         \x20\x20\x20\x20Action php-script /php/php-cgi.exe\n\
+         \x20\x20\x20\x20AddType application/x-httpd-php .php\n\
+         \n\
          \x20\x20\x20\x20ErrorLog \"{logs}/vhost-{domain}-error.log\"\n\
          \x20\x20\x20\x20CustomLog \"{logs}/vhost-{domain}-access.log\" common\n\
          </VirtualHost>\n"

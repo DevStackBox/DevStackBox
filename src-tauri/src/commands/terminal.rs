@@ -6,13 +6,13 @@
 // Event emitted:  "terminal-output"  payload: { session_id: String, data: String }
 
 use std::collections::HashMap;
-use std::io::Write;
-use std::os::windows::process::CommandExt;
+use std::io::{Read, Write};
 use std::process::{Child, ChildStdin, Stdio};
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter};
 
 use crate::utils::paths::{get_installation_path, get_mysql_bin_dir};
+use crate::utils::process::create_hidden_command;
 
 // ── shared state ─────────────────────────────────────────────────────────────
 
@@ -49,25 +49,57 @@ fn emit_output(app: &AppHandle, session_id: &str, data: &str) {
     );
 }
 
-/// Read bytes from a readable and emit them line-by-line as events.
-fn stream_reader<R: std::io::Read + Send + 'static>(
+/// Spawn reader threads for stdout and stderr that feed a shared channel.
+/// A single batcher thread collects all output within 16ms windows (~60fps)
+/// and emits one event per window instead of one event per read() call.
+/// This prevents rapid frontend re-renders during cmd.exe startup banner bursts.
+fn spawn_output_forwarder(
     app: AppHandle,
     session_id: String,
-    mut reader: R,
+    stdout: std::process::ChildStdout,
+    stderr: std::process::ChildStderr,
 ) {
+    use std::sync::mpsc;
+    use std::time::Duration;
+
+    let (tx, rx) = mpsc::channel::<String>();
+
+    // Stdout reader thread
+    let tx1 = tx.clone();
     std::thread::spawn(move || {
-        let mut buf = [0u8; 512];
-        loop {
-            match reader.read(&mut buf) {
-                Ok(0) => break,
-                Ok(n) => {
-                    let chunk = String::from_utf8_lossy(&buf[..n]).to_string();
-                    emit_output(&app, &session_id, &chunk);
-                }
-                Err(_) => break,
+        let mut buf = [0u8; 4096];
+        let mut reader = stdout;
+        while let Ok(n @ 1..) = reader.read(&mut buf) {
+            let chunk = String::from_utf8_lossy(&buf[..n]).into_owned();
+            if tx1.send(chunk).is_err() {
+                break;
             }
         }
-        // Signal session end.
+    });
+
+    // Stderr reader thread — when both senders drop, channel closes
+    std::thread::spawn(move || {
+        let mut buf = [0u8; 4096];
+        let mut reader = stderr;
+        while let Ok(n @ 1..) = reader.read(&mut buf) {
+            let chunk = String::from_utf8_lossy(&buf[..n]).into_owned();
+            if tx.send(chunk).is_err() {
+                break;
+            }
+        }
+    });
+
+    // Batcher thread: block for first chunk, then drain for up to 16ms,
+    // emit the accumulated batch as one event. Repeat until channel closes.
+    std::thread::spawn(move || {
+        let window = Duration::from_millis(16);
+        while let Ok(first) = rx.recv() {
+            let mut batch = first;
+            while let Ok(chunk) = rx.recv_timeout(window) {
+                batch.push_str(&chunk);
+            }
+            emit_output(&app, &session_id, &batch);
+        }
         emit_output(&app, &session_id, "\r\n[session closed]\r\n");
     });
 }
@@ -94,12 +126,11 @@ pub async fn spawn_terminal(
         existing_path
     );
 
-    let mut child = std::process::Command::new("cmd.exe")
+    let mut child = create_hidden_command("cmd.exe")
         .env("PATH", &new_path)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
-        .creation_flags(0x08000000) // CREATE_NO_WINDOW
         .spawn()
         .map_err(|e| format!("Failed to spawn shell: {}", e))?;
 
@@ -107,9 +138,8 @@ pub async fn spawn_terminal(
     let stderr = child.stderr.take().unwrap();
     let stdin = child.stdin.take().unwrap();
 
-    // Stream stdout and stderr to frontend.
-    stream_reader(app.clone(), session_id.clone(), stdout);
-    stream_reader(app.clone(), session_id.clone(), stderr);
+    // Stream stdout and stderr to frontend (batched, single emitter).
+    spawn_output_forwarder(app.clone(), session_id.clone(), stdout, stderr);
 
     // Optionally send an initial command (e.g. "mysql -u root").
     let mut session = TerminalSession { stdin, child };

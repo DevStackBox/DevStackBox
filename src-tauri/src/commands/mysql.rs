@@ -1,7 +1,6 @@
 // MySQL service commands.
 
 use serde_json;
-use std::process::Command;
 use std::time::Duration;
 use tokio::time::sleep;
 
@@ -40,7 +39,7 @@ async fn initialize_mysql_data() -> Result<(), String> {
 
     let mysql_dir = data_dir.join("mysql");
     if !mysql_dir.exists() {
-        match Command::new(&mysql_bin_path)
+        match create_hidden_command(&mysql_bin_path.to_string_lossy())
             .arg("--initialize-insecure")
             .arg(format!("--basedir={}", base_path.join("mysql").display()))
             .arg(format!("--datadir={}", data_dir.display()))
@@ -90,7 +89,7 @@ pub async fn start_mysql() -> Result<bool, String> {
 
             sleep(Duration::from_secs(2)).await;
 
-            match std::process::Command::new("netstat").arg("-ano").output() {
+            match create_hidden_command("netstat").arg("-ano").output() {
                 Ok(netstat_output) => {
                     let output_str = String::from_utf8_lossy(&netstat_output.stdout);
                     if output_str.contains(":3306 ") {
@@ -188,7 +187,7 @@ async fn get_mysql_version() -> Option<String> {
         return None;
     }
 
-    match Command::new(&mysql_path).arg("--version").output() {
+    match create_hidden_command(&mysql_path.to_string_lossy()).arg("--version").output() {
         Ok(output) => {
             let version_str = String::from_utf8_lossy(&output.stdout);
             if let Some(start) = version_str.find("Ver ") {
@@ -237,7 +236,7 @@ pub async fn backup_mysql_database() -> Result<String, String> {
 
     let backup_file = backups_dir.join(format!("mysql_backup_{}.sql", timestamp));
 
-    let output = Command::new(&mysql_dump_path)
+    let output = create_hidden_command(&mysql_dump_path.to_string_lossy())
         .args(["-u", "root", "--all-databases"])
         .output()
         .map_err(|e| format!("Failed to execute mysqldump: {}", e))?;

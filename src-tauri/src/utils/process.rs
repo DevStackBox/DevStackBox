@@ -55,7 +55,7 @@ pub fn create_hidden_command(program: &str) -> Command {
 
 #[cfg(windows)]
 pub fn is_process_running(process_name: &str) -> bool {
-    match Command::new("tasklist")
+    match create_hidden_command("tasklist")
         .args(["/FI", &format!("IMAGENAME eq {}", process_name), "/NH"])
         .output()
     {
@@ -82,7 +82,7 @@ pub fn is_process_running(process_name: &str) -> bool {
 
 #[cfg(windows)]
 pub fn get_process_pid(process_name: &str) -> Option<u32> {
-    match Command::new("tasklist")
+    match create_hidden_command("tasklist")
         .args(["/FI", &format!("IMAGENAME eq {}", process_name), "/FO", "CSV", "/NH"])
         .output()
     {
@@ -222,7 +222,7 @@ fn normalize_path(p: &std::path::Path) -> String {
 // touch processes belonging to other stacks (XAMPP, WAMP, etc.).
 #[cfg(windows)]
 pub fn kill_pid(pid: u32) -> Result<(), String> {
-    let output = Command::new("taskkill")
+    let output = create_hidden_command("taskkill")
         .args(["/F", "/PID", &pid.to_string(), "/T"])
         .output()
         .map_err(|e| format!("Failed to execute taskkill: {e}"))?;

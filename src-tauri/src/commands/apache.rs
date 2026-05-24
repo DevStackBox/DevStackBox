@@ -1,6 +1,5 @@
 // Apache service commands.
 
-use std::process::Command;
 use std::time::Duration;
 use tokio::time::sleep;
 
@@ -202,7 +201,7 @@ pub async fn stop_apache() -> Result<bool, String> {
     if apache_path.exists() {
         let config_path = user_config_dir().join("httpd.conf");
 
-        let _ = Command::new(&apache_path)
+        let _ = create_hidden_command(&apache_path.to_string_lossy())
             .args(["-f", config_path.to_str().unwrap_or(""), "-k", "stop"])
             .output();
 
@@ -255,34 +254,63 @@ pub async fn create_default_apache_config() -> Result<(), String> {
 
     let www_root_str = www_root.display().to_string().replace('\\', "/");
 
+    // Detect flat NSIS layout vs standard layout with bin/ subdirectory.
+    // NSIS flattens apache/modules/ -> apache/ and apache/conf/ -> apache/.
+    let modules_prefix = if apache_root.join("modules").exists() {
+        "modules/"
+    } else {
+        "" // flat layout: .so files are directly in apache/
+    };
+
+    // TypesConfig: conf/mime.types in standard layout, mime.types in flat layout.
+    let mime_types_path = if apache_root.join("conf").join("mime.types").exists() {
+        format!(
+            "{}/conf/mime.types",
+            apache_root.display().to_string().replace('\\', "/")
+        )
+    } else {
+        format!(
+            "{}/mime.types",
+            apache_root.display().to_string().replace('\\', "/")
+        )
+    };
+
+    // PHP-CGI path: php/current/ junction in dev layout, php/ directly in flat NSIS layout.
+    let php_cgi_dir = if install_path.join("php").join("current").exists() {
+        install_path.join("php").join("current")
+    } else {
+        install_path.join("php")
+    };
+    let php_cgi_dir_str = php_cgi_dir.display().to_string().replace('\\', "/");
+
     let config_content = format!(
-        r#"# configVersion: 7
+        r#"# configVersion: 8
 # Apache Configuration for DevStackBox
 # Managed by DevStackBox. Edits to this file are preserved across upgrades
 # unless the configVersion is bumped, which triggers a migration.
-ServerRoot "{}"
-PidFile "{}/httpd.pid"
+ServerRoot "{apache_root_str}"
+PidFile "{logs_root_str}/httpd.pid"
 Listen 80
 
 # Essential modules
-LoadModule dir_module modules/mod_dir.so
-LoadModule mime_module modules/mod_mime.so
-LoadModule rewrite_module modules/mod_rewrite.so
-LoadModule authz_core_module modules/mod_authz_core.so
-LoadModule authz_host_module modules/mod_authz_host.so
-LoadModule access_compat_module modules/mod_access_compat.so
-LoadModule log_config_module modules/mod_log_config.so
-LoadModule cgi_module modules/mod_cgi.so
-LoadModule alias_module modules/mod_alias.so
-LoadModule actions_module modules/mod_actions.so
-LoadModule headers_module modules/mod_headers.so
-LoadModule env_module modules/mod_env.so
-LoadModule setenvif_module modules/mod_setenvif.so
+LoadModule dir_module {mp}mod_dir.so
+LoadModule mime_module {mp}mod_mime.so
+LoadModule rewrite_module {mp}mod_rewrite.so
+LoadModule authz_core_module {mp}mod_authz_core.so
+LoadModule authz_host_module {mp}mod_authz_host.so
+LoadModule access_compat_module {mp}mod_access_compat.so
+LoadModule log_config_module {mp}mod_log_config.so
+LoadModule cgi_module {mp}mod_cgi.so
+LoadModule alias_module {mp}mod_alias.so
+LoadModule actions_module {mp}mod_actions.so
+LoadModule headers_module {mp}mod_headers.so
+LoadModule env_module {mp}mod_env.so
+LoadModule setenvif_module {mp}mod_setenvif.so
 
 ServerName localhost:80
-DocumentRoot "{}"
+DocumentRoot "{www_root_str}"
 
-<Directory "{}">
+<Directory "{www_root_str}">
     Options Indexes FollowSymLinks
     AllowOverride All
     Require all granted
@@ -290,11 +318,11 @@ DocumentRoot "{}"
 </Directory>
 
 # MIME Types
-TypesConfig conf/mime.types
+TypesConfig "{mime_types}"
 AddType text/html .html .htm
 
-# PHP CGI configuration - uses php/current junction, auto-follows active version
-ScriptAlias /php/ "{}/php/current/"
+# PHP CGI configuration
+ScriptAlias /php/ "{php_cgi_dir_str}/"
 Action php-script /php/php-cgi.exe
 AddHandler php-script .php
 AddType application/x-httpd-php .php
@@ -303,24 +331,24 @@ AddType application/x-httpd-php .php
 # to the user data dir so it never pollutes the installation directory.
 SetEnv PHPRC "{user_config}/"
 
-<Directory "{}/php/current">
+<Directory "{php_cgi_dir_str}">
     AllowOverride None
     Options ExecCGI
     Require all granted
 </Directory>
 
 # Error and Access logs
-ErrorLog "{}/error.log"
-CustomLog "{}/access.log" common
+ErrorLog "{logs_root_str}/error.log"
+CustomLog "{logs_root_str}/access.log" common
 
 # Security
 ServerTokens Prod
 ServerSignature Off
 
 # phpMyAdmin Configuration (optional - file created on first run)
-IncludeOptional "{}/phpmyadmin.conf"
+IncludeOptional "{user_config_str}/phpmyadmin.conf"
 # SSL Configuration (optional - enabled via HTTPS/SSL page)
-IncludeOptional "{}/ssl.conf"
+IncludeOptional "{user_config_str}/ssl.conf"
 # Default virtual host for localhost.
 # This is always the FIRST VirtualHost. Once user vhosts are added, Apache
 # uses name-based selection; localhost must be first so http://localhost/
@@ -360,22 +388,17 @@ IncludeOptional "{}/ssl.conf"
     </Directory>
 </VirtualHost>
 # Virtual Hosts (optional - managed via Virtual Hosts page)
-IncludeOptional "{}/vhosts.conf"
+IncludeOptional "{user_config_str}/vhosts.conf"
 "#,
-        apache_root.display().to_string().replace("\\", "/"),
-        logs_root.display().to_string().replace("\\", "/"),
-        www_root.display().to_string().replace("\\", "/"),
-        www_root.display().to_string().replace("\\", "/"),
-        install_path.display().to_string().replace("\\", "/"),
-        install_path.display().to_string().replace("\\", "/"),
-        logs_root.display().to_string().replace("\\", "/"),
-        logs_root.display().to_string().replace("\\", "/"),
-        user_config_dir().display().to_string().replace("\\", "/"),
-        user_config_dir().display().to_string().replace("\\", "/"),
-        user_config_dir().display().to_string().replace("\\", "/"),
-        user_config = user_config_apache,
+        apache_root_str = apache_root.display().to_string().replace('\\', "/"),
+        logs_root_str = logs_root.display().to_string().replace('\\', "/"),
         www_root_str = www_root_str,
-        pma_root = phpmyadmin_root.display().to_string().replace("\\", "/")
+        mp = modules_prefix,
+        mime_types = mime_types_path,
+        php_cgi_dir_str = php_cgi_dir_str,
+        user_config = user_config_apache,
+        user_config_str = user_config_dir().display().to_string().replace('\\', "/"),
+        pma_root = phpmyadmin_root.display().to_string().replace('\\', "/")
     );
 
     let phpmyadmin_config = format!(
