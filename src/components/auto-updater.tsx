@@ -1,4 +1,22 @@
-import { useState, useEffect, useRef } from "react";
+/**
+ * AutoUpdater
+ *
+ * Renders either:
+ *  - mode="indicator"  Header badge (VS Code-style).
+ *    Renders nothing until an update is found.
+ *    Shows a small Download icon + pulsing amber dot on update available.
+ *    Click opens the update dialog.
+ *
+ *  - mode="button"  About page button.
+ *    Always visible. Label and color reflect the full update lifecycle:
+ *    Check Updates → Checking… → Update Available → Downloading 42% → Restart & Update
+ *
+ * All state comes from UpdaterContext — this component owns NO update logic.
+ */
+
+import { Download, RefreshCw, RotateCcw } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -7,14 +25,10 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Download, RefreshCw, AlertCircle } from "lucide-react";
-import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
+import { Progress } from "@/components/ui/progress";
+import { useUpdater } from "@/context/updater-context";
 import { APP_VERSION } from "@/lib/version";
-import { isTauri } from "@/lib/tauri";
-import { useToast } from "@/hooks/use-toast";
 
 interface AutoUpdaterProps {
   mode?: "button" | "indicator";
@@ -22,259 +36,247 @@ interface AutoUpdaterProps {
 
 export function AutoUpdater({ mode = "button" }: AutoUpdaterProps) {
   const { t } = useTranslation();
-  const [updateAvailable, setUpdateAvailable] = useState(false);
-  const [updateInfo, setUpdateInfo] = useState<any>(null);
-  const [downloading, setDownloading] = useState(false);
-  const [downloadProgress, setDownloadProgress] = useState(0);
-  const [showDialog, setShowDialog] = useState(false);
-  const [checking, setChecking] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
+  const {
+    updateAvailable,
+    updateInfo,
+    checking,
+    downloading,
+    downloadProgress,
+    readyToInstall,
+    checkError,
+    checkForUpdates,
+    openUpdateDialog,
+  } = useUpdater();
 
-  const checkForUpdates = async (showNotification = false) => {
-    if (!isTauri()) {
-      console.log("[Browser Mode] Updates only available in Tauri app");
-      return;
-    }
+  // ------------------------------------------------------------------
+  // Header indicator (mode="indicator")
+  // ------------------------------------------------------------------
 
-    setChecking(true);
-    setError(null);
+  if (mode === "indicator") {
+    // Render nothing when no update is known
+    if (!updateAvailable) return null;
 
-    try {
-      const { check } = await import("@tauri-apps/plugin-updater");
-      const update = await check();
-      if (update?.available) {
-        setUpdateInfo(update);
-        setUpdateAvailable(true);
-        setShowDialog(true);
-      } else if (showNotification) {
-        toast({
-          title: t("updater.upToDate"),
-          description: `v${APP_VERSION} ${t("updater.latestVersion")}`,
-        });
-      }
-    } catch (error) {
-      console.error("Failed to check for updates:", error);
-      setError("Failed to check for updates");
-    } finally {
-      setChecking(false);
-    }
-  };
+    const tooltip = updateInfo?.version
+      ? `DevStackBox v${updateInfo.version} ${t("updater.available", "available")} — ${t("updater.clickToUpdate", "click to update")}`
+      : t("updater.updateAvailable", "Update available");
 
-  // Accumulate downloaded bytes so the progress bar reflects real total progress.
-  const downloadedRef = useRef(0);
-
-  const downloadAndInstall = async () => {
-    if (!updateInfo || !isTauri()) return;
-
-    setDownloading(true);
-    setError(null);
-    downloadedRef.current = 0;
-
-    try {
-      const { relaunch } = await import("@tauri-apps/plugin-process");
-
-      await updateInfo.downloadAndInstall((event: any) => {
-        switch (event.event) {
-          case "Started":
-            downloadedRef.current = 0;
-            setDownloadProgress(0);
-            break;
-          case "Progress": {
-            downloadedRef.current += event.data.chunkLength;
-            const total = event.data.contentLength;
-            const progress =
-              total > 0
-                ? Math.min(
-                    99,
-                    Math.round((downloadedRef.current / total) * 100),
-                  )
-                : downloadedRef.current > 0
-                  ? 50
-                  : 0;
-            setDownloadProgress(progress);
-            break;
-          }
-          case "Finished":
-            setDownloadProgress(100);
-            break;
-        }
-      });
-
-      // Restart the app after update
-      await relaunch();
-    } catch (error) {
-      console.error("Failed to update:", error);
-      setError("Failed to download update");
-      setDownloading(false);
-    }
-  };
-
-  useEffect(() => {
-    // Respect the user's "auto-check for updates" preference. The Settings
-    // page writes this key; default behaviour stays opt-in by being true.
-    const autoCheck =
-      localStorage.getItem("devstackbox.settings.autoCheckUpdates") !== "false";
-    if (!autoCheck) {
-      return;
-    }
-
-    // Check for updates on app start (silent)
-    const startupCheck = setTimeout(() => {
-      checkForUpdates(false);
-    }, 2000); // Delay to let app fully load
-
-    // Re-check every 6 hours while the app is open.
-    const interval = setInterval(
-      () => checkForUpdates(false),
-      6 * 60 * 60 * 1000,
-    );
-
-    return () => {
-      clearTimeout(startupCheck);
-      clearInterval(interval);
-    };
-  }, []);
-
-  // In indicator mode render nothing until an update is found. The component
-  // stays mounted so the startup check and 6-hour polling keep running.
-  if (mode === "indicator" && !updateAvailable) return null;
-
-  return (
-    <>
-      {mode === "indicator" ? (
-        // Header: icon-only button, only shown when an update is available.
+    return (
+      <>
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setShowDialog(true)}
-          className="text-primary"
-          title={t("updater.updateAvailable", "Update available")}
+          onClick={openUpdateDialog}
+          title={tooltip}
+          className="relative text-amber-500 hover:text-amber-400"
         >
           <Download className="h-4 w-4" />
+          {/* Pulsing amber dot badge */}
+          <span className="absolute top-1 right-1 flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+          </span>
         </Button>
-      ) : (
-        // About page: always-visible Check Updates button.
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => checkForUpdates(true)}
-          disabled={checking}
-        >
-          <RefreshCw
-            className={`h-4 w-4 mr-2 ${checking ? "animate-spin" : ""}`}
-          />
-          {t("updater.checkUpdates")}
-          {updateAvailable && (
-            <Badge
-              variant="destructive"
-              className="ml-2 h-5 min-w-5 px-1 text-xs"
-            >
-              !
-            </Badge>
-          )}
-        </Button>
+
+        {/* Shared dialog — rendered here so it works from the header too */}
+        <UpdateDialog />
+      </>
+    );
+  }
+
+  // ------------------------------------------------------------------
+  // About page button (mode="button")
+  // ------------------------------------------------------------------
+
+  const handleButtonClick = () => {
+    if (readyToInstall || updateAvailable || downloading) {
+      openUpdateDialog();
+    } else {
+      void checkForUpdates(true);
+    }
+  };
+
+  // Derive button label + icon + variant from state
+  let buttonLabel: string;
+  let ButtonIcon: React.ElementType;
+  let buttonVariant: "outline" | "default" | "secondary" = "outline";
+
+  if (readyToInstall) {
+    buttonLabel = t("updater.restartAndUpdate", "Restart & Update");
+    ButtonIcon = RotateCcw;
+    buttonVariant = "default";
+  } else if (downloading) {
+    buttonLabel = `${t("updater.downloading", "Downloading")} ${downloadProgress}%`;
+    ButtonIcon = Download;
+    buttonVariant = "secondary";
+  } else if (updateAvailable) {
+    buttonLabel = t("updater.updateAvailable", "Update Available");
+    ButtonIcon = Download;
+    buttonVariant = "default";
+  } else if (checking) {
+    buttonLabel = t("updater.checkingForUpdates", "Checking…");
+    ButtonIcon = RefreshCw;
+    buttonVariant = "outline";
+  } else {
+    buttonLabel = t("updater.checkUpdates", "Check Updates");
+    ButtonIcon = RefreshCw;
+    buttonVariant = "outline";
+  }
+
+  // Error hint under the button (only for check failures, not download failures)
+  const showErrorHint = !!checkError && !downloading && !updateAvailable;
+
+  return (
+    <>
+      <Button
+        variant={buttonVariant}
+        size="sm"
+        onClick={handleButtonClick}
+        disabled={checking}
+        className={updateAvailable && !downloading ? "border-primary text-primary hover:bg-primary/10" : ""}
+      >
+        <ButtonIcon
+          className={`h-4 w-4 mr-2 ${checking ? "animate-spin" : ""}`}
+        />
+        {buttonLabel}
+      </Button>
+
+      {showErrorHint && (
+        <p className="text-xs text-destructive mt-1">{checkError}</p>
       )}
 
-      {/* Update Dialog */}
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Download className="h-5 w-5" />
-              {t("updater.updateAvailable")}
-            </DialogTitle>
-            <DialogDescription>
-              {t("updater.newVersionAvailable", {
-                version: updateInfo?.version,
-              })}
-            </DialogDescription>
-          </DialogHeader>
+      <UpdateDialog />
+    </>
+  );
+}
 
-          <div className="space-y-4">
-            {/* Version Badge */}
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary">{t("updater.current", "Current")}: v{APP_VERSION}</Badge>
+// ------------------------------------------------------------------
+// Shared update dialog — used by both modes
+// ------------------------------------------------------------------
+
+function UpdateDialog() {
+  const { t } = useTranslation();
+  const {
+    updateInfo,
+    downloading,
+    downloadProgress,
+    readyToInstall,
+    checkError,
+    downloadAndInstall,
+    dismissUpdate,
+    showDialog,
+    setShowDialog,
+  } = useUpdater();
+
+  const handleLater = () => {
+    dismissUpdate(); // persists devstackbox.dismissedUpdate = version
+  };
+
+  return (
+    <Dialog open={showDialog} onOpenChange={setShowDialog}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Download className="h-5 w-5" />
+            DevStackBox v{updateInfo?.version}{" "}
+            {t("updater.available", "available")}
+          </DialogTitle>
+          <DialogDescription>
+            {/* Current → New version line */}
+            <span className="flex items-center gap-2 mt-1 flex-wrap">
+              <Badge variant="secondary">
+                {t("updater.current", "Current")}: v{APP_VERSION}
+              </Badge>
               <span>→</span>
-              <Badge variant="default">{t("updater.new", "New")}: {updateInfo?.version}</Badge>
+              <Badge variant="default">
+                {t("updater.new", "New")}: v{updateInfo?.version}
+              </Badge>
+            </span>
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Release notes */}
+          {updateInfo?.body && (
+            <div className="max-h-32 overflow-y-auto rounded-md border p-3 text-sm bg-muted/50">
+              <h4 className="font-medium mb-2">
+                {t("updater.whatsNew", "What's new:")}
+              </h4>
+              <pre className="whitespace-pre-wrap text-muted-foreground">
+                {updateInfo.body}
+              </pre>
             </div>
+          )}
 
-            {/* Release Notes */}
-            {updateInfo?.body && (
-              <div className="max-h-32 overflow-y-auto rounded-md border p-3 text-sm bg-muted/50">
-                <h4 className="font-medium mb-2">{t("updater.whatsNew", "What's new:")}</h4>
-                <pre className="whitespace-pre-wrap text-muted-foreground">
-                  {updateInfo.body}
-                </pre>
+          {/* Download progress */}
+          {downloading && (
+            <motion.div
+              className="space-y-2"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <div className="flex items-center gap-2">
+                <Progress value={downloadProgress} className="flex-1" />
+                <span className="text-sm font-mono min-w-[3rem]">
+                  {downloadProgress}%
+                </span>
               </div>
-            )}
+              <p className="text-sm text-center text-muted-foreground">
+                {readyToInstall
+                  ? t("updater.installAndRestart", "Installing and restarting…")
+                  : t("updater.downloading", "Downloading…")}
+              </p>
+            </motion.div>
+          )}
 
-            {/* Download Progress */}
-            {downloading && (
-              <motion.div
-                className="space-y-2"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <div className="flex items-center gap-2">
-                  <Progress value={downloadProgress} className="flex-1" />
-                  <span className="text-sm font-mono min-w-[3rem]">
-                    {downloadProgress}%
-                  </span>
-                </div>
-                <p className="text-sm text-center text-muted-foreground">
-                  {downloadProgress === 100
-                    ? t("updater.installAndRestart")
-                    : t("updater.downloading")}
-                </p>
-              </motion.div>
-            )}
+          {/* Error */}
+          {checkError && (
+            <motion.p
+              className="text-sm text-destructive"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              {checkError}
+            </motion.p>
+          )}
 
-            {/* Error Message */}
-            {error && (
-              <motion.div
-                className="flex items-center gap-2 text-sm text-destructive"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
-                <AlertCircle className="h-4 w-4" />
-                {error}
-              </motion.div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex gap-2 justify-end">
+          {/* Action buttons */}
+          <div className="flex gap-2 justify-end">
+            {!readyToInstall && (
               <Button
                 variant="outline"
-                onClick={() => setShowDialog(false)}
+                onClick={handleLater}
                 disabled={downloading}
               >
-                {t("updater.later")}
+                {t("updater.later", "Later")}
               </Button>
-              <Button
-                onClick={downloadAndInstall}
-                disabled={downloading}
-                className="min-w-[120px]"
-              >
-                {downloading ? (
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity }}
-                    className="mr-2"
-                  >
-                    <Download className="h-4 w-4" />
-                  </motion.div>
-                ) : (
-                  <Download className="h-4 w-4 mr-2" />
-                )}
-                {downloading
-                  ? t("updater.downloading")
-                  : t("updater.updateNow")}
-              </Button>
-            </div>
+            )}
+            <Button
+              onClick={() => void downloadAndInstall()}
+              disabled={downloading && !readyToInstall}
+              className="min-w-[140px]"
+            >
+              {downloading && !readyToInstall ? (
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="mr-2"
+                >
+                  <Download className="h-4 w-4" />
+                </motion.div>
+              ) : readyToInstall ? (
+                <RotateCcw className="h-4 w-4 mr-2" />
+              ) : (
+                <Download className="h-4 w-4 mr-2" />
+              )}
+              {readyToInstall
+                ? t("updater.restartAndUpdate", "Restart & Update")
+                : downloading
+                  ? `${t("updater.downloading", "Downloading")} ${downloadProgress}%`
+                  : t("updater.updateNow", "Download & Install")}
+            </Button>
           </div>
-        </DialogContent>
-      </Dialog>
-    </>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

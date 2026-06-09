@@ -21,6 +21,8 @@ import { OnboardingDialog } from "./components/onboarding-dialog";
 import { CommandPalette } from "./components/command-palette";
 import { ServiceStatusProvider } from "./context/service-status-context";
 import { DatabaseCacheProvider } from "./context/database-cache-context";
+import { UpdaterProvider } from "./context/updater-context";
+import { initializeSystemInfoCache } from "./lib/system-info-cache";
 
 import {
   DashboardPage,
@@ -86,6 +88,9 @@ function AppShell() {
   };
 
   useEffect(() => {
+    // Register PHP version change listener for the system info cache.
+    // Must be called here — not as a module-level side effect.
+    initializeSystemInfoCache();
     initializeApp();
   }, []);
 
@@ -333,7 +338,9 @@ function App() {
       <HashRouter>
         <ServiceStatusProvider>
           <DatabaseCacheProvider>
-            <AppShell />
+            <UpdaterProvider>
+              <AppShell />
+            </UpdaterProvider>
           </DatabaseCacheProvider>
         </ServiceStatusProvider>
       </HashRouter>
