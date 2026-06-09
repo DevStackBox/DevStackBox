@@ -40,7 +40,7 @@
     "resources": {
       "../apache": "apache",
       "../mysql": "mysql",
-      "../php": "php",
+      "../php/8.3": "php/8.3",
       "../phpmyadmin": "phpmyadmin",
       "../www": "www"
     },
