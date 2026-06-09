@@ -79,7 +79,7 @@ async fn get_current_php_version() -> Option<String> {
         default_exe
     };
 
-    match Command::new(&exe).arg("--version").output() {
+    match create_hidden_command(&exe.to_string_lossy()).arg("--version").output() {
         Ok(output) => {
             // `php --version` can emit "PHP Startup: ..." warning lines to
             // stdout before the actual banner. We must look specifically for a

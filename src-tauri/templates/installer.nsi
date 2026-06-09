@@ -424,12 +424,13 @@ FunctionEnd
 
 ; Uninstaller Pages
 ; 1. Confirm uninstall page
-Var DeleteAppDataCheckbox
-Var DeleteAppDataCheckboxState
+Var KeepUserDataCheckbox
+Var KeepUserDataCheckboxState
 ; ARCH-001: Track whether to preserve C:\devstackbox\www on uninstall
 Var KeepWwwCheckbox
 Var KeepWwwCheckboxState
 !define /ifndef WS_EX_LAYOUTRTL         0x00400000
+!define /ifndef SWP_NOMOVE              0x0002
 !define MUI_PAGE_CUSTOMFUNCTION_SHOW un.ConfirmShow
 Function un.ConfirmShow
   ; $1 inner dialog HWND
@@ -441,6 +442,17 @@ Function un.ConfirmShow
   ; $7 height
   FindWindow $1 "#32770" "" $HWNDPARENT ; Find inner dialog
   System::Call "user32::GetDpiForWindow(p r1) i .r2"
+
+  ; Grow the confirm dialog so both checkboxes stay visible (not clipped).
+  System::Call 'user32::GetClientRect(p r1, @r0)'
+  System::Call '*$0(i.r2, i.r3, i.r4, i.r5)'
+  IntOp $5 $5 + 40
+  System::Call 'user32::SetWindowPos(p r1, i 0, i 0, i 0, i r4, i $5, i ${SWP_NOMOVE})'
+  System::Call 'user32::GetClientRect(p $HWNDPARENT, @r0)'
+  System::Call '*$0(i.r2, i.r3, i.r4, i.r5)'
+  IntOp $5 $5 + 40
+  System::Call 'user32::SetWindowPos(p $HWNDPARENT, i 0, i 0, i 0, i r4, i $5, i ${SWP_NOMOVE})'
+
   ${If} $(^RTL) = 1
     StrCpy $3 "${__NSD_CheckBox_EXSTYLE} | ${WS_EX_LAYOUTRTL}"
     IntOp $4 50 * $2
@@ -448,7 +460,7 @@ Function un.ConfirmShow
     StrCpy $3 "${__NSD_CheckBox_EXSTYLE}"
     IntOp $4 0 * $2
   ${EndIf}
-  IntOp $6 400 * $2
+  IntOp $6 480 * $2
   IntOp $7 25 * $2
   IntOp $4 $4 / 96
   IntOp $6 $6 / 96
@@ -463,18 +475,18 @@ Function un.ConfirmShow
   SendMessage $KeepWwwCheckbox ${WM_SETFONT} $1 1
   SendMessage $KeepWwwCheckbox ${BM_SETCHECK} ${BST_CHECKED} 0
 
-  ; Delete app data checkbox below keep-www.
+  ; Keep user data checkbox below keep-www (checked by default).
   IntOp $5 128 * $2
   IntOp $5 $5 / 96
-  System::Call 'user32::CreateWindowEx(i r3, w "${__NSD_CheckBox_CLASS}", w "$(deleteAppData)", i ${__NSD_CheckBox_STYLE}, i r4, i r5, i r6, i r7, p r1, i0, i0, i0) i .s'
-  Pop $DeleteAppDataCheckbox
-  SendMessage $DeleteAppDataCheckbox ${WM_SETFONT} $1 1
+  System::Call 'user32::CreateWindowEx(i r3, w "${__NSD_CheckBox_CLASS}", w "$(keepUserData)", i ${__NSD_CheckBox_STYLE}, i r4, i r5, i r6, i r7, p r1, i0, i0, i0) i .s'
+  Pop $KeepUserDataCheckbox
+  SendMessage $KeepUserDataCheckbox ${WM_SETFONT} $1 1
+  SendMessage $KeepUserDataCheckbox ${BM_SETCHECK} ${BST_CHECKED} 0
 FunctionEnd
 !define MUI_PAGE_CUSTOMFUNCTION_LEAVE un.ConfirmLeave
 Function un.ConfirmLeave
-  SendMessage $DeleteAppDataCheckbox ${BM_GETCHECK} 0 0 $DeleteAppDataCheckboxState
-  ; ARCH-001: Read www protection checkbox state
   SendMessage $KeepWwwCheckbox ${BM_GETCHECK} 0 0 $KeepWwwCheckboxState
+  SendMessage $KeepUserDataCheckbox ${BM_GETCHECK} 0 0 $KeepUserDataCheckboxState
 FunctionEnd
 !define MUI_PAGE_CUSTOMFUNCTION_PRE un.SkipIfPassive
 !insertmacro MUI_UNPAGE_CONFIRM
@@ -490,8 +502,9 @@ FunctionEnd
 {{#each language_files}}
   !include "{{this}}"
 {{/each}}
-; ARCH-001: DevStackBox uninstaller string
+; ARCH-001: DevStackBox uninstaller strings
 LangString keepWwwFiles ${LANG_ENGLISH} "Keep website files in C:\devstackbox\www (recommended)"
+LangString keepUserData ${LANG_ENGLISH} "Keep user data in %LOCALAPPDATA%\devstackbox (configs, logs, databases)"
 
 Function .onInit
   ${GetOptions} $CMDLINE "/P" $PassiveMode
@@ -783,7 +796,7 @@ Function un.onInit
   ; ARCH-001: Safe defaults when confirm page is skipped (passive/silent) or
   ; before the user clicks Uninstall on the confirm page.
   StrCpy $KeepWwwCheckboxState 1
-  StrCpy $DeleteAppDataCheckboxState 0
+  StrCpy $KeepUserDataCheckboxState 1
 FunctionEnd
 
 Section Uninstall
@@ -893,9 +906,8 @@ Section Uninstall
     DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${PRODUCTNAME}"
   ${EndIf}
 
-  ; Delete app data if the checkbox is selected
-  ; and if not updating
-  ${If} $DeleteAppDataCheckboxState = 1
+  ; Remove user data unless the user chose to keep it (and not during updates).
+  ${If} $KeepUserDataCheckboxState = 0
   ${AndIf} $UpdateMode <> 1
     ; Clear the install location $INSTDIR from registry
     DeleteRegKey SHCTX "${MANUPRODUCTKEY}"
