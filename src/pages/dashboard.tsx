@@ -165,7 +165,7 @@ export function DashboardPage({
         <CardHeader className="flex flex-row items-center justify-between py-3 px-4">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
             <Globe className="w-4 h-4" />
-            Virtual Hosts
+            {t("vhosts.title", "Virtual Hosts")}
           </CardTitle>
           <Button
             variant="ghost"
@@ -173,14 +173,14 @@ export function DashboardPage({
             className="h-7 text-xs gap-1"
             onClick={() => navigate(ROUTES.apacheVhosts.path)}
           >
-            Manage
+            {t("vhosts.manage", "Manage")}
             <ArrowRight className="w-3 h-3" />
           </Button>
         </CardHeader>
         <CardContent className="px-4 pb-4">
           {vhosts.length === 0 ? (
             <p className="text-xs text-muted-foreground">
-              No virtual hosts configured.
+              {t("vhosts.noVhosts", "No virtual hosts configured yet.")}
             </p>
           ) : (
             <div className="space-y-1">
@@ -194,13 +194,13 @@ export function DashboardPage({
                     variant={v.enabled ? "default" : "secondary"}
                     className="text-xs h-5"
                   >
-                    {v.enabled ? "Enabled" : "Disabled"}
+                    {v.enabled ? t("vhosts.enabled", "Enabled") : t("vhosts.disabled", "Disabled")}
                   </Badge>
                 </div>
               ))}
               {vhosts.length > 5 && (
                 <p className="text-xs text-muted-foreground pt-1">
-                  +{vhosts.length - 5} more
+                  {t("vhosts.more", "+{{count}} more", { count: vhosts.length - 5 })}
                 </p>
               )}
             </div>

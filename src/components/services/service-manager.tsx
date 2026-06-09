@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { notify, primeNotificationPermission } from "@/lib/notify";
 import { ROUTES } from "@/lib/routes";
+import { useTranslation } from "react-i18next";
 
 interface ServiceManagerProps {
   compact?: boolean;
@@ -48,6 +49,7 @@ export function ServiceManager({
   selectedService,
   onSelectService,
 }: ServiceManagerProps) {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [services, setServices] = useState({
@@ -135,19 +137,19 @@ export function ServiceManager({
           const label = name.charAt(0).toUpperCase() + name.slice(1);
           toast({
             variant: "destructive",
-            title: `${label} stopped unexpectedly`,
-            description: `${label} was running but is no longer responding. Check logs and restart it.`,
+            title: t("serviceManager.crashTitle", "{{service}} stopped unexpectedly", { service: label }),
+            description: t("serviceManager.crashDesc", "{{service}} was running but is no longer responding. Check logs and restart it.", { service: label }),
             action: (
               <ToastAction
-                altText={`Restart ${label}`}
+                altText={t("serviceManager.crashRestart", "Restart")}
                 onClick={() => toggleServiceRef.current(name)}
               >
-                Restart
+                {t("serviceManager.crashRestart", "Restart")}
               </ToastAction>
             ),
           });
           void notify(
-            `${label} stopped unexpectedly`,
+            t("serviceManager.crashTitle", "{{service}} stopped unexpectedly", { service: label }),
             "Open DevStackBox to view logs and restart the service.",
           );
           // Phase 3.4: persist crash event to crash.log with a timestamp.
@@ -175,8 +177,8 @@ export function ServiceManager({
       if (!isTauri()) {
         toast({
           variant: "destructive",
-          title: "Browser Mode",
-          description: "Service control requires running in Tauri app",
+          title: t("serviceManager.browserMode", "Browser Mode"),
+          description: t("serviceManager.browserModeDesc", "Service control requires running in Tauri app"),
         });
         setLoading(null);
         return;
@@ -209,16 +211,20 @@ export function ServiceManager({
       // Show toast notification
       toast({
         variant: "success",
-        title: `${serviceName} ${result ? "Started" : "Stopped"}`,
+        title: result
+          ? t("serviceManager.serviceStarted", "{{service}} Started", { service: serviceName })
+          : t("serviceManager.serviceStopped", "{{service}} Stopped", { service: serviceName }),
         description: result
-          ? `${serviceName} service is now running`
-          : `${serviceName} service has been stopped`,
+          ? t("serviceManager.serviceNowRunning", "{{service}} service is now running", { service: serviceName })
+          : t("serviceManager.serviceNowStopped", "{{service}} service has been stopped", { service: serviceName }),
       });
       void notify(
-        `${serviceName} ${result ? "started" : "stopped"}`,
         result
-          ? `${serviceName} service is now running.`
-          : `${serviceName} service has been stopped.`,
+          ? t("serviceManager.serviceStarted", "{{service}} Started", { service: serviceName })
+          : t("serviceManager.serviceStopped", "{{service}} Stopped", { service: serviceName }),
+        result
+          ? t("serviceManager.serviceNowRunning", "{{service}} service is now running", { service: serviceName })
+          : t("serviceManager.serviceNowStopped", "{{service}} service has been stopped", { service: serviceName }),
       );
     } catch (error) {
       console.error(`Failed to toggle ${service}:`, error);
@@ -230,8 +236,8 @@ export function ServiceManager({
             : String(error);
       toast({
         variant: "destructive",
-        title: "Service Error",
-        description: errorMsg || `Failed to start/stop ${service}.`,
+        title: t("serviceManager.serviceError", "Service Error"),
+        description: errorMsg || t("serviceManager.serviceErrorDesc", "Failed to start/stop {{service}}.", { service }),
       });
     } finally {
       setLoading(null);
@@ -284,8 +290,8 @@ export function ServiceManager({
         if (!localStorage.getItem(SHOWN_KEY)) {
           localStorage.setItem(SHOWN_KEY, "1");
           void notify(
-            "DevStackBox is still running",
-            "The app is minimized to the system tray. Click the tray icon to restore it.",
+            t("serviceManager.trayNotice", "DevStackBox is still running"),
+            t("serviceManager.trayNoticeDesc", "The app is minimized to the system tray. Click the tray icon to restore it."),
           );
         }
       });

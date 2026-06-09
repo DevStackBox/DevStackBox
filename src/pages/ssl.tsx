@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import {
   Lock,
@@ -57,6 +58,7 @@ function StatusRow({
 }
 
 export function SslPage() {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<SslStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [actionMsg, setActionMsg] = useState<{
@@ -112,7 +114,7 @@ export function SslPage() {
           <RefreshCw
             className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
           />
-          Refresh
+          {t("ssl.refresh", "Refresh")}
         </Button>
       </div>
 
@@ -141,7 +143,7 @@ export function SslPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <ShieldCheck className="w-4 h-4" />
-            Current Status
+            {t("ssl.currentStatus", "Current Status")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-1">
@@ -149,22 +151,22 @@ export function SslPage() {
             <>
               <StatusRow
                 ok={status.ca_exists}
-                label="Local Root CA generated (DevStackBox Local CA)"
+                label={t("ssl.caGenerated", "Local Root CA generated (DevStackBox Local CA)")}
               />
               <Separator />
               <StatusRow
                 ok={status.cert_exists}
-                label="localhost certificate signed by CA"
+                label={t("ssl.certSigned", "localhost certificate signed by CA")}
                 detail={
                   status.cert_expiry
-                    ? `Expires: ${status.cert_expiry}`
+                    ? `${t("ssl.expires", "Expires")}: ${status.cert_expiry}`
                     : undefined
                 }
               />
               <Separator />
               <StatusRow
                 ok={status.enabled}
-                label="SSL enabled in Apache config"
+                label={t("ssl.sslEnabled", "SSL enabled in Apache config")}
               />
               {status.ca_exists && (
                 <>
@@ -183,7 +185,7 @@ export function SslPage() {
               )}
             </>
           ) : (
-            <p className="text-sm text-muted-foreground">Loading status...</p>
+            <p className="text-sm text-muted-foreground">{t("ssl.loadingStatus", "Loading status...")}</p>
           )}
         </CardContent>
       </Card>
@@ -194,12 +196,10 @@ export function SslPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <FileBadge className="w-4 h-4" />
-              Generate CA + Certificate
+              {t("ssl.generateTitle", "Generate CA + Certificate")}
             </CardTitle>
             <CardDescription className="text-xs">
-              Creates a Local Root CA (DevStackBox Local CA) then signs a
-              10-year localhost certificate with it. Re-run to regenerate the
-              localhost cert without touching the CA.
+              {t("ssl.generateDesc", "Creates a Local Root CA (DevStackBox Local CA) then signs a 10-year localhost certificate with it. Re-run to regenerate the localhost cert without touching the CA.")}
             </CardDescription>
           </CardHeader>
           <CardContent className="mt-auto pt-2">
@@ -214,7 +214,7 @@ export function SslPage() {
               ) : (
                 <FileBadge className="w-4 h-4 mr-2" />
               )}
-              Generate
+              {t("ssl.generate", "Generate")}
             </Button>
           </CardContent>
         </Card>
@@ -223,11 +223,10 @@ export function SslPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <Lock className="w-4 h-4" />
-              Enable SSL
+              {t("ssl.enableTitle", "Enable SSL")}
             </CardTitle>
             <CardDescription className="text-xs">
-              Adds mod_ssl and an HTTPS VirtualHost (port 443) to Apache config.
-              Generates a certificate if one does not exist yet.
+              {t("ssl.enableDesc", "Adds mod_ssl and an HTTPS VirtualHost (port 443) to Apache config. Generates a certificate if one does not exist yet.")}
             </CardDescription>
           </CardHeader>
           <CardContent className="mt-auto pt-2">
@@ -241,10 +240,10 @@ export function SslPage() {
               ) : (
                 <Lock className="w-4 h-4 mr-2" />
               )}
-              Enable
+              {t("ssl.enable", "Enable")}
               {status?.enabled && (
                 <Badge variant="secondary" className="ml-2 text-xs">
-                  Active
+                  {t("ssl.active", "Active")}
                 </Badge>
               )}
             </Button>
@@ -255,11 +254,10 @@ export function SslPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
               <LockOpen className="w-4 h-4" />
-              Disable SSL
+              {t("ssl.disableTitle", "Disable SSL")}
             </CardTitle>
             <CardDescription className="text-xs">
-              Removes the SSL Include from httpd.conf. Certificate files are
-              kept so SSL can be re-enabled without regenerating.
+              {t("ssl.disableDesc", "Removes the SSL Include from httpd.conf. Certificate files are kept so SSL can be re-enabled without regenerating.")}
             </CardDescription>
           </CardHeader>
           <CardContent className="mt-auto pt-2">
@@ -274,7 +272,7 @@ export function SslPage() {
               ) : (
                 <LockOpen className="w-4 h-4 mr-2" />
               )}
-              Disable
+              {t("ssl.disable", "Disable")}
             </Button>
           </CardContent>
         </Card>
@@ -284,42 +282,28 @@ export function SslPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-sm">
-            Trust the Root CA in Windows (one-time)
+            {t("ssl.trustTitle", "Trust the Root CA in Windows (one-time)")}
           </CardTitle>
           <CardDescription className="text-xs">
-            Import the CA certificate once. Every certificate DevStackBox
-            generates - for localhost and future virtual hosts - is then trusted
-            automatically. No more browser warnings.
+            {t("ssl.trustDesc", "Import the CA certificate once. Every certificate DevStackBox generates - for localhost and future virtual hosts - is then trusted automatically. No more browser warnings.")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
             <li>
-              Open{" "}
-              <span className="font-mono text-foreground">certmgr.msc</span>{" "}
-              (Windows Certificate Manager).
+              {t("ssl.trustStep1", "Open certmgr.msc (Windows Certificate Manager).")}
             </li>
             <li>
-              Navigate to{" "}
-              <span className="font-semibold text-foreground">
-                Trusted Root Certification Authorities &gt; Certificates
-              </span>
-              .
+              {t("ssl.trustStep2", "Navigate to Trusted Root Certification Authorities > Certificates.")}
             </li>
             <li>
-              Right-click and choose{" "}
-              <span className="font-semibold text-foreground">
-                All Tasks &gt; Import...
-              </span>
+              {t("ssl.trustStep3", "Right-click and choose All Tasks > Import...")}
             </li>
             <li>
-              Browse to{" "}
-              <span className="font-mono text-foreground">ca.crt</span> (path
-              shown below) and complete the import wizard.
+              {t("ssl.trustStep4", "Browse to ca.crt (path shown below) and complete the import wizard.")}
             </li>
             <li>
-              Restart your browser. All DevStackBox HTTPS sites will be trusted
-              without any further action.
+              {t("ssl.trustStep5", "Restart your browser. All DevStackBox HTTPS sites will be trusted without any further action.")}
             </li>
           </ol>
           {status?.ca_path && (
@@ -329,7 +313,7 @@ export function SslPage() {
           )}
           {!status?.ca_path && (
             <p className="text-xs text-muted-foreground">
-              Generate the CA first to see its path.
+              {t("ssl.generateFirst", "Generate the CA first to see its path.")}
             </p>
           )}
         </CardContent>

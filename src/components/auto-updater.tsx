@@ -194,15 +194,15 @@ export function AutoUpdater({ mode = "button" }: AutoUpdaterProps) {
           <div className="space-y-4">
             {/* Version Badge */}
             <div className="flex items-center gap-2">
-              <Badge variant="secondary">Current: v{APP_VERSION}</Badge>
+              <Badge variant="secondary">{t("updater.current", "Current")}: v{APP_VERSION}</Badge>
               <span>→</span>
-              <Badge variant="default">New: {updateInfo?.version}</Badge>
+              <Badge variant="default">{t("updater.new", "New")}: {updateInfo?.version}</Badge>
             </div>
 
             {/* Release Notes */}
             {updateInfo?.body && (
               <div className="max-h-32 overflow-y-auto rounded-md border p-3 text-sm bg-muted/50">
-                <h4 className="font-medium mb-2">What's new:</h4>
+                <h4 className="font-medium mb-2">{t("updater.whatsNew", "What's new:")}</h4>
                 <pre className="whitespace-pre-wrap text-muted-foreground">
                   {updateInfo.body}
                 </pre>

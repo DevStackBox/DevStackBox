@@ -38,11 +38,11 @@
       "icons/icon.ico"
     ],
     "resources": {
-      "../apache/**/*": "apache",
-      "../mysql/**/*": "mysql",
-      "../php/**/*": "php",
-      "../phpmyadmin/**/*": "phpmyadmin",
-      "../www/**/*": "www"
+      "../apache": "apache",
+      "../mysql": "mysql",
+      "../php": "php",
+      "../phpmyadmin": "phpmyadmin",
+      "../www": "www"
     },
     "externalBin": [],
     "copyright": "© 2026 Nomad Programmer",

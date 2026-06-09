@@ -431,7 +431,7 @@ Var KeepWwwCheckbox
 Var KeepWwwCheckboxState
 !define /ifndef WS_EX_LAYOUTRTL         0x00400000
 !define MUI_PAGE_CUSTOMFUNCTION_SHOW un.ConfirmShow
-Function un.ConfirmShow ; Add add a `Delete app data` check box
+Function un.ConfirmShow
   ; $1 inner dialog HWND
   ; $2 window DPI
   ; $3 style
@@ -448,25 +448,27 @@ Function un.ConfirmShow ; Add add a `Delete app data` check box
     StrCpy $3 "${__NSD_CheckBox_EXSTYLE}"
     IntOp $4 0 * $2
   ${EndIf}
-  IntOp $5 100 * $2
   IntOp $6 400 * $2
   IntOp $7 25 * $2
   IntOp $4 $4 / 96
-  IntOp $5 $5 / 96
   IntOp $6 $6 / 96
   IntOp $7 $7 / 96
-  System::Call 'user32::CreateWindowEx(i r3, w "${__NSD_CheckBox_CLASS}", w "$(deleteAppData)", i ${__NSD_CheckBox_STYLE}, i r4, i r5, i r6, i r7, p r1, i0, i0, i0) i .s'
-  Pop $DeleteAppDataCheckbox
-  SendMessage $HWNDPARENT ${WM_GETFONT} 0 0 $1
-  SendMessage $DeleteAppDataCheckbox ${WM_SETFONT} $1 1
-  ; ARCH-001: Add "Keep website files" checkbox below Delete app data, checked by default
-  IntOp $5 128 * $2
+
+  ; ARCH-001: Keep www checkbox (checked by default).
+  IntOp $5 100 * $2
   IntOp $5 $5 / 96
   System::Call 'user32::CreateWindowEx(i r3, w "${__NSD_CheckBox_CLASS}", w "$(keepWwwFiles)", i ${__NSD_CheckBox_STYLE}, i r4, i r5, i r6, i r7, p r1, i0, i0, i0) i .s'
   Pop $KeepWwwCheckbox
   SendMessage $HWNDPARENT ${WM_GETFONT} 0 0 $1
   SendMessage $KeepWwwCheckbox ${WM_SETFONT} $1 1
-  SendMessage $KeepWwwCheckbox ${BM_SETCHECK} 1 0
+  SendMessage $KeepWwwCheckbox ${BM_SETCHECK} ${BST_CHECKED} 0
+
+  ; Delete app data checkbox below keep-www.
+  IntOp $5 128 * $2
+  IntOp $5 $5 / 96
+  System::Call 'user32::CreateWindowEx(i r3, w "${__NSD_CheckBox_CLASS}", w "$(deleteAppData)", i ${__NSD_CheckBox_STYLE}, i r4, i r5, i r6, i r7, p r1, i0, i0, i0) i .s'
+  Pop $DeleteAppDataCheckbox
+  SendMessage $DeleteAppDataCheckbox ${WM_SETFONT} $1 1
 FunctionEnd
 !define MUI_PAGE_CUSTOMFUNCTION_LEAVE un.ConfirmLeave
 Function un.ConfirmLeave
@@ -777,10 +779,11 @@ Function un.onInit
   ${IfNot} ${Errors}
     StrCpy $UpdateMode 1
   ${EndIf}
-  ; ARCH-001: In passive/silent mode there is no dialog, default to keeping www
-  ${If} $PassiveMode = 1
-    StrCpy $KeepWwwCheckboxState 1
-  ${EndIf}
+
+  ; ARCH-001: Safe defaults when confirm page is skipped (passive/silent) or
+  ; before the user clicks Uninstall on the confirm page.
+  StrCpy $KeepWwwCheckboxState 1
+  StrCpy $DeleteAppDataCheckboxState 0
 FunctionEnd
 
 Section Uninstall

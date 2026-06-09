@@ -102,7 +102,7 @@ export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
             transition={{ delay: 0.2 }}
             className="text-xs text-muted-foreground text-center"
           >
-            <p>Built by Nomad Programmer</p>
+            <p>{t("sidebar.builtBy", "Built by Nomad Programmer")}</p>
           </motion.div>
         )}
       </div>

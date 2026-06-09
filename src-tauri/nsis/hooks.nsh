@@ -16,3 +16,14 @@
   StrCpy $INSTDIR "C:\devstackbox"
   SetOutPath "$INSTDIR"
 !macroend
+
+!macro NSIS_HOOK_POSTINSTALL
+  ; Ensure php/current junction exists after a directory-tree copy.
+  ; The bundled default is PHP 8.3; Apache ScriptAlias points at php/current/.
+  ${If} ${FileExists} "$INSTDIR\php\8.3\php.exe"
+    ${IfNot} ${FileExists} "$INSTDIR\php\current\php.exe"
+      Rmdir /r "$INSTDIR\php\current"
+      nsExec::ExecToLog 'cmd /c mklink /J "$INSTDIR\php\current" "$INSTDIR\php\8.3"'
+    ${EndIf}
+  ${EndIf}
+!macroend

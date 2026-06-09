@@ -89,13 +89,13 @@ export function AboutPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <p className="font-semibold">Version: {APP_VERSION}</p>
+            <p className="font-semibold">{t("about.version", "Version")}: {APP_VERSION}</p>
             <p className="text-sm text-muted-foreground">
-              Built with Tauri, React, and Rust
+              {t("about.builtWith", "Built with Tauri, React, and Rust")}
             </p>
           </div>
           <div>
-            <p className="font-semibold">Author: Nomad Programmer</p>
+            <p className="font-semibold">{t("about.author", "Author")}: Nomad Programmer</p>
             <p className="text-sm text-muted-foreground">shiv@srapsware.com</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -112,7 +112,7 @@ export function AboutPage() {
                 )
               }
             >
-              GitHub
+              {t("about.github", "GitHub")}
             </Button>
             <Button
               variant="outline"
@@ -125,7 +125,7 @@ export function AboutPage() {
                 )
               }
             >
-              Documentation
+              {t("about.documentation", "Documentation")}
             </Button>
           </div>
         </CardContent>
@@ -133,9 +133,9 @@ export function AboutPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>System Information</CardTitle>
+          <CardTitle>{t("about.systemInfo", "System Information")}</CardTitle>
           <CardDescription>
-            Detected runtime, host, and bundled binary versions.
+            {t("about.systemInfoDesc", "Detected runtime, host, and bundled binary versions.")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -149,30 +149,30 @@ export function AboutPage() {
             </div>
           ) : info ? (
             <div>
-              <Row label="App version" value={info.app_version} />
-              <Row label="Tauri" value={info.tauri_version} />
-              <Row label="OS" value={`${info.os} (${info.arch})`} />
-              <Row label="OS version" value={info.os_version} />
+              <Row label={t("about.appVersion", "App version")} value={info.app_version} />
+              <Row label={t("about.tauri", "Tauri")} value={info.tauri_version} />
+              <Row label={t("about.os", "OS")} value={`${info.os} (${info.arch})`} />
+              <Row label={t("about.osVersion", "OS version")} value={info.os_version} />
               <Row
-                label="Apache"
-                value={info.apache_version ?? "Not installed"}
+                label={t("about.apache", "Apache")}
+                value={info.apache_version ?? t("about.notInstalled", "Not installed")}
               />
               <Row
-                label="MySQL"
-                value={info.mysql_version ?? "Not installed"}
+                label={t("about.mysql", "MySQL")}
+                value={info.mysql_version ?? t("about.notInstalled", "Not installed")}
               />
               <Row
-                label="PHP versions"
+                label={t("about.phpVersions", "PHP versions")}
                 value={
                   info.php_versions.length > 0
                     ? info.php_versions.join(", ")
-                    : "None detected"
+                    : t("about.noneDetected", "None detected")
                 }
               />
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
-              Unable to load system information.
+              {t("about.loadError", "Unable to load system information.")}
             </p>
           )}
         </CardContent>

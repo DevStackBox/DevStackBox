@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ShieldAlert,
@@ -35,20 +36,17 @@ const SERVICE_LABELS: Record<string, string> = {
 
 const SEVERITY_META = {
   error: {
-    label: "Error",
     icon: XCircle,
     badgeClass: "bg-destructive/10 text-destructive border-destructive/30",
     rowClass: "border-l-4 border-l-destructive",
   },
   warning: {
-    label: "Warning",
     icon: AlertTriangle,
     badgeClass:
       "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/30",
     rowClass: "border-l-4 border-l-yellow-500",
   },
   info: {
-    label: "Info",
     icon: Info,
     badgeClass:
       "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30",
@@ -63,10 +61,17 @@ function FindingRow({
   finding: SecurityFinding;
   index: number;
 }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const navigate = useNavigate();
   const meta = SEVERITY_META[finding.severity];
   const Icon = meta.icon;
+
+  const severityLabel = finding.severity === "error"
+    ? t("security.severityError", "Error")
+    : finding.severity === "warning"
+      ? t("security.severityWarning", "Warning")
+      : t("security.severityInfo", "Info");
 
   const configRoute =
     finding.service === "apache"
@@ -98,7 +103,7 @@ function FindingRow({
           variant="outline"
           className={`text-xs shrink-0 ${meta.badgeClass}`}
         >
-          {meta.label}
+          {severityLabel}
         </Badge>
         {expanded ? (
           <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -119,7 +124,7 @@ function FindingRow({
             <div className="px-4 pb-4 pt-1 flex flex-col gap-2 text-sm border-t border-border/50">
               <p className="text-muted-foreground">{finding.description}</p>
               <div className="rounded bg-muted/50 px-3 py-2">
-                <span className="font-semibold text-foreground">Fix: </span>
+                <span className="font-semibold text-foreground">{t("security.fix", "Fix")}: </span>
                 <span className="text-muted-foreground">
                   {finding.recommendation}
                 </span>
@@ -132,7 +137,7 @@ function FindingRow({
                     onClick={() => navigate(configRoute)}
                   >
                     <ExternalLink className="mr-2 h-4 w-4" />
-                    Open Config
+                    {t("security.openConfig", "Open Config")}
                   </Button>
                 </div>
               )}
@@ -169,6 +174,7 @@ function SummaryCard({
 }
 
 export function SecurityPage() {
+  const { t } = useTranslation();
   const [findings, setFindings] = useState<SecurityFinding[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -199,11 +205,10 @@ export function SecurityPage() {
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Security Analyzer
+            {t("security.title", "Security Analyzer")}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Scans PHP, Apache, and MySQL configurations for common security
-            issues.
+            {t("security.description", "Scans PHP, Apache, and MySQL configurations for common security issues.")}
           </p>
         </div>
         <Button onClick={runAnalysis} disabled={loading}>
@@ -211,10 +216,10 @@ export function SecurityPage() {
             className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
           />
           {loading
-            ? "Scanning..."
+            ? t("security.scanning", "Scanning...")
             : findings === null
-              ? "Run Scan"
-              : "Scan Again"}
+              ? t("security.runScan", "Run Scan")
+              : t("security.scanAgain", "Scan Again")}
         </Button>
       </div>
 
@@ -228,9 +233,9 @@ export function SecurityPage() {
 
       {findings !== null && (
         <div className="grid grid-cols-3 gap-4">
-          <SummaryCard label="Errors" count={errors} severity="error" />
-          <SummaryCard label="Warnings" count={warnings} severity="warning" />
-          <SummaryCard label="Info" count={infos} severity="info" />
+          <SummaryCard label={t("security.errors", "Errors")} count={errors} severity="error" />
+          <SummaryCard label={t("security.warnings", "Warnings")} count={warnings} severity="warning" />
+          <SummaryCard label={t("security.info", "Info")} count={infos} severity="info" />
         </div>
       )}
 
@@ -241,9 +246,9 @@ export function SecurityPage() {
           className="flex flex-col items-center justify-center py-16 gap-3 text-center"
         >
           <ShieldCheck className="w-12 h-12 text-green-500" />
-          <p className="text-lg font-semibold">No issues found</p>
+          <p className="text-lg font-semibold">{t("security.noIssues", "No issues found")}</p>
           <p className="text-sm text-muted-foreground">
-            Your PHP, Apache, and MySQL configurations look good.
+            {t("security.noIssuesDesc", "Your PHP, Apache, and MySQL configurations look good.")}
           </p>
         </motion.div>
       )}
@@ -265,7 +270,7 @@ export function SecurityPage() {
           <CardContent className="flex flex-col items-center justify-center py-16 text-center gap-3">
             <ShieldAlert className="w-10 h-10 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
-              Click "Run Scan" to analyze your service configurations.
+              {t("security.runScanPrompt", "Click \"Run Scan\" to analyze your service configurations.")}
             </p>
           </CardContent>
         </Card>

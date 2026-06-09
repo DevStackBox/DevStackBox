@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import {
   Archive,
@@ -55,6 +56,7 @@ function formatDate(secs: number): string {
 }
 
 export function BackupPage() {
+  const { t } = useTranslation();
   const [backups, setBackups] = useState<BackupInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -114,8 +116,8 @@ export function BackupPage() {
         { timestamp: ts },
       );
       const msg = result.mysql_included
-        ? `Backup saved: ${result.path}`
-        : `Backup created but MySQL databases were NOT included - MySQL was not running. Start MySQL and create another backup to include database data.`;
+        ? `${t("backup.createBackup", "Backup saved")}: ${result.path}`
+        : t("backup.binariesNote", "Backup created but MySQL databases were NOT included - MySQL was not running. Start MySQL and create another backup to include database data.");
       setFeedback({ ok: result.mysql_included, message: msg });
       await loadBackups();
     } catch (err) {
@@ -155,8 +157,7 @@ export function BackupPage() {
       });
       setFeedback({
         ok: true,
-        message:
-          "Restore complete. Please restart services for changes to take effect.",
+        message: t("backup.restoreComplete", "Restore complete. Please restart services for changes to take effect."),
       });
     } catch (err) {
       setFeedback({ ok: false, message: String(err) });
@@ -175,7 +176,7 @@ export function BackupPage() {
         path: confirmDelete.path,
       });
       await loadBackups();
-      setFeedback({ ok: true, message: "Backup deleted." });
+      setFeedback({ ok: true, message: t("backup.backupDeleted", "Backup deleted.") });
     } catch (err) {
       setFeedback({ ok: false, message: String(err) });
     } finally {
@@ -208,7 +209,7 @@ export function BackupPage() {
           disabled={busy}
         >
           <FolderOpen className="mr-2 h-4 w-4" />
-          Open Folder
+          {t("backup.openFolder", "Open Folder")}
         </Button>
         <Button
           size="sm"
@@ -219,11 +220,11 @@ export function BackupPage() {
           <RefreshCw
             className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
           />
-          Refresh
+          {t("backup.refresh", "Refresh")}
         </Button>
         <Button size="sm" onClick={handleCreate} disabled={busy}>
           <Plus className="mr-2 h-4 w-4" />
-          {creating ? "Creating..." : "Create Backup"}
+          {creating ? t("backup.creating", "Creating...") : t("backup.createBackup", "Create Backup")}
         </Button>
       </div>
 
@@ -257,24 +258,21 @@ export function BackupPage() {
       <Card>
         <CardHeader className="py-3 px-4">
           <CardTitle className="text-sm font-medium">
-            What is included
+            {t("backup.whatIncluded", "What is included")}
           </CardTitle>
         </CardHeader>
         <CardContent className="px-4 pb-4">
           <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
             <li>
-              All configuration files (httpd.conf, my.cnf, php.ini, ssl.conf,
-              vhosts.json, phpmyadmin.conf)
+              {t("backup.includedItem1", "All configuration files (httpd.conf, my.cnf, php.ini, ssl.conf, vhosts.json, phpmyadmin.conf)")}
             </li>
-            <li>All files in your web root (www/)</li>
+            <li>{t("backup.includedItem2", "All files in your web root (www/)")}</li>
             <li>
-              MySQL databases via mysqldump (all-databases.sql) - requires MySQL
-              to be running
+              {t("backup.includedItem3", "MySQL databases via mysqldump (all-databases.sql) - requires MySQL to be running")}
             </li>
           </ul>
           <p className="text-xs text-muted-foreground mt-2">
-            Binaries (Apache, PHP, MySQL) are not included - they can be
-            reinstalled.
+            {t("backup.binariesNote", "Binaries (Apache, PHP, MySQL) are not included - they can be reinstalled.")}
           </p>
         </CardContent>
       </Card>
@@ -284,7 +282,7 @@ export function BackupPage() {
         <CardHeader className="py-3 px-4">
           <CardTitle className="text-sm font-medium flex items-center gap-2">
             <Archive className="w-4 h-4" />
-            Saved Backups
+            {t("backup.savedBackups", "Saved Backups")}
             <Badge variant="secondary" className="ml-1">
               {backups.length}
             </Badge>
@@ -293,7 +291,7 @@ export function BackupPage() {
         <CardContent className="px-4 pb-4">
           {backups.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No backups yet. Click &quot;Create Backup&quot; to get started.
+              {t("backup.noBackups", "No backups yet. Click \"Create Backup\" to get started.")}
             </p>
           ) : (
             <div className="space-y-2">
@@ -317,7 +315,7 @@ export function BackupPage() {
                       onClick={() => setConfirmRestore(b)}
                     >
                       <RotateCcw className="mr-1 h-3 w-3" />
-                      Restore
+                      {t("backup.restore", "Restore")}
                     </Button>
                     <Button
                       size="sm"
@@ -343,23 +341,18 @@ export function BackupPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Restore this backup?</AlertDialogTitle>
+            <AlertDialogTitle>{t("backup.confirmRestoreTitle", "Restore this backup?")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will overwrite your current configuration files and web root
-              with the contents of{" "}
-              <span className="font-mono">{confirmRestore?.filename}</span>. If
-              MySQL data was included, all current databases will be replaced.
-              Consider creating a fresh backup of your current state first. This
-              cannot be undone.
+              {t("backup.confirmRestoreDesc", "This will overwrite your current configuration files and web root with the contents of {{filename}}. If MySQL data was included, all current databases will be replaced. Consider creating a fresh backup of your current state first. This cannot be undone.", { filename: confirmRestore?.filename })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("actions.cancel", "Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={handleRestore}
             >
-              Restore
+              {t("backup.restore", "Restore")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -372,19 +365,18 @@ export function BackupPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete backup?</AlertDialogTitle>
+            <AlertDialogTitle>{t("backup.confirmDeleteTitle", "Delete backup?")}</AlertDialogTitle>
             <AlertDialogDescription>
-              <span className="font-mono">{confirmDelete?.filename}</span> will
-              be permanently deleted.
+              {t("backup.confirmDeleteDesc", "{{filename}} will be permanently deleted.", { filename: confirmDelete?.filename })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("actions.cancel", "Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={handleDelete}
             >
-              Delete
+              {t("backup.delete", "Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
