@@ -4,7 +4,7 @@
 //   - Installation path: where bundled binaries live (Apache, PHP, MySQL, phpMyAdmin).
 //     Updated by the installer / auto-update; user data must never live here.
 //   - User data root:    where runtime data lives (configs, logs, databases, www).
-//     Default: %LOCALAPPDATA%\DevStackBox\ on Windows.
+//     Default: %LOCALAPPDATA%\devstackbox\ on Windows.
 //     Override: env var `DEVSTACKBOX_DATA_DIR`.
 
 use std::env;
@@ -76,9 +76,9 @@ pub fn get_installation_path() -> PathBuf {
     }
 
     // Try common installation paths as a last resort.
-    // ARCH-001: install root is strictly C:\DevStackBox.
+    // ARCH-001: install root is strictly C:\devstackbox.
     let possible_paths = [
-        PathBuf::from("C:\\DevStackBox"),
+        PathBuf::from("C:\\devstackbox"),
     ];
 
     for path in &possible_paths {
@@ -110,7 +110,7 @@ pub fn get_user_data_root() -> PathBuf {
     #[cfg(windows)]
     {
         if let Ok(local_appdata) = env::var("LOCALAPPDATA") {
-            let p = PathBuf::from(local_appdata).join("DevStackBox");
+            let p = PathBuf::from(local_appdata).join("devstackbox");
             let _ = std::fs::create_dir_all(&p);
             return p;
         }

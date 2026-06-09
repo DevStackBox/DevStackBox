@@ -80,11 +80,11 @@ Name "${PRODUCTNAME}"
 BrandingText "${COPYRIGHT}"
 OutFile "${OUTFILE}"
 
-; ARCH-001: DevStackBox always installs to C:\DevStackBox
+; ARCH-001: DevStackBox always installs to C:\devstackbox
 ; PLACEHOLDER_INSTALL_DIR is kept so the perMachine RestorePreviousInstallLocation
 ; comparison in utils.nsh does not error; the real path is set below and in .onInit.
 !define PLACEHOLDER_INSTALL_DIR "placeholder\${PRODUCTNAME}"
-InstallDir "C:\DevStackBox"
+InstallDir "C:\devstackbox"
 
 VIProductVersion "${VERSIONWITHBUILD}"
 VIAddVersionKey "ProductName" "${PRODUCTNAME}"
@@ -385,7 +385,7 @@ Function PageLeaveReinstall
 FunctionEnd
 
 ; 5. Choose install directory page
-; ARCH-001: FixAndSkipDirPage forces C:\DevStackBox and skips the page entirely.
+; ARCH-001: FixAndSkipDirPage forces C:\devstackbox and skips the page entirely.
 ; DevStackBox is a fixed-path infrastructure tool — no user-selectable install dir.
 !define MUI_PAGE_CUSTOMFUNCTION_PRE FixAndSkipDirPage
 !insertmacro MUI_PAGE_DIRECTORY
@@ -426,7 +426,7 @@ FunctionEnd
 ; 1. Confirm uninstall page
 Var DeleteAppDataCheckbox
 Var DeleteAppDataCheckboxState
-; ARCH-001: Track whether to preserve C:\DevStackBox\www on uninstall
+; ARCH-001: Track whether to preserve C:\devstackbox\www on uninstall
 Var KeepWwwCheckbox
 Var KeepWwwCheckboxState
 !define /ifndef WS_EX_LAYOUTRTL         0x00400000
@@ -489,7 +489,7 @@ FunctionEnd
   !include "{{this}}"
 {{/each}}
 ; ARCH-001: DevStackBox uninstaller string
-LangString keepWwwFiles ${LANG_ENGLISH} "Keep website files in C:\DevStackBox\www (recommended)"
+LangString keepWwwFiles ${LANG_ENGLISH} "Keep website files in C:\devstackbox\www (recommended)"
 
 Function .onInit
   ${GetOptions} $CMDLINE "/P" $PassiveMode
@@ -515,7 +515,7 @@ Function .onInit
 
   ; ARCH-001: force install dir unconditionally so RestorePreviousInstallLocation
   ; (called via MULTIUSER_INSTALLMODE_FUNCTION inside SetContext) cannot override it.
-  StrCpy $INSTDIR "C:\DevStackBox"
+  StrCpy $INSTDIR "C:\devstackbox"
 
 
   !if "${INSTALLMODE}" == "both"
@@ -762,11 +762,11 @@ Function un.onInit
 
   !insertmacro MUI_UNGETLANGUAGE
 
-  ; ARCH-001: Force uninstaller to always operate on C:\DevStackBox.
+  ; ARCH-001: Force uninstaller to always operate on C:\devstackbox.
   ; The uninstaller reads $INSTDIR from the registry at startup.
   ; If a previous install wrote Program Files into the registry, the
   ; uninstaller would silently target the wrong directory without this override.
-  StrCpy $INSTDIR "C:\DevStackBox"
+  StrCpy $INSTDIR "C:\devstackbox"
 
   ${GetOptions} $CMDLINE "/P" $PassiveMode
   ${IfNot} ${Errors}
@@ -792,7 +792,7 @@ Section Uninstall
   !insertmacro CheckIfAppIsRunning "${MAINBINARYNAME}.exe" "${PRODUCTNAME}"
 
   ; ARCH-001: Temporarily rename www so the Delete loops below cannot touch its contents.
-  ; It will be moved back after deletion. Skipped during updates (www always preserved).
+  ; It will be moved back (C:\devstackbox\www) after deletion. Skipped during updates.
   ${If} $KeepWwwCheckboxState = 1
   ${AndIf} $UpdateMode <> 1
     Rename "$INSTDIR\www" "$INSTDIR\_www_keep"
@@ -906,6 +906,8 @@ Section Uninstall
     SetShellVarContext current
     RmDir /r "$APPDATA\${BUNDLEID}"
     RmDir /r "$LOCALAPPDATA\${BUNDLEID}"
+    ; ARCH-001: also remove the custom user-data dir used by DevStackBox
+    RmDir /r "$LOCALAPPDATA\devstackbox"
   ${EndIf}
 
   !ifmacrodef NSIS_HOOK_POSTUNINSTALL
@@ -936,9 +938,9 @@ Function un.SkipIfPassive
   ${IfThen} $PassiveMode = 1  ${|} Abort ${|}
 FunctionEnd
 
-; ARCH-001: force install dir to C:\DevStackBox and skip the directory page entirely.
+; ARCH-001: force install dir to C:\devstackbox and skip the directory page entirely.
 Function FixAndSkipDirPage
-  StrCpy $INSTDIR "C:\DevStackBox"
+  StrCpy $INSTDIR "C:\devstackbox"
   Abort
 FunctionEnd
 

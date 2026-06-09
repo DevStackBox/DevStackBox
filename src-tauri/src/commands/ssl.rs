@@ -15,6 +15,20 @@ use std::path::PathBuf;
 use crate::utils::paths::{get_installation_path, get_openssl_exe, to_apache_path, user_config_dir, user_logs_dir, user_www_dir};
 use crate::utils::process::create_hidden_command;
 
+/// Forward-slash path to the directory that holds php-cgi.exe.
+/// Uses php/current/ when the version junction exists (dev / multi-version
+/// layout), otherwise php/ directly (the flat layout shipped by the NSIS
+/// resource bundler).
+fn php_cgi_dir_apache_path() -> String {
+    let install = get_installation_path();
+    let dir = if install.join("php").join("current").exists() {
+        install.join("php").join("current")
+    } else {
+        install.join("php")
+    };
+    to_apache_path(&dir)
+}
+
 // ── types ─────────────────────────────────────────────────────────────────────
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -92,7 +106,6 @@ pub fn repair_ssl_conf() {
     if !crt.exists() || !key.exists() {
         return; // certs not yet generated - user still needs to click Enable
     }
-    let install = get_installation_path();
     let config_dir = user_config_dir();
     let www = user_www_dir();
     let logs = user_logs_dir();
@@ -131,12 +144,12 @@ SSLSessionCacheTimeout 300
     </Directory>
 
     # PHP CGI
-    ScriptAlias /php/ "{install}/php/current/"
+    ScriptAlias /php/ "{php_cgi}/"
     Action php-script /php/php-cgi.exe
     AddHandler php-script .php
     AddType application/x-httpd-php .php
 
-    <Directory "{install}/php/current">
+    <Directory "{php_cgi}">
         AllowOverride None
         Options ExecCGI
         Require all granted
@@ -153,7 +166,7 @@ SSLSessionCacheTimeout 300
         crt = to_apache_path(&crt),
         key = to_apache_path(&key),
         logs = to_apache_path(&logs),
-        install = to_apache_path(&install),
+        php_cgi = php_cgi_dir_apache_path(),
         config = to_apache_path(&config_dir),
     );
 
@@ -423,12 +436,12 @@ SSLSessionCacheTimeout 300
     </Directory>
 
     # PHP CGI
-    ScriptAlias /php/ "{install}/php/current/"
+    ScriptAlias /php/ "{php_cgi}/"
     Action php-script /php/php-cgi.exe
     AddHandler php-script .php
     AddType application/x-httpd-php .php
 
-    <Directory "{install}/php/current">
+    <Directory "{php_cgi}">
         AllowOverride None
         Options ExecCGI
         Require all granted
@@ -445,7 +458,7 @@ SSLSessionCacheTimeout 300
         crt = to_apache_path(&crt),
         key = to_apache_path(&key),
         logs = to_apache_path(&logs),
-        install = to_apache_path(&install),
+        php_cgi = php_cgi_dir_apache_path(),
         config = to_apache_path(&config_dir),
     );
 

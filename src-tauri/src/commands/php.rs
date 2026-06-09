@@ -17,12 +17,36 @@ use crate::utils::process::create_hidden_command;
 // downloadable on demand (Roadmap Phase 3.1).
 const PHP_BRANCHES: &[&str] = &["8.1", "8.2", "8.3", "8.4"];
 
+// The version that ships bundled with the installer.  When the installer
+// flattens PHP straight into php/ (php/php.exe instead of php/8.3/php.exe),
+// that flat copy is treated as this version.
+const BUNDLED_PHP_VERSION: &str = "8.3";
+
 fn php_root() -> PathBuf {
     get_installation_path().join("php")
 }
 
+// True when PHP is installed in the "flat" layout produced by the NSIS
+// resource bundler: php/php.exe sits directly in php/ with no version
+// subdirectory.  The bundler follows the php/current junction and copies
+// the active branch's contents to the top level, collapsing the structure.
+fn is_flat_layout() -> bool {
+    php_root().join("php.exe").exists()
+}
+
+// Resolves the directory that actually holds php.exe for `version`.
+// Order:
+//   1. versioned dir  php/<version>/       (standard multi-version layout)
+//   2. flat dir       php/                 (only for the bundled default)
 fn php_branch_dir(version: &str) -> PathBuf {
-    php_root().join(version)
+    let versioned = php_root().join(version);
+    if versioned.join("php.exe").exists() {
+        return versioned;
+    }
+    if version == BUNDLED_PHP_VERSION && is_flat_layout() {
+        return php_root();
+    }
+    versioned
 }
 
 fn php_branch_exe(version: &str) -> PathBuf {
@@ -46,7 +70,9 @@ async fn get_current_php_version() -> Option<String> {
     let exe = if current_exe.exists() {
         current_exe
     } else {
-        let default_exe = php_branch_exe("8.3");
+        // Falls back to the bundled default, resolving either the versioned
+        // (php/8.3/php.exe) or flat (php/php.exe) layout.
+        let default_exe = php_branch_exe(BUNDLED_PHP_VERSION);
         if !default_exe.exists() {
             return None;
         }
@@ -90,10 +116,10 @@ async fn check_active_php_version(version: &str) -> bool {
             }
         }
     }
-    // No junction exists yet (fresh install). The bundled default "8.3" is
-    // considered active as long as its exe is present.
-    if version == "8.3" {
-        return php_branch_exe("8.3").exists();
+    // No junction exists yet (fresh install). The bundled default is
+    // considered active as long as its exe is present (versioned or flat).
+    if version == BUNDLED_PHP_VERSION {
+        return php_branch_exe(BUNDLED_PHP_VERSION).exists();
     }
     false
 }
@@ -189,18 +215,28 @@ fn enable_essential_extensions(content: String, ext_dir: &std::path::Path) -> St
 // Called by start_apache on every start.
 //
 // IMPORTANT: this function writes to the USER CONFIG directory
-// (%LOCALAPPDATA%\DevStackBox\config\php.ini), never to the installation
+// (%LOCALAPPDATA%\devstackbox\config\php.ini), never to the installation
 // directory.  This keeps the bundled php/*/php.ini pristine and unmodified
 // so it can be committed to git and distributed through the installer
 // without containing any machine-specific paths.
 pub fn patch_php_ini() {
     // Locate the bundled (template) php.ini from the installation directory.
+    // Tries the active junction, then the versioned default dir, then the
+    // flat layout, and finally php.ini-production as a last resort.
     let template_ini = {
-        let current = php_root().join("current").join("php.ini");
-        if current.exists() {
-            current
-        } else {
-            php_root().join("8.3").join("php.ini")
+        let candidates = [
+            php_root().join("current").join("php.ini"),
+            php_root().join(BUNDLED_PHP_VERSION).join("php.ini"),
+            php_root().join("php.ini"),
+            php_branch_dir(BUNDLED_PHP_VERSION).join("php.ini"),
+            php_branch_dir(BUNDLED_PHP_VERSION).join("php.ini-production"),
+        ];
+        match candidates.into_iter().find(|p| p.exists()) {
+            Some(p) => p,
+            None => {
+                println!("patch_php_ini: no template php.ini found under {}", php_root().display());
+                return;
+            }
         }
     };
 
@@ -232,7 +268,7 @@ pub fn patch_php_ini() {
     let ext_dir = template_ini
         .parent()
         .map(|p| p.join("ext"))
-        .unwrap_or_else(|| php_root().join("8.3").join("ext"));
+        .unwrap_or_else(|| php_branch_dir(BUNDLED_PHP_VERSION).join("ext"));
     let ext_dir_str = to_apache_path(&ext_dir);
 
     // Sessions go under the user data root so PHP CGI can always write there.

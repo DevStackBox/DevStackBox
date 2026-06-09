@@ -59,6 +59,7 @@ export const TAURI_COMMANDS = {
     hideToTray: "hide_to_tray",
     quitApp: "quit_app",
     setTooltip: "set_tray_tooltip",
+    refreshMenu: "refresh_tray_menu",
   },
   terminal: {
     spawn: "spawn_terminal",

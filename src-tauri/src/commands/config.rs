@@ -1,19 +1,39 @@
 // Config file commands (read, update, backup, restore).
 
-use crate::utils::paths::{get_installation_path, user_config_backups_dir, user_config_dir};
+use std::path::PathBuf;
+
+use crate::utils::paths::{user_config_backups_dir, user_config_dir};
+
+// Resolves the editable config file for a service.
+//
+// All four configs (mysql, apache, php, phpmyadmin) are managed in the user
+// config dir (%LOCALAPPDATA%\devstackbox\config\). The PHP config in
+// particular MUST be the user copy, because Apache loads php.ini from there
+// via the PHPRC env var and the installation directory's php.ini is kept
+// pristine. Earlier this pointed at php/current/php.ini in the install dir,
+// which does not exist in the flat NSIS layout and is never the file PHP
+// actually reads at runtime.
+fn config_file_for(service: &str) -> Result<PathBuf, String> {
+    let config_dir = user_config_dir();
+    match service {
+        "mysql" => Ok(config_dir.join("my.cnf")),
+        "apache" | "httpd" => Ok(config_dir.join("httpd.conf")),
+        "php" => Ok(config_dir.join("php.ini")),
+        "phpmyadmin" => Ok(config_dir.join("phpmyadmin.conf")),
+        _ => Err(format!("Unknown service: {}", service)),
+    }
+}
 
 #[tauri::command]
 pub async fn read_config(service: String) -> Result<String, String> {
-    let base_path = get_installation_path();
-    let config_dir = user_config_dir();
+    let config_file = config_file_for(&service)?;
 
-    let config_file = match service.as_str() {
-        "mysql" => config_dir.join("my.cnf"),
-        "apache" | "httpd" => config_dir.join("httpd.conf"),
-        "php" => base_path.join("php").join("current").join("php.ini"),
-        "phpmyadmin" => config_dir.join("phpmyadmin.conf"),
-        _ => return Err(format!("Unknown service: {}", service)),
-    };
+    // The PHP user config is seeded lazily by patch_php_ini on first Apache
+    // start. If the editor is opened before that, seed it now so the user
+    // always sees a real php.ini instead of a "not found" error.
+    if service == "php" && !config_file.exists() {
+        crate::commands::php::patch_php_ini();
+    }
 
     if !config_file.exists() {
         return Err(format!("Config file not found: {}", config_file.display()));
@@ -25,16 +45,7 @@ pub async fn read_config(service: String) -> Result<String, String> {
 
 #[tauri::command]
 pub async fn update_config(service: String, content: String) -> Result<String, String> {
-    let base_path = get_installation_path();
-    let config_dir = user_config_dir();
-
-    let config_file = match service.as_str() {
-        "mysql" => config_dir.join("my.cnf"),
-        "apache" | "httpd" => config_dir.join("httpd.conf"),
-        "php" => base_path.join("php").join("current").join("php.ini"),
-        "phpmyadmin" => config_dir.join("phpmyadmin.conf"),
-        _ => return Err(format!("Unknown service: {}", service)),
-    };
+    let config_file = config_file_for(&service)?;
 
     if config_file.exists() {
         let backup_dir = user_config_backups_dir();
@@ -63,17 +74,8 @@ pub async fn update_config(service: String, content: String) -> Result<String, S
 
 #[tauri::command]
 pub async fn backup_config(service: String) -> Result<String, String> {
-    let base_path = get_installation_path();
-    let config_dir = user_config_dir();
     let backup_dir = user_config_backups_dir();
-
-    let config_file = match service.as_str() {
-        "mysql" => config_dir.join("my.cnf"),
-        "apache" | "httpd" => config_dir.join("httpd.conf"),
-        "php" => base_path.join("php").join("current").join("php.ini"),
-        "phpmyadmin" => config_dir.join("phpmyadmin.conf"),
-        _ => return Err(format!("Unknown service: {}", service)),
-    };
+    let config_file = config_file_for(&service)?;
 
     if !config_file.exists() {
         return Err(format!("Config file not found: {}", config_file.display()));
@@ -134,17 +136,8 @@ pub async fn restore_config_backup(
     service: String,
     backup_name: String,
 ) -> Result<String, String> {
-    let base_path = get_installation_path();
-    let config_dir = user_config_dir();
     let backup_dir = user_config_backups_dir();
-
-    let config_file = match service.as_str() {
-        "mysql" => config_dir.join("my.cnf"),
-        "apache" | "httpd" => config_dir.join("httpd.conf"),
-        "php" => base_path.join("php").join("current").join("php.ini"),
-        "phpmyadmin" => config_dir.join("phpmyadmin.conf"),
-        _ => return Err(format!("Unknown service: {}", service)),
-    };
+    let config_file = config_file_for(&service)?;
 
     let backup_path = backup_dir.join(&backup_name);
 

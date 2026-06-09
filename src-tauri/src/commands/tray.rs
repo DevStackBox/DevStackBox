@@ -39,3 +39,12 @@ pub async fn set_tray_tooltip(app_handle: tauri::AppHandle, text: String) -> Res
     }
     Ok(())
 }
+
+// Forces an immediate tray menu label + tooltip refresh.
+// Called from the frontend after an in-app service toggle so the tray labels
+// update without waiting for the next 5-second poll cycle.
+#[tauri::command]
+pub async fn refresh_tray_menu(app_handle: tauri::AppHandle) -> Result<(), String> {
+    crate::tray::refresh_tray_status(&app_handle).await;
+    Ok(())
+}

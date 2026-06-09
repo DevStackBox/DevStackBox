@@ -134,6 +134,22 @@ function AppShell() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  // Re-fetch service statuses when the Rust tray toggles a service so the
+  // dashboard badges update immediately regardless of which page is active.
+  useEffect(() => {
+    if (!isTauri()) return;
+    let unlisten: (() => void) | undefined;
+    (async () => {
+      const { listen } = await import("@tauri-apps/api/event");
+      unlisten = await listen("tray-services-updated", () => {
+        void safeInvoke(TAURI_COMMANDS.system.checkBinaries);
+      });
+    })();
+    return () => {
+      if (unlisten) unlisten();
+    };
+  }, []);
+
   // Keep currentPhpVersion in sync when the user activates a version from
   // the Versions page. The page dispatches this event after a successful
   // switch so service card badges update without an app restart.

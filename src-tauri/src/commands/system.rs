@@ -175,7 +175,7 @@ pub async fn debug_installation() -> Result<HashMap<String, String>, String> {
     let common_paths = [
         "C:\\dsb",
         "C:\\Program Files\\DevStackBox",
-        "C:\\DevStackBox",
+        "C:\\devstackbox",
     ];
 
     for path in &common_paths {

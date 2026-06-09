@@ -4,12 +4,11 @@
 // All command implementations live in `commands/`; helpers in `utils/`.
 
 pub mod commands;
+pub mod tray;
 pub mod types;
 pub mod utils;
 
-use tauri::menu::{MenuBuilder, MenuItemBuilder};
-use tauri::tray::{TrayIconBuilder, TrayIconEvent};
-use tauri::{Emitter, Manager};
+use tauri::Emitter;
 
 use crate::commands::apache::{get_apache_status, start_apache, stop_apache, toggle_apache};
 use crate::commands::config::{
@@ -35,7 +34,7 @@ use crate::commands::security::analyze_security;
 use crate::commands::ssl::{disable_ssl, enable_ssl, generate_ssl_cert, get_ssl_status};
 use crate::commands::vhosts::{add_vhost, get_hosts_entries, list_vhosts, remove_vhost, toggle_vhost, update_hosts_entry};
 use crate::commands::terminal::{kill_terminal_session, send_terminal_input, spawn_terminal, TerminalSessions};
-use crate::commands::tray::{hide_to_tray, quit_app, set_tray_tooltip, show_main_window};
+use crate::commands::tray::{hide_to_tray, quit_app, refresh_tray_menu, set_tray_tooltip, show_main_window};
 use crate::utils::paths::ensure_user_data_dirs;
 use std::sync::Arc;
 
@@ -95,6 +94,7 @@ pub fn run() {
             show_main_window,
             hide_to_tray,
             set_tray_tooltip,
+            refresh_tray_menu,
             quit_app,
             spawn_terminal,
             send_terminal_input,
@@ -117,82 +117,13 @@ pub fn run() {
             open_backups_folder
         ])
         .setup(|app| {
-            println!("DevStackBox setup complete, setting up system tray...");
+            println!("DevStackBox setup complete, initializing...");
 
             // Roadmap Phase 1.8: ensure user data root and subdirs exist
             // before any service can try to read/write configs or data.
             ensure_user_data_dirs();
 
-            // System tray menu
-            let show_item = MenuItemBuilder::new("Show DevStackBox").id("show").build(app)?;
-            let hide_item = MenuItemBuilder::new("Hide to Tray").id("hide").build(app)?;
-            let mysql_item = MenuItemBuilder::new("Toggle MySQL").id("mysql").build(app)?;
-            let apache_item = MenuItemBuilder::new("Toggle Apache").id("apache").build(app)?;
-            let quit_item = MenuItemBuilder::new("Quit").id("quit").build(app)?;
-
-            let menu = MenuBuilder::new(app)
-                .item(&show_item)
-                .item(&hide_item)
-                .separator()
-                .item(&mysql_item)
-                .item(&apache_item)
-                .separator()
-                .item(&quit_item)
-                .build()?;
-
-            let _tray = TrayIconBuilder::with_id("main")
-                .menu(&menu)
-                .tooltip("DevStackBox - PHP Development Environment")
-                .icon(app.default_window_icon().unwrap().clone())
-                .on_menu_event(move |_app, event| match event.id().as_ref() {
-                    "show" => {
-                        if let Some(window) = _app.get_webview_window("main") {
-                            let _ = window.show();
-                            let _ = window.set_focus();
-                        }
-                    }
-                    "hide" => {
-                        if let Some(window) = _app.get_webview_window("main") {
-                            let _ = window.hide();
-                        }
-                    }
-                    "mysql" => {
-                        // Phase 5.3 - quick toggle from tray.
-                        // Delegate to the frontend so it can run the same
-                        // start/stop pipeline (config check, error toast,
-                        // status refresh) used by the UI buttons.
-                        if let Some(window) = _app.get_webview_window("main") {
-                            let _ = window.emit("tray-toggle-service", "mysql");
-                        }
-                    }
-                    "apache" => {
-                        if let Some(window) = _app.get_webview_window("main") {
-                            let _ = window.emit("tray-toggle-service", "apache");
-                        }
-                    }
-                    "quit" => {
-                        _app.exit(0);
-                    }
-                    _ => {}
-                })
-                .on_tray_icon_event(|tray, event| {
-                    if let TrayIconEvent::Click { button, .. } = event {
-                        if button == tauri::tray::MouseButton::Left {
-                            let app = tray.app_handle();
-                            if let Some(window) = app.get_webview_window("main") {
-                                if window.is_visible().unwrap_or(false) {
-                                    let _ = window.hide();
-                                } else {
-                                    let _ = window.show();
-                                    let _ = window.set_focus();
-                                }
-                            }
-                        }
-                    }
-                })
-                .build(app)?;
-
-            println!("System tray initialized successfully!");
+            crate::tray::setup_tray(app)?;
             Ok(())
         })
         .on_window_event(|window, event| {

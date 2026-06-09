@@ -2,11 +2,11 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Fragment>
     <!--
-      ARCH-001: Force MSI install dir to C:\DevStackBox.
+      ARCH-001: Force MSI install dir to C:\devstackbox.
       SetProperty runs before the directory UI resolves, unlike CustomAction.
     -->
     <SetProperty Id="APPLICATIONFOLDER"
-                 Value="C:\DevStackBox\"
+                 Value="C:\devstackbox\"
                  Before="CostInitialize"
                  Sequence="both" />
   </Fragment>
