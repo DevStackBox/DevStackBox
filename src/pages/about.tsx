@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { safeInvoke, isTauri } from "@/lib/tauri";
+import { Bug } from "lucide-react";
+import { safeInvoke, isTauri, openExternalUrl } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
 import { APP_VERSION } from "@/lib/version";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,11 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AutoUpdater } from "@/components/auto-updater";
-import { BugReportDialog } from "@/components/bug-report-dialog";
+
+const GITHUB_REPO_URL = "https://github.com/ProgrammerNomad/DevStackBox";
+const GITHUB_ISSUES_URL = "https://github.com/ProgrammerNomad/DevStackBox/issues";
+const GITHUB_DOCS_URL =
+  "https://github.com/ProgrammerNomad/DevStackBox/tree/main/docs";
 
 interface SystemInfo {
   os: string;
@@ -100,30 +105,25 @@ export function AboutPage() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <AutoUpdater />
-            <BugReportDialog />
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                window.open(
-                  "https://github.com/ProgrammerNomad/DevStackBox",
-                  "_blank",
-                  "noopener,noreferrer",
-                )
-              }
+              onClick={() => void openExternalUrl(GITHUB_ISSUES_URL)}
+            >
+              <Bug className="mr-2 h-4 w-4" />
+              {t("bugReport.button", "Report a bug")}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void openExternalUrl(GITHUB_REPO_URL)}
             >
               {t("about.github", "GitHub")}
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                window.open(
-                  "https://github.com/ProgrammerNomad/DevStackBox/wiki",
-                  "_blank",
-                  "noopener,noreferrer",
-                )
-              }
+              onClick={() => void openExternalUrl(GITHUB_DOCS_URL)}
             >
               {t("about.documentation", "Documentation")}
             </Button>
