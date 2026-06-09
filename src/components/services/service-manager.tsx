@@ -163,7 +163,7 @@ export function ServiceManager({
   const handleOpenConfig = (service: string) => onOpenConfig?.(service);
   const handleViewLogs   = (service: string) => onViewLogs?.(service);
   const handleBackupDatabase = () => navigate(ROUTES.databasesBackups.path);
-  const handleOpenTerminal   = () => navigate(ROUTES.terminalPhp.path);
+  const handleOpenTerminal   = () => navigate(ROUTES.terminal.path);
 
   const containerClassName = compact
     ? "grid grid-cols-1 md:grid-cols-3 gap-4"

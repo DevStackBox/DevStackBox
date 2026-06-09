@@ -4,7 +4,6 @@ export { DatabasesPage } from "./databases-list";
 export { SettingsPage } from "./settings-general";
 export { AboutPage } from "./about";
 export { MySQLUsersPage } from "./mysql-users";
-export { TerminalLayout } from "./terminal/layout";
 export { SecurityPage } from "./security";
 export { SslPage } from "./ssl";
 export { VhostsPage } from "./vhosts";

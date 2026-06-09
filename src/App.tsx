@@ -34,13 +34,8 @@ import {
   AboutPage,
   SecurityPage,
 } from "./pages";
-import { TerminalLayout } from "./pages/terminal/layout";
-import { TerminalShellPage } from "./pages/terminal/shell";
-import { TerminalPowershellPage } from "./pages/terminal/powershell";
-import { TerminalCmdPage } from "./pages/terminal/cmd";
-import { TerminalPhpPage } from "./pages/terminal/php";
-import { TerminalMysqlPage } from "./pages/terminal/mysql";
-import { TerminalGitPage } from "./pages/terminal/git";
+import { UniversalTerminalPage } from "./pages/terminal/index";
+import { TerminalProvider } from "./context/terminal-context";
 import { ApacheLayout } from "./pages/services/apache/layout";
 import { ApacheOverviewPage } from "./pages/services/apache";
 import { ApacheLogsPage } from "./pages/services/apache/logs";
@@ -255,15 +250,15 @@ function AppShell() {
               <Route path="mysql" element={<LogsMysqlPage />} />
               <Route path="php" element={<LogsPhpPage />} />
             </Route>
-            <Route path="/terminal" element={<TerminalLayout />}>
-              <Route index element={<Navigate to="shell" replace />} />
-              <Route path="shell" element={<TerminalShellPage />} />
-              <Route path="powershell" element={<TerminalPowershellPage />} />
-              <Route path="cmd" element={<TerminalCmdPage />} />
-              <Route path="php-cli" element={<TerminalPhpPage />} />
-              <Route path="mysql-cli" element={<TerminalMysqlPage />} />
-              <Route path="git" element={<TerminalGitPage />} />
-            </Route>
+            {/* Universal terminal — single route, sessions survive navigation */}
+            <Route path="/terminal" element={<UniversalTerminalPage />} />
+            {/* Redirects from old sub-routes */}
+            <Route path="/terminal/shell" element={<Navigate to="/terminal" replace />} />
+            <Route path="/terminal/powershell" element={<Navigate to="/terminal" replace />} />
+            <Route path="/terminal/cmd" element={<Navigate to="/terminal" replace />} />
+            <Route path="/terminal/php-cli" element={<Navigate to="/terminal" replace />} />
+            <Route path="/terminal/mysql-cli" element={<Navigate to="/terminal" replace />} />
+            <Route path="/terminal/git" element={<Navigate to="/terminal" replace />} />
             <Route path="/security" element={<SecurityPage />} />
 
             <Route path="/settings" element={<SettingsLayout />}>
@@ -339,7 +334,9 @@ function App() {
         <ServiceStatusProvider>
           <DatabaseCacheProvider>
             <UpdaterProvider>
-              <AppShell />
+              <TerminalProvider>
+                <AppShell />
+              </TerminalProvider>
             </UpdaterProvider>
           </DatabaseCacheProvider>
         </ServiceStatusProvider>

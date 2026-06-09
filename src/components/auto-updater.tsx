@@ -122,9 +122,6 @@ export function AutoUpdater({ mode = "button" }: AutoUpdaterProps) {
     buttonVariant = "outline";
   }
 
-  // Error hint under the button (only for check failures, not download failures)
-  const showErrorHint = !!checkError && !downloading && !updateAvailable;
-
   return (
     <>
       <Button
@@ -139,10 +136,6 @@ export function AutoUpdater({ mode = "button" }: AutoUpdaterProps) {
         />
         {buttonLabel}
       </Button>
-
-      {showErrorHint && (
-        <p className="text-xs text-destructive mt-1">{checkError}</p>
-      )}
 
       <UpdateDialog />
     </>
