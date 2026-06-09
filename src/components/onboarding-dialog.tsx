@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { safeInvoke, isTauri } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
 import { useToast } from "@/hooks/use-toast";
+import { useServiceStatus } from "@/context/service-status-context";
 
 const STORAGE_KEY = "devstackbox.onboarding.completed";
 
@@ -23,6 +24,7 @@ interface OnboardingDialogProps {
 export function OnboardingDialog({ onOpenServices }: OnboardingDialogProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { refresh } = useServiceStatus();
   const [open, setOpen] = useState(false);
   const [starting, setStarting] = useState(false);
 
@@ -56,6 +58,10 @@ export function OnboardingDialog({ onOpenServices }: OnboardingDialogProps) {
     try {
       await safeInvoke(TAURI_COMMANDS.services.startMysql);
       await safeInvoke(TAURI_COMMANDS.services.startApache);
+      // Give Win32_Process a moment to register the newly-started processes.
+      // This delay lives here only — not in the normal polling loop.
+      await new Promise((r) => setTimeout(r, 800));
+      await refresh();
       toast({
         title: t("onboarding.startedTitle", "Services started"),
         description: t(

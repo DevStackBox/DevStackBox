@@ -19,7 +19,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { useToast } from "@/hooks/use-toast";
-import { safeInvoke, isTauri, openExternalUrl } from "@/lib/tauri";
+import { safeInvoke, openExternalUrl } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
 import {
   Database as DatabaseIcon,
@@ -29,19 +29,7 @@ import {
   Search,
   Copy,
 } from "lucide-react";
-
-interface DatabaseInfo {
-  name: string;
-  tableCount: number;
-  sizeBytes: number;
-}
-
-// Tauri returns snake_case fields (serde::Serialize on the Rust struct).
-interface RawDatabaseInfo {
-  name: string;
-  table_count: number;
-  size_bytes: number;
-}
+import { useDatabaseCache } from "@/context/database-cache-context";
 
 function formatBytes(bytes: number): string {
   if (!bytes || bytes <= 0) return "0 B";
@@ -60,47 +48,15 @@ function formatBytes(bytes: number): string {
 export function DatabasesPage() {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const [databases, setDatabases] = useState<DatabaseInfo[]>([]);
-  const [loading, setLoading] = useState(false);
+  // All fetching is owned by DatabaseCacheProvider — no local fetch here.
+  const { databases, loading, hasCache, refresh } = useDatabaseCache();
   const [busy, setBusy] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
-  const loadDatabases = async () => {
-    setLoading(true);
-    try {
-      if (!isTauri()) {
-        setDatabases([
-          { name: "sample_db", tableCount: 5, sizeBytes: 1024000 },
-          { name: "wordpress", tableCount: 12, sizeBytes: 5242880 },
-          { name: "laravel_app", tableCount: 0, sizeBytes: 0 },
-        ]);
-        return;
-      }
-      const list = await safeInvoke<RawDatabaseInfo[]>(
-        TAURI_COMMANDS.services.listMysqlDatabasesDetailed,
-      );
-      setDatabases(
-        (list ?? []).map((d) => ({
-          name: d.name,
-          tableCount: d.table_count,
-          sizeBytes: d.size_bytes,
-        })),
-      );
-    } catch (err) {
-      toast({
-        variant: "destructive",
-        title: t("databases.listFailed", "Failed to list databases"),
-        description: `${err}`,
-      });
-      setDatabases([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Lazy warmup: trigger the first fetch when this page is first visited.
   useEffect(() => {
-    loadDatabases();
-  }, []);
+    void refresh();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const backupDatabase = async (name: string) => {
     setBusy(name);
@@ -165,7 +121,7 @@ export function DatabasesPage() {
         <Button
           variant="outline"
           size="sm"
-          onClick={loadDatabases}
+          onClick={() => void refresh()}
           disabled={loading}
         >
           <RefreshCw
@@ -220,13 +176,14 @@ export function DatabasesPage() {
             </div>
           </div>
 
-          {loading ? (
+          {/* Skeleton only on first-ever load (no session cache yet) */}
+          {loading && !hasCache ? (
             <div className="space-y-2">
               <Skeleton className="h-12 w-full" />
               <Skeleton className="h-12 w-full" />
               <Skeleton className="h-12 w-full" />
             </div>
-          ) : databases.length === 0 ? (
+          ) : !hasCache && databases.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               {t(
                 "databases.empty",

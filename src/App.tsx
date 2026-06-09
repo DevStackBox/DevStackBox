@@ -19,6 +19,8 @@ import { Sidebar } from "./components/sidebar";
 import { Breadcrumb } from "./components/breadcrumb";
 import { OnboardingDialog } from "./components/onboarding-dialog";
 import { CommandPalette } from "./components/command-palette";
+import { ServiceStatusProvider } from "./context/service-status-context";
+import { DatabaseCacheProvider } from "./context/database-cache-context";
 
 import {
   DashboardPage,
@@ -329,7 +331,11 @@ function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="devstackbox-ui-theme">
       <HashRouter>
-        <AppShell />
+        <ServiceStatusProvider>
+          <DatabaseCacheProvider>
+            <AppShell />
+          </DatabaseCacheProvider>
+        </ServiceStatusProvider>
       </HashRouter>
     </ThemeProvider>
   );

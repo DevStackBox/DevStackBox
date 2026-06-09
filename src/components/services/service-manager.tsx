@@ -1,21 +1,31 @@
-import { useState, useEffect, useRef } from "react";
+/**
+ * ServiceManager
+ *
+ * Pure display + action handler component.
+ * All polling, caching, and state ownership has moved to ServiceStatusProvider.
+ * This component only reads from context and handles user toggle actions.
+ */
+import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { safeInvoke, isTauri, getMockServiceStatus } from "@/lib/tauri";
+import { safeInvoke, isTauri } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
 import { motion } from "framer-motion";
 import {
   ApacheService,
   MySQLService,
   PHPService,
-  ServiceStatus,
 } from "./index";
+import type { ServiceStatus } from "@/types/services";
 import { useToast } from "@/hooks/use-toast";
-import { ToastAction } from "@/components/ui/toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { notify, primeNotificationPermission } from "@/lib/notify";
+import { notify } from "@/lib/notify";
 import { ROUTES } from "@/lib/routes";
 import { useTranslation } from "react-i18next";
+import { useServiceStatus } from "@/context/service-status-context";
+
+// Re-export ServiceStatus so importers that use the old path still work.
+export type { ServiceStatus };
 
 interface ServiceManagerProps {
   compact?: boolean;
@@ -24,16 +34,12 @@ interface ServiceManagerProps {
   onViewLogs?: (service: string) => void;
   onOpenPHPVersionSelector?: () => void;
   currentPhpVersion?: string;
+  /** @deprecated status is now read from ServiceStatusContext */
   onStatusesChange?: (statuses: {
     apache: ServiceStatus;
     mysql: ServiceStatus;
     php: ServiceStatus;
   }) => void;
-  /**
-   * Phase 6.2 - which service card is currently selected (drives the
-   * Services workspace panel below the grid). When undefined the cards
-   * are not selectable.
-   */
   selectedService?: "apache" | "mysql" | "php";
   onSelectService?: (service: "apache" | "mysql" | "php") => void;
 }
@@ -45,152 +51,55 @@ export function ServiceManager({
   onViewLogs,
   onOpenPHPVersionSelector,
   currentPhpVersion = "8.3",
-  onStatusesChange,
   selectedService,
   onSelectService,
 }: ServiceManagerProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [services, setServices] = useState({
-    apache: { running: false } as ServiceStatus,
-    mysql: { running: false } as ServiceStatus,
-    php: { running: false } as ServiceStatus,
-  });
-  const [loading, setLoading] = useState<string | null>(null);
-  const [initialLoading, setInitialLoading] = useState(true);
-  // Roadmap Phase 3.4: detect unexpected service crashes.
-  // We track the previous running state per service so a transition
-  // "running -> stopped" that is NOT caused by the user clicking toggle
-  // surfaces as a crash notification.
-  const prevRunningRef = useRef<Record<string, boolean>>({
-    apache: false,
-    mysql: false,
-    php: false,
-  });
-  const loadingRef = useRef<string | null>(null);
-  loadingRef.current = loading;
-  // Phase 5.3 - the tray menu emits "tray-toggle-service" with the service
-  // name; we need to call the latest toggleService closure from a one-shot
-  // listener effect, so keep it in a ref.
+
+  const {
+    services,
+    initialLoading,
+    loading,
+    setLoading,
+    refresh,
+    optimisticUpdate,
+  } = useServiceStatus();
+
+  // Keep toggleService stable reference for any external callers (tray events
+  // are now handled inside ServiceStatusProvider, but kept here for safety).
   const toggleServiceRef = useRef<(service: string) => void>(() => {});
 
-  // Check service status
-  const checkServiceStatus = async (isFirstCheck = false) => {
-    try {
-      // On the very first check after mount, give Win32_Process a moment to
-      // register processes that were just started (e.g. from onboarding dialog).
-      if (isFirstCheck) {
-        await new Promise((r) => setTimeout(r, 800));
-      }
-
-      if (!isTauri()) {
-        const toServiceStatus = (): ServiceStatus => {
-          const mock = getMockServiceStatus();
-          return {
-            running: mock.running,
-            pid: mock.pid ?? undefined,
-            port: mock.port ?? undefined,
-            version: undefined,
-          };
-        };
-
-        const mockStatuses = {
-          apache: toServiceStatus(),
-          mysql: toServiceStatus(),
-          php: toServiceStatus(),
-        };
-        setServices(mockStatuses);
-        onStatusesChange?.(mockStatuses);
-        setInitialLoading(false);
-        return;
-      }
-
-      // Use allSettled so a single failing query does not blank out the rest.
-      const [apacheR, mysqlR, phpR] = await Promise.allSettled([
-        safeInvoke<ServiceStatus>(TAURI_COMMANDS.services.getApacheStatus),
-        safeInvoke<ServiceStatus>(TAURI_COMMANDS.services.getMysqlStatus),
-        safeInvoke<ServiceStatus>(TAURI_COMMANDS.services.getPhpStatus),
-      ]);
-
-      const apache = apacheR.status === "fulfilled" ? apacheR.value : null;
-      const mysql  = mysqlR.status  === "fulfilled" ? mysqlR.value  : null;
-      const php    = phpR.status    === "fulfilled" ? phpR.value    : null;
-
-      // Only abort if every single query failed (network/IPC fully broken).
-      if (!apache && !mysql && !php) {
-        setInitialLoading(false);
-        return;
-      }
-
-      const nextStatuses = {
-        apache: apache ?? services.apache,
-        mysql:  mysql  ?? services.mysql,
-        php:    php    ?? services.php,
-      };
-      // Crash detection: surface a toast for any service that flipped from
-      // running to stopped while NOT being toggled by the user.
-      (["apache", "mysql", "php"] as const).forEach((name) => {
-        const wasRunning = prevRunningRef.current[name];
-        const isRunning = nextStatuses[name].running;
-        if (wasRunning && !isRunning && loadingRef.current !== name) {
-          const label = name.charAt(0).toUpperCase() + name.slice(1);
-          toast({
-            variant: "destructive",
-            title: t("serviceManager.crashTitle", "{{service}} stopped unexpectedly", { service: label }),
-            description: t("serviceManager.crashDesc", "{{service}} was running but is no longer responding. Check logs and restart it.", { service: label }),
-            action: (
-              <ToastAction
-                altText={t("serviceManager.crashRestart", "Restart")}
-                onClick={() => toggleServiceRef.current(name)}
-              >
-                {t("serviceManager.crashRestart", "Restart")}
-              </ToastAction>
-            ),
-          });
-          void notify(
-            t("serviceManager.crashTitle", "{{service}} stopped unexpectedly", { service: label }),
-            "Open DevStackBox to view logs and restart the service.",
-          );
-          // Phase 3.4: persist crash event to crash.log with a timestamp.
-          void safeInvoke(TAURI_COMMANDS.services.logCrashEvent, {
-            service: name,
-            timestamp: new Date().toISOString(),
-          });
-        }
-        prevRunningRef.current[name] = isRunning;
-      });
-      setServices(nextStatuses);
-      onStatusesChange?.(nextStatuses);
-      setInitialLoading(false);
-      // Tray tooltip and menu labels are now managed by the Rust poller in tray.rs.
-    } catch (error) {
-      console.error("Failed to check service status:", error);
-      setInitialLoading(false);
-    }
-  };
-
-  // Toggle service
+  // Toggle a service with optimistic state update
   const toggleService = async (service: string) => {
     setLoading(service);
+
+    if (!isTauri()) {
+      toast({
+        variant: "destructive",
+        title: t("serviceManager.browserMode", "Browser Mode"),
+        description: t(
+          "serviceManager.browserModeDesc",
+          "Service control requires running in Tauri app",
+        ),
+      });
+      setLoading(null);
+      return;
+    }
+
+    const isCurrentlyRunning = services[service as "apache" | "mysql" | "php"].running;
+    const serviceName = service.charAt(0).toUpperCase() + service.slice(1);
+
+    // Optimistic update — show transition state immediately
+    optimisticUpdate(service as "apache" | "mysql" | "php", {
+      state: isCurrentlyRunning ? "stopping" : "starting",
+    });
+
     try {
-      if (!isTauri()) {
-        toast({
-          variant: "destructive",
-          title: t("serviceManager.browserMode", "Browser Mode"),
-          description: t("serviceManager.browserModeDesc", "Service control requires running in Tauri app"),
-        });
-        setLoading(null);
-        return;
-      }
-
       let result: boolean | null;
-      const serviceName = service.charAt(0).toUpperCase() + service.slice(1);
-
       if (service === "apache") {
-        result = await safeInvoke<boolean>(
-          TAURI_COMMANDS.services.toggleApache,
-        );
+        result = await safeInvoke<boolean>(TAURI_COMMANDS.services.toggleApache);
       } else if (service === "mysql") {
         result = await safeInvoke<boolean>(TAURI_COMMANDS.services.toggleMysql);
       } else {
@@ -198,17 +107,18 @@ export function ServiceManager({
       }
 
       if (result === null) {
+        await refresh(); // revert optimistic state
         setLoading(null);
         return;
       }
 
-      await checkServiceStatus();
+      // Get confirmed real state
+      await refresh();
       onServiceToggle?.(service, result);
 
-      // Immediately sync tray menu labels without waiting for the 5s poller
+      // Sync tray menu immediately
       void safeInvoke(TAURI_COMMANDS.tray.refreshMenu);
 
-      // Show toast notification
       toast({
         variant: "success",
         title: result
@@ -228,6 +138,8 @@ export function ServiceManager({
       );
     } catch (error) {
       console.error(`Failed to toggle ${service}:`, error);
+      // RULE: on error revert to real state via refresh(), not a hardcoded error state.
+      await refresh();
       const errorMsg =
         typeof error === "string"
           ? error
@@ -237,75 +149,27 @@ export function ServiceManager({
       toast({
         variant: "destructive",
         title: t("serviceManager.serviceError", "Service Error"),
-        description: errorMsg || t("serviceManager.serviceErrorDesc", "Failed to start/stop {{service}}.", { service }),
+        description:
+          errorMsg ||
+          t("serviceManager.serviceErrorDesc", "Failed to start/stop {{service}}.", { service }),
       });
     } finally {
       setLoading(null);
     }
   };
 
-  // Handle config opening
-  const handleOpenConfig = (service: string) => {
-    onOpenConfig?.(service);
-  };
-
-  // Handle logs viewing
-  const handleViewLogs = (service: string) => {
-    onViewLogs?.(service);
-  };
-
-  // Handle database backup - navigate to the Databases > Backups page (SSOT).
-  const handleBackupDatabase = () => {
-    navigate(ROUTES.databasesBackups.path);
-  };
-
-  // Navigate to the in-app PHP CLI terminal tab.
-  const handleOpenTerminal = () => {
-    navigate(ROUTES.terminalPhp.path);
-  };
-
-  useEffect(() => {
-    primeNotificationPermission();
-    checkServiceStatus(true);
-
-    // Set up periodic status checking every 5 seconds for real-time monitoring
-    const interval = setInterval(() => checkServiceStatus(false), 5000);
-
-    return () => clearInterval(interval);
-  }, []);
-
   toggleServiceRef.current = toggleService;
 
-  // Show a one-time system notification when the window is hidden to the tray
-  // via the X close button.  The notification fires while the webview is still
-  // active (emitted before window.hide() in lib.rs) so the OS can display it
-  // even after the window disappears.
-  useEffect(() => {
-    if (!isTauri()) return;
-    let unlisten: (() => void) | undefined;
-    (async () => {
-      const { listen } = await import("@tauri-apps/api/event");
-      unlisten = await listen("window-hidden-to-tray", () => {
-        const SHOWN_KEY = "devstackbox.tray.hideNoticeShown";
-        if (!localStorage.getItem(SHOWN_KEY)) {
-          localStorage.setItem(SHOWN_KEY, "1");
-          void notify(
-            t("serviceManager.trayNotice", "DevStackBox is still running"),
-            t("serviceManager.trayNoticeDesc", "The app is minimized to the system tray. Click the tray icon to restore it."),
-          );
-        }
-      });
-    })();
-    return () => {
-      if (unlisten) unlisten();
-    };
-  }, []);
+  const handleOpenConfig = (service: string) => onOpenConfig?.(service);
+  const handleViewLogs   = (service: string) => onViewLogs?.(service);
+  const handleBackupDatabase = () => navigate(ROUTES.databasesBackups.path);
+  const handleOpenTerminal   = () => navigate(ROUTES.terminalPhp.path);
 
   const containerClassName = compact
     ? "grid grid-cols-1 md:grid-cols-3 gap-4"
     : "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6";
 
-  // Service Card Skeleton
+  // Skeleton — only on very first launch with no cache
   const ServiceSkeleton = () => (
     <Card>
       <CardHeader className="space-y-2">

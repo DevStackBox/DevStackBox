@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ServiceManager, type ServiceStatus } from "@/components/services";
+import { ServiceManager } from "@/components/services";
 import { ErrorLogPreview } from "@/components/error-log-preview";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TAURI_COMMANDS } from "@/lib/commands";
 import { ROUTES } from "@/lib/routes";
 import { Play, Square, Server, Loader2, Globe, ArrowRight } from "lucide-react";
+import { useServiceStatus } from "@/context/service-status-context";
 
 interface VhostEntry {
   domain: string;
@@ -35,11 +36,7 @@ export function DashboardPage({
 }: DashboardPageProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [statuses, setStatuses] = useState<{
-    apache: ServiceStatus;
-    mysql: ServiceStatus;
-    php: ServiceStatus;
-  } | null>(null);
+  const { services } = useServiceStatus();
   const [bulkBusy, setBulkBusy] = useState<"start" | "stop" | null>(null);
   const [vhosts, setVhosts] = useState<VhostEntry[]>([]);
 
@@ -49,9 +46,7 @@ export function DashboardPage({
       .catch(() => {});
   }, []);
 
-  const runningCount = statuses
-    ? [statuses.apache.running, statuses.mysql.running].filter(Boolean).length
-    : 0;
+  const runningCount = [services.apache.running, services.mysql.running].filter(Boolean).length;
   const statusLabel =
     runningCount === 2
       ? t("status.operational", "All services running")
@@ -150,14 +145,10 @@ export function DashboardPage({
       {/* Compact service grid */}
       <ServiceManager
         compact
-        onServiceToggle={() => {
-          /* status changes flow through onStatusesChange */
-        }}
         onOpenConfig={(s) => onOpenConfig(s as "apache" | "mysql" | "php")}
         onViewLogs={(s) => onViewLogs(s as "apache" | "mysql" | "php")}
         onOpenPHPVersionSelector={onOpenPHPVersionSelector}
         currentPhpVersion={currentPhpVersion}
-        onStatusesChange={setStatuses}
       />
 
       {/* Virtual hosts summary */}
