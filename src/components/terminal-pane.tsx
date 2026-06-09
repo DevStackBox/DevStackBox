@@ -100,55 +100,65 @@ export function TerminalPane({
     }
 
     let cancelled = false;
+    let initTimer: ReturnType<typeof setTimeout>;
 
-    // ── terminal-output listener ──────────────────────────────────────────
-    listen<{ session_id: string; data: string }>("terminal-output", (event) => {
-      if (event.payload.session_id === sessionId) {
-        term.write(event.payload.data);
-      }
-    }).then((unlisten) => {
-      if (cancelled) {
-        unlisten();
-      } else {
-        unlistenOutputRef.current = unlisten;
-      }
-    });
-
-    // ── terminal-process-changed listener stub ────────────────────────────
-    // Wired now (even though unused) to avoid a refactor when tab indicators
-    // and dynamic titles are built. The Rust side will emit this event.
-    listen<{ session_id: string; process: string }>(
-      "terminal-process-changed",
-      (_event) => {
-        // Future: update tab title / process indicator dot
-        // if (_event.payload.session_id === sessionId) { ... }
-      },
-    ).then((unlisten) => {
-      if (cancelled) {
-        unlisten();
-      } else {
-        unlistenProcessRef.current = unlisten;
-      }
-    });
-
-    // ── Forward keystrokes to Rust pty ────────────────────────────────────
-    const inputDisposable = term.onData((data) => {
-      void safeInvoke(TAURI_COMMANDS.terminal.sendInput, {
-        session_id: sessionId,
-        data,
+    const setupTerminal = async () => {
+      // 1. Wait a moment for React/DOM layout to settle so xterm has real dimensions
+      await new Promise((resolve) => {
+        initTimer = setTimeout(resolve, 50);
       });
-    });
+      if (cancelled) return;
 
-    // ── Spawn the Rust pty session ────────────────────────────────────────
-    void safeInvoke(TAURI_COMMANDS.terminal.spawn, {
-      session_id: sessionId,
-      initial_command: initialCommand ?? null,
-    });
+      fitAddon.fit();
+
+      // 2. Register listeners and await them BEFORE spawning
+      const unlistenOutput = await listen<{ session_id: string; data: string }>(
+        "terminal-output",
+        (event) => {
+          if (event.payload.session_id === sessionId) {
+            term.write(event.payload.data);
+          }
+        }
+      );
+      if (cancelled) {
+        unlistenOutput();
+        return;
+      }
+      unlistenOutputRef.current = unlistenOutput;
+
+      const unlistenProcess = await listen<{ session_id: string; process: string }>(
+        "terminal-process-changed",
+        (_event) => {}
+      );
+      if (cancelled) {
+        unlistenProcess();
+        return;
+      }
+      unlistenProcessRef.current = unlistenProcess;
+
+      // 3. Forward keystrokes to Rust pty
+      inputDisposable = term.onData((data) => {
+        void safeInvoke(TAURI_COMMANDS.terminal.sendInput, {
+          session_id: sessionId,
+          data,
+        });
+      });
+
+      // 4. Spawn the Rust pty session safely
+      await safeInvoke(TAURI_COMMANDS.terminal.spawn, {
+        session_id: sessionId,
+        initial_command: initialCommand ?? null,
+      });
+    };
+
+    let inputDisposable: { dispose: () => void } | null = null;
+    void setupTerminal();
 
     return () => {
       cancelled = true;
+      clearTimeout(initTimer);
       onMountCleanup?.();
-      inputDisposable.dispose();
+      inputDisposable?.dispose();
       unlistenOutputRef.current?.();
       unlistenProcessRef.current?.();
       void safeInvoke(TAURI_COMMANDS.terminal.kill, {

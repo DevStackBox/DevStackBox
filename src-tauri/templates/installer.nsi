@@ -470,7 +470,7 @@ Function un.ConfirmShow
   ; ARCH-001: Keep www checkbox (checked by default).
   IntOp $5 100 * $2
   IntOp $5 $5 / 96
-  System::Call 'user32::CreateWindowEx(i r3, w "${__NSD_CheckBox_CLASS}", w "$(keepWwwFiles)", i ${__NSD_CheckBox_STYLE}, i r4, i r5, i r6, i r7, p r1, i0, i0, i0) i .s'
+  System::Call 'user32::CreateWindowEx(i r3, w "Button", w "$(keepWwwFiles)", i 0x50012003, i r4, i r5, i r6, i r7, p r1, i0, i0, i0) i .s'
   Pop $KeepWwwCheckbox
   SendMessage $HWNDPARENT ${WM_GETFONT} 0 0 $1
   SendMessage $KeepWwwCheckbox ${WM_SETFONT} $1 1
@@ -479,7 +479,7 @@ Function un.ConfirmShow
   ; Keep user data checkbox below keep-www (checked by default).
   IntOp $5 128 * $2
   IntOp $5 $5 / 96
-  System::Call 'user32::CreateWindowEx(i r3, w "${__NSD_CheckBox_CLASS}", w "$(keepUserData)", i ${__NSD_CheckBox_STYLE}, i r4, i r5, i r6, i r7, p r1, i0, i0, i0) i .s'
+  System::Call 'user32::CreateWindowEx(i r3, w "Button", w "$(keepUserData)", i 0x50012003, i r4, i r5, i r6, i r7, p r1, i0, i0, i0) i .s'
   Pop $KeepUserDataCheckbox
   SendMessage $KeepUserDataCheckbox ${WM_SETFONT} $1 1
   SendMessage $KeepUserDataCheckbox ${BM_SETCHECK} ${BST_CHECKED} 0

@@ -43,7 +43,6 @@ export function AutoUpdater({ mode = "button" }: AutoUpdaterProps) {
     downloading,
     downloadProgress,
     readyToInstall,
-    checkError,
     checkForUpdates,
     openUpdateDialog,
   } = useUpdater();
