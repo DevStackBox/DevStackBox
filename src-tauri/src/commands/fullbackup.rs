@@ -11,8 +11,9 @@ use std::path::{Path, PathBuf};
 use tauri::Emitter;
 use zip::write::SimpleFileOptions;
 
-use crate::utils::paths::{get_installation_path, get_mysql_client_exe, get_mysqldump_exe, user_backups_dir, user_config_dir, user_www_dir};
-use crate::utils::process::create_hidden_command;
+use crate::utils::mysql_connection::{mysqldump_command, mysql_command, prepare_mysql_client};
+use crate::utils::paths::{get_installation_path, get_mysqld_exe, user_backups_dir, user_config_dir, user_www_dir};
+use crate::utils::process::is_our_process_running;
 
 // -------------------------------------------------------------------------
 // Shared types
@@ -177,13 +178,18 @@ pub async fn create_full_backup(
 
     // --- mysql/all-databases.sql ----------------------------------------
     emit(&app, "mysql", 70, "Backing up MySQL databases...");
-    let mysql_dump_path = get_mysqldump_exe(&get_installation_path());
+    let base = get_installation_path();
+    let mysqld = get_mysqld_exe(&base);
     let mut mysql_included = false;
-    if mysql_dump_path.exists() {
-        match create_hidden_command(&mysql_dump_path.to_string_lossy())
-            .args(["-u", "root", "--all-databases"])
-            .output()
-        {
+    if is_our_process_running("mysqld.exe", &mysqld) {
+        let mysql_dump_result = crate::utils::mysql_connection::prepare_mysql_client()
+            .and_then(|_| mysqldump_command())
+            .and_then(|mut cmd| {
+                cmd.arg("--all-databases")
+                    .output()
+                    .map_err(|e| format!("mysqldump failed: {}", e))
+            });
+        match mysql_dump_result {
             Ok(output) if output.status.success() => {
                 zip.start_file("mysql/all-databases.sql", options)
                     .map_err(|e| format!("Zip error (mysql): {}", e))?;
@@ -195,7 +201,7 @@ pub async fn create_full_backup(
             Ok(output) => {
                 let stderr = String::from_utf8_lossy(&output.stderr);
                 eprintln!("mysqldump skipped: {}", stderr.trim());
-                // Not fatal — we continue without MySQL data
+                // Not fatal - we continue without MySQL data
             }
             Err(e) => {
                 eprintln!("mysqldump exec failed: {}", e);
@@ -203,7 +209,7 @@ pub async fn create_full_backup(
             }
         }
     } else {
-        eprintln!("mysqldump not found, skipping MySQL backup");
+        eprintln!("DevStackBox MySQL is not running, skipping MySQL backup");
     }
 
     // --- manifest.json ---------------------------------------------------
@@ -291,7 +297,7 @@ pub async fn restore_full_backup(
     let manifest: BackupManifest = {
         let mut entry = archive
             .by_name("manifest.json")
-            .map_err(|_| "Backup is missing manifest.json — it may be corrupt".to_string())?;
+            .map_err(|_| "Backup is missing manifest.json - it may be corrupt".to_string())?;
         let mut buf = String::new();
         entry
             .read_to_string(&mut buf)
@@ -336,7 +342,7 @@ pub async fn restore_full_backup(
             let sub = rel.strip_prefix("www").unwrap_or(&rel);
             www_dir.join(sub)
         } else if zip_name == "mysql/all-databases.sql" {
-            // Handled separately below — skip for now
+            // Handled separately below - skip for now
             continue;
         } else {
             continue;
@@ -374,11 +380,10 @@ pub async fn restore_full_backup(
             });
 
         if let Some(sql) = sql_data {
-            let mysql_exe = get_mysql_client_exe(&get_installation_path());
-            if mysql_exe.exists() && !sql.is_empty() {
+            if !sql.is_empty() {
+                prepare_mysql_client()?;
                 use std::process::Stdio;
-                let mut child = create_hidden_command(&mysql_exe.to_string_lossy())
-                    .args(["-u", "root"])
+                let mut child = mysql_command()?
                     .stdin(Stdio::piped())
                     .stdout(Stdio::null())
                     .stderr(Stdio::piped())

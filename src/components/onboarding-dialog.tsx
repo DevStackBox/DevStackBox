@@ -59,7 +59,7 @@ export function OnboardingDialog({ onOpenServices }: OnboardingDialogProps) {
       await safeInvoke(TAURI_COMMANDS.services.startMysql);
       await safeInvoke(TAURI_COMMANDS.services.startApache);
       // Give Win32_Process a moment to register the newly-started processes.
-      // This delay lives here only — not in the normal polling loop.
+      // This delay lives here only - not in the normal polling loop.
       await new Promise((r) => setTimeout(r, 800));
       await refresh();
       toast({

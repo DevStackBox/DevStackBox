@@ -2,7 +2,7 @@
  * TerminalPane
  *
  * A single xterm instance backed by a Rust pty session.
- * Rendered once per tab — hidden via CSS (display:none) when inactive,
+ * Rendered once per tab - hidden via CSS (display:none) when inactive,
  * NEVER unmounted while the tab is alive. This preserves the live pty
  * session, scrollback buffer, and process state across tab switches and
  * navigation away from /terminal.
@@ -56,6 +56,20 @@ export function TerminalPane({
     (theme === "system" &&
       window.matchMedia("(prefers-color-scheme: dark)").matches);
 
+  const syncTerminalSize = (term: Terminal) => {
+    if (!isTauri()) return;
+    void safeInvoke(TAURI_COMMANDS.terminal.resize, {
+      session_id: sessionId,
+      cols: term.cols,
+      rows: term.rows,
+    });
+  };
+
+  const fitAndSync = (term: Terminal, fitAddon: FitAddon) => {
+    fitAddon.fit();
+    syncTerminalSize(term);
+  };
+
   // ── Mount xterm once ────────────────────────────────────────────────────
   useEffect(() => {
     if (!containerRef.current) return;
@@ -95,7 +109,7 @@ export function TerminalPane({
     const onMountCleanup = onMount?.(clearFn);
 
     if (!isTauri()) {
-      term.writeln("\x1b[33m[Browser mode — terminal unavailable]\x1b[0m");
+      term.writeln("\x1b[33m[Browser mode - terminal unavailable]\x1b[0m");
       return;
     }
 
@@ -118,7 +132,7 @@ export function TerminalPane({
           if (event.payload.session_id === sessionId) {
             term.write(event.payload.data);
           }
-        }
+        },
       );
       if (cancelled) {
         unlistenOutput();
@@ -126,10 +140,10 @@ export function TerminalPane({
       }
       unlistenOutputRef.current = unlistenOutput;
 
-      const unlistenProcess = await listen<{ session_id: string; process: string }>(
-        "terminal-process-changed",
-        (_event) => {}
-      );
+      const unlistenProcess = await listen<{
+        session_id: string;
+        process: string;
+      }>("terminal-process-changed", (_event) => {});
       if (cancelled) {
         unlistenProcess();
         return;
@@ -149,6 +163,9 @@ export function TerminalPane({
         session_id: sessionId,
         initial_command: initialCommand ?? null,
       });
+
+      // 5. Sync PTY size after spawn so the shell matches xterm dimensions
+      fitAndSync(term, fitAddon);
     };
 
     let inputDisposable: { dispose: () => void } | null = null;
@@ -170,27 +187,28 @@ export function TerminalPane({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
 
-  // ── ResizeObserver — active-only fitting ─────────────────────────────────
+  // ── ResizeObserver - active-only fitting ─────────────────────────────────
   // Registered on every TerminalPane. Guards with isActive before calling
   // fitAddon.fit() so hidden panes (display:none) can't corrupt dimensions.
   useEffect(() => {
     if (!containerRef.current) return;
 
     const observer = new ResizeObserver(() => {
-      if (isActive && fitAddonRef.current) {
-        fitAddonRef.current.fit();
+      if (isActive && fitAddonRef.current && termRef.current) {
+        fitAndSync(termRef.current, fitAddonRef.current);
       }
     });
     observer.observe(containerRef.current);
 
     // When THIS pane becomes active, fit immediately to catch any resize
     // that happened while the tab was hidden.
-    if (isActive && fitAddonRef.current) {
-      fitAddonRef.current.fit();
+    if (isActive && fitAddonRef.current && termRef.current) {
+      fitAndSync(termRef.current, fitAddonRef.current);
+      termRef.current.focus();
     }
 
     return () => observer.disconnect();
-  }, [isActive]);
+  }, [isActive, sessionId]);
 
   return (
     <div

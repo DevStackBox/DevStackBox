@@ -5,8 +5,8 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::utils::paths::{get_installation_path, get_mysql_client_exe, user_config_dir};
-use crate::utils::process::create_hidden_command;
+use crate::utils::mysql_connection::{mysql_command, prepare_mysql_client};
+use crate::utils::paths::{get_installation_path, user_config_dir};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SecurityFinding {
@@ -174,13 +174,12 @@ fn check_apache(findings: &mut Vec<SecurityFinding>) {
 // ── MySQL checks ──────────────────────────────────────────────────────────────
 
 fn run_mysql_scalar(query: &str) -> Option<String> {
-    let base_path = get_installation_path();
-    let mysql_path = get_mysql_client_exe(&base_path);
-    if !mysql_path.exists() {
+    if prepare_mysql_client().is_err() {
         return None;
     }
-    let output = create_hidden_command(&mysql_path.to_string_lossy())
-        .args(["-u", "root", "--batch", "--skip-column-names", "-e", query])
+    let output = mysql_command()
+        .ok()?
+        .args(["--batch", "--skip-column-names", "-e", query])
         .output()
         .ok()?;
     if output.status.success() {
@@ -264,6 +263,7 @@ fn check_mysql(findings: &mut Vec<SecurityFinding>) {
 
 #[tauri::command]
 pub async fn analyze_security() -> Result<Vec<SecurityFinding>, String> {
+    let _ = crate::commands::config::ensure_service_config("apache").await;
     let mut findings: Vec<SecurityFinding> = Vec::new();
 
     check_php(&mut findings);

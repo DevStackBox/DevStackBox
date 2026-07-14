@@ -6,7 +6,7 @@
  * How `initialCommand` works:
  *  The Rust backend ALWAYS spawns cmd.exe as the host process (with php/current
  *  and mysql/bin prepended to PATH). `initialCommand` is a string written to
- *  cmd.exe's stdin immediately after spawn — equivalent to the user typing it
+ *  cmd.exe's stdin immediately after spawn - equivalent to the user typing it
  *  and pressing Enter. null means a plain cmd.exe prompt.
  *
  *  Git Bash is a special case: the Rust side must resolve git-bash.exe at
@@ -50,7 +50,7 @@ export const SHELL_TYPES: ShellType[] = [
     id: "cmd",
     label: "CMD",
     icon: SquareTerminal,
-    initialCommand: null, // plain cmd.exe — identical to "shell" but semantically distinct
+    initialCommand: null, // plain cmd.exe - identical to "shell" but semantically distinct
   },
   {
     id: "php-cli",
@@ -68,7 +68,7 @@ export const SHELL_TYPES: ShellType[] = [
     id: "git-bash",
     label: "Git Bash",
     icon: GitBranch,
-    // null here — the Rust backend resolves git-bash.exe via shellTypeId="git-bash"
+    // null here - the Rust backend resolves git-bash.exe via shellTypeId="git-bash"
     initialCommand: null,
   },
 ] as const;

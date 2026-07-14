@@ -65,7 +65,7 @@ function writeCache(data: SystemInfo): void {
     const entry: SystemInfoCache = { cacheVersion: APP_VERSION, data };
     localStorage.setItem(CACHE_KEY, JSON.stringify(entry));
   } catch {
-    // localStorage quota exceeded — non-fatal
+    // localStorage quota exceeded - non-fatal
   }
 }
 
@@ -96,7 +96,7 @@ async function refreshPhpVersions(): Promise<void> {
       .filter((v) => v.installed)
       .map((v) => v.version);
 
-    // Patch the cache — leave all other fields intact
+    // Patch the cache - leave all other fields intact
     const cached = readCache();
     if (cached) {
       writeCache({ ...cached.data, php_versions: installed });
@@ -149,7 +149,7 @@ export async function getSystemInfoCached(): Promise<SystemInfo | null> {
 
 /**
  * Register the php-version-changed event listener.
- * Call this ONCE during App startup — NOT as a module-level side effect.
+ * Call this ONCE during App startup - NOT as a module-level side effect.
  */
 export function initializeSystemInfoCache(): void {
   window.addEventListener(

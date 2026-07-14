@@ -2,14 +2,14 @@
  * DatabaseCacheContext
  *
  * Single source of truth for the MySQL database list.
- * Uses sessionStorage — instant within a session, fresh on app restart.
+ * Uses sessionStorage - instant within a session, fresh on app restart.
  *
  * Rules:
  *  - NO auto-poll. refresh() is called explicitly after mutations.
- *  - Lazy warmup — does NOT fetch on app startup.
+ *  - Lazy warmup - does NOT fetch on app startup.
  *    Data loads only when refresh() is first called by a consumer.
  *  - On a failed refresh the existing state is preserved (never cleared).
- *  - Shared refreshPromiseRef — every `await refresh()` waits for the same
+ *  - Shared refreshPromiseRef - every `await refresh()` waits for the same
  *    in-flight request (no duplicate MySQL queries).
  *  - hasCache distinguishes "no databases yet" from "still loading first time".
  */
@@ -104,7 +104,9 @@ interface DatabaseCacheContextValue {
   refresh: () => Promise<void>;
 }
 
-const DatabaseCacheContext = createContext<DatabaseCacheContextValue | null>(null);
+const DatabaseCacheContext = createContext<DatabaseCacheContextValue | null>(
+  null,
+);
 
 // ---------------------------------------------------------------------------
 // Provider
@@ -114,11 +116,13 @@ export function DatabaseCacheProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   const cached = readDatabaseCache();
-  const [databases, setDatabases] = useState<DatabaseInfo[]>(cached?.databases ?? []);
+  const [databases, setDatabases] = useState<DatabaseInfo[]>(
+    cached?.databases ?? [],
+  );
   const [loading, setLoading] = useState(false);
   const [hasCache, setHasCache] = useState(!!cached);
 
-  // Shared promise — prevents duplicate in-flight requests
+  // Shared promise - prevents duplicate in-flight requests
   const refreshPromiseRef = useRef<Promise<void> | null>(null);
 
   const refresh = useCallback((): Promise<void> => {
@@ -132,9 +136,9 @@ export function DatabaseCacheProvider({ children }: { children: ReactNode }) {
         if (!isTauri()) {
           // Browser / dev mode mock
           const mock: DatabaseInfo[] = [
-            { name: "sample_db",   tableCount: 5,  sizeBytes: 1024000 },
-            { name: "wordpress",   tableCount: 12, sizeBytes: 5242880 },
-            { name: "laravel_app", tableCount: 0,  sizeBytes: 0 },
+            { name: "sample_db", tableCount: 5, sizeBytes: 1024000 },
+            { name: "wordpress", tableCount: 12, sizeBytes: 5242880 },
+            { name: "laravel_app", tableCount: 0, sizeBytes: 0 },
           ];
           setDatabases(mock);
           setHasCache(true);
@@ -160,10 +164,10 @@ export function DatabaseCacheProvider({ children }: { children: ReactNode }) {
             } satisfies CachedDatabases),
           );
         } catch {
-          // sessionStorage quota exceeded — non-fatal
+          // sessionStorage quota exceeded - non-fatal
         }
       } catch (err) {
-        // RULE: never clear existing databases on failure — keep what was showing.
+        // RULE: never clear existing databases on failure - keep what was showing.
         console.error("[DatabaseCacheProvider] refresh failed:", err);
         toast({
           variant: "destructive",
@@ -179,11 +183,13 @@ export function DatabaseCacheProvider({ children }: { children: ReactNode }) {
     return refreshPromiseRef.current;
   }, [toast]);
 
-  // NO useEffect here — lazy warmup only.
+  // NO useEffect here - lazy warmup only.
   // Data is fetched when the consumer calls refresh() for the first time.
 
   return (
-    <DatabaseCacheContext.Provider value={{ databases, loading, hasCache, refresh }}>
+    <DatabaseCacheContext.Provider
+      value={{ databases, loading, hasCache, refresh }}
+    >
       {children}
     </DatabaseCacheContext.Provider>
   );
@@ -196,7 +202,9 @@ export function DatabaseCacheProvider({ children }: { children: ReactNode }) {
 export function useDatabaseCache(): DatabaseCacheContextValue {
   const ctx = useContext(DatabaseCacheContext);
   if (!ctx) {
-    throw new Error("useDatabaseCache must be used inside <DatabaseCacheProvider>");
+    throw new Error(
+      "useDatabaseCache must be used inside <DatabaseCacheProvider>",
+    );
   }
   return ctx;
 }

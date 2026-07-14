@@ -10,12 +10,12 @@
 export type ServiceState =
   | "running"
   | "stopped"
-  | "starting"   // set optimistically on Start click — not from Rust
-  | "stopping"   // set optimistically on Stop click — not from Rust
-  | "error";     // transient error state — not persisted
+  | "starting" // set optimistically on Start click - not from Rust
+  | "stopping" // set optimistically on Stop click - not from Rust
+  | "error"; // transient error state - not persisted
 
 export interface ServiceStatus {
-  /** Derived presentation state — prefer this over `running`. */
+  /** Derived presentation state - prefer this over `running`. */
   state: ServiceState;
   /** Kept for backward compat with components not yet migrated. */
   running: boolean;
@@ -33,7 +33,9 @@ export interface RawServiceStatus {
 }
 
 /** Map a Rust response to the frontend ServiceStatus. Only ever produces "running" or "stopped". */
-export function mapRawStatus(raw: RawServiceStatus | null | undefined): ServiceStatus {
+export function mapRawStatus(
+  raw: RawServiceStatus | null | undefined,
+): ServiceStatus {
   if (!raw) return { state: "stopped", running: false };
   return {
     state: raw.running ? "running" : "stopped",
@@ -43,7 +45,6 @@ export function mapRawStatus(raw: RawServiceStatus | null | undefined): ServiceS
     version: raw.version ?? undefined,
   };
 }
-
 
 export interface ServiceInfo extends ServiceStatus {
   uptime?: string;

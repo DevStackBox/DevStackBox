@@ -9,10 +9,32 @@ use crate::utils::paths::{
     get_apache_exe, get_installation_path, get_user_data_root, user_config_dir, user_logs_dir,
     user_www_dir,
 };
+use crate::utils::config_version::needs_config_migration;
 use crate::utils::process::{
     create_hidden_command, ensure_port_available, find_our_processes, is_32bit_executable,
     is_our_process_running, kill_pid,
 };
+
+pub const APACHE_CONFIG_VERSION: u32 = 8;
+
+/// Ensure httpd.conf exists and is migrated to the current template version.
+pub async fn ensure_apache_config() -> Result<(), String> {
+    let config_path = user_config_dir().join("httpd.conf");
+    if !config_path.exists() {
+        return create_default_apache_config().await;
+    }
+
+    let content = std::fs::read_to_string(&config_path)
+        .map_err(|e| format!("Failed to read Apache config: {}", e))?;
+    if needs_config_migration(&content, APACHE_CONFIG_VERSION) {
+        println!(
+            "Detected outdated Apache config. Migrating to configVersion {}...",
+            APACHE_CONFIG_VERSION
+        );
+        create_default_apache_config().await?;
+    }
+    Ok(())
+}
 
 fn apache_exe_path() -> std::path::PathBuf {
     let base = get_installation_path();
@@ -63,21 +85,9 @@ pub async fn start_apache() -> Result<bool, String> {
         }
     }
 
+    ensure_apache_config().await?;
+
     let config_path = user_config_dir().join("httpd.conf");
-    if !config_path.exists() {
-        create_default_apache_config().await?;
-    } else {
-        // Auto-migrate stale configs. If the on-disk configVersion is older than
-        // the current template version (2), regenerate the default config so that
-        // new modules / directives are picked up without requiring a manual delete.
-        let needs_regen = std::fs::read_to_string(&config_path)
-            .map(|content| !content.contains("# configVersion: 7"))
-            .unwrap_or(false);
-        if needs_regen {
-            println!("Detected outdated Apache config (pre-v7). Migrating to configVersion 7...");
-            create_default_apache_config().await?;
-        }
-    }
 
     // If ssl.conf exists but contains a \\?\ / //?/ UNC prefix (written by an
     // older enable_ssl that used canonicalize), delete it and immediately
@@ -453,7 +463,7 @@ Alias /pma "{}"
 
 // Ensures the web root directory exists and contains a minimal index.html.
 // In the current architecture, user_www_dir() points to the install-dir www/
-// so no file copying is needed — installer already placed files there.
+// so no file copying is needed - installer already placed files there.
 // Files are only written if absent, so user edits are never overwritten.
 fn seed_www_dir() {
     let www_dir = user_www_dir();

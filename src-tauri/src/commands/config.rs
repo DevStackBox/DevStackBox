@@ -24,16 +24,24 @@ fn config_file_for(service: &str) -> Result<PathBuf, String> {
     }
 }
 
+/// Ensure the managed config for a service exists and is migrated to the current version.
+pub async fn ensure_service_config(service: &str) -> Result<(), String> {
+    match service {
+        "apache" | "httpd" => crate::commands::apache::ensure_apache_config().await,
+        "mysql" => crate::commands::mysql::ensure_mysql_config().await,
+        "php" => {
+            crate::commands::php::patch_php_ini();
+            Ok(())
+        }
+        "phpmyadmin" => Ok(()),
+        _ => Err(format!("Unknown service: {}", service)),
+    }
+}
+
 #[tauri::command]
 pub async fn read_config(service: String) -> Result<String, String> {
+    ensure_service_config(&service).await?;
     let config_file = config_file_for(&service)?;
-
-    // The PHP user config is seeded lazily by patch_php_ini on first Apache
-    // start. If the editor is opened before that, seed it now so the user
-    // always sees a real php.ini instead of a "not found" error.
-    if service == "php" && !config_file.exists() {
-        crate::commands::php::patch_php_ini();
-    }
 
     if !config_file.exists() {
         return Err(format!("Config file not found: {}", config_file.display()));
@@ -45,6 +53,7 @@ pub async fn read_config(service: String) -> Result<String, String> {
 
 #[tauri::command]
 pub async fn update_config(service: String, content: String) -> Result<String, String> {
+    ensure_service_config(&service).await?;
     let config_file = config_file_for(&service)?;
 
     if config_file.exists() {
@@ -74,6 +83,7 @@ pub async fn update_config(service: String, content: String) -> Result<String, S
 
 #[tauri::command]
 pub async fn backup_config(service: String) -> Result<String, String> {
+    ensure_service_config(&service).await?;
     let backup_dir = user_config_backups_dir();
     let config_file = config_file_for(&service)?;
 

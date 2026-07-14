@@ -6,13 +6,13 @@
  * Rules enforced here:
  *  - ONLY this provider may call Tauri updater APIs (check / download / install).
  *  - Polling: silent startup check after 2 s, then every 6 hours while the app is open.
- *  - `readyToInstall` is set explicitly in the "Finished" download event — never
+ *  - `readyToInstall` is set explicitly in the "Finished" download event - never
  *    inferred from downloadProgress === 100 (fragile).
  *  - `isDismissed` is NOT stored in context state; consumers compute it locally:
  *      localStorage.getItem("devstackbox.dismissedUpdate") === updateInfo?.version
  *  - `checkError` is set on network/server failure and cleared before each new check,
  *    ensuring the About page never shows "up to date" after a failed check.
- *  - `updateAvailable` is NOT persisted to localStorage — doing so creates stale
+ *  - `updateAvailable` is NOT persisted to localStorage - doing so creates stale
  *    "update available" state if the user installs manually. The 2 s startup delay
  *    is the accepted tradeoff (same as VS Code / GitHub Desktop).
  */
@@ -71,7 +71,7 @@ export interface UpdaterContextValue {
   dismissUpdate: () => void;
   /** Whether the update dialog is currently open */
   showDialog: boolean;
-  /** Internal setter — consumers should use openUpdateDialog / dismissUpdate */
+  /** Internal setter - consumers should use openUpdateDialog / dismissUpdate */
   setShowDialog: (open: boolean) => void;
 }
 
@@ -181,7 +181,10 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
             const total = event.data.contentLength as number;
             const progress =
               total > 0
-                ? Math.min(99, Math.round((downloadedRef.current / total) * 100))
+                ? Math.min(
+                    99,
+                    Math.round((downloadedRef.current / total) * 100),
+                  )
                 : downloadedRef.current > 0
                   ? 50
                   : 0;
@@ -190,7 +193,7 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
           }
 
           case "Finished":
-            // Set explicitly — do NOT infer from downloadProgress === 100
+            // Set explicitly - do NOT infer from downloadProgress === 100
             setDownloadProgress(100);
             setReadyToInstall(true);
             break;
@@ -225,7 +228,7 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
       localStorage.getItem("devstackbox.settings.autoCheckUpdates") !== "false";
     if (!autoCheck) return;
 
-    // Silent startup check — delayed 2 s to let the app fully load
+    // Silent startup check - delayed 2 s to let the app fully load
     const startupTimer = setTimeout(() => {
       void checkForUpdates(false);
     }, 2000);

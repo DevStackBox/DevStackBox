@@ -126,7 +126,7 @@
     "lastChecked": "Last checked",
     "lastCheckedNever": "never",
     "status": "Status",
-    "statusReadyToInstall": "Ready to install — restart to update",
+    "statusReadyToInstall": "Ready to install - restart to update",
     "statusDownloading": "Downloading update…",
     "statusUpdateAvailable": "Update available (v{{version}})"
   },

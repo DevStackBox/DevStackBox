@@ -2,12 +2,12 @@
  * TerminalContext
  *
  * Single source of truth for all terminal tab state.
- * Lives at the app root — never unmounts, so sessions survive navigation.
+ * Lives at the app root - never unmounts, so sessions survive navigation.
  *
  * Rules:
  *  - Tab state is NOT persisted to localStorage (pty sessions don't survive
  *    app restart; a fresh Shell tab on every launch is expected behavior).
- *  - canCreateTab is a derived useMemo — consumers never re-derive it.
+ *  - canCreateTab is a derived useMemo - consumers never re-derive it.
  *  - Tab title numbering is MONOTONIC per shell type. Opening Shell 1, 2, 3,
  *    closing Shell 2, then opening a new Shell → Shell 4 (never reuses gaps).
  *  - When the last tab is closed, a new Shell tab is automatically opened.
@@ -30,7 +30,7 @@ import { DEFAULT_SHELL, type ShellType } from "@/lib/shell-types";
 // ---------------------------------------------------------------------------
 
 export interface TerminalTab {
-  /** crypto.randomUUID() — also used as the Rust pty session_id */
+  /** crypto.randomUUID() - also used as the Rust pty session_id */
   id: string;
   shellType: ShellType;
   /** Monotonic title: "Shell 1", "PHP Interactive 3" */
@@ -61,7 +61,7 @@ const TerminalContext = createContext<TerminalContextValue | null>(null);
 // ---------------------------------------------------------------------------
 
 export function TerminalProvider({ children }: { children: ReactNode }) {
-  // Monotonic counter per shell type — never decremented, never reused
+  // Monotonic counter per shell type - never decremented, never reused
   const countersRef = useRef<Record<string, number>>({});
 
   const makeTitle = (shellType: ShellType): string => {
@@ -78,7 +78,9 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
   });
 
   // Open with one Shell tab by default
-  const [tabs, setTabs] = useState<TerminalTab[]>(() => [makeTab(DEFAULT_SHELL)]);
+  const [tabs, setTabs] = useState<TerminalTab[]>(() => [
+    makeTab(DEFAULT_SHELL),
+  ]);
   const [activeTabId, setActiveTabId] = useState<string | null>(
     () => tabs[0]?.id ?? null,
   );
@@ -133,7 +135,14 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
 
   return (
     <TerminalContext.Provider
-      value={{ tabs, activeTabId, canCreateTab, createTab, closeTab, switchTab }}
+      value={{
+        tabs,
+        activeTabId,
+        canCreateTab,
+        createTab,
+        closeTab,
+        switchTab,
+      }}
     >
       {children}
     </TerminalContext.Provider>

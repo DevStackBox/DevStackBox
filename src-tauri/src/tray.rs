@@ -1,4 +1,4 @@
-// System tray setup — menu build, live status poller, and event handlers.
+// System tray setup - menu build, live status poller, and event handlers.
 //
 // This module is the single source of truth for the tray icon. It builds the
 // menu once, holds cloned MenuItem handles so labels can be updated at runtime
@@ -98,7 +98,7 @@ fn open_phpmyadmin(app: &AppHandle) {
 // ─── Setup ───────────────────────────────────────────────────────────────────
 
 pub fn setup_tray(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
-    // Build menu items — start with Stopped labels; the poller will update them
+    // Build menu items - start with Stopped labels; the poller will update them
     // within the first second.
     let show_item = MenuItemBuilder::new("Show DevStackBox")
         .id("show")
@@ -216,7 +216,7 @@ pub fn setup_tray(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         })
         .build(app)?;
 
-    // Spawn the background poller — runs every 5 seconds
+    // Spawn the background poller - runs every 5 seconds
     tauri::async_runtime::spawn(async move {
         // Give the app half a second to finish startup before first poll
         tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;

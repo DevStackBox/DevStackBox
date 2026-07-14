@@ -27,7 +27,7 @@ Move only www\ to C:\DevStackBox\www\ for developer discoverability.
 - NSIS installerMode: "perMachine" (UAC required to write C:\ root)
 - NSIS installPath: "C:\\DevStackBox"
 - NSIS postInstallSection: IF needed after testing, grant write access to BUILTIN\Users (NOT Everyone).
-  First test WITHOUT any icacls — C:\DevStackBox outside Program Files may already be writable
+  First test WITHOUT any icacls - C:\DevStackBox outside Program Files may already be writable
   by the creating user. Only add ACL modification if standard-user writes to www\ fail.
 - bundle.resources: ADD ../apache/\*_/_ (critical, currently missing from installer)
 - bundle.resources: REMOVE ../config/\*_/_ (dev-path templates, never read at runtime)
@@ -55,15 +55,15 @@ Fresh install:
 1. pnpm tauri build succeeds (with signing key set)
 2. Run NSIS installer, UAC prompt appears, default path is C:\DevStackBox
 3. After install, C:\DevStackBox\www\ is writable by a STANDARD USER without UAC (no elevated prompt)
-   - Test: open cmd as normal user, create a file in C:\DevStackBox\www\ — must succeed
-   - Test: npm install, composer create-project, git clone inside C:\DevStackBox\www\ — must succeed
+   - Test: open cmd as normal user, create a file in C:\DevStackBox\www\ - must succeed
+   - Test: npm install, composer create-project, git clone inside C:\DevStackBox\www\ - must succeed
 4. Launch app, %LOCALAPPDATA%\DevStackBox\config\ is created (NOT C:\DevStackBox\config\)
 5. Start Apache, httpd.conf is in %LOCALAPPDATA%\DevStackBox\config\, DocumentRoot = C:\DevStackBox\www\
 6. http://localhost serves from C:\DevStackBox\www\
 7. Start MySQL, datadir = %LOCALAPPDATA%\DevStackBox\mysql-data\
 8. Uninstall via Settings > Apps, C:\DevStackBox is removed, LOCALAPPDATA data preserved
 
-Upgrade path (CRITICAL — more important than clean install): 9. Install v0.1.6 first, start Apache + MySQL, create a file in www\, create a vhost 10. Install v0.1.7 over it 11. Verify: configs in LOCALAPPDATA are preserved (not overwritten) 12. Verify: MySQL data is preserved 13. Verify: SSL certs preserved 14. Verify: user files in www\ preserved 15. Verify: app launches and all services start normally after upgrade
+Upgrade path (CRITICAL - more important than clean install): 9. Install v0.1.6 first, start Apache + MySQL, create a file in www\, create a vhost 10. Install v0.1.7 over it 11. Verify: configs in LOCALAPPDATA are preserved (not overwritten) 12. Verify: MySQL data is preserved 13. Verify: SSL certs preserved 14. Verify: user files in www\ preserved 15. Verify: app launches and all services start normally after upgrade
 
 ### Blocking before auto-update goes public
 

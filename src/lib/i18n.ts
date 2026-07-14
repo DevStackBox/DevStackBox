@@ -20,9 +20,14 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
+    lng: 'en',
     fallbackLng: 'en',
+    supportedLngs: ['en', 'hi'],
+    nonExplicitSupportedLngs: true,
+    load: 'languageOnly',
+    cleanCode: true,
     debug: false,
-    
+
     detection: {
       order: ['localStorage', 'navigator', 'htmlTag'],
       caches: ['localStorage'],

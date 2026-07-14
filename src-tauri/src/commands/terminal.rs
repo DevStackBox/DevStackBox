@@ -1,18 +1,18 @@
 // Embedded terminal session management.
 //
-// Spawns a cmd.exe child process per session, pipes stdin/stdout/stderr,
+// Spawns a cmd.exe child process per session inside a ConPTY (via portable-pty),
 // and streams output to the frontend via Tauri events.
 //
 // Event emitted:  "terminal-output"  payload: { session_id: String, data: String }
 
 use std::collections::HashMap;
 use std::io::{Read, Write};
-use std::process::{Child, ChildStdin, Stdio};
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
+use portable_pty::{native_pty_system, CommandBuilder, MasterPty, PtySize};
 use tauri::{AppHandle, Emitter};
 
 use crate::utils::paths::{get_installation_path, get_mysql_bin_dir};
-use crate::utils::process::create_hidden_command;
 
 // ── shared state ─────────────────────────────────────────────────────────────
 
@@ -35,8 +35,9 @@ impl Default for TerminalSessions {
 }
 
 pub struct TerminalSession {
-    stdin: ChildStdin,
-    child: Child,
+    writer: Box<dyn Write + Send>,
+    master: Box<dyn MasterPty + Send>,
+    child: Box<dyn portable_pty::Child + Send + Sync>,
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -49,38 +50,20 @@ fn emit_output(app: &AppHandle, session_id: &str, data: &str) {
     );
 }
 
-/// Spawn reader threads for stdout and stderr that feed a shared channel.
-/// A single batcher thread collects all output within 16ms windows (~60fps)
-/// and emits one event per window instead of one event per read() call.
-/// This prevents rapid frontend re-renders during cmd.exe startup banner bursts.
-fn spawn_output_forwarder(
+/// Read PTY output in a background thread and batch-emits to the frontend.
+fn spawn_pty_output_forwarder(
     app: AppHandle,
     session_id: String,
-    stdout: std::process::ChildStdout,
-    stderr: std::process::ChildStderr,
+    reader: Box<dyn Read + Send>,
 ) {
     use std::sync::mpsc;
     use std::time::Duration;
 
     let (tx, rx) = mpsc::channel::<String>();
 
-    // Stdout reader thread
-    let tx1 = tx.clone();
     std::thread::spawn(move || {
         let mut buf = [0u8; 4096];
-        let mut reader = stdout;
-        while let Ok(n @ 1..) = reader.read(&mut buf) {
-            let chunk = String::from_utf8_lossy(&buf[..n]).into_owned();
-            if tx1.send(chunk).is_err() {
-                break;
-            }
-        }
-    });
-
-    // Stderr reader thread — when both senders drop, channel closes
-    std::thread::spawn(move || {
-        let mut buf = [0u8; 4096];
-        let mut reader = stderr;
+        let mut reader = reader;
         while let Ok(n @ 1..) = reader.read(&mut buf) {
             let chunk = String::from_utf8_lossy(&buf[..n]).into_owned();
             if tx.send(chunk).is_err() {
@@ -89,8 +72,6 @@ fn spawn_output_forwarder(
         }
     });
 
-    // Batcher thread: block for first chunk, then drain for up to 16ms,
-    // emit the accumulated batch as one event. Repeat until channel closes.
     std::thread::spawn(move || {
         let window = Duration::from_millis(16);
         while let Ok(first) = rx.recv() {
@@ -104,6 +85,18 @@ fn spawn_output_forwarder(
     });
 }
 
+fn build_shell_path(base_path: &PathBuf) -> String {
+    let php_path = base_path.join("php").join("current");
+    let mysql_bin = get_mysql_bin_dir(base_path);
+    let existing_path = std::env::var("PATH").unwrap_or_default();
+    format!(
+        "{};{};{}",
+        php_path.display(),
+        mysql_bin.display(),
+        existing_path
+    )
+}
+
 // ── commands ──────────────────────────────────────────────────────────────────
 
 #[tauri::command]
@@ -114,39 +107,55 @@ pub async fn spawn_terminal(
     initial_command: Option<String>,
 ) -> Result<(), String> {
     let base_path = get_installation_path();
+    let new_path = build_shell_path(&base_path);
 
-    // Build PATH that includes php/current and mysql/bin so CLI tools work.
-    let php_path = base_path.join("php").join("current");
-    let mysql_bin = get_mysql_bin_dir(&base_path);
-    let existing_path = std::env::var("PATH").unwrap_or_default();
-    let new_path = format!(
-        "{};{};{}",
-        php_path.display(),
-        mysql_bin.display(),
-        existing_path
-    );
+    let pty_system = native_pty_system();
+    let pair = pty_system
+        .openpty(PtySize {
+            rows: 24,
+            cols: 80,
+            pixel_width: 0,
+            pixel_height: 0,
+        })
+        .map_err(|e| format!("Failed to open PTY: {}", e))?;
 
-    let mut child = create_hidden_command("cmd.exe")
-        .env("PATH", &new_path)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
+    let mut cmd = CommandBuilder::new("cmd.exe");
+    cmd.env("PATH", &new_path);
+    if let Some(cwd) = base_path.to_str() {
+        cmd.cwd(cwd);
+    }
+
+    let child = pair
+        .slave
+        .spawn_command(cmd)
         .map_err(|e| format!("Failed to spawn shell: {}", e))?;
 
-    let stdout = child.stdout.take().unwrap();
-    let stderr = child.stderr.take().unwrap();
-    let stdin = child.stdin.take().unwrap();
+    let reader = pair
+        .master
+        .try_clone_reader()
+        .map_err(|e| format!("Failed to clone PTY reader: {}", e))?;
+    let mut writer = pair
+        .master
+        .take_writer()
+        .map_err(|e| format!("Failed to take PTY writer: {}", e))?;
 
-    // Stream stdout and stderr to frontend (batched, single emitter).
-    spawn_output_forwarder(app.clone(), session_id.clone(), stdout, stderr);
+    spawn_pty_output_forwarder(app.clone(), session_id.clone(), reader);
 
-    // Optionally send an initial command (e.g. "mysql -u root").
-    let mut session = TerminalSession { stdin, child };
     if let Some(cmd) = initial_command {
         let line = format!("{}\r\n", cmd);
-        let _ = session.stdin.write_all(line.as_bytes());
+        writer
+            .write_all(line.as_bytes())
+            .map_err(|e| format!("Failed to write initial command: {}", e))?;
+        writer
+            .flush()
+            .map_err(|e| format!("Failed to flush initial command: {}", e))?;
     }
+
+    let session = TerminalSession {
+        writer,
+        master: pair.master,
+        child,
+    };
 
     let mut sessions = state
         .inner
@@ -168,16 +177,47 @@ pub async fn send_terminal_input(
         .lock()
         .map_err(|_| "State lock poisoned".to_string())?;
 
-    if let Some(session) = sessions.get_mut(&session_id) {
-        session
-            .stdin
-            .write_all(data.as_bytes())
-            .map_err(|e| format!("Failed to write to stdin: {}", e))?;
-        session
-            .stdin
-            .flush()
-            .map_err(|e| format!("Failed to flush stdin: {}", e))?;
-    }
+    let session = sessions
+        .get_mut(&session_id)
+        .ok_or_else(|| format!("Terminal session not found: {}", session_id))?;
+
+    session
+        .writer
+        .write_all(data.as_bytes())
+        .map_err(|e| format!("Failed to write to PTY: {}", e))?;
+    session
+        .writer
+        .flush()
+        .map_err(|e| format!("Failed to flush PTY: {}", e))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn resize_terminal(
+    state: tauri::State<'_, Arc<TerminalSessions>>,
+    session_id: String,
+    cols: u16,
+    rows: u16,
+) -> Result<(), String> {
+    let sessions = state
+        .inner
+        .lock()
+        .map_err(|_| "State lock poisoned".to_string())?;
+
+    let session = sessions
+        .get(&session_id)
+        .ok_or_else(|| format!("Terminal session not found: {}", session_id))?;
+
+    session
+        .master
+        .resize(PtySize {
+            rows,
+            cols,
+            pixel_width: 0,
+            pixel_height: 0,
+        })
+        .map_err(|e| format!("Failed to resize PTY: {}", e))?;
 
     Ok(())
 }

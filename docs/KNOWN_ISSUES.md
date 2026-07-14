@@ -33,6 +33,7 @@ No open critical issues.
 `tauri-plugin-updater` is installed, `auto-updater.tsx` is wired up, and `tauri.conf.json` points to the GitHub Releases `latest.json` endpoint.
 
 **Work done:**
+
 - Key pair generated with `pnpm tauri signer generate --ci`.
 - Private key saved to `%USERPROFILE%\.tauri\devstackbox.key` (local machine, not committed).
 - Public key updated in `src-tauri/tauri.conf.json`.
@@ -41,8 +42,9 @@ No open critical issues.
 
 **Remaining step:**
 Paste the private key content into GitHub repository secrets:
+
 1. Go to `https://github.com/ProgrammerNomad/DevStackBox/settings/secrets/actions`.
-2. Add secret `TAURI_SIGNING_PRIVATE_KEY` — value is the full content of `%USERPROFILE%\.tauri\devstackbox.key`.
+2. Add secret `TAURI_SIGNING_PRIVATE_KEY` - value is the full content of `%USERPROFILE%\.tauri\devstackbox.key`.
 3. `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` can be left empty (key has no password).
 4. Do not commit the private key file or paste it anywhere in the repo.
 
@@ -127,22 +129,22 @@ During installer verification, confirm the bundled `www/` seed files are present
 
 ## Fixed Issues Reference
 
-| Issue | Fix | Version |
-| --- | --- | --- |
-| MSI version format `0.1.0-alpha.6` broke MSI | Changed to clean semver | v0.1.6 |
-| `globals.css` accidentally deleted | Restored | v0.1.6 |
-| `main.tsx` accidentally deleted | Restored | v0.1.6 |
-| GitHub Actions emoji encoding broke PowerShell | Removed emoji from workflow files | v0.1.6 |
-| Duplicate `ServiceStatus` type in 3 files | Consolidated to `src/types/services.ts` | v0.1.6 |
-| Apache `get_apache_status` missing from Rust | Added command | v0.1.6 |
-| Config management commands missing | Added config commands | v0.1.6 |
-| `service_manager.rs` dead code | Deleted | v0.1.6 |
-| `lib.rs` was too large | Split into `commands/`, `utils/`, and `types.rs` | v0.1.6 |
-| Service status had multiple sources of truth | Removed status globals; status uses OS process checks | v0.1.6 |
-| `switch_php_version` could not call `mklink` directly | Uses `cmd /C mklink /J` | v0.1.6 |
-| Dev-machine path used as production fallback | Removed `C:\xampp\htdocs\DevStackBox` from production fallback paths | v0.1.6 |
-| `DebugPanel` visible in production | Guarded behind development mode | v0.1.6 |
-| Raw frontend command strings | Centralized in `src/lib/commands.ts`; no raw `safeInvoke("...")` matches found | v0.1.7-dev |
-| localhost 500 on PHP 8.4 due to `session.sid_*` deprecations | `patch_php_ini()` comments out deprecated directives | v0.1.7-dev |
-| phpMyAdmin timeout or 500 on PHP 8.4 due to deprecation flood | `patch_php_ini()` sets compatible `error_reporting` and disables `html_errors` | v0.1.7-dev |
-| localhost and phpMyAdmin broke after adding a vhost | configVersion 7 template keeps localhost VirtualHost and phpMyAdmin Alias together | v0.1.7-dev |
+| Issue                                                         | Fix                                                                                | Version    |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ---------- |
+| MSI version format `0.1.0-alpha.6` broke MSI                  | Changed to clean semver                                                            | v0.1.6     |
+| `globals.css` accidentally deleted                            | Restored                                                                           | v0.1.6     |
+| `main.tsx` accidentally deleted                               | Restored                                                                           | v0.1.6     |
+| GitHub Actions emoji encoding broke PowerShell                | Removed emoji from workflow files                                                  | v0.1.6     |
+| Duplicate `ServiceStatus` type in 3 files                     | Consolidated to `src/types/services.ts`                                            | v0.1.6     |
+| Apache `get_apache_status` missing from Rust                  | Added command                                                                      | v0.1.6     |
+| Config management commands missing                            | Added config commands                                                              | v0.1.6     |
+| `service_manager.rs` dead code                                | Deleted                                                                            | v0.1.6     |
+| `lib.rs` was too large                                        | Split into `commands/`, `utils/`, and `types.rs`                                   | v0.1.6     |
+| Service status had multiple sources of truth                  | Removed status globals; status uses OS process checks                              | v0.1.6     |
+| `switch_php_version` could not call `mklink` directly         | Uses `cmd /C mklink /J`                                                            | v0.1.6     |
+| Dev-machine path used as production fallback                  | Removed `C:\xampp\htdocs\DevStackBox` from production fallback paths               | v0.1.6     |
+| `DebugPanel` visible in production                            | Guarded behind development mode                                                    | v0.1.6     |
+| Raw frontend command strings                                  | Centralized in `src/lib/commands.ts`; no raw `safeInvoke("...")` matches found     | v0.1.7-dev |
+| localhost 500 on PHP 8.4 due to `session.sid_*` deprecations  | `patch_php_ini()` comments out deprecated directives                               | v0.1.7-dev |
+| phpMyAdmin timeout or 500 on PHP 8.4 due to deprecation flood | `patch_php_ini()` sets compatible `error_reporting` and disables `html_errors`     | v0.1.7-dev |
+| localhost and phpMyAdmin broke after adding a vhost           | configVersion 7 template keeps localhost VirtualHost and phpMyAdmin Alias together | v0.1.7-dev |

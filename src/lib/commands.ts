@@ -64,6 +64,7 @@ export const TAURI_COMMANDS = {
   terminal: {
     spawn: "spawn_terminal",
     sendInput: "send_terminal_input",
+    resize: "resize_terminal",
     kill: "kill_terminal_session",
   },
   security: {

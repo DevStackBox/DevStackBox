@@ -2,7 +2,7 @@
  * ServiceStatusContext
  *
  * Single source of truth for Apache / MySQL / PHP status.
- * Lives at the app root — never unmounts, never stops polling.
+ * Lives at the app root - never unmounts, never stops polling.
  *
  * Rules enforced here:
  *  - "starting" / "stopping" states are NEVER written to localStorage.
@@ -69,21 +69,33 @@ function writeServiceCache(
   services: { apache: ServiceStatus; mysql: ServiceStatus; php: ServiceStatus },
   now: number,
 ): void {
-  // RULE: only persist "running" or "stopped" — never optimistic states.
+  // RULE: only persist "running" or "stopped" - never optimistic states.
   const cacheable = {
-    apache: { ...services.apache, state: services.apache.running ? "running" : "stopped" as ServiceState },
-    mysql:  { ...services.mysql,  state: services.mysql.running  ? "running" : "stopped" as ServiceState },
-    php:    { ...services.php,    state: services.php.running    ? "running" : "stopped" as ServiceState },
+    apache: {
+      ...services.apache,
+      state: services.apache.running ? "running" : ("stopped" as ServiceState),
+    },
+    mysql: {
+      ...services.mysql,
+      state: services.mysql.running ? "running" : ("stopped" as ServiceState),
+    },
+    php: {
+      ...services.php,
+      state: services.php.running ? "running" : ("stopped" as ServiceState),
+    },
   };
   try {
-    localStorage.setItem(SERVICE_CACHE_KEY, JSON.stringify({
-      version: SERVICE_CACHE_VERSION,
-      timestamp: now,
-      lastSuccessfulRefresh: now,
-      services: cacheable,
-    } satisfies CachedEntry));
+    localStorage.setItem(
+      SERVICE_CACHE_KEY,
+      JSON.stringify({
+        version: SERVICE_CACHE_VERSION,
+        timestamp: now,
+        lastSuccessfulRefresh: now,
+        services: cacheable,
+      } satisfies CachedEntry),
+    );
   } catch {
-    // localStorage quota exceeded — non-fatal
+    // localStorage quota exceeded - non-fatal
   }
 }
 
@@ -103,12 +115,12 @@ interface ServiceStatusContextValue {
   services: { apache: ServiceStatus; mysql: ServiceStatus; php: ServiceStatus };
   /** true only on very first app launch with no valid cache */
   initialLoading: boolean;
-  /** epoch ms of the last successful poll — null until first poll completes */
+  /** epoch ms of the last successful poll - null until first poll completes */
   lastSuccessfulRefresh: number | null;
   /** which service is being toggled right now */
   loading: string | null;
   setLoading: (s: string | null) => void;
-  /** force immediate re-fetch — awaitable, shared promise (no duplicate fetches) */
+  /** force immediate re-fetch - awaitable, shared promise (no duplicate fetches) */
   refresh: () => Promise<void>;
   /** instantly update a single service's state for optimistic UI */
   optimisticUpdate: (
@@ -117,7 +129,9 @@ interface ServiceStatusContextValue {
   ) => void;
 }
 
-const ServiceStatusContext = createContext<ServiceStatusContextValue | null>(null);
+const ServiceStatusContext = createContext<ServiceStatusContextValue | null>(
+  null,
+);
 
 // ---------------------------------------------------------------------------
 // Provider
@@ -129,9 +143,9 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
   const cached = readServiceCache();
   const [services, setServices] = useState(cached?.services ?? defaultServices);
   const [initialLoading, setInitialLoading] = useState(!cached);
-  const [lastSuccessfulRefresh, setLastSuccessfulRefresh] = useState<number | null>(
-    cached?.lastSuccessfulRefresh ?? null,
-  );
+  const [lastSuccessfulRefresh, setLastSuccessfulRefresh] = useState<
+    number | null
+  >(cached?.lastSuccessfulRefresh ?? null);
   const [loading, setLoading] = useState<string | null>(null);
 
   // Ref mirrors loading for crash detection inside the polling closure
@@ -141,14 +155,14 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
   // Track previous running state to detect unexpected crashes
   const prevRunningRef = useRef<Record<string, boolean>>({
     apache: cached?.services.apache.running ?? false,
-    mysql:  cached?.services.mysql.running  ?? false,
-    php:    cached?.services.php.running    ?? false,
+    mysql: cached?.services.mysql.running ?? false,
+    php: cached?.services.php.running ?? false,
   });
 
   // Ref to keep the latest toggleService for the tray listener
   const toggleServiceRef = useRef<(service: string) => void>(() => {});
 
-  // Shared refresh promise — every `await refresh()` caller waits for the
+  // Shared refresh promise - every `await refresh()` caller waits for the
   // same in-flight request rather than returning immediately (void).
   const refreshPromiseRef = useRef<Promise<void> | null>(null);
 
@@ -165,7 +179,7 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
     refreshPromiseRef.current = (async () => {
       try {
         if (!isTauri()) {
-          // Browser / dev mode — use mock data
+          // Browser / dev mode - use mock data
           const mock = getMockServiceStatus();
           const mockStatus: ServiceStatus = {
             state: mock.running ? "running" : "stopped",
@@ -173,7 +187,11 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
             pid: mock.pid ?? undefined,
             port: mock.port ?? undefined,
           };
-          const next = { apache: mockStatus, mysql: mockStatus, php: mockStatus };
+          const next = {
+            apache: mockStatus,
+            mysql: mockStatus,
+            php: mockStatus,
+          };
           setServices(next);
           const now = Date.now();
           setLastSuccessfulRefresh(now);
@@ -188,18 +206,19 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
           safeInvoke<RawServiceStatus>(TAURI_COMMANDS.services.getPhpStatus),
         ]);
 
-        // RULE: per-service partial failure — keep previous value on failure.
+        // RULE: per-service partial failure - keep previous value on failure.
         setServices((prev) => {
           const next = {
-            apache: apacheR.status === "fulfilled"
-              ? mapRawStatus(apacheR.value)
-              : prev.apache,
-            mysql: mysqlR.status === "fulfilled"
-              ? mapRawStatus(mysqlR.value)
-              : prev.mysql,
-            php: phpR.status === "fulfilled"
-              ? mapRawStatus(phpR.value)
-              : prev.php,
+            apache:
+              apacheR.status === "fulfilled"
+                ? mapRawStatus(apacheR.value)
+                : prev.apache,
+            mysql:
+              mysqlR.status === "fulfilled"
+                ? mapRawStatus(mysqlR.value)
+                : prev.mysql,
+            php:
+              phpR.status === "fulfilled" ? mapRawStatus(phpR.value) : prev.php,
           };
 
           // Crash detection: service flipped running→stopped without user action
@@ -233,7 +252,7 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
             prevRunningRef.current[name] = isRunning;
           });
 
-          // RULE: only write "running"/"stopped" to cache — not optimistic states.
+          // RULE: only write "running"/"stopped" to cache - not optimistic states.
           const now = Date.now();
           setLastSuccessfulRefresh(now);
           writeServiceCache(next, now);
@@ -255,10 +274,7 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
   }, [toast]);
 
   const optimisticUpdate = useCallback(
-    (
-      service: "apache" | "mysql" | "php",
-      partial: Partial<ServiceStatus>,
-    ) => {
+    (service: "apache" | "mysql" | "php", partial: Partial<ServiceStatus>) => {
       setServices((prev) => ({
         ...prev,
         [service]: { ...prev[service], ...partial },
@@ -275,7 +291,7 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(id);
   }, [refresh]);
 
-  // Tray toggle listener — keep toggleServiceRef pointing to the latest handler
+  // Tray toggle listener - keep toggleServiceRef pointing to the latest handler
   useEffect(() => {
     if (!isTauri()) return;
     let unlisten: (() => void) | undefined;
@@ -285,7 +301,9 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
         toggleServiceRef.current(event.payload);
       });
     })();
-    return () => { if (unlisten) unlisten(); };
+    return () => {
+      if (unlisten) unlisten();
+    };
   }, []);
 
   // Window hidden to tray notification
@@ -305,7 +323,9 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
         }
       });
     })();
-    return () => { if (unlisten) unlisten(); };
+    return () => {
+      if (unlisten) unlisten();
+    };
   }, []);
 
   return (
@@ -332,7 +352,9 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
 export function useServiceStatus(): ServiceStatusContextValue {
   const ctx = useContext(ServiceStatusContext);
   if (!ctx) {
-    throw new Error("useServiceStatus must be used inside <ServiceStatusProvider>");
+    throw new Error(
+      "useServiceStatus must be used inside <ServiceStatusProvider>",
+    );
   }
   return ctx;
 }

@@ -19,9 +19,9 @@ import { Switch } from "@/components/ui/switch";
 import { Power, Bell, Palette } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { useToast } from "@/hooks/use-toast";
+import { getAppLanguageCode } from "@/lib/app-language";
 import { safeInvoke, isTauri } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
-import i18n from "@/lib/i18n";
 
 const AUTO_CHECK_KEY = "devstackbox.settings.autoCheckUpdates";
 const AUTOSTART_APACHE_KEY = "devstackbox.settings.autoStartApache";
@@ -32,7 +32,8 @@ const UPDATE_CHANNEL_KEY = "devstackbox.settings.updateChannel";
 interface SettingsPageProps {}
 
 export function SettingsPage({}: SettingsPageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const language = getAppLanguageCode(i18n);
   const { theme, setTheme } = useTheme();
   const { toast } = useToast();
   const [autostart, setAutostartState] = useState<boolean>(false);
@@ -192,7 +193,7 @@ export function SettingsPage({}: SettingsPageProps) {
                 {t("settings.languageDesc", "User interface language.")}
               </div>
             </div>
-            <Select value={i18n.language} onValueChange={handleLanguage}>
+            <Select value={language} onValueChange={handleLanguage}>
               <SelectTrigger className="w-40">
                 <SelectValue />
               </SelectTrigger>

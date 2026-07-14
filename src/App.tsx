@@ -84,7 +84,7 @@ function AppShell() {
 
   useEffect(() => {
     // Register PHP version change listener for the system info cache.
-    // Must be called here — not as a module-level side effect.
+    // Must be called here - not as a module-level side effect.
     initializeSystemInfoCache();
     initializeApp();
   }, []);
@@ -250,15 +250,33 @@ function AppShell() {
               <Route path="mysql" element={<LogsMysqlPage />} />
               <Route path="php" element={<LogsPhpPage />} />
             </Route>
-            {/* Universal terminal — single route, sessions survive navigation */}
+            {/* Universal terminal - single route, sessions survive navigation */}
             <Route path="/terminal" element={<UniversalTerminalPage />} />
             {/* Redirects from old sub-routes */}
-            <Route path="/terminal/shell" element={<Navigate to="/terminal" replace />} />
-            <Route path="/terminal/powershell" element={<Navigate to="/terminal" replace />} />
-            <Route path="/terminal/cmd" element={<Navigate to="/terminal" replace />} />
-            <Route path="/terminal/php-cli" element={<Navigate to="/terminal" replace />} />
-            <Route path="/terminal/mysql-cli" element={<Navigate to="/terminal" replace />} />
-            <Route path="/terminal/git" element={<Navigate to="/terminal" replace />} />
+            <Route
+              path="/terminal/shell"
+              element={<Navigate to="/terminal" replace />}
+            />
+            <Route
+              path="/terminal/powershell"
+              element={<Navigate to="/terminal" replace />}
+            />
+            <Route
+              path="/terminal/cmd"
+              element={<Navigate to="/terminal" replace />}
+            />
+            <Route
+              path="/terminal/php-cli"
+              element={<Navigate to="/terminal" replace />}
+            />
+            <Route
+              path="/terminal/mysql-cli"
+              element={<Navigate to="/terminal" replace />}
+            />
+            <Route
+              path="/terminal/git"
+              element={<Navigate to="/terminal" replace />}
+            />
             <Route path="/security" element={<SecurityPage />} />
 
             <Route path="/settings" element={<SettingsLayout />}>

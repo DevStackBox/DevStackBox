@@ -33,7 +33,7 @@ use crate::commands::system::{
 use crate::commands::security::analyze_security;
 use crate::commands::ssl::{disable_ssl, enable_ssl, generate_ssl_cert, get_ssl_status};
 use crate::commands::vhosts::{add_vhost, get_hosts_entries, list_vhosts, remove_vhost, toggle_vhost, update_hosts_entry};
-use crate::commands::terminal::{kill_terminal_session, send_terminal_input, spawn_terminal, TerminalSessions};
+use crate::commands::terminal::{kill_terminal_session, resize_terminal, send_terminal_input, spawn_terminal, TerminalSessions};
 use crate::commands::tray::{hide_to_tray, quit_app, refresh_tray_menu, set_tray_tooltip, show_main_window};
 use crate::utils::paths::ensure_user_data_dirs;
 use std::sync::Arc;
@@ -98,6 +98,7 @@ pub fn run() {
             quit_app,
             spawn_terminal,
             send_terminal_input,
+            resize_terminal,
             kill_terminal_session,
             analyze_security,
             get_ssl_status,

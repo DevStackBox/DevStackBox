@@ -126,7 +126,7 @@
     "lastChecked": "अंतिम जांच",
     "lastCheckedNever": "कभी नहीं",
     "status": "स्थिति",
-    "statusReadyToInstall": "इंस्टॉल के लिए तैयार — अपडेट के लिए पुनः शुरू करें",
+    "statusReadyToInstall": "इंस्टॉल के लिए तैयार - अपडेट के लिए पुनः शुरू करें",
     "statusDownloading": "अपडेट डाउनलोड हो रहा है…",
     "statusUpdateAvailable": "अपडेट उपलब्ध है (v{{version}})"
   },

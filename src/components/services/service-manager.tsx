@@ -10,11 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { safeInvoke, isTauri } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
 import { motion } from "framer-motion";
-import {
-  ApacheService,
-  MySQLService,
-  PHPService,
-} from "./index";
+import { ApacheService, MySQLService, PHPService } from "./index";
 import type { ServiceStatus } from "@/types/services";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -88,10 +84,11 @@ export function ServiceManager({
       return;
     }
 
-    const isCurrentlyRunning = services[service as "apache" | "mysql" | "php"].running;
+    const isCurrentlyRunning =
+      services[service as "apache" | "mysql" | "php"].running;
     const serviceName = service.charAt(0).toUpperCase() + service.slice(1);
 
-    // Optimistic update — show transition state immediately
+    // Optimistic update - show transition state immediately
     optimisticUpdate(service as "apache" | "mysql" | "php", {
       state: isCurrentlyRunning ? "stopping" : "starting",
     });
@@ -99,7 +96,9 @@ export function ServiceManager({
     try {
       let result: boolean | null;
       if (service === "apache") {
-        result = await safeInvoke<boolean>(TAURI_COMMANDS.services.toggleApache);
+        result = await safeInvoke<boolean>(
+          TAURI_COMMANDS.services.toggleApache,
+        );
       } else if (service === "mysql") {
         result = await safeInvoke<boolean>(TAURI_COMMANDS.services.toggleMysql);
       } else {
@@ -122,19 +121,43 @@ export function ServiceManager({
       toast({
         variant: "success",
         title: result
-          ? t("serviceManager.serviceStarted", "{{service}} Started", { service: serviceName })
-          : t("serviceManager.serviceStopped", "{{service}} Stopped", { service: serviceName }),
+          ? t("serviceManager.serviceStarted", "{{service}} Started", {
+              service: serviceName,
+            })
+          : t("serviceManager.serviceStopped", "{{service}} Stopped", {
+              service: serviceName,
+            }),
         description: result
-          ? t("serviceManager.serviceNowRunning", "{{service}} service is now running", { service: serviceName })
-          : t("serviceManager.serviceNowStopped", "{{service}} service has been stopped", { service: serviceName }),
+          ? t(
+              "serviceManager.serviceNowRunning",
+              "{{service}} service is now running",
+              { service: serviceName },
+            )
+          : t(
+              "serviceManager.serviceNowStopped",
+              "{{service}} service has been stopped",
+              { service: serviceName },
+            ),
       });
       void notify(
         result
-          ? t("serviceManager.serviceStarted", "{{service}} Started", { service: serviceName })
-          : t("serviceManager.serviceStopped", "{{service}} Stopped", { service: serviceName }),
+          ? t("serviceManager.serviceStarted", "{{service}} Started", {
+              service: serviceName,
+            })
+          : t("serviceManager.serviceStopped", "{{service}} Stopped", {
+              service: serviceName,
+            }),
         result
-          ? t("serviceManager.serviceNowRunning", "{{service}} service is now running", { service: serviceName })
-          : t("serviceManager.serviceNowStopped", "{{service}} service has been stopped", { service: serviceName }),
+          ? t(
+              "serviceManager.serviceNowRunning",
+              "{{service}} service is now running",
+              { service: serviceName },
+            )
+          : t(
+              "serviceManager.serviceNowStopped",
+              "{{service}} service has been stopped",
+              { service: serviceName },
+            ),
       );
     } catch (error) {
       console.error(`Failed to toggle ${service}:`, error);
@@ -151,7 +174,11 @@ export function ServiceManager({
         title: t("serviceManager.serviceError", "Service Error"),
         description:
           errorMsg ||
-          t("serviceManager.serviceErrorDesc", "Failed to start/stop {{service}}.", { service }),
+          t(
+            "serviceManager.serviceErrorDesc",
+            "Failed to start/stop {{service}}.",
+            { service },
+          ),
       });
     } finally {
       setLoading(null);
@@ -161,15 +188,15 @@ export function ServiceManager({
   toggleServiceRef.current = toggleService;
 
   const handleOpenConfig = (service: string) => onOpenConfig?.(service);
-  const handleViewLogs   = (service: string) => onViewLogs?.(service);
+  const handleViewLogs = (service: string) => onViewLogs?.(service);
   const handleBackupDatabase = () => navigate(ROUTES.databasesBackups.path);
-  const handleOpenTerminal   = () => navigate(ROUTES.terminal.path);
+  const handleOpenTerminal = () => navigate(ROUTES.terminal.path);
 
   const containerClassName = compact
     ? "grid grid-cols-1 md:grid-cols-3 gap-4"
     : "grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6";
 
-  // Skeleton — only on very first launch with no cache
+  // Skeleton - only on very first launch with no cache
   const ServiceSkeleton = () => (
     <Card>
       <CardHeader className="space-y-2">

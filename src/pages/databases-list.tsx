@@ -48,7 +48,7 @@ function formatBytes(bytes: number): string {
 export function DatabasesPage() {
   const { t } = useTranslation();
   const { toast } = useToast();
-  // All fetching is owned by DatabaseCacheProvider — no local fetch here.
+  // All fetching is owned by DatabaseCacheProvider - no local fetch here.
   const { databases, loading, hasCache, refresh } = useDatabaseCache();
   const [busy, setBusy] = useState<string | null>(null);
   const [search, setSearch] = useState("");

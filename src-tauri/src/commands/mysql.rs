@@ -5,11 +5,15 @@ use std::time::Duration;
 use tokio::time::sleep;
 
 use crate::types::ServiceInfo;
-use crate::utils::paths::{get_installation_path, get_mysql_client_exe, get_mysqld_exe, get_mysqldump_exe, user_config_dir, user_mysql_data_dir};
+use crate::utils::config_version::needs_config_migration;
+use crate::utils::mysql_connection::{mysqldump_command, mysql_command, prepare_mysql_client};
+use crate::utils::paths::{get_installation_path, get_mysqld_exe, user_config_dir, user_mysql_data_dir};
 use crate::utils::process::{
     create_hidden_command, ensure_port_available, find_our_processes, is_our_process_running,
     kill_pid,
 };
+
+pub const MYSQL_CONFIG_VERSION: u32 = 2;
 
 fn mysqld_exe_path() -> std::path::PathBuf {
     let base = get_installation_path();
@@ -69,9 +73,7 @@ pub async fn start_mysql() -> Result<bool, String> {
     }
 
     let config_path = user_config_dir().join("my.cnf");
-    if !config_path.exists() {
-        create_default_mysql_config().await?;
-    }
+    ensure_mysql_config().await?;
 
     initialize_mysql_data().await?;
 
@@ -138,14 +140,32 @@ pub async fn stop_mysql() -> Result<bool, String> {
     }
 }
 
-async fn create_default_mysql_config() -> Result<(), String> {
+pub async fn ensure_mysql_config() -> Result<(), String> {
+    let config_path = user_config_dir().join("my.cnf");
+    if !config_path.exists() {
+        return create_default_mysql_config().await;
+    }
+
+    let content = std::fs::read_to_string(&config_path)
+        .map_err(|e| format!("Failed to read MySQL config: {}", e))?;
+    if needs_config_migration(&content, MYSQL_CONFIG_VERSION) {
+        println!(
+            "Detected outdated MySQL config. Migrating to configVersion {}...",
+            MYSQL_CONFIG_VERSION
+        );
+        create_default_mysql_config().await?;
+    }
+    Ok(())
+}
+
+pub async fn create_default_mysql_config() -> Result<(), String> {
     let install_path = get_installation_path();
 
     let mysql_base = install_path.join("mysql");
     let mysql_data = user_mysql_data_dir();
 
     let config_content = format!(
-        r#"# configVersion: 1
+        r#"# configVersion: 2
 # Managed by DevStackBox. Edits to this file are preserved across upgrades
 # unless the configVersion is bumped, which triggers a migration.
 [mysqld]
@@ -167,6 +187,8 @@ bind-address=127.0.0.1
 default-character-set=utf8mb4
 
 [client]
+host=127.0.0.1
+protocol=TCP
 port=3306
 default-character-set=utf8mb4
 "#,
@@ -215,15 +237,7 @@ pub async fn toggle_mysql() -> Result<bool, String> {
 
 #[tauri::command]
 pub async fn backup_mysql_database() -> Result<String, String> {
-    let base_path = get_installation_path();
-    let mysql_dump_path = get_mysqldump_exe(&base_path);
-
-    if !mysql_dump_path.exists() {
-        return Err(format!(
-            "mysqldump not found at {}",
-            mysql_dump_path.display()
-        ));
-    }
+    prepare_mysql_client()?;
 
     let backups_dir = crate::utils::paths::user_backups_dir().join("mysql");
     std::fs::create_dir_all(&backups_dir)
@@ -236,8 +250,8 @@ pub async fn backup_mysql_database() -> Result<String, String> {
 
     let backup_file = backups_dir.join(format!("mysql_backup_{}.sql", timestamp));
 
-    let output = create_hidden_command(&mysql_dump_path.to_string_lossy())
-        .args(["-u", "root", "--all-databases"])
+    let output = mysqldump_command()?
+        .arg("--all-databases")
         .output()
         .map_err(|e| format!("Failed to execute mysqldump: {}", e))?;
 
@@ -255,22 +269,10 @@ pub async fn backup_mysql_database() -> Result<String, String> {
 /// List all non-system databases on the running MySQL server.
 #[tauri::command]
 pub async fn list_mysql_databases() -> Result<Vec<String>, String> {
-    let base_path = get_installation_path();
-    let mysql_path = get_mysql_client_exe(&base_path);
+    prepare_mysql_client()?;
 
-    if !mysql_path.exists() {
-        return Err(format!("mysql not found at {}", mysql_path.display()));
-    }
-
-    let output = create_hidden_command(&mysql_path.to_string_lossy())
-        .args([
-            "-u",
-            "root",
-            "-N",
-            "-B",
-            "-e",
-            "SHOW DATABASES",
-        ])
+    let output = mysql_command()?
+        .args(["-N", "-B", "-e", "SHOW DATABASES"])
         .output()
         .map_err(|e| format!("Failed to execute mysql client: {}", e))?;
 
@@ -295,12 +297,7 @@ pub async fn list_mysql_databases() -> Result<Vec<String>, String> {
 /// query. Used by the Databases page row UI.
 #[tauri::command]
 pub async fn list_mysql_databases_detailed() -> Result<Vec<crate::types::DatabaseInfo>, String> {
-    let base_path = get_installation_path();
-    let mysql_path = get_mysql_client_exe(&base_path);
-
-    if !mysql_path.exists() {
-        return Err(format!("mysql not found at {}", mysql_path.display()));
-    }
+    prepare_mysql_client()?;
 
     // Excluding system schemas at SQL level keeps the result tight.
     let sql = "SELECT table_schema, COUNT(*), \
@@ -309,8 +306,8 @@ pub async fn list_mysql_databases_detailed() -> Result<Vec<crate::types::Databas
         WHERE table_schema NOT IN ('information_schema','performance_schema','mysql','sys') \
         GROUP BY table_schema";
 
-    let output = create_hidden_command(&mysql_path.to_string_lossy())
-        .args(["-u", "root", "-N", "-B", "-e", sql])
+    let output = mysql_command()?
+        .args(["-N", "-B", "-e", sql])
         .output()
         .map_err(|e| format!("Failed to execute mysql client: {}", e))?;
 
@@ -362,15 +359,7 @@ pub async fn backup_mysql_database_named(database: String) -> Result<String, Str
         return Err("Invalid database name".to_string());
     }
 
-    let base_path = get_installation_path();
-    let mysql_dump_path = get_mysqldump_exe(&base_path);
-
-    if !mysql_dump_path.exists() {
-        return Err(format!(
-            "mysqldump not found at {}",
-            mysql_dump_path.display()
-        ));
-    }
+    prepare_mysql_client()?;
 
     let backups_dir = crate::utils::paths::user_backups_dir().join("mysql");
     std::fs::create_dir_all(&backups_dir)
@@ -383,8 +372,8 @@ pub async fn backup_mysql_database_named(database: String) -> Result<String, Str
 
     let backup_file = backups_dir.join(format!("{}_{}.sql", database, timestamp));
 
-    let output = create_hidden_command(&mysql_dump_path.to_string_lossy())
-        .args(["-u", "root", "--databases", &database])
+    let output = mysqldump_command()?
+        .args(["--databases", &database])
         .output()
         .map_err(|e| format!("Failed to execute mysqldump: {}", e))?;
 
@@ -408,18 +397,12 @@ pub async fn restore_mysql_database(sql: String) -> Result<String, String> {
         return Err("SQL content is empty".to_string());
     }
 
-    let base_path = get_installation_path();
-    let mysql_path = get_mysql_client_exe(&base_path);
-
-    if !mysql_path.exists() {
-        return Err(format!("mysql not found at {}", mysql_path.display()));
-    }
+    prepare_mysql_client()?;
 
     use std::io::Write;
     use std::process::Stdio;
 
-    let mut child = create_hidden_command(&mysql_path.to_string_lossy())
-        .args(["-u", "root"])
+    let mut child = mysql_command()?
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -448,15 +431,10 @@ pub async fn restore_mysql_database(sql: String) -> Result<String, String> {
 // ── MySQL user management ────────────────────────────────────────────────────
 
 fn run_mysql_query(query: &str) -> Result<String, String> {
-    let base_path = get_installation_path();
-    let mysql_path = get_mysql_client_exe(&base_path);
+    prepare_mysql_client()?;
 
-    if !mysql_path.exists() {
-        return Err(format!("mysql not found at {}", mysql_path.display()));
-    }
-
-    let output = create_hidden_command(&mysql_path.to_string_lossy())
-        .args(["-u", "root", "--batch", "--skip-column-names", "-e", query])
+    let output = mysql_command()?
+        .args(["--batch", "--skip-column-names", "-e", query])
         .output()
         .map_err(|e| format!("Failed to run mysql query: {}", e))?;
 

@@ -386,10 +386,14 @@ Function PageLeaveReinstall
 FunctionEnd
 
 ; 5. Choose install directory page
-; ARCH-001: FixAndSkipDirPage forces C:\devstackbox and skips the page entirely.
-; DevStackBox is a fixed-path infrastructure tool — no user-selectable install dir.
-!define MUI_PAGE_CUSTOMFUNCTION_PRE FixAndSkipDirPage
+; ARCH-001: DevStackBox installs to C:\devstackbox - show the path read-only.
+!define MUI_DIRECTORYPAGE_TEXT_TOP "Choose the installation location"
+!define MUI_DIRECTORYPAGE_TEXT "DevStackBox installs to a fixed location. Your projects and services expect this path."
+!define MUI_PAGE_CUSTOMFUNCTION_PRE SetFixedInstallDir
+!define MUI_PAGE_CUSTOMFUNCTION_SHOW DisableInstallDirEdit
 !insertmacro MUI_PAGE_DIRECTORY
+!undef MUI_PAGE_CUSTOMFUNCTION_PRE
+!undef MUI_PAGE_CUSTOMFUNCTION_SHOW
 
 ; 6. Start menu shortcut page
 Var AppStartMenuFolder
@@ -424,71 +428,46 @@ Function RunMainBinary
 FunctionEnd
 
 ; Uninstaller Pages
-; 1. Confirm uninstall page
+; 1. Custom options page - choose what to keep
 Var KeepUserDataCheckbox
 Var KeepUserDataCheckboxState
-; ARCH-001: Track whether to preserve C:\devstackbox\www on uninstall
 Var KeepWwwCheckbox
 Var KeepWwwCheckboxState
-!define /ifndef WS_EX_LAYOUTRTL         0x00400000
-!define /ifndef SWP_NOMOVE              0x0002
-!define MUI_PAGE_CUSTOMFUNCTION_SHOW un.ConfirmShow
-Function un.ConfirmShow
-  ; $1 inner dialog HWND
-  ; $2 window DPI
-  ; $3 style
-  ; $4 x
-  ; $5 y
-  ; $6 width
-  ; $7 height
-  FindWindow $1 "#32770" "" $HWNDPARENT ; Find inner dialog
-  System::Call "user32::GetDpiForWindow(p r1) i .r2"
 
-  ; Grow the confirm dialog so both checkboxes stay visible (not clipped).
-  System::Call 'user32::GetClientRect(p r1, @r0)'
-  System::Call '*$0(i.r2, i.r3, i.r4, i.r5)'
-  IntOp $5 $5 + 40
-  System::Call 'user32::SetWindowPos(p r1, i 0, i 0, i 0, i r4, i $5, i ${SWP_NOMOVE})'
-  System::Call 'user32::GetClientRect(p $HWNDPARENT, @r0)'
-  System::Call '*$0(i.r2, i.r3, i.r4, i.r5)'
-  IntOp $5 $5 + 40
-  System::Call 'user32::SetWindowPos(p $HWNDPARENT, i 0, i 0, i 0, i r4, i $5, i ${SWP_NOMOVE})'
+UninstPage custom un.UninstallOptionsShow un.UninstallOptionsLeave
 
-  ${If} $(^RTL) = 1
-    StrCpy $3 "${__NSD_CheckBox_EXSTYLE} | ${WS_EX_LAYOUTRTL}"
-    IntOp $4 50 * $2
-  ${Else}
-    StrCpy $3 "${__NSD_CheckBox_EXSTYLE}"
-    IntOp $4 0 * $2
-  ${EndIf}
-  IntOp $6 480 * $2
-  IntOp $7 25 * $2
-  IntOp $4 $4 / 96
-  IntOp $6 $6 / 96
-  IntOp $7 $7 / 96
+Function un.UninstallOptionsShow
+  ${IfThen} $PassiveMode = 1 ${|} Abort ${|}
 
-  ; ARCH-001: Keep www checkbox (checked by default).
-  IntOp $5 100 * $2
-  IntOp $5 $5 / 96
-  System::Call 'user32::CreateWindowEx(i r3, w "Button", w "$(keepWwwFiles)", i 0x50012003, i r4, i r5, i r6, i r7, p r1, i0, i0, i0) i .s'
+  !insertmacro MUI_HEADER_TEXT "$(unOptionsTitle)" "$(unOptionsSubTitle)"
+
+  nsDialogs::Create 1018
+  Pop $0
+  ${IfThen} $(^RTL) = 1 ${|} nsDialogs::SetRTL $(^RTL) ${|}
+
+  ${NSD_CreateCheckbox} 0 0u 100% 12u "$(unKeepWebsites)"
   Pop $KeepWwwCheckbox
-  SendMessage $HWNDPARENT ${WM_GETFONT} 0 0 $1
-  SendMessage $KeepWwwCheckbox ${WM_SETFONT} $1 1
   SendMessage $KeepWwwCheckbox ${BM_SETCHECK} ${BST_CHECKED} 0
 
-  ; Keep user data checkbox below keep-www (checked by default).
-  IntOp $5 128 * $2
-  IntOp $5 $5 / 96
-  System::Call 'user32::CreateWindowEx(i r3, w "Button", w "$(keepUserData)", i 0x50012003, i r4, i r5, i r6, i r7, p r1, i0, i0, i0) i .s'
+  ${NSD_CreateLabel} 0 16u 100% 12u "$(unKeepWebsitesPath)"
+  Pop $R0
+
+  ${NSD_CreateCheckbox} 0 36u 100% 12u "$(unKeepAppData)"
   Pop $KeepUserDataCheckbox
-  SendMessage $KeepUserDataCheckbox ${WM_SETFONT} $1 1
   SendMessage $KeepUserDataCheckbox ${BM_SETCHECK} ${BST_CHECKED} 0
+
+  ${NSD_CreateLabel} 0 52u 100% 90u "$(unKeepAppDataDesc)"
+  Pop $R0
+
+  nsDialogs::Show
 FunctionEnd
-!define MUI_PAGE_CUSTOMFUNCTION_LEAVE un.ConfirmLeave
-Function un.ConfirmLeave
+
+Function un.UninstallOptionsLeave
   SendMessage $KeepWwwCheckbox ${BM_GETCHECK} 0 0 $KeepWwwCheckboxState
   SendMessage $KeepUserDataCheckbox ${BM_GETCHECK} 0 0 $KeepUserDataCheckboxState
 FunctionEnd
+
+; 2. Confirm uninstall page
 !define MUI_PAGE_CUSTOMFUNCTION_PRE un.SkipIfPassive
 !insertmacro MUI_UNPAGE_CONFIRM
 
@@ -503,9 +482,14 @@ FunctionEnd
 {{#each language_files}}
   !include "{{this}}"
 {{/each}}
-; ARCH-001: DevStackBox uninstaller strings
-LangString keepWwwFiles ${LANG_ENGLISH} "Keep website files in C:\devstackbox\www (recommended)"
-LangString keepUserData ${LANG_ENGLISH} "Keep user data in %LOCALAPPDATA%\devstackbox (configs, logs, databases)"
+
+; DevStackBox uninstaller strings (after MUI_LANGUAGE so ${LANG_ENGLISH} is defined)
+LangString unOptionsTitle ${LANG_ENGLISH} "Uninstall ${PRODUCTNAME}"
+LangString unOptionsSubTitle ${LANG_ENGLISH} "Choose what to keep on your computer"
+LangString unKeepWebsites ${LANG_ENGLISH} "Keep websites"
+LangString unKeepWebsitesPath ${LANG_ENGLISH} "C:\devstackbox\www"
+LangString unKeepAppData ${LANG_ENGLISH} "Keep application data"
+LangString unKeepAppDataDesc ${LANG_ENGLISH} "Includes MySQL databases, settings, logs and user data.$\r$\n$\r$\nPreserves:$\r$\n• MySQL databases$\r$\n• DevStackBox settings$\r$\n• Logs$\r$\n• Cache and temporary files$\r$\n• User configuration$\r$\n$\r$\nLocation:$\r$\n%LOCALAPPDATA%\devstackbox"
 
 Function .onInit
   ${GetOptions} $CMDLINE "/P" $PassiveMode
@@ -954,10 +938,17 @@ Function un.SkipIfPassive
   ${IfThen} $PassiveMode = 1  ${|} Abort ${|}
 FunctionEnd
 
-; ARCH-001: force install dir to C:\devstackbox and skip the directory page entirely.
-Function FixAndSkipDirPage
+; ARCH-001: force install dir to C:\devstackbox (directory page is shown read-only).
+Function SetFixedInstallDir
   StrCpy $INSTDIR "C:\devstackbox"
-  Abort
+FunctionEnd
+
+Function DisableInstallDirEdit
+  FindWindow $0 "#32770" "" $HWNDPARENT
+  GetDlgItem $1 $0 1006
+  EnableWindow $1 0
+  GetDlgItem $1 $0 1019
+  EnableWindow $1 0
 FunctionEnd
 
 Function CreateOrUpdateStartMenuShortcut

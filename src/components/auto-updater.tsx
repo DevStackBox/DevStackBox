@@ -11,7 +11,7 @@
  *    Always visible. Label and color reflect the full update lifecycle:
  *    Check Updates → Checking… → Update Available → Downloading 42% → Restart & Update
  *
- * All state comes from UpdaterContext — this component owns NO update logic.
+ * All state comes from UpdaterContext - this component owns NO update logic.
  */
 
 import { Download, RefreshCw, RotateCcw } from "lucide-react";
@@ -56,7 +56,7 @@ export function AutoUpdater({ mode = "button" }: AutoUpdaterProps) {
     if (!updateAvailable) return null;
 
     const tooltip = updateInfo?.version
-      ? `DevStackBox v${updateInfo.version} ${t("updater.available", "available")} — ${t("updater.clickToUpdate", "click to update")}`
+      ? `DevStackBox v${updateInfo.version} ${t("updater.available", "available")} - ${t("updater.clickToUpdate", "click to update")}`
       : t("updater.updateAvailable", "Update available");
 
     return (
@@ -76,7 +76,7 @@ export function AutoUpdater({ mode = "button" }: AutoUpdaterProps) {
           </span>
         </Button>
 
-        {/* Shared dialog — rendered here so it works from the header too */}
+        {/* Shared dialog - rendered here so it works from the header too */}
         <UpdateDialog />
       </>
     );
@@ -128,7 +128,11 @@ export function AutoUpdater({ mode = "button" }: AutoUpdaterProps) {
         size="sm"
         onClick={handleButtonClick}
         disabled={checking}
-        className={updateAvailable && !downloading ? "border-primary text-primary hover:bg-primary/10" : ""}
+        className={
+          updateAvailable && !downloading
+            ? "border-primary text-primary hover:bg-primary/10"
+            : ""
+        }
       >
         <ButtonIcon
           className={`h-4 w-4 mr-2 ${checking ? "animate-spin" : ""}`}
@@ -142,7 +146,7 @@ export function AutoUpdater({ mode = "button" }: AutoUpdaterProps) {
 }
 
 // ------------------------------------------------------------------
-// Shared update dialog — used by both modes
+// Shared update dialog - used by both modes
 // ------------------------------------------------------------------
 
 function UpdateDialog() {

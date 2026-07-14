@@ -74,15 +74,23 @@ function deriveStatusText(
     updateVersion?: string;
   },
 ): string {
-  if (opts.checking) return t("updater.checkingForUpdates", "Checking for updates…");
+  if (opts.checking)
+    return t("updater.checkingForUpdates", "Checking for updates…");
   if (opts.readyToInstall)
-    return t("updater.statusReadyToInstall", "Ready to install — restart to update");
+    return t(
+      "updater.statusReadyToInstall",
+      "Ready to install - restart to update",
+    );
   if (opts.downloading)
     return t("updater.statusDownloading", "Downloading update…");
   if (opts.updateAvailable)
-    return t("updater.statusUpdateAvailable", "Update available (v{{version}})", {
-      version: opts.updateVersion ?? "",
-    });
+    return t(
+      "updater.statusUpdateAvailable",
+      "Update available (v{{version}})",
+      {
+        version: opts.updateVersion ?? "",
+      },
+    );
   if (opts.checkError) return opts.checkError;
   return t("updater.upToDate", "You're running the latest version");
 }
@@ -152,9 +160,7 @@ export function AboutPage() {
             <p className="font-semibold">
               {t("about.author", "Author")}: Nomad Programmer
             </p>
-            <p className="text-sm text-muted-foreground">
-              shiv@srapsware.com
-            </p>
+            <p className="text-sm text-muted-foreground">shiv@srapsware.com</p>
           </div>
 
           {/* Action buttons */}
@@ -207,9 +213,7 @@ export function AboutPage() {
       {/* ── System info card ── */}
       <Card>
         <CardHeader>
-          <CardTitle>
-            {t("about.systemInfo", "System Information")}
-          </CardTitle>
+          <CardTitle>{t("about.systemInfo", "System Information")}</CardTitle>
           <CardDescription>
             {t(
               "about.systemInfoDesc",
@@ -257,11 +261,10 @@ export function AboutPage() {
               <Row
                 label={t("about.mysql", "MySQL")}
                 value={
-                  info.mysql_version ??
-                  t("about.notInstalled", "Not installed")
+                  info.mysql_version ?? t("about.notInstalled", "Not installed")
                 }
               />
-              {/* PHP versions — only this row gets the inline spinner on refresh */}
+              {/* PHP versions - only this row gets the inline spinner on refresh */}
               <Row
                 label={t("about.phpVersions", "PHP versions")}
                 value={
