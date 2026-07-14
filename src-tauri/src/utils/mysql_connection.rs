@@ -95,10 +95,17 @@ pub fn ensure_mysql_running() -> Result<(), String> {
     Ok(())
 }
 
+/// Normalize MySQL datadir strings for comparison.
+/// Paths are never hardcoded per user; `verify_mysql_datadir` compares MySQL's
+/// `@@datadir` against `user_mysql_data_dir()` which resolves `%LOCALAPPDATA%`
+/// (or `DEVSTACKBOX_DATA_DIR`) at runtime.
 fn normalize_mysql_path(path: &str) -> String {
     let mut s = path.trim().trim_matches('"').to_string();
     if let Some(stripped) = s.strip_prefix(r"\\?\") {
         s = stripped.to_string();
+    }
+    if cfg!(windows) {
+        s = s.replace('/', "\\");
     }
     while s.ends_with('/') || s.ends_with('\\') {
         s.pop();
@@ -107,6 +114,55 @@ fn normalize_mysql_path(path: &str) -> String {
         s.to_lowercase()
     } else {
         s
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::normalize_mysql_path;
+    use crate::utils::paths::user_mysql_data_dir;
+
+    #[test]
+    fn forward_and_backslash_paths_match_on_windows() {
+        if !cfg!(windows) {
+            return;
+        }
+        let forward = "C:/Users/ExampleUser/AppData/Local/devstackbox/mysql-data/";
+        let backslash = r"C:\Users\ExampleUser\AppData\Local\devstackbox\mysql-data";
+        assert_eq!(normalize_mysql_path(forward), normalize_mysql_path(backslash));
+    }
+
+    #[test]
+    fn strips_trailing_slashes() {
+        if !cfg!(windows) {
+            return;
+        }
+        let with_trailing = r"C:\data\mysql-data\\";
+        let without = r"C:\data\mysql-data";
+        assert_eq!(normalize_mysql_path(with_trailing), normalize_mysql_path(without));
+    }
+
+    #[test]
+    fn strips_extended_path_prefix() {
+        if !cfg!(windows) {
+            return;
+        }
+        let extended = r"\\?\C:\Users\ExampleUser\AppData\Local\devstackbox\mysql-data\";
+        let normal = r"C:\Users\ExampleUser\AppData\Local\devstackbox\mysql-data";
+        assert_eq!(normalize_mysql_path(extended), normalize_mysql_path(normal));
+    }
+
+    #[test]
+    fn user_data_dir_matches_forward_slash_mysql_output_on_windows() {
+        if !cfg!(windows) {
+            return;
+        }
+        let expected = user_mysql_data_dir();
+        let forward = format!("{}/", expected.to_string_lossy().replace('\\', "/"));
+        assert_eq!(
+            normalize_mysql_path(&forward),
+            normalize_mysql_path(&expected.to_string_lossy())
+        );
     }
 }
 
