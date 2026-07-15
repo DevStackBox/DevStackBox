@@ -1,4 +1,4 @@
-; DevStackBox NSIS hooks — install/uninstall logging and cleanup (v6)
+; DevStackBox NSIS hooks - install/uninstall logging and cleanup
 
 ; ---------------------------------------------------------------------------
 ; Logging
@@ -39,7 +39,19 @@
   IntOp $R0 $R0 - $LogStartTick
   IntOp $R0 $R0 / 1000
   DetailPrint ""
+  IntCmp $R0 1 0 +3
+    DetailPrint "Duration: 1 second"
+    Goto log_duration_done
   DetailPrint "Duration: $R0 seconds"
+  log_duration_done:
+!macroend
+
+!macro DsbExecSilent cmd
+  ; NSIS splits macro args on commas - commands passed here must not contain literal commas.
+  SetDetailsPrint none
+  nsExec::Exec '${cmd}'
+  Pop $0
+  SetDetailsPrint textonly
 !macroend
 
 ; ---------------------------------------------------------------------------
@@ -89,8 +101,10 @@ Function un.DsbProcessRunningUnderInstDir
   Push $R1
   Push $R2
   StrCpy $R2 "$INSTDIR"
-  nsExec::ExecToLog 'powershell -NoProfile -Command "if (Get-Process -Name ''$R0'' -ErrorAction SilentlyContinue | Where-Object { $$_.Path -like ''$R2*'' }) { exit 0 } else { exit 1 }"'
+  SetDetailsPrint none
+  nsExec::Exec 'powershell -NoProfile -Command "if (Get-Process -Name ''$R0'' -ErrorAction SilentlyContinue | Where-Object { $$_.Path -like ''$R2*'' }) { exit 0 } else { exit 1 }"'
   Pop $R1
+  SetDetailsPrint textonly
   StrCmp $R1 "0" running notrunning
   running:
     StrCpy $R0 0
@@ -125,11 +139,15 @@ Function un.DsbWaitProcessExitUnderInstDir
   wait_done:
     Pop $R2
     Pop $R1
-    Exch $R0
+  Exch $R0
 FunctionEnd
 
 !macro ForceStopInstDirProcesses
-  nsExec::ExecToLog 'powershell -NoProfile -Command "Get-Process -Name httpd,mysqld,php-cgi,php -ErrorAction SilentlyContinue | Where-Object { $$_.Path -like ''$INSTDIR*'' } | Stop-Process -Force"'
+  ; Inlined (not DsbExecSilent): '' in PowerShell literals splits nested macro args.
+  SetDetailsPrint none
+  nsExec::Exec 'powershell -NoProfile -Command "Get-Process | Where-Object { $$_.Path -like ''$INSTDIR*'' -and $$_.Name -match ''^(httpd|mysqld|php-cgi|php)$$'' } | Stop-Process -Force"'
+  Pop $0
+  SetDetailsPrint textonly
 !macroend
 
 Function un.DsbLogServiceStatus
@@ -141,9 +159,9 @@ Function un.DsbLogServiceStatus
   Call un.DsbProcessRunningUnderInstDir
   Pop $R2
   StrCmp $R2 0 0 +3
-    DetailPrint "  $R1      Running"
+    DetailPrint "  $R1  Running"
     Goto done
-  DetailPrint "  $R1      Not running"
+  DetailPrint "  $R1  Not running"
   done:
   Pop $R2
   Pop $R1
@@ -159,7 +177,11 @@ Function un.DsbStopNamedService
   Pop $R3
   StrCmp $R3 1 stop_done
 
-  nsExec::ExecToLog '$R2'
+  SetDetailsPrint none
+  nsExec::Exec '$R2'
+  Pop $R3
+  SetDetailsPrint textonly
+
   Push $R0
   Call un.DsbWaitProcessExitUnderInstDir
   Pop $R3
@@ -175,6 +197,12 @@ Function un.DsbStopNamedService
   StrCmp $R3 1 stop_fail
   stop_ok:
   DetailPrint "$R1 stopped."
+  StrCmp $R1 "Apache" 0 check_mysql_stopped
+  StrCpy $LogApacheStopped 1
+  Goto stop_done
+  check_mysql_stopped:
+  StrCmp $R1 "MySQL" 0 stop_done
+  StrCpy $LogMysqlStopped 1
   Goto stop_done
   stop_fail:
   DetailPrint "Failed to stop $R1."
@@ -186,13 +214,10 @@ FunctionEnd
   DetailPrint "Checking running services..."
   DetailPrint ""
   Push "httpd"
-  Push "Apache     "
+  Push "Apache"
   Call un.DsbLogServiceStatus
   Push "mysqld"
-  Push "MySQL      "
-  Call un.DsbLogServiceStatus
-  Push "php-cgi"
-  Push "PHP CGI    "
+  Push "MySQL"
   Call un.DsbLogServiceStatus
   DetailPrint ""
 
@@ -214,22 +239,13 @@ FunctionEnd
   Push "httpd"
   Call un.DsbProcessRunningUnderInstDir
   Pop $R0
-  StrCmp $R0 1 check_mysql_wait
-  DetailPrint "Waiting for services to stop..."
+  StrCmp $R0 1 apache_done
   Push "mysqld"
   Call un.DsbProcessRunningUnderInstDir
   Pop $R0
-  StrCmp $R0 1 services_waiting
+  StrCmp $R0 1 apache_done
   Goto services_done
-  check_mysql_wait:
-  Push "mysqld"
-  Call un.DsbProcessRunningUnderInstDir
-  Pop $R0
-  StrCmp $R0 1 services_waiting
-  DetailPrint "Waiting for services to stop..."
-  Goto services_done
-  services_waiting:
-  DetailPrint "MySQL is still running."
+  apache_done:
   DetailPrint "Waiting for services to stop..."
   services_done:
 !macroend
@@ -258,37 +274,40 @@ FunctionEnd
 
 !macro PreserveWebsiteFolder
   ${If} $UpdateMode = 1
-    DetailPrint "Update mode — preserving install layout."
+    DetailPrint "Update mode - preserving install layout."
   ${ElseIf} $KeepWwwCheckboxState = 1
     DetailPrint "Preserving websites..."
     DetailPrint "Websites preserved."
+  ${Else}
+    DetailPrint "Removing websites..."
+    ${If} ${FileExists} "$INSTDIR\www"
+      RmDir /r /REBOOTOK "$INSTDIR\www"
+    ${EndIf}
+    DetailPrint "Websites removed."
   ${EndIf}
 !macroend
 
-!macro RemoveInstallComponent name
-  ${If} ${FileExists} "$INSTDIR\${name}"
-    DetailPrint "Removing ${name}..."
-    RmDir /r /REBOOTOK "$INSTDIR\${name}"
+!macro RemoveInstallComponent folder displayName
+  ${If} ${FileExists} "$INSTDIR\${folder}"
+    DetailPrint "Removing ${displayName}..."
+    RmDir /r /REBOOTOK "$INSTDIR\${folder}"
   ${EndIf}
 !macroend
 
 !macro DeleteInstallFiles
   ${If} $UpdateMode = 1
-    DetailPrint "Update mode — skipping application file removal."
+    DetailPrint "Update mode - skipping application file removal."
   ${Else}
     !insertmacro RenameWwwForKeep
-    !insertmacro RemoveInstallComponent "apache"
-    !insertmacro RemoveInstallComponent "mysql"
-    !insertmacro RemoveInstallComponent "php"
-    !insertmacro RemoveInstallComponent "phpmyadmin"
-    !insertmacro RemoveInstallComponent "logs"
-    !insertmacro RemoveInstallComponent "temp"
-    !insertmacro RemoveInstallComponent "cache"
-    !insertmacro RemoveInstallComponent "runtime"
-    !insertmacro RemoveInstallComponent "bin"
-    ${If} $KeepWwwCheckboxState = 0
-      !insertmacro RemoveInstallComponent "www"
-    ${EndIf}
+    !insertmacro RemoveInstallComponent "apache" "Apache"
+    !insertmacro RemoveInstallComponent "mysql" "MySQL"
+    !insertmacro RemoveInstallComponent "php" "PHP"
+    !insertmacro RemoveInstallComponent "phpmyadmin" "phpMyAdmin"
+    !insertmacro RemoveInstallComponent "logs" "logs"
+    !insertmacro RemoveInstallComponent "temp" "temp"
+    !insertmacro RemoveInstallComponent "cache" "cache"
+    !insertmacro RemoveInstallComponent "runtime" "runtime"
+    !insertmacro RemoveInstallComponent "bin" "bin"
     Delete "$INSTDIR\${MAINBINARYNAME}.exe"
     Delete "$INSTDIR\uninstall.exe"
     !insertmacro RestoreWwwAfterDelete
@@ -298,7 +317,7 @@ FunctionEnd
 
 !macro DeleteUserData
   ${If} $UpdateMode = 1
-    DetailPrint "Update mode — keeping application data."
+    DetailPrint "Update mode - keeping application data."
   ${ElseIf} $KeepUserDataCheckboxState = 1
     DetailPrint "Preserving application data."
   ${Else}
@@ -320,7 +339,7 @@ FunctionEnd
 
 !macro CleanShortcutsUninstall
   ${If} $UpdateMode <> 1
-    DetailPrint "Cleaning shortcuts..."
+    DetailPrint "Removing shortcuts..."
     !insertmacro DeleteAppUserModelId
     !insertmacro MUI_STARTMENU_GETFOLDER Application $AppStartMenuFolder
     !insertmacro IsShortcutTarget "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
@@ -342,13 +361,13 @@ FunctionEnd
       !insertmacro UnpinShortcut "$DESKTOP\${PRODUCTNAME}.lnk"
       Delete "$DESKTOP\${PRODUCTNAME}.lnk"
     ${EndIf}
-    DetailPrint "Shortcuts cleaned."
+    DetailPrint "Shortcuts removed."
   ${EndIf}
 !macroend
 
 !macro CleanRegistryUninstall
   ${If} $UpdateMode <> 1
-    DetailPrint "Cleaning registry..."
+    DetailPrint "Removing registry entries..."
     !if "${INSTALLMODE}" == "both"
       DeleteRegKey SHCTX "${UNINSTKEY}"
     !else if "${INSTALLMODE}" == "perMachine"
@@ -364,7 +383,7 @@ FunctionEnd
       DeleteRegKey /ifempty HKCU "${MANUPRODUCTKEY}"
       DeleteRegKey /ifempty HKCU "${MANUKEY}"
     ${EndIf}
-    DetailPrint "Registry cleaned."
+    DetailPrint "Registry entries removed."
   ${EndIf}
 !macroend
 
@@ -373,6 +392,12 @@ FunctionEnd
   DetailPrint "Summary"
   DetailPrint ""
   ${If} $UpdateMode <> 1
+    ${If} $LogApacheStopped = 1
+      DetailPrint "Apache stopped."
+    ${EndIf}
+    ${If} $LogMysqlStopped = 1
+      DetailPrint "MySQL stopped."
+    ${EndIf}
     DetailPrint "Application files removed."
     ${If} $KeepWwwCheckboxState = 1
       DetailPrint "Websites preserved."
@@ -401,38 +426,65 @@ FunctionEnd
   !insertmacro LogStartTimer
 !macroend
 
+!macro CleanFileAssociationsBegin
+  DetailPrint "Removing file associations..."
+!macroend
+
+!macro CleanFileAssociationsEnd
+  DetailPrint "File associations removed."
+!macroend
+
 ; ---------------------------------------------------------------------------
 ; Install validation and logging
 ; ---------------------------------------------------------------------------
 
 !macro ValidateInstallation
+  StrCpy $ValidationFailures 0
   DetailPrint "Checking Apache..."
   !insertmacro ResolveHttpdPath $R8
-  ${IfNot} ${FileExists} "$R8"
-    DetailPrint "Failed to validate Apache installation."
+  ${If} ${FileExists} "$R8"
+    DetailPrint "Apache verified."
+  ${Else}
+    !insertmacro LogFail "Failed to validate Apache installation."
+    IntOp $ValidationFailures $ValidationFailures + 1
   ${EndIf}
   DetailPrint "Checking MySQL..."
   !insertmacro ResolveMysqldPath $R8
-  ${IfNot} ${FileExists} "$R8"
-    DetailPrint "Failed to validate MySQL installation."
+  ${If} ${FileExists} "$R8"
+    DetailPrint "MySQL verified."
+  ${Else}
+    !insertmacro LogFail "Failed to validate MySQL installation."
+    IntOp $ValidationFailures $ValidationFailures + 1
   ${EndIf}
   DetailPrint "Checking PHP..."
   !insertmacro ResolvePhpPath $R8
-  ${IfNot} ${FileExists} "$R8"
-    DetailPrint "Failed to validate PHP installation."
+  ${If} ${FileExists} "$R8"
+    DetailPrint "PHP verified."
+  ${Else}
+    !insertmacro LogFail "Failed to validate PHP installation."
+    IntOp $ValidationFailures $ValidationFailures + 1
   ${EndIf}
+  IntCmp $ValidationFailures 0 validation_ok
+  DetailPrint "Installation validation failed."
+  Abort
+  validation_ok:
   DetailPrint "Validation completed."
 !macroend
 
 !macro InstallBegin
   !insertmacro SetLogNormal
   DetailPrint "Initializing installation..."
+  DetailPrint "${PRODUCTNAME} ${VERSION}"
   !insertmacro LogStartTimer
 !macroend
 
 !macro InstallSummary
   DetailPrint ""
   DetailPrint "Summary"
+  DetailPrint ""
+  DetailPrint "Apache verified."
+  DetailPrint "MySQL verified."
+  DetailPrint "PHP verified."
   DetailPrint ""
   DetailPrint "Installation completed successfully."
 !macroend
@@ -442,15 +494,20 @@ FunctionEnd
   SetOutPath "$INSTDIR"
   !insertmacro InstallBegin
   !insertmacro LogPhase 1 7 "Checking existing installation"
+  DetailPrint "Install location: C:\devstackbox"
+  ${If} $UpdateMode = 1
+    DetailPrint "Existing installation detected."
+  ${EndIf}
 !macroend
 
 !macro NSIS_HOOK_POSTINSTALL
   !insertmacro LogPhase 4 7 "Configuring components"
   ${If} ${FileExists} "$INSTDIR\php\8.3\php.exe"
     ${IfNot} ${FileExists} "$INSTDIR\php\current\php.exe"
+      DetailPrint "Configuring PHP current version..."
       Rmdir /r "$INSTDIR\php\current"
-      nsExec::ExecToLog 'cmd /c mklink /J "$INSTDIR\php\current" "$INSTDIR\php\8.3"'
+      !insertmacro DsbExecSilent 'cmd /c mklink /J "$INSTDIR\php\current" "$INSTDIR\php\8.3"'
     ${EndIf}
   ${EndIf}
-  DetailPrint "Configuration completed."
+  DetailPrint "PHP configuration completed."
 !macroend

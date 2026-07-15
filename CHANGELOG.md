@@ -7,13 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.6] - 2024-12-18
 
-### ✅ Fixed
+### Fixed
 - **MSI Compatibility**: Fixed version format from `0.1.0-alpha.6` to `0.1.6` for MSI bundler
 - **File Structure**: Resolved accidental deletion of critical files (`globals.css`, `main.tsx`)
 - **GitHub Actions**: Fixed emoji encoding issues causing PowerShell parsing errors
 - **CSS Pipeline**: Restored complete Tailwind CSS compilation (27.60 kB output)
 
-### ✅ Added
+### Added
 - Both MSI (288.9MB) and NSIS (147.7MB) installers now available
 - Multilanguage support (English & Hindi) with i18next
 - Theme switching (dark/light mode)
@@ -21,13 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - phpMyAdmin integration
 - Basic configuration management
 
-### 🔄 In Progress
+### In Progress
 - System tray integration
 - Auto-updater functionality
 - Logs viewer
 - Bug reporting via GitHub Issues
 
-### 🕓 Planned
+### Planned
 - Apache HTTP server integration
 - Multiple PHP version support
 - One-click app installers (WordPress, Laravel, etc.)

@@ -4,6 +4,14 @@
 
 ---
 
+## Writing standards
+
+| Document | Purpose |
+| -------- | ------- |
+| [standards/WRITING_GUIDELINES.md](standards/WRITING_GUIDELINES.md) | Product-wide voice, buttons, errors, installer log tone |
+| [standards/TERMINOLOGY.md](standards/TERMINOLOGY.md) | Preferred terms glossary |
+| [standards/UI_GUIDELINES.md](standards/UI_GUIDELINES.md) | Buttons, dialogs (stub) |
+
 ## Core Docs (Read These First)
 
 | Document                               | Purpose                                                         | When to Read                            |
@@ -33,7 +41,7 @@
 | [SECURITY.md](SECURITY.md)                             | Security policy, unsafe operations, vulnerability reporting     |
 | [INSTALL.md](INSTALL.md)                               | End-user installation guide                                     |
 | [APACHE_64BIT_GUIDE.md](APACHE_64BIT_GUIDE.md)         | Apache architecture troubleshooting                             |
-| [MSI_TROUBLESHOOTING.md](MSI_TROUBLESHOOTING.md)       | Installer troubleshooting                                       |
+| [archive/MSI_TROUBLESHOOTING.md](archive/MSI_TROUBLESHOOTING.md) | Legacy MSI notes (archived)                             |
 
 ## Architecture Decisions
 

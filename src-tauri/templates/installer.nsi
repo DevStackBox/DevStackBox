@@ -32,6 +32,11 @@ ManifestDPIAwareness PerMonitorV2
 ${StrCase}
 ${StrLoc}
 
+Var LogStartTick
+Var ValidationFailures
+Var LogApacheStopped
+Var LogMysqlStopped
+
 {{#if installer_hooks}}
 !include "{{installer_hooks}}"
 {{/if}}
@@ -433,7 +438,6 @@ Var KeepUserDataCheckbox
 Var KeepUserDataCheckboxState
 Var KeepWwwCheckbox
 Var KeepWwwCheckboxState
-Var LogStartTick
 
 UninstPage custom un.UninstallOptionsShow un.UninstallOptionsLeave
 
@@ -486,11 +490,11 @@ FunctionEnd
 
 ; DevStackBox uninstaller strings (after MUI_LANGUAGE so ${LANG_ENGLISH} is defined)
 LangString unOptionsTitle ${LANG_ENGLISH} "Uninstall ${PRODUCTNAME}"
-LangString unOptionsSubTitle ${LANG_ENGLISH} "Choose what to keep on your computer"
+LangString unOptionsSubTitle ${LANG_ENGLISH} "Choose what to keep after uninstalling DevStackBox."
 LangString unKeepWebsites ${LANG_ENGLISH} "Keep websites"
 LangString unKeepWebsitesPath ${LANG_ENGLISH} "C:\devstackbox\www"
 LangString unKeepAppData ${LANG_ENGLISH} "Keep application data"
-LangString unKeepAppDataDesc ${LANG_ENGLISH} "Includes MySQL databases, settings, logs and user data.$\r$\n$\r$\nPreserves:$\r$\n• MySQL databases$\r$\n• DevStackBox settings$\r$\n• Logs$\r$\n• Cache and temporary files$\r$\n• User configuration$\r$\n$\r$\nLocation:$\r$\n%LOCALAPPDATA%\devstackbox"
+LangString unKeepAppDataDesc ${LANG_ENGLISH} "Application data includes:$\r$\n$\r$\n- MySQL databases$\r$\n- Configuration files$\r$\n- Logs$\r$\n- SSL certificates$\r$\n$\r$\nLocation:$\r$\n%LOCALAPPDATA%\devstackbox"
 
 Function .onInit
   ${GetOptions} $CMDLINE "/P" $PassiveMode
@@ -644,6 +648,7 @@ Section Install
   !endif
 
   !insertmacro CheckIfAppIsRunning "${MAINBINARYNAME}.exe" "${PRODUCTNAME}"
+  DetailPrint "Application is not running."
 
   !insertmacro LogPhase 2 7 "Installing application files"
 
@@ -742,6 +747,8 @@ Section Install
   !endif
 
   !insertmacro LogPhase 6 7 "Finalizing installation"
+
+  !insertmacro LogPhase 7 7 "Summary"
   !insertmacro InstallSummary
   !insertmacro LogDuration
 
@@ -793,6 +800,8 @@ Function un.onInit
   ; before the user clicks Uninstall on the confirm page.
   StrCpy $KeepWwwCheckboxState 1
   StrCpy $KeepUserDataCheckboxState 1
+  StrCpy $LogApacheStopped 0
+  StrCpy $LogMysqlStopped 0
 FunctionEnd
 
 Section Uninstall
@@ -810,6 +819,8 @@ Section Uninstall
 
   !insertmacro LogPhase 4 8 "Removing application files"
 
+  !insertmacro CleanFileAssociationsBegin
+
   ; Delete app associations
   {{#each file_associations as |association| ~}}
     {{#each association.ext as |ext| ~}}
@@ -824,6 +835,8 @@ Section Uninstall
       DeleteRegKey SHCTX "Software\Classes\\{{protocol}}"
     ${EndIf}
   {{/each}}
+
+  !insertmacro CleanFileAssociationsEnd
 
   !insertmacro DeleteInstallFiles
 

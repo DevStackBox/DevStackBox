@@ -112,7 +112,7 @@ export function AutoUpdater({ mode = "button" }: AutoUpdaterProps) {
     ButtonIcon = Download;
     buttonVariant = "default";
   } else if (checking) {
-    buttonLabel = t("updater.checkingForUpdates", "Checking…");
+    buttonLabel = t("updater.checkingForUpdates", "Checking...");
     ButtonIcon = RefreshCw;
     buttonVariant = "outline";
   } else {
@@ -182,7 +182,7 @@ function UpdateDialog() {
               <Badge variant="secondary">
                 {t("updater.current", "Current")}: v{APP_VERSION}
               </Badge>
-              <span>→</span>
+              <span className="text-muted-foreground">to</span>
               <Badge variant="default">
                 {t("updater.new", "New")}: v{updateInfo?.version}
               </Badge>
@@ -218,8 +218,8 @@ function UpdateDialog() {
               </div>
               <p className="text-sm text-center text-muted-foreground">
                 {readyToInstall
-                  ? t("updater.installAndRestart", "Installing and restarting…")
-                  : t("updater.downloading", "Downloading…")}
+                  ? t("updater.installAndRestart", "Installing and restarting...")
+                  : t("updater.downloading", "Downloading...")}
               </p>
             </motion.div>
           )}

@@ -453,5 +453,25 @@
   },
   "sidebar": {
     "builtBy": "Nomad Programmer द्वारा बनाया गया"
+  },
+  "about": {
+    "version": "संस्करण",
+    "tagline": "Windows के लिए स्थानीय PHP विकास वातावरण।",
+    "author": "लेखक",
+    "github": "GitHub",
+    "documentation": "प्रलेखन",
+    "systemInfo": "सिस्टम जानकारी",
+    "systemInfoDesc": "Runtime, host, और bundled binary versions.",
+    "runtime": "Runtime",
+    "appVersion": "App version",
+    "os": "OS",
+    "osVersion": "OS version",
+    "apache": "Apache",
+    "mysql": "MySQL",
+    "phpVersions": "PHP versions",
+    "notInstalled": "स्थापित नहीं",
+    "noneDetected": "कोई नहीं मिला",
+    "loadError": "सिस्टम जानकारी लोड नहीं हो सकी।",
+    "builtWith": "Windows के लिए स्थानीय PHP विकास वातावरण।"
   }
 }

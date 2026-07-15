@@ -1,8 +1,8 @@
 # Contributing to DevStackBox
 
-Thank you for your interest in contributing to DevStackBox! 🎉
+Thank you for your interest in contributing to DevStackBox.
 
-## 📋 Table of Contents
+## Table of Contents
 - [Getting Started](#getting-started)
 - [Development Setup](#development-setup)
 - [Project Structure](#project-structure)
@@ -10,7 +10,7 @@ Thank you for your interest in contributing to DevStackBox! 🎉
 - [Submitting Changes](#submitting-changes)
 - [Reporting Issues](#reporting-issues)
 
-## 🚀 Getting Started
+## Getting Started
 
 DevStackBox is built with:
 - **Backend**: Tauri (Rust)
@@ -19,7 +19,7 @@ DevStackBox is built with:
 - **Animations**: Framer Motion
 - **i18n**: i18next (English & Hindi)
 
-## 💻 Development Setup
+## Development Setup
 
 ### Prerequisites
 - Node.js 18+ and pnpm (or npm/yarn)
@@ -56,7 +56,9 @@ DevStackBox/
 └── scripts/          # Build & preparation scripts
 ```
 
-## 📝 Development Guidelines
+## Development Guidelines
+
+Follow [docs/standards/WRITING_GUIDELINES.md](docs/standards/WRITING_GUIDELINES.md) for user-facing copy.
 
 ### UI/UX Rules
 - **Only use Tailwind CSS and shadcn/ui** - No custom CSS unless absolutely necessary
@@ -138,4 +140,4 @@ If applicable
 
 ---
 
-Thank you for contributing to DevStackBox! 🚀
+Thank you for contributing to DevStackBox!

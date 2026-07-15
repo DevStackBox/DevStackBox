@@ -1,4 +1,4 @@
-import { Globe } from "lucide-react";
+import { Check, Globe } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { getAppLanguageCode } from "@/lib/app-language";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,7 @@ export function LanguageSwitcher() {
           >
             <span className="font-medium">{language.nativeName}</span>
             {currentLanguage.code === language.code && (
-              <span className="ml-auto text-xs opacity-60">✓</span>
+              <Check className="ml-auto h-4 w-4 opacity-60" />
             )}
           </DropdownMenuItem>
         ))}

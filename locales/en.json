@@ -111,10 +111,10 @@
     "later": "Later",
     "updateNow": "Download & Install",
     "downloading": "Downloading",
-    "installAndRestart": "Installing and restarting…",
+    "installAndRestart": "Installing and restarting...",
     "upToDate": "You're running the latest version",
     "latestVersion": "is the latest version.",
-    "checkingForUpdates": "Checking…",
+    "checkingForUpdates": "Checking...",
     "current": "Current",
     "new": "New",
     "whatsNew": "What's new:",
@@ -127,7 +127,7 @@
     "lastCheckedNever": "never",
     "status": "Status",
     "statusReadyToInstall": "Ready to install - restart to update",
-    "statusDownloading": "Downloading update…",
+    "statusDownloading": "Downloading update...",
     "statusUpdateAvailable": "Update available (v{{version}})"
   },
   "vhosts": {
@@ -453,5 +453,25 @@
   },
   "sidebar": {
     "builtBy": "Built by Nomad Programmer"
+  },
+  "about": {
+    "version": "Version",
+    "tagline": "Local PHP development environment for Windows.",
+    "author": "Author",
+    "github": "GitHub",
+    "documentation": "Documentation",
+    "systemInfo": "System Information",
+    "systemInfoDesc": "Detected runtime, host, and bundled binary versions.",
+    "runtime": "Runtime",
+    "appVersion": "App version",
+    "os": "OS",
+    "osVersion": "OS version",
+    "apache": "Apache",
+    "mysql": "MySQL",
+    "phpVersions": "PHP versions",
+    "notInstalled": "Not installed",
+    "noneDetected": "None detected",
+    "loadError": "Unable to load system information.",
+    "builtWith": "Local PHP development environment for Windows."
   }
 }

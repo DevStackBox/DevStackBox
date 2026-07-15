@@ -75,14 +75,14 @@ function deriveStatusText(
   },
 ): string {
   if (opts.checking)
-    return t("updater.checkingForUpdates", "Checking for updates…");
+    return t("updater.checkingForUpdates", "Checking...");
   if (opts.readyToInstall)
     return t(
       "updater.statusReadyToInstall",
       "Ready to install - restart to update",
     );
   if (opts.downloading)
-    return t("updater.statusDownloading", "Downloading update…");
+    return t("updater.statusDownloading", "Downloading update...");
   if (opts.updateAvailable)
     return t(
       "updater.statusUpdateAvailable",
@@ -153,7 +153,7 @@ export function AboutPage() {
               {t("about.version", "Version")}: {APP_VERSION}
             </p>
             <p className="text-sm text-muted-foreground">
-              {t("about.builtWith", "Built with Tauri, React, and Rust")}
+              {t("about.tagline")}
             </p>
           </div>
           <div>
@@ -240,7 +240,7 @@ export function AboutPage() {
                 value={info.app_version}
               />
               <Row
-                label={t("about.tauri", "Tauri")}
+                label={t("about.runtime", "Runtime")}
                 value={info.tauri_version}
               />
               <Row
