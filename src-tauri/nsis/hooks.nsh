@@ -17,16 +17,29 @@
   DetailPrint ""
 !macroend
 
+; Seconds-since-midnight for duration logging.
+; Uses FileFunc GetTime — never System::Call (*$9 vs $R9 caused System.dll AV).
 !macro DsbLocalTimeStamp outVar
-  System::Call "kernel32::GetLocalTime(*i.r9)"
-  System::Call "*$9(&i2,&i2,&i2.r3,&i2,&i2.r4,&i2.r5,&i2.r6,&i2)"
-  IntOp $R0 $3 * 86400
-  IntOp $R1 $4 * 3600
-  IntOp $R1 $R1 + $5
-  IntOp $R1 $R1 * 60
-  IntOp $R1 $R1 + $6
-  IntOp $R0 $R0 + $R1
-  StrCpy ${outVar} $R0
+  Push $0
+  Push $1
+  Push $2
+  Push $3
+  Push $4
+  Push $5
+  Push $6
+  ${GetTime} "" "L" $0 $1 $2 $3 $4 $5 $6
+  IntOp $0 $4 * 3600
+  IntOp $1 $5 * 60
+  IntOp $0 $0 + $1
+  IntOp $0 $0 + $6
+  StrCpy ${outVar} $0
+  Pop $6
+  Pop $5
+  Pop $4
+  Pop $3
+  Pop $2
+  Pop $1
+  Pop $0
 !macroend
 
 !macro LogInfo message
@@ -78,9 +91,16 @@
 !macroend
 
 !macro ForceStopInstDirProcesses
-  ; Inlined (not DsbExecSilent): '' in PowerShell literals splits nested macro args.
+  ; Prefer taskkill (reliable); ignore errors when process is already gone.
   SetDetailsPrint none
-  nsExec::Exec 'powershell -NoProfile -Command "Get-Process | Where-Object { $$_.Path -like ''$INSTDIR*'' -and $$_.Name -match ''^(httpd|mysqld|php-cgi|php)$$'' } | Stop-Process -Force"'
+  nsExec::Exec 'taskkill /F /IM httpd.exe /T'
+  Pop $0
+  nsExec::Exec 'taskkill /F /IM mysqld.exe /T'
+  Pop $0
+  nsExec::Exec 'taskkill /F /IM php-cgi.exe /T'
+  Pop $0
+  ; Path-scoped php.exe only under install dir (avoid killing unrelated PHP).
+  nsExec::Exec 'powershell -NoProfile -Command "Get-Process -Name php -ErrorAction SilentlyContinue | Where-Object { $$_.Path -like ''$INSTDIR*'' } | Stop-Process -Force -ErrorAction SilentlyContinue"'
   Pop $0
   SetDetailsPrint textonly
 !macroend
@@ -174,14 +194,11 @@ Function DsbWaitProcessExitUnderInstDir
 FunctionEnd
 
 Function DsbStopNamedService
+  ; Always attempt graceful stop — process detection via Path can false-negative.
   Push $R3
   Push $R4
   StrCpy $R4 $R0
   DetailPrint "Stopping $R1..."
-  Push $R4
-  Call DsbProcessRunningUnderInstDir
-  Pop $R3
-  StrCmp $R3 1 stop_done
 
   SetDetailsPrint none
   nsExec::Exec '$R2'
@@ -199,7 +216,6 @@ Function DsbStopNamedService
   Sleep 1000
   stop_ok:
   DetailPrint "$R1 stopped."
-  stop_done:
   Pop $R4
   Pop $R3
 FunctionEnd
@@ -207,10 +223,12 @@ FunctionEnd
 !macro StopServicesForUpgrade
   ${If} $UpdateMode = 1
     DetailPrint "Stopping services before upgrade..."
-    SetShellVarContext current
+    ; Resolve user config via env — never SetShellVarContext current here
+    ; (that flips SHCTX to HKCU and breaks perMachine registry writes).
+    ReadEnvStr $R7 "LOCALAPPDATA"
+    StrCpy $R7 "$R7\devstackbox\config"
     !insertmacro ResolveHttpdPath $R8
     !insertmacro ResolveMysqlAdminPath $R9
-    StrCpy $R7 "$LOCALAPPDATA\devstackbox\config"
 
     StrCpy $R0 "httpd"
     StrCpy $R1 "Apache"
@@ -221,6 +239,40 @@ FunctionEnd
     StrCpy $R1 "MySQL"
     StrCpy $R2 '"$R9" --defaults-file="$R7\my.cnf" -h 127.0.0.1 --protocol=TCP shutdown'
     Call DsbStopNamedService
+
+    DetailPrint "Ensuring no service processes remain..."
+    !insertmacro ForceStopInstDirProcesses
+    Sleep 1500
+
+    Push "httpd"
+    Call DsbProcessRunningUnderInstDir
+    Pop $R0
+    StrCmp $R0 1 mysql_check_after_force
+      DetailPrint "httpd still running after force stop — retrying..."
+      !insertmacro ForceStopInstDirProcesses
+      Sleep 1500
+      Push "httpd"
+      Call DsbProcessRunningUnderInstDir
+      Pop $R0
+      StrCmp $R0 1 mysql_check_after_force
+        DetailPrint "ERROR: Apache (httpd) could not be stopped. Close it and retry."
+        Abort
+    mysql_check_after_force:
+    Push "mysqld"
+    Call DsbProcessRunningUnderInstDir
+    Pop $R0
+    StrCmp $R0 1 services_force_done
+      DetailPrint "mysqld still running after force stop — retrying..."
+      !insertmacro ForceStopInstDirProcesses
+      Sleep 1500
+      Push "mysqld"
+      Call DsbProcessRunningUnderInstDir
+      Pop $R0
+      StrCmp $R0 1 services_force_done
+        DetailPrint "ERROR: MySQL (mysqld) could not be stopped. Close it and retry."
+        Abort
+    services_force_done:
+    DetailPrint "Services stopped."
   ${EndIf}
 !macroend
 
@@ -369,10 +421,10 @@ FunctionEnd
   Call un.DsbLogServiceStatus
   DetailPrint ""
 
-  SetShellVarContext current
+  ReadEnvStr $R7 "LOCALAPPDATA"
+  StrCpy $R7 "$R7\devstackbox\config"
   !insertmacro ResolveHttpdPath $R8
   !insertmacro ResolveMysqlAdminPath $R9
-  StrCpy $R7 "$LOCALAPPDATA\devstackbox\config"
 
   StrCpy $R0 "httpd"
   StrCpy $R1 "Apache"
@@ -649,6 +701,9 @@ FunctionEnd
   ${If} $UpdateMode = 1
     DetailPrint "Existing installation detected."
     !insertmacro StopServicesForUpgrade
+    ; Second safety net immediately before file copy
+    !insertmacro ForceStopInstDirProcesses
+    Sleep 500
   ${EndIf}
   !insertmacro ProtectWwwBeforeInstall
   ${If} $UpdateMode = 1

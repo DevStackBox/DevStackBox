@@ -32,24 +32,38 @@ ManifestDPIAwareness PerMonitorV2
 ${StrCase}
 ${StrLoc}
 
-; Uncomment for upgrade-crash investigation; comment out before release.
-; !define DEBUG_UPGRADE
+; Comment out for release builds — macros and helpers stay in the project.
+!define DEBUG_UPGRADE
+
+; Bisection: 0=normal, 1=noop SetFixedInstallDir, 2=noop DisableInstallDirEdit,
+;            3=noop PageLeaveReinstall, 4=omit MUI_PAGE_DIRECTORY, 5=omit MUI_PAGE_STARTMENU
+!define DEBUG_STAGE 0
 
 !ifdef DEBUG_UPGRADE
   !macro DsbDebugPrint msg
     DetailPrint "DEBUG: ${msg}"
   !macroend
-  !macro DsbDebugMsg msg
-    MessageBox MB_OK "DEBUG: ${msg}"
+  !macro DsbDebugLog msg
+    Push $DebugLine
+    StrCpy $DebugLine "${msg}"
+    Call DsbDebugWriteLine
+    Pop $DebugLine
+    DetailPrint "DEBUG: ${msg}"
+  !macroend
+  !macro DsbDebugLogUpgradeState
+    !insertmacro DsbDebugLog "  VersionCompareResult=$VersionCompareResult UpdateMode=$UpdateMode InstalledVersion=$InstalledVersion NewVersion=${VERSION}"
   !macroend
   !macro DsbDebugCheckPlugin label
-    IfErrors 0 +2
-      DetailPrint "DEBUG: Plugin error after ${label}"
+    IfErrors 0 +3
+      !insertmacro DsbDebugLog "PLUGIN FAILED: ${label}"
+      ClearErrors
   !macroend
 !else
   !macro DsbDebugPrint msg
   !macroend
-  !macro DsbDebugMsg msg
+  !macro DsbDebugLog msg
+  !macroend
+  !macro DsbDebugLogUpgradeState
   !macroend
   !macro DsbDebugCheckPlugin label
   !macroend
@@ -106,6 +120,9 @@ Var WixMode
 Var OldMainBinaryName
 Var VersionCompareResult
 Var InstalledVersion
+Var DebugFile
+Var DebugLine
+Var DebugTimeBuf
 
 Name "${PRODUCTNAME}"
 BrandingText "${COPYRIGHT}"
@@ -217,7 +234,7 @@ VIAddVersionKey "ProductVersion" "${VERSION}"
 Var ReinstallPageCheck
 Page custom PageReinstall PageLeaveReinstall
 Function PageReinstall
-  !insertmacro DsbDebugPrint "PageReinstall entered"
+  !insertmacro DsbDebugLog "PageReinstall entered"
   ; Uninstall previous WiX installation if exists.
   ;
   ; A WiX installer stores the installation info in registry
@@ -246,10 +263,24 @@ Function PageReinstall
     Goto compare_version
   wix_loop_done:
 
-  ; Check if there is an existing installation, if not, abort the reinstall page
+  ; Check if there is an existing installation, if not, abort the reinstall page.
+  ; Prefer SHCTX (respects install mode); fall back to HKLM then HKCU so a prior
+  ; SetShellVarContext current (e.g. debug logging) cannot hide a perMachine install.
   ReadRegStr $R0 SHCTX "${UNINSTKEY}" ""
   ReadRegStr $R1 SHCTX "${UNINSTKEY}" "UninstallString"
-  ${IfThen} "$R0$R1" == "" ${|} Abort ${|}
+  ${If} "$R0$R1" == ""
+    ReadRegStr $R0 HKLM "${UNINSTKEY}" ""
+    ReadRegStr $R1 HKLM "${UNINSTKEY}" "UninstallString"
+  ${EndIf}
+  ${If} "$R0$R1" == ""
+    ReadRegStr $R0 HKCU "${UNINSTKEY}" ""
+    ReadRegStr $R1 HKCU "${UNINSTKEY}" "UninstallString"
+  ${EndIf}
+  !insertmacro DsbDebugLog "PageReinstall detect: default=$R0 UninstallString=$R1 WixMode=$WixMode"
+  ${If} "$R0$R1" == ""
+    !insertmacro DsbDebugLog "PageReinstall Abort: no existing install"
+    Abort
+  ${EndIf}
 
   ; Compare this installar version with the existing installation
   ; and modify the messages presented to the user accordingly
@@ -259,20 +290,22 @@ Function PageReinstall
     ReadRegStr $R0 HKLM "$R6" "DisplayVersion"
   ${Else}
     ReadRegStr $R0 SHCTX "${UNINSTKEY}" "DisplayVersion"
+    ${If} $R0 == ""
+      ReadRegStr $R0 HKLM "${UNINSTKEY}" "DisplayVersion"
+    ${EndIf}
+    ${If} $R0 == ""
+      ReadRegStr $R0 HKCU "${UNINSTKEY}" "DisplayVersion"
+    ${EndIf}
   ${EndIf}
   ${IfThen} $R0 == "" ${|} StrCpy $R4 "$(unknown)" ${|}
 
   StrCpy $InstalledVersion $R0
+  Call DsbDebugLogRegistryInfo
   nsis_tauri_utils::SemverCompare "${VERSION}" $InstalledVersion
   Pop $R0
   StrCpy $VersionCompareResult $R0
-  !insertmacro DsbDebugPrint "PageReinstall compare"
-  !insertmacro DsbDebugPrint "InstalledVersion=$InstalledVersion"
-  !insertmacro DsbDebugPrint "NewVersion=${VERSION}"
-  !insertmacro DsbDebugPrint "VersionCompareResult=$VersionCompareResult"
-  !insertmacro DsbDebugPrint "UpdateMode=$UpdateMode"
+  !insertmacro DsbDebugLogUpgradeState
   !insertmacro DsbDebugCheckPlugin "SemverCompare"
-  !insertmacro DsbDebugMsg "PageReinstall$\nInstalled: $InstalledVersion$\nNew: ${VERSION}$\nResult: $VersionCompareResult$\nUpdateMode: $UpdateMode"
   ; Reinstalling the same version
   ${If} $R0 = 0
     StrCpy $R1 "$(alreadyInstalledLong)"
@@ -324,15 +357,11 @@ Function PageReinstall
 
     ${NSD_CreateRadioButton} 30u 70u -30u 8u $R3
     Pop $R3
-    ; Disable this radio button if downgrading and downgrades are disabled
     !if "${ALLOWDOWNGRADES}" == "false"
       ${IfThen} $VersionCompareResult = -1 ${|} EnableWindow $R3 0 ${|}
     !endif
     ${NSD_OnClick} $R3 PageReinstallUpdateSelection
 
-    ; Check the first radio button if this the first time
-    ; we enter this page or if the second button wasn't
-    ; selected the last time we were on this page
     ${If} $ReinstallPageCheck <> 2
       SendMessage $R2 ${BM_SETCHECK} ${BST_CHECKED} 0
     ${Else}
@@ -344,24 +373,31 @@ Function PageReinstall
     nsDialogs::Show
     !insertmacro DsbDebugCheckPlugin "nsDialogs::Show"
   ${EndIf}
+  !insertmacro DsbDebugLog "PageReinstall leaving"
 FunctionEnd
 Function PageReinstallUpdateSelection
-  !insertmacro DsbDebugPrint "PageReinstallUpdateSelection"
+  !insertmacro DsbDebugLog "PageReinstallUpdateSelection entered"
   ${NSD_GetState} $R2 $R1
+  !insertmacro DsbDebugCheckPlugin "NSD_GetState R2"
   ${If} $R1 == ${BST_CHECKED}
     StrCpy $ReinstallPageCheck 1
   ${Else}
     StrCpy $ReinstallPageCheck 2
   ${EndIf}
+  !insertmacro DsbDebugLog "PageReinstallUpdateSelection leaving"
 FunctionEnd
 Function PageLeaveReinstall
-  !insertmacro DsbDebugMsg "PageLeaveReinstall entered$\nInstalledVersion=$InstalledVersion$\nNewVersion=${VERSION}$\nVersionCompareResult=$VersionCompareResult$\nUpdateMode=$UpdateMode"
+  !insertmacro DsbDebugLog "PageLeaveReinstall entered"
+  !insertmacro DsbDebugLogUpgradeState
+!if "${DEBUG_STAGE}" == "3"
+  !insertmacro DsbDebugLog "PageLeaveReinstall leaving (noop stage 3)"
+  Return
+!endif
 
   ; Upgrade: always in-place update - never touch radio controls
   StrCmp $VersionCompareResult 1 reinst_done
   StrCmp $UpdateMode 1 reinst_done
 
-  !insertmacro DsbDebugPrint "PageLeaveReinstall: reading radio buttons..."
   ${NSD_GetState} $R2 $R1
   !insertmacro DsbDebugCheckPlugin "NSD_GetState R2"
 
@@ -433,6 +469,7 @@ Function PageLeaveReinstall
       Abort
     ${EndIf}
   reinst_done:
+  !insertmacro DsbDebugLog "PageLeaveReinstall leaving"
 FunctionEnd
 
 ; 5. Choose install directory page
@@ -441,7 +478,9 @@ FunctionEnd
 !define MUI_DIRECTORYPAGE_TEXT "DevStackBox installs to a fixed location. Your projects and services expect this path."
 !define MUI_PAGE_CUSTOMFUNCTION_PRE SetFixedInstallDir
 !define MUI_PAGE_CUSTOMFUNCTION_SHOW DisableInstallDirEdit
+!if "${DEBUG_STAGE}" != "4"
 !insertmacro MUI_PAGE_DIRECTORY
+!endif
 !undef MUI_PAGE_CUSTOMFUNCTION_PRE
 !undef MUI_PAGE_CUSTOMFUNCTION_SHOW
 
@@ -453,7 +492,9 @@ Var AppStartMenuFolder
 !else
   !define MUI_PAGE_CUSTOMFUNCTION_PRE Skip
 !endif
+!if "${DEBUG_STAGE}" != "5"
 !insertmacro MUI_PAGE_STARTMENU Application $AppStartMenuFolder
+!endif
 
 ; 7. Installation page
 !insertmacro MUI_PAGE_INSTFILES
@@ -544,7 +585,165 @@ LangString upgradeDetected ${LANG_ENGLISH} "Existing installation detected.$\r$\
 LangString upgradeHeader ${LANG_ENGLISH} "Update DevStackBox"
 LangString upgradeSubHeader ${LANG_ENGLISH} "Click Next to upgrade, or Cancel to exit."
 
+!ifdef DEBUG_UPGRADE
+Function DsbDebugFormatLocalTime
+  Push $0
+  Push $1
+  Push $2
+  Push $3
+  Push $4
+  Push $5
+  Push $6
+  ; FileFunc GetTime — day, month, year, weekday, hour, minute, second
+  ; No System::Call (avoids System.dll AV from $9/$R9 mismatch)
+  ${GetTime} "" "L" $0 $1 $2 $3 $4 $5 $6
+  StrCpy $DebugTimeBuf "$2-$1-$0 $4:$5:$6"
+  Pop $6
+  Pop $5
+  Pop $4
+  Pop $3
+  Pop $2
+  Pop $1
+  Pop $0
+FunctionEnd
+
+Function DsbDebugWriteOnePath
+  Pop $R9
+  Push $DebugFile
+  ClearErrors
+  FileOpen $DebugFile $R9 a
+  IfErrors write_one_done
+  FileSeek $DebugFile 0 END
+  FileWrite $DebugFile "$DebugTimeBuf $DebugLine$\r$\n"
+  FileClose $DebugFile
+  write_one_done:
+  Pop $DebugFile
+FunctionEnd
+
+Function DsbDebugWriteLine
+  Push $R8
+  Call DsbDebugFormatLocalTime
+  ; 1) Install dir — most reliable on upgrade tests
+  CreateDirectory "C:\devstackbox"
+  StrCpy $R9 "C:\devstackbox\install-debug.log"
+  Push $R9
+  Call DsbDebugWriteOnePath
+  ; 2) Beside setup exe
+  StrCpy $R9 "$EXEDIR\devstackbox-install-debug.log"
+  Push $R9
+  Call DsbDebugWriteOnePath
+  ; 3) LOCALAPPDATA via env — never SetShellVarContext (that flips SHCTX to HKCU
+  ;    and breaks PageReinstall / perMachine registry reads)
+  ReadEnvStr $R8 "LOCALAPPDATA"
+  StrCmp $R8 "" debug_write_temp
+  CreateDirectory "$R8\devstackbox"
+  StrCpy $R9 "$R8\devstackbox\install-debug.log"
+  Push $R9
+  Call DsbDebugWriteOnePath
+  debug_write_temp:
+  ; 4) TEMP
+  StrCpy $R9 "$TEMP\devstackbox-install-debug.log"
+  Push $R9
+  Call DsbDebugWriteOnePath
+  Pop $R8
+FunctionEnd
+
+Function DsbDebugWriteSessionHeader
+  Push $R9
+  Push $R8
+  Push $DebugFile
+  Call DsbDebugFormatLocalTime
+  StrCpy $0 0
+  header_loop:
+    StrCmp $0 0 header_instdir
+    StrCmp $0 1 header_exedir
+    StrCmp $0 2 header_local
+    StrCmp $0 3 header_temp
+    Goto header_done
+  header_instdir:
+    CreateDirectory "C:\devstackbox"
+    StrCpy $R9 "C:\devstackbox\install-debug.log"
+    Goto header_write
+  header_exedir:
+    StrCpy $R9 "$EXEDIR\devstackbox-install-debug.log"
+    Goto header_write
+  header_local:
+    ReadEnvStr $R8 "LOCALAPPDATA"
+    StrCmp $R8 "" header_next
+    CreateDirectory "$R8\devstackbox"
+    StrCpy $R9 "$R8\devstackbox\install-debug.log"
+    Goto header_write
+  header_temp:
+    StrCpy $R9 "$TEMP\devstackbox-install-debug.log"
+  header_write:
+    ClearErrors
+    FileOpen $DebugFile $R9 a
+    IfErrors header_next
+    FileSeek $DebugFile 0 END
+    FileWrite $DebugFile "$\r$\n================================================$\r$\n"
+    FileWrite $DebugFile "DevStackBox Installer Debug$\r$\n"
+    FileWrite $DebugFile "Version: ${VERSION}$\r$\n"
+    FileWrite $DebugFile "Time: $DebugTimeBuf$\r$\n"
+    FileWrite $DebugFile "EXEDIR: $EXEDIR$\r$\n"
+    FileWrite $DebugFile "DEBUG_STAGE=${DEBUG_STAGE}$\r$\n"
+    FileWrite $DebugFile "================================================$\r$\n"
+    FileClose $DebugFile
+  header_next:
+    IntOp $0 $0 + 1
+    Goto header_loop
+  header_done:
+  Pop $DebugFile
+  Pop $R8
+  Pop $R9
+FunctionEnd
+
+Function DsbDebugLogRegistryInfo
+  Push $DebugLine
+  ReadRegStr $R0 SHCTX "${UNINSTKEY}" "DisplayName"
+  ReadRegStr $R1 SHCTX "${UNINSTKEY}" "Publisher"
+  ReadRegStr $R2 SHCTX "${UNINSTKEY}" "InstallLocation"
+  ReadRegStr $R3 SHCTX "${UNINSTKEY}" "UninstallString"
+  ReadRegStr $R4 SHCTX "${UNINSTKEY}" "QuietUninstallString"
+  StrCpy $DebugLine "  Registry DisplayName=$R0"
+  Call DsbDebugWriteLine
+  StrCpy $DebugLine "  Registry Publisher=$R1"
+  Call DsbDebugWriteLine
+  StrCpy $DebugLine "  Registry DisplayVersion=$InstalledVersion"
+  Call DsbDebugWriteLine
+  StrCpy $DebugLine "  Registry InstallLocation=$R2"
+  Call DsbDebugWriteLine
+  StrCpy $DebugLine "  Registry UninstallString=$R3"
+  Call DsbDebugWriteLine
+  StrCpy $DebugLine "  Registry QuietUninstallString=$R4"
+  Call DsbDebugWriteLine
+  Pop $DebugLine
+FunctionEnd
+!else
+Function DsbDebugWriteLine
+FunctionEnd
+Function DsbDebugWriteSessionHeader
+FunctionEnd
+Function DsbDebugLogRegistryInfo
+FunctionEnd
+!endif
+
 Function .onInit
+  !ifdef DEBUG_UPGRADE
+    ; Inline bootstrap — no helpers, no System::Call — proves .onInit ran
+    ClearErrors
+    CreateDirectory "C:\devstackbox"
+    FileOpen $DebugFile "C:\devstackbox\install-debug.log" a
+    IfErrors bootstrap_done
+    FileSeek $DebugFile 0 END
+    FileWrite $DebugFile "BOOTSTRAP ${VERSION} DEBUG_STAGE=${DEBUG_STAGE}$\r$\n"
+    FileClose $DebugFile
+    bootstrap_done:
+    Push $DebugLine
+    StrCpy $DebugLine ".onInit bootstrap (first instruction)"
+    Call DsbDebugWriteLine
+    Pop $DebugLine
+    Call DsbDebugWriteSessionHeader
+  !endif
   ${GetOptions} $CMDLINE "/P" $PassiveMode
   ${IfNot} ${Errors}
     StrCpy $PassiveMode 1
@@ -689,7 +888,7 @@ Section WebView2
 SectionEnd
 
 Section Install
-  !insertmacro DsbDebugPrint "Section Install entered"
+  !insertmacro DsbDebugLog "Section Install entered"
   SetOutPath $INSTDIR
 
   !ifmacrodef NSIS_HOOK_PREINSTALL
@@ -931,8 +1130,9 @@ Function Skip
 FunctionEnd
 
 Function SkipIfPassive
-  !insertmacro DsbDebugPrint "SkipIfPassive"
+  !insertmacro DsbDebugLog "SkipIfPassive entered"
   ${IfThen} $PassiveMode = 1  ${|} Abort ${|}
+  !insertmacro DsbDebugLog "SkipIfPassive leaving"
 FunctionEnd
 Function un.SkipIfPassive
   ${IfThen} $PassiveMode = 1  ${|} Abort ${|}
@@ -940,21 +1140,31 @@ FunctionEnd
 
 ; ARCH-001: force install dir to C:\devstackbox (directory page is shown read-only).
 Function SetFixedInstallDir
-  !insertmacro DsbDebugMsg "SetFixedInstallDir"
+  !insertmacro DsbDebugLog "SetFixedInstallDir entered"
+  !insertmacro DsbDebugLogUpgradeState
+!if "${DEBUG_STAGE}" == "1"
+  !insertmacro DsbDebugLog "SetFixedInstallDir leaving (noop stage 1)"
+  Return
+!endif
   StrCpy $INSTDIR "C:\devstackbox"
+  !insertmacro DsbDebugLog "SetFixedInstallDir leaving"
 FunctionEnd
 
 Function DisableInstallDirEdit
-  !insertmacro DsbDebugMsg "DisableInstallDirEdit"
-  FindWindow $0 "#32770" "" $HWNDPARENT
+  !insertmacro DsbDebugLog "DisableInstallDirEdit entered"
+!if "${DEBUG_STAGE}" == "2"
+  !insertmacro DsbDebugLog "DisableInstallDirEdit leaving (noop stage 2)"
+  Return
+!endif
+  ; MUI sets $HWNDPARENT to the directory page dialog — do not use FindWindow
+  GetDlgItem $0 $HWNDPARENT 1006
   StrCmp $0 0 disable_dir_done
-  GetDlgItem $1 $0 1006
-  StrCmp $1 0 disable_dir_done
-  EnableWindow $1 0
-  GetDlgItem $1 $0 1019
-  StrCmp $1 0 disable_dir_done
-  EnableWindow $1 0
+  EnableWindow $0 0
+  GetDlgItem $0 $HWNDPARENT 1019
+  StrCmp $0 0 disable_dir_done
+  EnableWindow $0 0
   disable_dir_done:
+  !insertmacro DsbDebugLog "DisableInstallDirEdit leaving"
 FunctionEnd
 
 Function CreateOrUpdateStartMenuShortcut
