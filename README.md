@@ -5,7 +5,7 @@ A lightweight, portable, open-source local development environment for PHP devel
 **Author:** Nomad Programmer  
 **Contact:** shiv@srapsware.com  
 **Repository:** [ProgrammerNomad/DevStackBox](https://github.com/ProgrammerNomad/DevStackBox)  
-**Latest release:** [v0.1.7](https://github.com/ProgrammerNomad/DevStackBox/releases/latest)
+**Latest release:** [GitHub Releases](https://github.com/ProgrammerNomad/DevStackBox/releases/latest)
 
 ---
 
@@ -40,9 +40,7 @@ Release history: [CHANGELOG.md](CHANGELOG.md)
 
 ## Installation
 
-Download the Windows installer from [GitHub Releases](https://github.com/ProgrammerNomad/DevStackBox/releases/latest):
-
-- `DevStackBox_0.1.7_x64-setup.exe` (NSIS)
+Download the latest release from [GitHub Releases](https://github.com/ProgrammerNomad/DevStackBox/releases/latest).
 
 End-user guide: [docs/INSTALL.md](docs/INSTALL.md)
 

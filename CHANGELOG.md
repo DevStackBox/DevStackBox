@@ -1,46 +1,35 @@
 # Changelog
 
-All notable changes to DevStackBox will be documented in this file.
+All notable changes to DevStackBox are documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [0.1.6] - 2024-12-18
-
-### Fixed
-- **MSI Compatibility**: Fixed version format from `0.1.0-alpha.6` to `0.1.6` for MSI bundler
-- **File Structure**: Resolved accidental deletion of critical files (`globals.css`, `main.tsx`)
-- **GitHub Actions**: Fixed emoji encoding issues causing PowerShell parsing errors
-- **CSS Pipeline**: Restored complete Tailwind CSS compilation (27.60 kB output)
+## [0.1.8] - 2026-06-09
 
 ### Added
-- Both MSI (288.9MB) and NSIS (147.7MB) installers now available
-- Multilanguage support (English & Hindi) with i18next
-- Theme switching (dark/light mode)
-- MySQL service management with GUI controls
-- phpMyAdmin integration
-- Basic configuration management
 
-### In Progress
-- System tray integration
-- Auto-updater functionality
-- Logs viewer
-- Bug reporting via GitHub Issues
+- One-click in-place upgrade dialog when installing a newer version over an existing install
+- Automatic Apache and MySQL shutdown before upgrade file copy
+- `www` folder preservation during upgrade when websites already exist
 
-### Planned
-- Apache HTTP server integration
-- Multiple PHP version support
-- One-click app installers (WordPress, Laravel, etc.)
-- Config editor with Monaco
-- Database backup/restore
-- Project management
-- Security analyzer
-- Mail testing tools
+### Changed
 
-## [0.1.0-0.1.5] - Previous Versions
+- Installer details log: phase order, duration timing, summary copy, and spacing
+- README install section uses evergreen GitHub Releases download link
 
-Early alpha releases with basic functionality and architecture setup.
+### Fixed
 
----
+- NSIS `DsbExecSilent` comma-split build failure in force-stop macro
+- Negative install duration on systems with long uptime (`GetLocalTime`-based timing)
+- Duplicate `Output folder` noise from redundant `SetOutPath` in PREINSTALL hook
 
-For detailed release notes, see [GitHub Releases](https://github.com/ProgrammerNomad/DevStackBox/releases)
+## [0.1.7] - 2026-06-01
+
+### Added
+
+- NSIS installer with professional deployment logs (7-phase install, 8-phase uninstall)
+- Writing standards and documentation cleanup
+
+### Changed
+
+- NSIS-only bundle target (replacing MSI for Windows releases)

@@ -13,6 +13,22 @@
   DetailPrint "[${current}/${total}] ${message}..."
 !macroend
 
+!macro LogPhaseEnd
+  DetailPrint ""
+!macroend
+
+!macro DsbLocalTimeStamp outVar
+  System::Call "kernel32::GetLocalTime(*i.r9)"
+  System::Call "*$9(&i2,&i2,&i2.r3,&i2,&i2.r4,&i2.r5,&i2.r6,&i2)"
+  IntOp $R0 $3 * 86400
+  IntOp $R1 $4 * 3600
+  IntOp $R1 $R1 + $5
+  IntOp $R1 $R1 * 60
+  IntOp $R1 $R1 + $6
+  IntOp $R0 $R0 + $R1
+  StrCpy ${outVar} $R0
+!macroend
+
 !macro LogInfo message
   DetailPrint "${message}"
 !macroend
@@ -30,19 +46,26 @@
 !macroend
 
 !macro LogStartTimer
-  System::Call "kernel32::GetTickCount() i .r0"
-  StrCpy $LogStartTick $0
+  !insertmacro DsbLocalTimeStamp $LogStartTick
 !macroend
 
 !macro LogDuration
-  System::Call "kernel32::GetTickCount() i .r0"
+  !insertmacro DsbLocalTimeStamp $R0
   IntOp $R0 $R0 - $LogStartTick
-  IntOp $R0 $R0 / 1000
+  IntCmp $R0 0 +3 0 +3
+    IntOp $R0 $R0 + 86400
+  IntCmp $R0 0 log_duration_less_than_one
+  IntCmp $R0 1 log_duration_one
   DetailPrint ""
-  IntCmp $R0 1 0 +3
-    DetailPrint "Duration: 1 second"
-    Goto log_duration_done
   DetailPrint "Duration: $R0 seconds"
+  Goto log_duration_done
+  log_duration_less_than_one:
+  DetailPrint ""
+  DetailPrint "Duration: less than 1 second"
+  Goto log_duration_done
+  log_duration_one:
+  DetailPrint ""
+  DetailPrint "Duration: 1 second"
   log_duration_done:
 !macroend
 
@@ -50,6 +73,14 @@
   ; NSIS splits macro args on commas - commands passed here must not contain literal commas.
   SetDetailsPrint none
   nsExec::Exec '${cmd}'
+  Pop $0
+  SetDetailsPrint textonly
+!macroend
+
+!macro ForceStopInstDirProcesses
+  ; Inlined (not DsbExecSilent): '' in PowerShell literals splits nested macro args.
+  SetDetailsPrint none
+  nsExec::Exec 'powershell -NoProfile -Command "Get-Process | Where-Object { $$_.Path -like ''$INSTDIR*'' -and $$_.Name -match ''^(httpd|mysqld|php-cgi|php)$$'' } | Stop-Process -Force"'
   Pop $0
   SetDetailsPrint textonly
 !macroend
@@ -89,6 +120,119 @@
     StrCpy ${outVar} "$INSTDIR\php\8.3\php.exe"
   ${Else}
     StrCpy ${outVar} "$INSTDIR\php\php.exe"
+  ${EndIf}
+!macroend
+
+; ---------------------------------------------------------------------------
+; Process helpers (install / upgrade)
+; ---------------------------------------------------------------------------
+
+Function DsbProcessRunningUnderInstDir
+  Exch $R0
+  Push $R1
+  Push $R2
+  StrCpy $R2 "$INSTDIR"
+  SetDetailsPrint none
+  nsExec::Exec 'powershell -NoProfile -Command "if (Get-Process -Name ''$R0'' -ErrorAction SilentlyContinue | Where-Object { $$_.Path -like ''$R2*'' }) { exit 0 } else { exit 1 }"'
+  Pop $R1
+  SetDetailsPrint textonly
+  StrCmp $R1 "0" running notrunning
+  running:
+    StrCpy $R0 0
+    Goto done
+  notrunning:
+    StrCpy $R0 1
+  done:
+  Pop $R2
+  Pop $R1
+  Exch $R0
+FunctionEnd
+
+Function DsbWaitProcessExitUnderInstDir
+  Exch $R0
+  Push $R1
+  Push $R2
+  StrCpy $R2 0
+  wait_loop:
+    Push $R0
+    Call DsbProcessRunningUnderInstDir
+    Pop $R1
+    StrCmp $R1 1 exited
+    IntOp $R2 $R2 + 1
+    IntCmp $R2 20 timed_out
+    Sleep 500
+    Goto wait_loop
+  exited:
+    StrCpy $R0 0
+    Goto wait_done
+  timed_out:
+    StrCpy $R0 1
+  wait_done:
+    Pop $R2
+    Pop $R1
+  Exch $R0
+FunctionEnd
+
+Function DsbStopNamedService
+  Push $R3
+  DetailPrint "Stopping $R1..."
+  Push $R0
+  Call DsbProcessRunningUnderInstDir
+  Pop $R3
+  StrCmp $R3 1 stop_done
+
+  SetDetailsPrint none
+  nsExec::Exec '$R2'
+  Pop $R3
+  SetDetailsPrint textonly
+
+  Push $R0
+  Call DsbWaitProcessExitUnderInstDir
+  Pop $R3
+  StrCmp $R3 0 stop_ok
+
+  DetailPrint "$R1 did not stop within the expected time."
+  DetailPrint "Attempting forced shutdown..."
+  !insertmacro ForceStopInstDirProcesses
+  Sleep 1000
+  stop_ok:
+  DetailPrint "$R1 stopped."
+  stop_done:
+  Pop $R3
+FunctionEnd
+
+!macro StopServicesForUpgrade
+  ${If} $UpdateMode = 1
+    DetailPrint "Stopping services before upgrade..."
+    SetShellVarContext current
+    !insertmacro ResolveHttpdPath $R8
+    !insertmacro ResolveMysqlAdminPath $R9
+    StrCpy $R7 "$LOCALAPPDATA\devstackbox\config"
+
+    StrCpy $R0 "httpd"
+    StrCpy $R1 "Apache"
+    StrCpy $R2 '"$R8" -f "$R7\httpd.conf" -k stop'
+    Call DsbStopNamedService
+
+    StrCpy $R0 "mysqld"
+    StrCpy $R1 "MySQL"
+    StrCpy $R2 '"$R9" --defaults-file="$R7\my.cnf" -h 127.0.0.1 --protocol=TCP shutdown'
+    Call DsbStopNamedService
+  ${EndIf}
+!macroend
+
+!macro ProtectWwwBeforeInstall
+  ${If} ${FileExists} "$INSTDIR\www\*.*"
+    DetailPrint "Preserving existing websites..."
+    Rename "$INSTDIR\www" "$INSTDIR\_www_preserve"
+  ${EndIf}
+!macroend
+
+!macro RestoreWwwAfterInstall
+  ${If} ${FileExists} "$INSTDIR\_www_preserve"
+    RmDir /r /REBOOTOK "$INSTDIR\www"
+    Rename "$INSTDIR\_www_preserve" "$INSTDIR\www"
+    DetailPrint "Websites preserved."
   ${EndIf}
 !macroend
 
@@ -141,14 +285,6 @@ Function un.DsbWaitProcessExitUnderInstDir
     Pop $R1
   Exch $R0
 FunctionEnd
-
-!macro ForceStopInstDirProcesses
-  ; Inlined (not DsbExecSilent): '' in PowerShell literals splits nested macro args.
-  SetDetailsPrint none
-  nsExec::Exec 'powershell -NoProfile -Command "Get-Process | Where-Object { $$_.Path -like ''$INSTDIR*'' -and $$_.Name -match ''^(httpd|mysqld|php-cgi|php)$$'' } | Stop-Process -Force"'
-  Pop $0
-  SetDetailsPrint textonly
-!macroend
 
 Function un.DsbLogServiceStatus
   Exch $R0
@@ -469,6 +605,7 @@ FunctionEnd
   Abort
   validation_ok:
   DetailPrint "Validation completed."
+  !insertmacro LogPhaseEnd
 !macroend
 
 !macro InstallBegin
@@ -482,26 +619,35 @@ FunctionEnd
   DetailPrint ""
   DetailPrint "Summary"
   DetailPrint ""
-  DetailPrint "Apache verified."
-  DetailPrint "MySQL verified."
-  DetailPrint "PHP verified."
+  DetailPrint "Install location:"
+  DetailPrint "C:\devstackbox"
+  DetailPrint ""
+  DetailPrint "Apache configured."
+  DetailPrint "MySQL configured."
+  DetailPrint "PHP configured."
   DetailPrint ""
   DetailPrint "Installation completed successfully."
 !macroend
 
 !macro NSIS_HOOK_PREINSTALL
   StrCpy $INSTDIR "C:\devstackbox"
-  SetOutPath "$INSTDIR"
   !insertmacro InstallBegin
   !insertmacro LogPhase 1 7 "Checking existing installation"
   DetailPrint "Install location: C:\devstackbox"
   ${If} $UpdateMode = 1
     DetailPrint "Existing installation detected."
+    !insertmacro StopServicesForUpgrade
   ${EndIf}
+  !insertmacro ProtectWwwBeforeInstall
+  ${If} $UpdateMode = 1
+    DetailPrint "Upgrading to ${VERSION}..."
+  ${EndIf}
+  !insertmacro LogPhaseEnd
 !macroend
 
 !macro NSIS_HOOK_POSTINSTALL
-  !insertmacro LogPhase 4 7 "Configuring components"
+  !insertmacro RestoreWwwAfterInstall
+  !insertmacro LogPhase 4 7 "Configuring services"
   ${If} ${FileExists} "$INSTDIR\php\8.3\php.exe"
     ${IfNot} ${FileExists} "$INSTDIR\php\current\php.exe"
       DetailPrint "Configuring PHP current version..."
@@ -510,4 +656,5 @@ FunctionEnd
     ${EndIf}
   ${EndIf}
   DetailPrint "PHP configuration completed."
+  !insertmacro LogPhaseEnd
 !macroend

@@ -81,6 +81,7 @@ Var UpdateMode
 Var NoShortcutMode
 Var WixMode
 Var OldMainBinaryName
+Var VersionCompareResult
 
 Name "${PRODUCTNAME}"
 BrandingText "${COPYRIGHT}"
@@ -238,18 +239,18 @@ Function PageReinstall
 
   nsis_tauri_utils::SemverCompare "${VERSION}" $R0
   Pop $R0
+  StrCpy $VersionCompareResult $R0
   ; Reinstalling the same version
   ${If} $R0 = 0
     StrCpy $R1 "$(alreadyInstalledLong)"
     StrCpy $R2 "$(addOrReinstall)"
     StrCpy $R3 "$(uninstallApp)"
     !insertmacro MUI_HEADER_TEXT "$(alreadyInstalled)" "$(chooseMaintenanceOption)"
-  ; Upgrading
+  ; Upgrading - in-place update, no uninstall choice
   ${ElseIf} $R0 = 1
-    StrCpy $R1 "$(olderOrUnknownVersionInstalled)"
-    StrCpy $R2 "$(uninstallBeforeInstalling)"
-    StrCpy $R3 "$(dontUninstall)"
-    !insertmacro MUI_HEADER_TEXT "$(alreadyInstalled)" "$(choowHowToInstall)"
+    StrCpy $UpdateMode 1
+    StrCpy $R1 "$(upgradeDetected)"
+    !insertmacro MUI_HEADER_TEXT "$(upgradeHeader)" "$(upgradeSubHeader)"
   ; Downgrading
   ${ElseIf} $R0 = -1
     StrCpy $R1 "$(newerVersionInstalled)"
@@ -280,6 +281,9 @@ Function PageReinstall
     ${NSD_CreateLabel} 0 0 100% 24u $R1
     Pop $R1
 
+    ${If} $VersionCompareResult = 1
+      ${NSD_SetFocus} $R1
+    ${Else}
     ${NSD_CreateRadioButton} 30u 50u -30u 8u $R2
     Pop $R2
     ${NSD_OnClick} $R2 PageReinstallUpdateSelection
@@ -288,7 +292,7 @@ Function PageReinstall
     Pop $R3
     ; Disable this radio button if downgrading and downgrades are disabled
     !if "${ALLOWDOWNGRADES}" == "false"
-      ${IfThen} $R0 = -1 ${|} EnableWindow $R3 0 ${|}
+      ${IfThen} $VersionCompareResult = -1 ${|} EnableWindow $R3 0 ${|}
     !endif
     ${NSD_OnClick} $R3 PageReinstallUpdateSelection
 
@@ -302,6 +306,7 @@ Function PageReinstall
     ${EndIf}
 
     ${NSD_SetFocus} $R2
+    ${EndIf}
     nsDialogs::Show
   ${EndIf}
 FunctionEnd
@@ -314,6 +319,11 @@ Function PageReinstallUpdateSelection
   ${EndIf}
 FunctionEnd
 Function PageLeaveReinstall
+  ; Upgrade: always in-place update
+  ${If} $VersionCompareResult = 1
+    Goto reinst_done
+  ${EndIf}
+
   ${NSD_GetState} $R2 $R1
 
   ; If migrating from Wix, always uninstall
@@ -495,6 +505,9 @@ LangString unKeepWebsites ${LANG_ENGLISH} "Keep websites"
 LangString unKeepWebsitesPath ${LANG_ENGLISH} "C:\devstackbox\www"
 LangString unKeepAppData ${LANG_ENGLISH} "Keep application data"
 LangString unKeepAppDataDesc ${LANG_ENGLISH} "Application data includes:$\r$\n$\r$\n- MySQL databases$\r$\n- Configuration files$\r$\n- Logs$\r$\n- SSL certificates$\r$\n$\r$\nLocation:$\r$\n%LOCALAPPDATA%\devstackbox"
+LangString upgradeDetected ${LANG_ENGLISH} "Existing installation detected.$\r$\n$\r$\nDevStackBox will be upgraded to version ${VERSION}."
+LangString upgradeHeader ${LANG_ENGLISH} "Update DevStackBox"
+LangString upgradeSubHeader ${LANG_ENGLISH} "Click Next to upgrade, or Cancel to exit."
 
 Function .onInit
   ${GetOptions} $CMDLINE "/P" $PassiveMode
@@ -668,6 +681,8 @@ Section Install
     File /a "/oname={{this}}" "{{no-escape @key}}"
   {{/each}}
 
+  DetailPrint ""
+
   !insertmacro LogPhase 3 7 "Validating installation"
   !insertmacro ValidateInstallation
 
@@ -729,6 +744,10 @@ Section Install
     WriteRegStr SHCTX "${UNINSTKEY}" "HelpLink" "${HOMEPAGE}"
   !endif
 
+  !ifmacrodef NSIS_HOOK_POSTINSTALL
+    !insertmacro NSIS_HOOK_POSTINSTALL
+  !endif
+
   ; Create start menu shortcut
   !insertmacro LogPhase 5 7 "Creating shortcuts"
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
@@ -741,10 +760,6 @@ Section Install
   ${OrIf} ${Silent}
     Call CreateOrUpdateDesktopShortcut
   ${EndIf}
-
-  !ifmacrodef NSIS_HOOK_POSTINSTALL
-    !insertmacro NSIS_HOOK_POSTINSTALL
-  !endif
 
   !insertmacro LogPhase 6 7 "Finalizing installation"
 
