@@ -73,6 +73,8 @@ Var LogStartTick
 Var ValidationFailures
 Var LogApacheStopped
 Var LogMysqlStopped
+; Declared before hooks so Functions in hooks.nsh can reference $UpdateMode.
+Var UpdateMode
 
 {{#if installer_hooks}}
 !include "{{installer_hooks}}"
@@ -114,7 +116,6 @@ Var LogMysqlStopped
 !define STARTMENUFOLDER "{{start_menu_folder}}"
 
 Var PassiveMode
-Var UpdateMode
 Var NoShortcutMode
 Var WixMode
 Var OldMainBinaryName
@@ -469,6 +470,12 @@ Function PageLeaveReinstall
       Abort
     ${EndIf}
   reinst_done:
+  ; Early stop on upgrade so Apache/MySQL exit while the user is on the directory page.
+  ${If} $UpdateMode = 1
+    StrCpy $INSTDIR "C:\devstackbox"
+    !insertmacro DsbDebugLog "PageLeaveReinstall: early StopServicesBeforeUpgrade"
+    !insertmacro StopServicesBeforeUpgrade
+  ${EndIf}
   !insertmacro DsbDebugLog "PageLeaveReinstall leaving"
 FunctionEnd
 
@@ -891,12 +898,13 @@ Section Install
   !insertmacro DsbDebugLog "Section Install entered"
   SetOutPath $INSTDIR
 
+  ; Close DevStackBox first - then PREINSTALL stops Apache/MySQL and preserves www.
+  !insertmacro CheckIfAppIsRunning "${MAINBINARYNAME}.exe" "${PRODUCTNAME}"
+  DetailPrint "Application is not running."
+
   !ifmacrodef NSIS_HOOK_PREINSTALL
     !insertmacro NSIS_HOOK_PREINSTALL
   !endif
-
-  !insertmacro CheckIfAppIsRunning "${MAINBINARYNAME}.exe" "${PRODUCTNAME}"
-  DetailPrint "Application is not running."
 
   !insertmacro LogPhase 2 7 "Installing application files"
 

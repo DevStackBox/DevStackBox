@@ -90,19 +90,62 @@
   SetDetailsPrint textonly
 !macroend
 
-!macro ForceStopInstDirProcesses
-  ; Prefer taskkill (reliable); ignore errors when process is already gone.
+; Kill processes whose Win32_Process.ExecutablePath is under $INSTDIR only.
+; Implemented as Functions (not macros with labels) so callers can invoke repeatedly
+; without NSIS "label already declared" errors.
+!macro DsbForceKillImageUnderInstDir imageName
+  Push $0
   SetDetailsPrint none
-  nsExec::Exec 'taskkill /F /IM httpd.exe /T'
-  Pop $0
-  nsExec::Exec 'taskkill /F /IM mysqld.exe /T'
-  Pop $0
-  nsExec::Exec 'taskkill /F /IM php-cgi.exe /T'
-  Pop $0
-  ; Path-scoped php.exe only under install dir (avoid killing unrelated PHP).
-  nsExec::Exec 'powershell -NoProfile -Command "Get-Process -Name php -ErrorAction SilentlyContinue | Where-Object { $$_.Path -like ''$INSTDIR*'' } | Stop-Process -Force -ErrorAction SilentlyContinue"'
+  nsExec::Exec 'powershell -NoProfile -NonInteractive -Command "Get-CimInstance Win32_Process | Where-Object { $$_.Name -eq ''${imageName}'' -and $$_.ExecutablePath -and ($$_.ExecutablePath -like ''$INSTDIR*'') } | ForEach-Object { Stop-Process -Id $$_.ProcessId -Force -ErrorAction SilentlyContinue }; exit 0"'
   Pop $0
   SetDetailsPrint textonly
+  Pop $0
+!macroend
+
+Function DsbForceStopInstDirProcesses
+  ; Path-scoped PID kill with retries (matches Rust stop_apache / stop_mysql cadence).
+  ; Main app binary is killed by the ForceStopInstDirProcesses macro wrapper
+  ; (MAINBINARYNAME is not defined yet when this function is compiled from hooks.nsh).
+  Push $R6
+  StrCpy $R6 0
+  force_stop_retry:
+    !insertmacro DsbForceKillImageUnderInstDir "httpd.exe"
+    !insertmacro DsbForceKillImageUnderInstDir "mysqld.exe"
+    !insertmacro DsbForceKillImageUnderInstDir "php-cgi.exe"
+    !insertmacro DsbForceKillImageUnderInstDir "php.exe"
+    IntOp $R6 $R6 + 1
+    IntCmp $R6 4 force_stop_done
+    Sleep 750
+    Goto force_stop_retry
+  force_stop_done:
+  Pop $R6
+FunctionEnd
+
+Function un.DsbForceStopInstDirProcesses
+  Push $R6
+  StrCpy $R6 0
+  un_force_stop_retry:
+    !insertmacro DsbForceKillImageUnderInstDir "httpd.exe"
+    !insertmacro DsbForceKillImageUnderInstDir "mysqld.exe"
+    !insertmacro DsbForceKillImageUnderInstDir "php-cgi.exe"
+    !insertmacro DsbForceKillImageUnderInstDir "php.exe"
+    IntOp $R6 $R6 + 1
+    IntCmp $R6 4 un_force_stop_done
+    Sleep 750
+    Goto un_force_stop_retry
+  un_force_stop_done:
+  Pop $R6
+FunctionEnd
+
+; Macro expands at call site so ${MAINBINARYNAME} is available.
+!macro ForceStopInstDirProcesses
+  Call DsbForceStopInstDirProcesses
+  !insertmacro DsbForceKillImageUnderInstDir "${MAINBINARYNAME}.exe"
+!macroend
+
+!macro un.ForceStopInstDirProcesses
+  Call un.DsbForceStopInstDirProcesses
+  !insertmacro DsbForceKillImageUnderInstDir "${MAINBINARYNAME}.exe"
 !macroend
 
 ; ---------------------------------------------------------------------------
@@ -148,12 +191,14 @@
 ; ---------------------------------------------------------------------------
 
 Function DsbProcessRunningUnderInstDir
+  ; Input: process base name without .exe (e.g. "httpd"). Returns 0=running under INSTDIR, 1=not.
+  ; Uses Win32_Process.ExecutablePath - Get-Process.Path can be empty and false-negative.
   Exch $R0
   Push $R1
   Push $R2
   StrCpy $R2 "$INSTDIR"
   SetDetailsPrint none
-  nsExec::Exec 'powershell -NoProfile -Command "if (Get-Process -Name ''$R0'' -ErrorAction SilentlyContinue | Where-Object { $$_.Path -like ''$R2*'' }) { exit 0 } else { exit 1 }"'
+  nsExec::Exec 'powershell -NoProfile -NonInteractive -Command "if (Get-CimInstance Win32_Process | Where-Object { $$_.Name -eq ''$R0.exe'' -and $$_.ExecutablePath -and ($$_.ExecutablePath -like ''$R2*'') }) { exit 0 } else { exit 1 }"'
   Pop $R1
   SetDetailsPrint textonly
   StrCmp $R1 "0" running notrunning
@@ -212,7 +257,9 @@ Function DsbStopNamedService
 
   DetailPrint "$R1 did not stop within the expected time."
   DetailPrint "Attempting forced shutdown..."
-  !insertmacro ForceStopInstDirProcesses
+  ; Call function directly - hooks.nsh is included before MAINBINARYNAME is defined,
+  ; so the ForceStopInstDirProcesses macro (which expands MAINBINARYNAME) cannot be used here.
+  Call DsbForceStopInstDirProcesses
   Sleep 1000
   stop_ok:
   DetailPrint "$R1 stopped."
@@ -220,8 +267,29 @@ Function DsbStopNamedService
   Pop $R3
 FunctionEnd
 
-!macro StopServicesForUpgrade
+Function DsbStopServicesBeforeUpgrade
+  ; Run when upgrading, or whenever DevStackBox httpd/mysqld is still running under INSTDIR
+  ; (covers same-version reinstall and missed UpdateMode from registry quirks).
+  Push $R5
+  StrCpy $R5 0
   ${If} $UpdateMode = 1
+    StrCpy $R5 1
+  ${Else}
+    Push "httpd"
+    Call DsbProcessRunningUnderInstDir
+    Pop $R0
+    ${If} $R0 = 0
+      StrCpy $R5 1
+    ${EndIf}
+    Push "mysqld"
+    Call DsbProcessRunningUnderInstDir
+    Pop $R0
+    ${If} $R0 = 0
+      StrCpy $R5 1
+    ${EndIf}
+  ${EndIf}
+
+  ${If} $R5 = 1
     DetailPrint "Stopping services before upgrade..."
     ; Resolve user config via env — never SetShellVarContext current here
     ; (that flips SHCTX to HKCU and breaks perMachine registry writes).
@@ -241,15 +309,15 @@ FunctionEnd
     Call DsbStopNamedService
 
     DetailPrint "Ensuring no service processes remain..."
-    !insertmacro ForceStopInstDirProcesses
-    Sleep 1500
+    Call DsbForceStopInstDirProcesses
+    Sleep 1000
 
     Push "httpd"
     Call DsbProcessRunningUnderInstDir
     Pop $R0
     StrCmp $R0 1 mysql_check_after_force
-      DetailPrint "httpd still running after force stop — retrying..."
-      !insertmacro ForceStopInstDirProcesses
+      DetailPrint "httpd still running after force stop - retrying..."
+      Call DsbForceStopInstDirProcesses
       Sleep 1500
       Push "httpd"
       Call DsbProcessRunningUnderInstDir
@@ -262,8 +330,8 @@ FunctionEnd
     Call DsbProcessRunningUnderInstDir
     Pop $R0
     StrCmp $R0 1 services_force_done
-      DetailPrint "mysqld still running after force stop — retrying..."
-      !insertmacro ForceStopInstDirProcesses
+      DetailPrint "mysqld still running after force stop - retrying..."
+      Call DsbForceStopInstDirProcesses
       Sleep 1500
       Push "mysqld"
       Call DsbProcessRunningUnderInstDir
@@ -274,6 +342,11 @@ FunctionEnd
     services_force_done:
     DetailPrint "Services stopped."
   ${EndIf}
+  Pop $R5
+FunctionEnd
+
+!macro StopServicesBeforeUpgrade
+  Call DsbStopServicesBeforeUpgrade
 !macroend
 
 !macro ProtectWwwBeforeInstall
@@ -305,12 +378,13 @@ FunctionEnd
 ; ---------------------------------------------------------------------------
 
 Function un.DsbProcessRunningUnderInstDir
+  ; Input: process base name without .exe. Returns 0=running under INSTDIR, 1=not.
   Exch $R0
   Push $R1
   Push $R2
   StrCpy $R2 "$INSTDIR"
   SetDetailsPrint none
-  nsExec::Exec 'powershell -NoProfile -Command "if (Get-Process -Name ''$R0'' -ErrorAction SilentlyContinue | Where-Object { $$_.Path -like ''$R2*'' }) { exit 0 } else { exit 1 }"'
+  nsExec::Exec 'powershell -NoProfile -NonInteractive -Command "if (Get-CimInstance Win32_Process | Where-Object { $$_.Name -eq ''$R0.exe'' -and $$_.ExecutablePath -and ($$_.ExecutablePath -like ''$R2*'') }) { exit 0 } else { exit 1 }"'
   Pop $R1
   SetDetailsPrint textonly
   StrCmp $R1 "0" running notrunning
@@ -389,7 +463,7 @@ Function un.DsbStopNamedService
 
   DetailPrint "$R1 did not stop within the expected time."
   DetailPrint "Attempting forced shutdown..."
-  !insertmacro ForceStopInstDirProcesses
+  Call un.DsbForceStopInstDirProcesses
   Sleep 1000
   Push $R0
   Call un.DsbProcessRunningUnderInstDir
@@ -693,6 +767,8 @@ FunctionEnd
   DetailPrint "Installation completed successfully."
 !macroend
 
+; Called from Section Install AFTER CheckIfAppIsRunning so DevStackBox is closed
+; before we stop Apache/MySQL and before file copy.
 !macro NSIS_HOOK_PREINSTALL
   StrCpy $INSTDIR "C:\devstackbox"
   !insertmacro InstallBegin
@@ -700,17 +776,21 @@ FunctionEnd
   DetailPrint "Install location: C:\devstackbox"
   ${If} $UpdateMode = 1
     DetailPrint "Existing installation detected."
-    !insertmacro StopServicesForUpgrade
-    ; Second safety net immediately before file copy
-    !insertmacro ForceStopInstDirProcesses
-    Sleep 500
   ${EndIf}
+  ; Path-scoped kill of main binary (backup if CheckIfAppIsRunning left a zombie)
+  !insertmacro DsbForceKillImageUnderInstDir "${MAINBINARYNAME}.exe"
+  Sleep 300
+  !insertmacro StopServicesBeforeUpgrade
+  ; Final safety net immediately before www preserve / file copy
+  !insertmacro ForceStopInstDirProcesses
+  Sleep 500
   !insertmacro ProtectWwwBeforeInstall
   ${If} $UpdateMode = 1
     DetailPrint "Upgrading to ${VERSION}..."
   ${EndIf}
   !insertmacro LogPhaseEnd
 !macroend
+
 
 !macro NSIS_HOOK_POSTINSTALL
   !insertmacro RestoreWwwAfterInstall
