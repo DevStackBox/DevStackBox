@@ -32,6 +32,29 @@ ManifestDPIAwareness PerMonitorV2
 ${StrCase}
 ${StrLoc}
 
+; Uncomment for upgrade-crash investigation; comment out before release.
+!define DEBUG_UPGRADE
+
+!ifdef DEBUG_UPGRADE
+  !macro DsbDebugPrint msg
+    DetailPrint "DEBUG: ${msg}"
+  !macroend
+  !macro DsbDebugMsg msg
+    MessageBox MB_OK "DEBUG: ${msg}"
+  !macroend
+  !macro DsbDebugCheckPlugin label
+    IfErrors 0 +2
+      DetailPrint "DEBUG: Plugin error after ${label}"
+  !macroend
+!else
+  !macro DsbDebugPrint msg
+  !macroend
+  !macro DsbDebugMsg msg
+  !macroend
+  !macro DsbDebugCheckPlugin label
+  !macroend
+!endif
+
 Var LogStartTick
 Var ValidationFailures
 Var LogApacheStopped
@@ -82,6 +105,7 @@ Var NoShortcutMode
 Var WixMode
 Var OldMainBinaryName
 Var VersionCompareResult
+Var InstalledVersion
 
 Name "${PRODUCTNAME}"
 BrandingText "${COPYRIGHT}"
@@ -193,6 +217,7 @@ VIAddVersionKey "ProductVersion" "${VERSION}"
 Var ReinstallPageCheck
 Page custom PageReinstall PageLeaveReinstall
 Function PageReinstall
+  !insertmacro DsbDebugPrint "PageReinstall entered"
   ; Uninstall previous WiX installation if exists.
   ;
   ; A WiX installer stores the installation info in registry
@@ -237,9 +262,17 @@ Function PageReinstall
   ${EndIf}
   ${IfThen} $R0 == "" ${|} StrCpy $R4 "$(unknown)" ${|}
 
-  nsis_tauri_utils::SemverCompare "${VERSION}" $R0
+  StrCpy $InstalledVersion $R0
+  nsis_tauri_utils::SemverCompare "${VERSION}" $InstalledVersion
   Pop $R0
   StrCpy $VersionCompareResult $R0
+  !insertmacro DsbDebugPrint "PageReinstall compare"
+  !insertmacro DsbDebugPrint "InstalledVersion=$InstalledVersion"
+  !insertmacro DsbDebugPrint "NewVersion=${VERSION}"
+  !insertmacro DsbDebugPrint "VersionCompareResult=$VersionCompareResult"
+  !insertmacro DsbDebugPrint "UpdateMode=$UpdateMode"
+  !insertmacro DsbDebugCheckPlugin "SemverCompare"
+  !insertmacro DsbDebugMsg "PageReinstall$\nInstalled: $InstalledVersion$\nNew: ${VERSION}$\nResult: $VersionCompareResult$\nUpdateMode: $UpdateMode"
   ; Reinstalling the same version
   ${If} $R0 = 0
     StrCpy $R1 "$(alreadyInstalledLong)"
@@ -276,6 +309,7 @@ Function PageReinstall
   ${Else}
     nsDialogs::Create 1018
     Pop $R4
+    !insertmacro DsbDebugCheckPlugin "nsDialogs::Create"
     ${IfThen} $(^RTL) = 1 ${|} nsDialogs::SetRTL $(^RTL) ${|}
 
     ${NSD_CreateLabel} 0 0 100% 24u $R1
@@ -308,9 +342,11 @@ Function PageReinstall
     ${NSD_SetFocus} $R2
     ${EndIf}
     nsDialogs::Show
+    !insertmacro DsbDebugCheckPlugin "nsDialogs::Show"
   ${EndIf}
 FunctionEnd
 Function PageReinstallUpdateSelection
+  !insertmacro DsbDebugPrint "PageReinstallUpdateSelection"
   ${NSD_GetState} $R2 $R1
   ${If} $R1 == ${BST_CHECKED}
     StrCpy $ReinstallPageCheck 1
@@ -319,24 +355,23 @@ Function PageReinstallUpdateSelection
   ${EndIf}
 FunctionEnd
 Function PageLeaveReinstall
-  ; Upgrade: always in-place update
-  ${If} $VersionCompareResult = 1
-    Goto reinst_done
-  ${EndIf}
+  !insertmacro DsbDebugMsg "PageLeaveReinstall entered$\nInstalledVersion=$InstalledVersion$\nNewVersion=${VERSION}$\nVersionCompareResult=$VersionCompareResult$\nUpdateMode=$UpdateMode"
 
+  ; Upgrade: always in-place update — never touch radio controls
+  StrCmp $VersionCompareResult 1 reinst_done
+  StrCmp $UpdateMode 1 reinst_done
+
+  !insertmacro DsbDebugPrint "PageLeaveReinstall: reading radio buttons..."
   ${NSD_GetState} $R2 $R1
+  !insertmacro DsbDebugCheckPlugin "NSD_GetState R2"
 
   ; If migrating from Wix, always uninstall
   ${If} $WixMode = 1
     Goto reinst_uninstall
   ${EndIf}
 
-  ; In update mode, always proceeds without uninstalling
-  ${If} $UpdateMode = 1
-    Goto reinst_done
-  ${EndIf}
-
   ; $R0 holds whether same(0)/upgrading(1)/downgrading(-1) version
+  StrCpy $R0 $VersionCompareResult
   ; $R1 holds the radio buttons state:
   ;   1 => first choice was selected
   ;   0 => second choice was selected
@@ -654,6 +689,7 @@ Section WebView2
 SectionEnd
 
 Section Install
+  !insertmacro DsbDebugPrint "Section Install entered"
   SetOutPath $INSTDIR
 
   !ifmacrodef NSIS_HOOK_PREINSTALL
@@ -895,6 +931,7 @@ Function Skip
 FunctionEnd
 
 Function SkipIfPassive
+  !insertmacro DsbDebugPrint "SkipIfPassive"
   ${IfThen} $PassiveMode = 1  ${|} Abort ${|}
 FunctionEnd
 Function un.SkipIfPassive
@@ -903,15 +940,21 @@ FunctionEnd
 
 ; ARCH-001: force install dir to C:\devstackbox (directory page is shown read-only).
 Function SetFixedInstallDir
+  !insertmacro DsbDebugMsg "SetFixedInstallDir"
   StrCpy $INSTDIR "C:\devstackbox"
 FunctionEnd
 
 Function DisableInstallDirEdit
+  !insertmacro DsbDebugMsg "DisableInstallDirEdit"
   FindWindow $0 "#32770" "" $HWNDPARENT
+  StrCmp $0 0 disable_dir_done
   GetDlgItem $1 $0 1006
+  StrCmp $1 0 disable_dir_done
   EnableWindow $1 0
   GetDlgItem $1 $0 1019
+  StrCmp $1 0 disable_dir_done
   EnableWindow $1 0
+  disable_dir_done:
 FunctionEnd
 
 Function CreateOrUpdateStartMenuShortcut

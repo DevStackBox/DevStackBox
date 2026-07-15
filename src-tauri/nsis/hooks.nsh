@@ -175,8 +175,10 @@ FunctionEnd
 
 Function DsbStopNamedService
   Push $R3
+  Push $R4
+  StrCpy $R4 $R0
   DetailPrint "Stopping $R1..."
-  Push $R0
+  Push $R4
   Call DsbProcessRunningUnderInstDir
   Pop $R3
   StrCmp $R3 1 stop_done
@@ -186,7 +188,7 @@ Function DsbStopNamedService
   Pop $R3
   SetDetailsPrint textonly
 
-  Push $R0
+  Push $R4
   Call DsbWaitProcessExitUnderInstDir
   Pop $R3
   StrCmp $R3 0 stop_ok
@@ -198,6 +200,7 @@ Function DsbStopNamedService
   stop_ok:
   DetailPrint "$R1 stopped."
   stop_done:
+  Pop $R4
   Pop $R3
 FunctionEnd
 
@@ -224,7 +227,16 @@ FunctionEnd
 !macro ProtectWwwBeforeInstall
   ${If} ${FileExists} "$INSTDIR\www\*.*"
     DetailPrint "Preserving existing websites..."
+    ${If} ${FileExists} "$INSTDIR\_www_preserve"
+      ClearErrors
+      RmDir /r /REBOOTOK "$INSTDIR\_www_preserve"
+      IfErrors 0 +2
+        DetailPrint "Warning: could not remove stale _www_preserve folder."
+    ${EndIf}
+    ClearErrors
     Rename "$INSTDIR\www" "$INSTDIR\_www_preserve"
+    IfErrors 0 +2
+      DetailPrint "Warning: could not preserve www folder (files may be in use)."
   ${EndIf}
 !macroend
 
