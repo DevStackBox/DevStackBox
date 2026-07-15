@@ -33,7 +33,7 @@ ${StrCase}
 ${StrLoc}
 
 ; Uncomment for upgrade-crash investigation; comment out before release.
-!define DEBUG_UPGRADE
+; !define DEBUG_UPGRADE
 
 !ifdef DEBUG_UPGRADE
   !macro DsbDebugPrint msg
@@ -357,7 +357,7 @@ FunctionEnd
 Function PageLeaveReinstall
   !insertmacro DsbDebugMsg "PageLeaveReinstall entered$\nInstalledVersion=$InstalledVersion$\nNewVersion=${VERSION}$\nVersionCompareResult=$VersionCompareResult$\nUpdateMode=$UpdateMode"
 
-  ; Upgrade: always in-place update — never touch radio controls
+  ; Upgrade: always in-place update - never touch radio controls
   StrCmp $VersionCompareResult 1 reinst_done
   StrCmp $UpdateMode 1 reinst_done
 

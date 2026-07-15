@@ -1,15 +1,15 @@
 # DevStackBox UI Guidelines
 
-Stub — expand as the design system matures. Writing rules: [WRITING_GUIDELINES.md](WRITING_GUIDELINES.md).
+Stub - expand as the design system matures. Writing rules: [WRITING_GUIDELINES.md](WRITING_GUIDELINES.md).
 
 ## Button variants
 
-| Action | Variant |
-|--------|---------|
+| Action                      | Variant             |
+| --------------------------- | ------------------- |
 | Delete, destructive actions | `destructive` (red) |
-| Cancel | `secondary` |
-| Save, primary action | `default` / primary |
-| Close, dismiss | `outline` |
+| Cancel                      | `secondary`         |
+| Save, primary action        | `default` / primary |
+| Close, dismiss              | `outline`           |
 
 ## Confirmation dialogs
 

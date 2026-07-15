@@ -1,6 +1,6 @@
 # DevStackBox Icon Guidelines
 
-Stub — expand later.
+Stub - expand later.
 
 ## Library
 

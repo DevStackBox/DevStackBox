@@ -34,10 +34,10 @@ Target tone: VS Code, Windows Terminal, JetBrains, Visual Studio.
 
 State facts. Do not apologize in errors or system messages.
 
-| Avoid | Use |
-|-------|-----|
+| Avoid                        | Use                     |
+| ---------------------------- | ----------------------- |
 | Sorry, something went wrong. | Unable to start Apache. |
-| Sorry, backup failed. | Backup failed. |
+| Sorry, backup failed.        | Backup failed.          |
 
 ---
 
@@ -49,12 +49,12 @@ Use one vocabulary. See [TERMINOLOGY.md](TERMINOLOGY.md) for the full glossary.
 
 ## Capitalization
 
-| Context | Style | Examples |
-|---------|-------|----------|
-| Navigation | Title Case | Dashboard, Services, Settings |
-| Card titles | Title Case | Apache, PHP Versions, Virtual Hosts |
-| Descriptions | Sentence case | Manage Apache configuration and virtual hosts. |
-| Buttons | Title Case verb | Start, Stop, Refresh |
+| Context      | Style           | Examples                                       |
+| ------------ | --------------- | ---------------------------------------------- |
+| Navigation   | Title Case      | Dashboard, Services, Settings                  |
+| Card titles  | Title Case      | Apache, PHP Versions, Virtual Hosts            |
+| Descriptions | Sentence case   | Manage Apache configuration and virtual hosts. |
+| Buttons      | Title Case verb | Start, Stop, Refresh                           |
 
 ---
 
@@ -96,7 +96,7 @@ Backup completed.
 
 ## Errors
 
-Three parts — always actionable:
+Three parts - always actionable:
 
 1. What failed
 2. Why
@@ -143,7 +143,7 @@ Apache
 Running
 ```
 
-or `Status: Running` — not `Apache -> Running`.
+or `Status: Running` - not `Apache -> Running`.
 
 ---
 
@@ -173,10 +173,10 @@ Do not mix: `a moment ago`, `secs ago`, `few seconds ago`.
 
 ## Punctuation and icons
 
-- In-progress: three dots — `Checking for Updates...`
-- Completed: period — `Apache stopped.`
+- In-progress: three dots - `Checking for Updates...`
+- Completed: period - `Apache stopped.`
 - No emoji in product UI or project docs
-- No Unicode decorative symbols in text — use Lucide icons in the app UI
+- No Unicode decorative symbols in text - use Lucide icons in the app UI
 - Do not replace selection indicators with the word `Selected`
 
 ---
