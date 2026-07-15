@@ -433,6 +433,7 @@ Var KeepUserDataCheckbox
 Var KeepUserDataCheckboxState
 Var KeepWwwCheckbox
 Var KeepWwwCheckboxState
+Var LogStartTick
 
 UninstPage custom un.UninstallOptionsShow un.UninstallOptionsLeave
 
@@ -644,6 +645,8 @@ Section Install
 
   !insertmacro CheckIfAppIsRunning "${MAINBINARYNAME}.exe" "${PRODUCTNAME}"
 
+  !insertmacro LogPhase 2 7 "Installing application files"
+
   ; Copy main executable
   File "${MAINBINARYSRCPATH}"
 
@@ -659,6 +662,9 @@ Section Install
   {{#each binaries}}
     File /a "/oname={{this}}" "{{no-escape @key}}"
   {{/each}}
+
+  !insertmacro LogPhase 3 7 "Validating installation"
+  !insertmacro ValidateInstallation
 
   ; Create file associations
   {{#each file_associations as |association| ~}}
@@ -719,6 +725,7 @@ Section Install
   !endif
 
   ; Create start menu shortcut
+  !insertmacro LogPhase 5 7 "Creating shortcuts"
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
     Call CreateOrUpdateStartMenuShortcut
   !insertmacro MUI_STARTMENU_WRITE_END
@@ -733,6 +740,10 @@ Section Install
   !ifmacrodef NSIS_HOOK_POSTINSTALL
     !insertmacro NSIS_HOOK_POSTINSTALL
   !endif
+
+  !insertmacro LogPhase 6 7 "Finalizing installation"
+  !insertmacro InstallSummary
+  !insertmacro LogDuration
 
   ; Auto close this page for passive mode
   ${If} $PassiveMode = 1
@@ -786,32 +797,18 @@ FunctionEnd
 
 Section Uninstall
 
-  !ifmacrodef NSIS_HOOK_PREUNINSTALL
-    !insertmacro NSIS_HOOK_PREUNINSTALL
-  !endif
+  !insertmacro UninstallBegin
 
+  !insertmacro LogPhase 1 8 "Checking application"
   !insertmacro CheckIfAppIsRunning "${MAINBINARYNAME}.exe" "${PRODUCTNAME}"
 
-  ; ARCH-001: Temporarily rename www so the Delete loops below cannot touch its contents.
-  ; It will be moved back (C:\devstackbox\www) after deletion. Skipped during updates.
-  ${If} $KeepWwwCheckboxState = 1
-  ${AndIf} $UpdateMode <> 1
-    Rename "$INSTDIR\www" "$INSTDIR\_www_keep"
-  ${EndIf}
+  !insertmacro LogPhase 2 8 "Stopping services"
+  !insertmacro StopDevStackBoxServices
 
-  ; Delete the app directory and its content from disk
-  ; Copy main executable
-  Delete "$INSTDIR\${MAINBINARYNAME}.exe"
+  !insertmacro LogPhase 3 8 "Preserving user data"
+  !insertmacro PreserveWebsiteFolder
 
-  ; Delete resources
-  {{#each resources}}
-    Delete "$INSTDIR\\{{this.[1]}}"
-  {{/each}}
-
-  ; Delete external binaries
-  {{#each binaries}}
-    Delete "$INSTDIR\\{{this}}"
-  {{/each}}
+  !insertmacro LogPhase 4 8 "Removing application files"
 
   ; Delete app associations
   {{#each file_associations as |association| ~}}
@@ -828,87 +825,25 @@ Section Uninstall
     ${EndIf}
   {{/each}}
 
-
-  ; Delete uninstaller
-  Delete "$INSTDIR\uninstall.exe"
-
-  ; ARCH-001: Restore www before directory cleanup - RMDir will then skip it (non-empty)
-  ${If} $KeepWwwCheckboxState = 1
-  ${AndIf} $UpdateMode <> 1
-    ${If} ${FileExists} "$INSTDIR\_www_keep\*.*"
-      Rename "$INSTDIR\_www_keep" "$INSTDIR\www"
-    ${EndIf}
-  ${EndIf}
+  !insertmacro DeleteInstallFiles
 
   {{#each resources_ancestors}}
   RMDir /REBOOTOK "$INSTDIR\\{{this}}"
   {{/each}}
-  RMDir "$INSTDIR"
+  RMDir /REBOOTOK "$INSTDIR"
 
-  ; Remove shortcuts if not updating
-  ${If} $UpdateMode <> 1
-    !insertmacro DeleteAppUserModelId
+  !insertmacro LogPhase 5 8 "Removing application data"
+  !insertmacro DeleteUserData
 
-    ; Remove start menu shortcut
-    !insertmacro MUI_STARTMENU_GETFOLDER Application $AppStartMenuFolder
-    !insertmacro IsShortcutTarget "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
-    Pop $0
-    ${If} $0 = 1
-      !insertmacro UnpinShortcut "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk"
-      Delete "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk"
-      RMDir "$SMPROGRAMS\$AppStartMenuFolder"
-    ${EndIf}
-    !insertmacro IsShortcutTarget "$SMPROGRAMS\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
-    Pop $0
-    ${If} $0 = 1
-      !insertmacro UnpinShortcut "$SMPROGRAMS\${PRODUCTNAME}.lnk"
-      Delete "$SMPROGRAMS\${PRODUCTNAME}.lnk"
-    ${EndIf}
+  !insertmacro LogPhase 6 8 "Cleaning shortcuts"
+  !insertmacro CleanShortcutsUninstall
 
-    ; Remove desktop shortcuts
-    !insertmacro IsShortcutTarget "$DESKTOP\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
-    Pop $0
-    ${If} $0 = 1
-      !insertmacro UnpinShortcut "$DESKTOP\${PRODUCTNAME}.lnk"
-      Delete "$DESKTOP\${PRODUCTNAME}.lnk"
-    ${EndIf}
-  ${EndIf}
+  !insertmacro LogPhase 7 8 "Cleaning registry"
+  !insertmacro CleanRegistryUninstall
 
-  ; Remove registry information for add/remove programs
-  !if "${INSTALLMODE}" == "both"
-    DeleteRegKey SHCTX "${UNINSTKEY}"
-  !else if "${INSTALLMODE}" == "perMachine"
-    DeleteRegKey HKLM "${UNINSTKEY}"
-  !else
-    DeleteRegKey HKCU "${UNINSTKEY}"
-  !endif
-
-  ; Removes the Autostart entry for ${PRODUCTNAME} from the HKCU Run key if it exists.
-  ; This ensures the program does not launch automatically after uninstallation if it exists.
-  ; If it doesn't exist, it does nothing.
-  ; We do this when not updating (to preserve the registry value on updates)
-  ${If} $UpdateMode <> 1
-    DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${PRODUCTNAME}"
-  ${EndIf}
-
-  ; Remove user data unless the user chose to keep it (and not during updates).
-  ${If} $KeepUserDataCheckboxState = 0
-  ${AndIf} $UpdateMode <> 1
-    ; Clear the install location $INSTDIR from registry
-    DeleteRegKey SHCTX "${MANUPRODUCTKEY}"
-    DeleteRegKey /ifempty SHCTX "${MANUKEY}"
-
-    ; Clear the install language from registry
-    DeleteRegValue HKCU "${MANUPRODUCTKEY}" "Installer Language"
-    DeleteRegKey /ifempty HKCU "${MANUPRODUCTKEY}"
-    DeleteRegKey /ifempty HKCU "${MANUKEY}"
-
-    SetShellVarContext current
-    RmDir /r "$APPDATA\${BUNDLEID}"
-    RmDir /r "$LOCALAPPDATA\${BUNDLEID}"
-    ; ARCH-001: also remove the custom user-data dir used by DevStackBox
-    RmDir /r "$LOCALAPPDATA\devstackbox"
-  ${EndIf}
+  !insertmacro LogPhase 8 8 "Finalizing"
+  !insertmacro UninstallSummary
+  !insertmacro LogDuration
 
   !ifmacrodef NSIS_HOOK_POSTUNINSTALL
     !insertmacro NSIS_HOOK_POSTUNINSTALL
