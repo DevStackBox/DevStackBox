@@ -17,7 +17,7 @@
 
 Do NOT report security issues in public GitHub Issues.
 
-Send to: **shiv@srapsware.com**
+Send to: **security@devstackbox.com**
 
 Include:
 

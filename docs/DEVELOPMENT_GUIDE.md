@@ -29,7 +29,7 @@ cargo --version
 ## 2. First-Time Setup
 
 ```bash
-git clone https://github.com/ProgrammerNomad/DevStackBox.git
+git clone https://github.com/DevStackBox/DevStackBox.git
 cd DevStackBox
 pnpm install
 ```

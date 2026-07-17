@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { APP_VERSION } from "@/lib/version";
 
 const ISSUE_BASE_URL =
-  "https://github.com/ProgrammerNomad/DevStackBox/issues/new";
+  "https://github.com/DevStackBox/DevStackBox/issues/new";
 
 interface BugReportDialogProps {
   trigger?: React.ReactNode;

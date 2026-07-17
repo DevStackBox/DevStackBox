@@ -2,7 +2,7 @@
 name = "devstackbox"
 version = "0.1.8"
 description = "A lightweight, portable, open-source local development environment for PHP developers"
-authors = ["Nomad Programmer <shiv@srapsware.com>"]
+authors = ["Nomad Programmer <hello@devstackbox.com>"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

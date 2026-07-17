@@ -1,93 +1,62 @@
 # DevStackBox
 
-A lightweight, portable, open-source local development environment for PHP developers on Windows.
+[![Release](https://img.shields.io/github/v/release/DevStackBox/DevStackBox?style=flat-square)](https://github.com/DevStackBox/DevStackBox/releases/latest)
+[![License: MIT](https://img.shields.io/github/license/DevStackBox/DevStackBox?style=flat-square)](LICENSE)
+[![Windows 10/11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?style=flat-square&logo=windows&logoColor=white)](https://github.com/DevStackBox/DevStackBox/releases)
 
-**Author:** Nomad Programmer  
-**Contact:** shiv@srapsware.com  
-**Repository:** [ProgrammerNomad/DevStackBox](https://github.com/ProgrammerNomad/DevStackBox)  
-**Latest release:** [GitHub Releases](https://github.com/ProgrammerNomad/DevStackBox/releases/latest)
+Local PHP development for Windows - Apache, MySQL, PHP, and phpMyAdmin in one desktop app.
 
----
+DevStackBox is free and open source. It gives you a modern interface to start services, edit configs, manage sites, handle SSL, and run backups. One installer, fixed paths, no telemetry.
 
-## What is DevStackBox?
+## Why DevStackBox?
 
-DevStackBox bundles Apache, PHP, MySQL, and phpMyAdmin in a single desktop application with a modern UI for starting services, editing configuration, and managing local websites.
+- **All-in-one** - Apache, PHP, MySQL, and phpMyAdmin in a single setup
+- **Modern UI** - Desktop app built with Tauri and React, not a tray of loose tools
+- **Fixed layout** - Installs to `C:\devstackbox`; app data in `%LOCALAPPDATA%\devstackbox`
+- **Useful extras** - Config editor, SSL, backup/restore, dark/light themes, English and Hindi
+- **Your machine stays yours** - No telemetry; offline-friendly for everyday development
+- **Open source** - MIT license
 
-Install location: `C:\devstackbox`  
-Application data: `%LOCALAPPDATA%\devstackbox`
+If you use XAMPP, Laragon, or WAMP today, DevStackBox targets the same stack with less manual wiring.
 
----
+## Quick start
 
-## Features
+1. Download the latest installer from [GitHub Releases](https://github.com/DevStackBox/DevStackBox/releases/latest).
+2. Run setup (administrator rights required).
+3. Open DevStackBox and start Apache, MySQL, and PHP when you need them.
 
-| Feature | Status |
-|---------|--------|
-| Apache, MySQL, PHP, phpMyAdmin | Working |
-| Config editor and backup/restore | Working |
-| English and Hindi UI | Working |
-| Dark and light mode | Working |
-| NSIS installer | Working |
-| System tray | Partial |
-| Log viewer | Partial |
-| Multiple PHP versions | Partial |
-| Auto-updater | In progress |
+Full guide: [docs/INSTALL.md](docs/INSTALL.md)
 
-Full status: [docs/FEATURE_STATUS.md](docs/FEATURE_STATUS.md)  
-Roadmap: [docs/ROADMAP.md](docs/ROADMAP.md)  
-Release history: [CHANGELOG.md](CHANGELOG.md)
-
----
-
-## Installation
-
-Download the latest release from [GitHub Releases](https://github.com/ProgrammerNomad/DevStackBox/releases/latest).
-
-End-user guide: [docs/INSTALL.md](docs/INSTALL.md)
-
----
-
-## Development
-
-**Prerequisites:** Windows 10/11, Node.js 18+, Rust, Git, pnpm
+## Build from source
 
 ```bash
-git clone https://github.com/ProgrammerNomad/DevStackBox.git
+git clone https://github.com/DevStackBox/DevStackBox.git
 cd DevStackBox
 pnpm install
 pnpm tauri dev
 ```
 
-See [docs/DEVELOPMENT_GUIDE.md](docs/DEVELOPMENT_GUIDE.md) for full setup.
-
----
+You need Windows 10 or 11, Node.js 18+, Rust, pnpm, and Git. See [docs/DEVELOPMENT_GUIDE.md](docs/DEVELOPMENT_GUIDE.md).
 
 ## Documentation
 
-All documentation: [docs/README.md](docs/README.md)  
-Writing standards: [docs/standards/WRITING_GUIDELINES.md](docs/standards/WRITING_GUIDELINES.md)
-
----
+| Guide                                    | Description           |
+| ---------------------------------------- | --------------------- |
+| [Installation](docs/INSTALL.md)          | Install and first run |
+| [Development](docs/DEVELOPMENT_GUIDE.md) | Local build setup     |
+| [Feature status](docs/FEATURE_STATUS.md) | Shipped vs planned    |
+| [Roadmap](docs/ROADMAP.md)               | What is next          |
+| [Changelog](CHANGELOG.md)                | Release history       |
+| [Docs index](docs/README.md)             | Everything else       |
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) before opening a pull request.
 
----
+## Links
 
-## Privacy
-
-No telemetry. No internet required for normal use. See [PRIVACY.md](PRIVACY.md).
-
----
-
-## License
-
-MIT License. See [LICENSE](LICENSE).
-
----
-
-## Support
-
-- [GitHub Issues](https://github.com/ProgrammerNomad/DevStackBox/issues)
-- [GitHub Discussions](https://github.com/ProgrammerNomad/DevStackBox/discussions)
-- [shiv@srapsware.com](mailto:shiv@srapsware.com)
+- Website: [devstackbox.com](https://devstackbox.com)
+- Email: [hello@devstackbox.com](mailto:hello@devstackbox.com)
+- Issues: [GitHub Issues](https://github.com/DevStackBox/DevStackBox/issues)
+- Discussions: [GitHub Discussions](https://github.com/DevStackBox/DevStackBox/discussions)
+- Privacy: [PRIVACY.md](PRIVACY.md) · License: [MIT](LICENSE)

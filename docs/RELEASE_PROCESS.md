@@ -166,7 +166,7 @@ Include these in the GitHub Release description.
    git push origin v0.1.7
    ```
 
-2. Go to [GitHub Releases](https://github.com/ProgrammerNomad/DevStackBox/releases/new)
+2. Go to [GitHub Releases](https://github.com/DevStackBox/DevStackBox/releases/new)
 
 3. Fill in:
    - **Tag:** `v0.1.7`

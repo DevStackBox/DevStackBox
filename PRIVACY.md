@@ -101,4 +101,4 @@ If this policy changes, the updated version will be in this file in the GitHub r
 
 ## Contact
 
-Questions about privacy: shiv@srapsware.com
+Questions about privacy: hello@devstackbox.com

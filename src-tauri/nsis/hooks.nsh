@@ -18,7 +18,7 @@
 !macroend
 
 ; Seconds-since-midnight for duration logging.
-; Uses FileFunc GetTime — never System::Call (*$9 vs $R9 caused System.dll AV).
+; Uses FileFunc GetTime - never System::Call (*$9 vs $R9 caused System.dll AV).
 !macro DsbLocalTimeStamp outVar
   Push $0
   Push $1
@@ -239,7 +239,7 @@ Function DsbWaitProcessExitUnderInstDir
 FunctionEnd
 
 Function DsbStopNamedService
-  ; Always attempt graceful stop — process detection via Path can false-negative.
+  ; Always attempt graceful stop - process detection via Path can false-negative.
   Push $R3
   Push $R4
   StrCpy $R4 $R0
@@ -291,7 +291,7 @@ Function DsbStopServicesBeforeUpgrade
 
   ${If} $R5 = 1
     DetailPrint "Stopping services before upgrade..."
-    ; Resolve user config via env — never SetShellVarContext current here
+    ; Resolve user config via env - never SetShellVarContext current here
     ; (that flips SHCTX to HKCU and breaks perMachine registry writes).
     ReadEnvStr $R7 "LOCALAPPDATA"
     StrCpy $R7 "$R7\devstackbox\config"

@@ -1,7 +1,7 @@
 # DevStackBox - Official Roadmap
 
 **The single source of truth for what we are building and in what order.**  
-Feature requests and discussions: [GitHub Discussions](https://github.com/ProgrammerNomad/DevStackBox/discussions)
+Feature requests and discussions: [GitHub Discussions](https://github.com/DevStackBox/DevStackBox/discussions)
 
 ---
 

@@ -68,10 +68,10 @@
     "typescript": "^5.7.2",
     "vite": "^6.3.5"
   },
-  "author": "Nomad Programmer <shiv@srapsware.com>",
+  "author": "Nomad Programmer <hello@devstackbox.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ProgrammerNomad/DevStackBox.git"
+    "url": "https://github.com/DevStackBox/DevStackBox.git"
   }
 }

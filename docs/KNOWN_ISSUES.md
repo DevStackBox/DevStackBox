@@ -43,7 +43,7 @@ No open critical issues.
 **Remaining step:**
 Paste the private key content into GitHub repository secrets:
 
-1. Go to `https://github.com/ProgrammerNomad/DevStackBox/settings/secrets/actions`.
+1. Go to `https://github.com/DevStackBox/DevStackBox/settings/secrets/actions`.
 2. Add secret `TAURI_SIGNING_PRIVATE_KEY` - value is the full content of `%USERPROFILE%\.tauri\devstackbox.key`.
 3. `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` can be left empty (key has no password).
 4. Do not commit the private key file or paste it anywhere in the repo.

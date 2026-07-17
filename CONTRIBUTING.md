@@ -28,7 +28,7 @@ DevStackBox is built with:
 
 ### Installation
 ```bash
-git clone https://github.com/ProgrammerNomad/DevStackBox.git
+git clone https://github.com/DevStackBox/DevStackBox.git
 cd DevStackBox
 pnpm install
 pnpm tauri dev
@@ -102,7 +102,7 @@ Priority features (see README.md for full list):
 
 ## 🐛 Reporting Issues
 
-Use [GitHub Issues](https://github.com/ProgrammerNomad/DevStackBox/issues) to report:
+Use [GitHub Issues](https://github.com/DevStackBox/DevStackBox/issues) to report:
 - Bugs
 - Feature requests
 - Documentation improvements
@@ -135,8 +135,8 @@ If applicable
 ## 📞 Contact
 
 - **Author**: Nomad Programmer
-- **Email**: shiv@srapsware.com
-- **GitHub**: [ProgrammerNomad/DevStackBox](https://github.com/ProgrammerNomad/DevStackBox)
+- **Email**: hello@devstackbox.com
+- **GitHub**: [DevStackBox/DevStackBox](https://github.com/DevStackBox/DevStackBox)
 
 ---
 

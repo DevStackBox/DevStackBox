@@ -15,11 +15,11 @@ import { useSystemInfo } from "@/hooks/use-system-info";
 import { useUpdater } from "@/context/updater-context";
 import { APP_VERSION } from "@/lib/version";
 
-const GITHUB_REPO_URL = "https://github.com/ProgrammerNomad/DevStackBox";
+const GITHUB_REPO_URL = "https://github.com/DevStackBox/DevStackBox";
 const GITHUB_ISSUES_URL =
-  "https://github.com/ProgrammerNomad/DevStackBox/issues";
+  "https://github.com/DevStackBox/DevStackBox/issues";
 const GITHUB_DOCS_URL =
-  "https://github.com/ProgrammerNomad/DevStackBox/tree/main/docs";
+  "https://github.com/DevStackBox/DevStackBox/tree/main/docs";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -160,7 +160,7 @@ export function AboutPage() {
             <p className="font-semibold">
               {t("about.author", "Author")}: Nomad Programmer
             </p>
-            <p className="text-sm text-muted-foreground">shiv@srapsware.com</p>
+            <p className="text-sm text-muted-foreground">hello@devstackbox.com</p>
           </div>
 
           {/* Action buttons */}

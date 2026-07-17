@@ -32,7 +32,7 @@ ManifestDPIAwareness PerMonitorV2
 ${StrCase}
 ${StrLoc}
 
-; Comment out for release builds — macros and helpers stay in the project.
+; Comment out for release builds - macros and helpers stay in the project.
 !define DEBUG_UPGRADE
 
 ; Bisection: 0=normal, 1=noop SetFixedInstallDir, 2=noop DisableInstallDirEdit,
@@ -601,7 +601,7 @@ Function DsbDebugFormatLocalTime
   Push $4
   Push $5
   Push $6
-  ; FileFunc GetTime — day, month, year, weekday, hour, minute, second
+  ; FileFunc GetTime - day, month, year, weekday, hour, minute, second
   ; No System::Call (avoids System.dll AV from $9/$R9 mismatch)
   ${GetTime} "" "L" $0 $1 $2 $3 $4 $5 $6
   StrCpy $DebugTimeBuf "$2-$1-$0 $4:$5:$6"
@@ -630,7 +630,7 @@ FunctionEnd
 Function DsbDebugWriteLine
   Push $R8
   Call DsbDebugFormatLocalTime
-  ; 1) Install dir — most reliable on upgrade tests
+  ; 1) Install dir - most reliable on upgrade tests
   CreateDirectory "C:\devstackbox"
   StrCpy $R9 "C:\devstackbox\install-debug.log"
   Push $R9
@@ -639,7 +639,7 @@ Function DsbDebugWriteLine
   StrCpy $R9 "$EXEDIR\devstackbox-install-debug.log"
   Push $R9
   Call DsbDebugWriteOnePath
-  ; 3) LOCALAPPDATA via env — never SetShellVarContext (that flips SHCTX to HKCU
+  ; 3) LOCALAPPDATA via env - never SetShellVarContext (that flips SHCTX to HKCU
   ;    and breaks PageReinstall / perMachine registry reads)
   ReadEnvStr $R8 "LOCALAPPDATA"
   StrCmp $R8 "" debug_write_temp
@@ -736,7 +736,7 @@ FunctionEnd
 
 Function .onInit
   !ifdef DEBUG_UPGRADE
-    ; Inline bootstrap — no helpers, no System::Call — proves .onInit ran
+    ; Inline bootstrap - no helpers, no System::Call - proves .onInit ran
     ClearErrors
     CreateDirectory "C:\devstackbox"
     FileOpen $DebugFile "C:\devstackbox\install-debug.log" a
@@ -1164,7 +1164,7 @@ Function DisableInstallDirEdit
   !insertmacro DsbDebugLog "DisableInstallDirEdit leaving (noop stage 2)"
   Return
 !endif
-  ; MUI sets $HWNDPARENT to the directory page dialog — do not use FindWindow
+  ; MUI sets $HWNDPARENT to the directory page dialog - do not use FindWindow
   GetDlgItem $0 $HWNDPARENT 1006
   StrCmp $0 0 disable_dir_done
   EnableWindow $0 0

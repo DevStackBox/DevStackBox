@@ -23,7 +23,7 @@ $ErrorActionPreference = "Stop"
 # Read version from tauri.conf.json
 $tauriConf = Get-Content "$PSScriptRoot\..\src-tauri\tauri.conf.json" | ConvertFrom-Json
 $version = $tauriConf.version
-$repoOwner = "ProgrammerNomad"
+$repoOwner = "DevStackBox"
 $repoName  = "DevStackBox"
 
 Write-Host "Building latest.json for v$version"

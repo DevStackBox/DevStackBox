@@ -39,7 +39,7 @@ Get-ChildItem "release\" | Format-Table Name, Length, LastWriteTime
 
 Write-Host ""
 Write-Host "🎯 Next Steps:" -ForegroundColor Yellow
-Write-Host "1. Create a new release on GitHub: https://github.com/ProgrammerNomad/DevStackBox/releases/new"
+Write-Host "1. Create a new release on GitHub: https://github.com/DevStackBox/DevStackBox/releases/new"
 Write-Host "2. Tag: v0.1.0-alpha.1"
 Write-Host "3. Title: DevStackBox v0.1.0-alpha.1 - First Alpha Release"
 Write-Host "4. Upload these files as release assets:"
@@ -48,10 +48,10 @@ Write-Host "   - DevStackBox_0.1.0-1_x64-setup.exe"
 Write-Host "5. Use RELEASE_NOTES.md as the release description"
 Write-Host "6. Mark as 'Pre-release' since it is an alpha"
 Write-Host ""
-Write-Host "🔗 GitHub Release URL: https://github.com/ProgrammerNomad/DevStackBox/releases/new" -ForegroundColor Cyan
+Write-Host "🔗 GitHub Release URL: https://github.com/DevStackBox/DevStackBox/releases/new" -ForegroundColor Cyan
 
 # Open GitHub releases page
 $response = Read-Host "Would you like to open the GitHub releases page now? (y/n)"
 if ($response -eq "y" -or $response -eq "Y") {
-    Start-Process "https://github.com/ProgrammerNomad/DevStackBox/releases/new"
+    Start-Process "https://github.com/DevStackBox/DevStackBox/releases/new"
 }

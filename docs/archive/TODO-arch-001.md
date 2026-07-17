@@ -85,7 +85,7 @@ Upgrade path (CRITICAL - more important than clean install): 9. Install v0.1.6 f
 Priority: HIGH
 Status: READY (build complete, latest.json generated)
 
-Files to upload to https://github.com/ProgrammerNomad/DevStackBox/releases/new?tag=v0.1.7
+Files to upload to https://github.com/DevStackBox/DevStackBox/releases/new?tag=v0.1.7
 
 1. src-tauri/target/release/bundle/nsis/DevStackBox_0.1.7_x64-setup.exe
 2. src-tauri/target/release/bundle/nsis/DevStackBox_0.1.7_x64-setup.exe.sig

@@ -2,7 +2,7 @@
 
 ## Quick Install (Alpha)
 
-1. **Download**: Get the latest `.msi` or `.exe` from [Releases](https://github.com/ProgrammerNomad/DevStackBox/releases)
+1. **Download**: Get the latest `.msi` or `.exe` from [Releases](https://github.com/DevStackBox/DevStackBox/releases)
 2. **Install**: Run the installer (no admin rights required)
 3. **Launch**: Start DevStackBox from Start Menu or Desktop
 4. **Start Services**: Click "Start All" to launch Apache, MySQL, and PHP

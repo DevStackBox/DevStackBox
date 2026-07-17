@@ -274,7 +274,7 @@ Most common causes:
 1. Check `docs/KNOWN_ISSUES.md` - your issue may be documented there
 2. Use the Debug panel in dev builds to inspect path resolution
 3. Check the relevant log file in `logs/`
-4. Open a GitHub Issue: [ProgrammerNomad/DevStackBox issues](https://github.com/ProgrammerNomad/DevStackBox/issues)
+4. Open a GitHub Issue: [DevStackBox/DevStackBox issues](https://github.com/DevStackBox/DevStackBox/issues)
    - Include DevStackBox version
    - Include OS version
    - Include the exact error message
