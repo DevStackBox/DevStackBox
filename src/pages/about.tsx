@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
-import { Bug, Loader2 } from "lucide-react";
+import { Bug, Download, Globe, Loader2 } from "lucide-react";
 import { openExternalUrl } from "@/lib/tauri";
+import { URLS } from "@/lib/urls";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,11 +15,6 @@ import { AutoUpdater } from "@/components/auto-updater";
 import { useSystemInfo } from "@/hooks/use-system-info";
 import { useUpdater } from "@/context/updater-context";
 import { APP_VERSION } from "@/lib/version";
-
-const GITHUB_REPO_URL = "https://github.com/DevStackBox/DevStackBox";
-const GITHUB_ISSUES_URL =
-  "https://github.com/DevStackBox/DevStackBox/issues";
-const GITHUB_DOCS_URL = "https://www.devstackbox.com/docs";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -168,7 +164,7 @@ export function AboutPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => void openExternalUrl(GITHUB_ISSUES_URL)}
+              onClick={() => void openExternalUrl(URLS.githubIssues)}
             >
               <Bug className="mr-2 h-4 w-4" />
               {t("bugReport.button", "Report a bug")}
@@ -176,14 +172,30 @@ export function AboutPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => void openExternalUrl(GITHUB_REPO_URL)}
+              onClick={() => void openExternalUrl(URLS.githubRepo)}
             >
               {t("about.github", "GitHub")}
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => void openExternalUrl(GITHUB_DOCS_URL)}
+              onClick={() => void openExternalUrl(URLS.website)}
+            >
+              <Globe className="mr-2 h-4 w-4" />
+              {t("about.website", "Website")}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void openExternalUrl(URLS.download)}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              {t("about.download", "Download")}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void openExternalUrl(URLS.docs)}
             >
               {t("about.documentation", "Documentation")}
             </Button>

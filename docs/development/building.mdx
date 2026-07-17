@@ -125,7 +125,7 @@ Do NOT show everything at once. Overloaded UIs drive users away.
 - Sidebar: EXACTLY 6 items in the current app - Dashboard, Services, Projects, Logs, Settings, About
 - Main area: card-based, spacious, clean - no dense tables, no charts
 
-See ARCHITECTURE.md for the full layout diagram.
+See development/architecture for the full layout diagram.
 
 ### Service Card Pattern
 
@@ -169,7 +169,7 @@ Add any new quick action to the command palette. Example entries:
 
 **Reuse-first workflow:**
 
-- Check `docs/COMPONENTS.md` before creating any component, page section, dialog, or status widget.
+- Check `development/components` before creating any component, page section, dialog, or status widget.
 - If an existing component is close, extend it with props, variants, or children instead of copying markup.
 - If the same command, type, or UI pattern appears in more than one place, centralize it immediately.
 - Keep the same action looking and behaving the same everywhere in the app.
@@ -209,7 +209,7 @@ Add any new quick action to the command palette. Example entries:
 **Commands:**
 
 - All commands go in `src-tauri/src/lib.rs`
-- Do NOT add code to `service_manager.rs` (it is dead code, see KNOWN_ISSUES.md)
+- Do NOT add code to `service_manager.rs` (it is dead code, see advanced/troubleshooting)
 - Commands must return `Result<T, String>`
 - Long-running operations must be `async`
 - Add every new command to `invoke_handler` in `run()` at the bottom of `lib.rs`
@@ -257,7 +257,7 @@ Add any new quick action to the command palette. Example entries:
 
 5. Add translation keys to `locales/en.json` and `locales/hi.json`.
 
-6. Update `docs/COMPONENTS.md` with the new page.
+6. Update `development/components` with the new page.
 
 7. If the page is mostly composed of existing cards, dialogs, or sections, reuse those components instead of creating page-specific duplicates.
 
@@ -282,7 +282,7 @@ Add any new quick action to the command palette. Example entries:
 
 4. Call from frontend with `safeInvoke`.
 
-5. Update `docs/TAURI_COMMANDS.md`.
+5. Update `reference/commands`.
 
 ---
 
@@ -300,7 +300,7 @@ npx shadcn add select
 npx shadcn add alert
 ```
 
-This generates the component in `src/components/ui/`. Do NOT manually edit these files. Document it in `docs/COMPONENTS.md`.
+This generates the component in `src/components/ui/`. Do NOT manually edit these files. Document it in `development/components`.
 
 Do not generate a new shadcn component if an existing one plus composition solves the problem. Prefer reuse over surface-area growth.
 
@@ -375,7 +375,7 @@ Rule: Version must be clean semver only: `X.Y.Z` - no hyphens, no letters (MSI r
 
 ## 13. Reuse Checklist Before You Add Code
 
-1. Does a component with the same shape already exist in `docs/COMPONENTS.md`?
+1. Does a component with the same shape already exist in `development/components`?
 2. Can the existing component accept props, children, or a variant instead?
 3. Is there already a shared Tauri command name in `src/lib/commands.ts`?
 4. Is there already a shared type in `src/types/services.ts`?

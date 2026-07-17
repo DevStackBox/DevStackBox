@@ -459,6 +459,8 @@
     "tagline": "Windows के लिए स्थानीय PHP विकास वातावरण।",
     "author": "लेखक",
     "github": "GitHub",
+    "website": "वेबसाइट",
+    "download": "डाउनलोड",
     "documentation": "प्रलेखन",
     "systemInfo": "सिस्टम जानकारी",
     "systemInfoDesc": "Runtime, host, और bundled binary versions.",

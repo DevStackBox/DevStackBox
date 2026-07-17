@@ -68,7 +68,7 @@ DevStackBox executes these binaries:
 
 **Risk:** If binaries are replaced by a malicious actor with filesystem access, the app will execute the replacement.
 
-**Mitigation:** DevStackBox does NOT verify binary checksums at runtime (current limitation). See `docs/KNOWN_ISSUES.md`. This is a future improvement.
+**Mitigation:** DevStackBox does NOT verify binary checksums at runtime (current limitation). See [troubleshooting](https://www.devstackbox.com/docs/advanced/troubleshooting). This is a future improvement.
 
 **Rule:** Always install DevStackBox to a directory you control. Do NOT run it from a shared/network drive.
 
@@ -91,7 +91,7 @@ When `download_php_version` becomes real, it will download from `windows.php.net
 3. Do NOT execute downloaded files until checksum passes
 4. Show the checksum verification result in the UI
 
-**Current state:** This feature is a stub. No download happens. See `docs/KNOWN_ISSUES.md` ISSUE-003.
+**Current state:** This feature is a stub. No download happens. See [troubleshooting](https://www.devstackbox.com/docs/advanced/troubleshooting) ISSUE-003.
 
 ### Windows `hosts` File (Phase 3)
 
@@ -151,7 +151,7 @@ When reading or writing files based on service name:
 - If antivirus flags the binary: the installer is downloaded from GitHub Releases - verify the SHA-256 hash listed on the release page before running
 - Add the DevStackBox installation directory to antivirus exclusions if it repeatedly flags service binaries
 
-**Future plan:** Add code signing (see `docs/ROADMAP.md` Phase 4.4). Until then, publish SHA-256 hashes on every GitHub Release.
+**Future plan:** Add code signing (see [roadmap](https://www.devstackbox.com/docs/roadmap) Phase 4.4). Until then, publish SHA-256 hashes on every GitHub Release.
 
 ---
 

@@ -98,6 +98,7 @@ export const siteFooterNav = {
     { label: "Download", href: "/download" },
     { label: "Releases", href: "/releases" },
     { label: "Roadmap", href: "/roadmap" },
+    { label: "Changelog", href: "/changelog" },
     { label: "FAQ", href: "/faq" },
   ],
   community: [

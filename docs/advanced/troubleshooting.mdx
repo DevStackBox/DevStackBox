@@ -24,7 +24,7 @@ When you see an error in the UI or logs, find it here first.
 1. Open the Debug panel (dev builds only) - it shows what path was resolved
 2. Check that `apache/bin/httpd.exe`, `mysql/bin/mysqld.exe`, or `php/8.3/php.exe` exist
 3. If they are missing, re-run `scripts/prepare-binaries.ps1` or copy from your XAMPP installation
-4. If the path looks wrong (pointing to `C:\xampp\htdocs\DevStackBox` in a production install), see `docs/KNOWN_ISSUES.md` ISSUE-009
+4. If the path looks wrong (pointing to `C:\xampp\htdocs\DevStackBox` in a production install), see `advanced/troubleshooting` ISSUE-009
 
 ---
 
@@ -32,7 +32,7 @@ When you see an error in the UI or logs, find it here first.
 
 **Meaning:** Something else is already using port 80.
 
-**Fix:** See `docs/NETWORKING.md` section "Port 80 Already in Use"
+**Fix:** See `advanced/environment` section "Port 80 Already in Use"
 
 ---
 
@@ -40,7 +40,7 @@ When you see an error in the UI or logs, find it here first.
 
 **Meaning:** MySQL cannot start because port 3306 is taken.
 
-**Fix:** See `docs/NETWORKING.md` section "Port 3306 Already in Use"
+**Fix:** See `advanced/environment` section "Port 3306 Already in Use"
 
 ---
 
@@ -60,7 +60,7 @@ When you see an error in the UI or logs, find it here first.
 - Check `logs/error.log` for the specific Apache error
 - Run manually to see output: `apache\bin\httpd.exe -t` (config test)
 
-**Architecture mismatch fix:** See `docs/APACHE_64BIT_GUIDE.md`
+**Architecture mismatch fix:** See `advanced/troubleshooting`
 
 ---
 
@@ -179,7 +179,7 @@ Remove-Item "mysql\data\<hostname>.pid" -ErrorAction SilentlyContinue
 **Fix:**
 
 1. Use the PHP Version Selector to install the missing version
-2. Note: PHP download is currently a stub - see `docs/KNOWN_ISSUES.md` ISSUE-003
+2. Note: PHP download is currently a stub - see `advanced/troubleshooting` ISSUE-003
 
 ---
 
@@ -261,7 +261,7 @@ See `docs/MSI_TROUBLESHOOTING.md` for more detail.
 
 ### `pnpm tauri build` fails with "version mismatch"
 
-All three version files must be identical. See `docs/RELEASE_PROCESS.md` Step 2.
+All three version files must be identical. See `development/release-process` Step 2.
 
 ---
 
@@ -277,7 +277,7 @@ Most common causes:
 
 ## Getting More Help
 
-1. Check `docs/KNOWN_ISSUES.md` - your issue may be documented there
+1. Check `advanced/troubleshooting` - your issue may be documented there
 2. Use the Debug panel in dev builds to inspect path resolution
 3. Check the relevant log file in `logs/`
 4. Open a GitHub Issue: [DevStackBox/DevStackBox issues](https://github.com/DevStackBox/DevStackBox/issues)

@@ -24,7 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { PHPVersionInfo } from "@/types/services";
 
 // PHP 8.3 is bundled with the installer; all other branches are downloaded
-// on demand. See docs/ROADMAP.md "Bundled vs downloadable".
+// on demand. See docs/roadmap.mdx "Bundled vs downloadable".
 const BUNDLED_DEFAULT_VERSION = "8.3";
 
 // Static, user-facing context shown alongside each branch. Order matches the

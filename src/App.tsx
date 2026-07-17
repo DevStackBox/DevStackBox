@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import { safeInvoke, isTauri, getMockBinariesStatus } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
+import { URLS } from "@/lib/urls";
 import { FolderOpen } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -317,10 +318,7 @@ function AppShell() {
                     action={{
                       label: "View Roadmap",
                       onClick: () =>
-                        window.open(
-                          "https://www.devstackbox.com/roadmap",
-                          "_blank",
-                        ),
+                        window.open(URLS.roadmap, "_blank"),
                     }}
                   />
                 </div>

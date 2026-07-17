@@ -459,6 +459,8 @@
     "tagline": "Local PHP development environment for Windows.",
     "author": "Author",
     "github": "GitHub",
+    "website": "Website",
+    "download": "Download",
     "documentation": "Documentation",
     "systemInfo": "System Information",
     "systemInfoDesc": "Detected runtime, host, and bundled binary versions.",

@@ -54,7 +54,7 @@ Do NOT require users to download core components on first launch. Bad first-laun
 
 ## Current State: v0.1.7-dev
 
-Phases 1, 2, and 3 are complete. The focus is now Phase 4 (installer / distribution) and incremental Phase 5 polish. Current validation: `cargo check` and `pnpm exec tsc --noEmit` are clean; `cargo clippy --all-targets -- -D warnings` has two release-hardening warnings tracked in `docs/KNOWN_ISSUES.md` ISSUE-017.
+Phases 1, 2, and 3 are complete. The focus is now Phase 4 (installer / distribution) and incremental Phase 5 polish. Current validation: `cargo check` and `pnpm exec tsc --noEmit` are clean; `cargo clippy --all-targets -- -D warnings` has two release-hardening warnings tracked in `advanced/troubleshooting` ISSUE-017.
 
 ---
 
@@ -62,7 +62,7 @@ Phases 1, 2, and 3 are complete. The focus is now Phase 4 (installer / distribut
 
 **Goal:** Make what exists actually work reliably.
 
-All Phase 1 items are complete. See FEATURE_STATUS.md and KNOWN_ISSUES.md for details.
+All Phase 1 items are complete. See feature-status and advanced/troubleshooting for details.
 
 ### 1.1 Remove Dead Code
 
@@ -73,7 +73,7 @@ All Phase 1 items are complete. See FEATURE_STATUS.md and KNOWN_ISSUES.md for de
 
 - [x] Run `cargo clippy --fix` in `src-tauri/`
 - [x] Fix remaining `dead_code` warnings manually
-- [x] Build was warning-free before Phase 2 began; current toolchain clippy follow-up is tracked in KNOWN_ISSUES.md ISSUE-017
+- [x] Build was warning-free before Phase 2 began; current toolchain clippy follow-up is tracked in advanced/troubleshooting ISSUE-017
 
 ### 1.3 Fix Service Status Logic (Critical)
 
@@ -132,7 +132,7 @@ This is a prerequisite for enabling auto-updates. Without it, updates will destr
 
 Binaries (Apache, PHP, MySQL, phpMyAdmin) remain inside the install dir and may be replaced by auto-update without touching user data.
 
-See `docs/UPDATES_AND_MIGRATIONS.md` for the full architecture.
+See `reference/installer` for the full architecture.
 
 ---
 
@@ -141,7 +141,7 @@ See `docs/UPDATES_AND_MIGRATIONS.md` for the full architecture.
 **Goal:** Split `lib.rs` (~1600 lines) into maintainable modules.  
 Do this as a dedicated refactor task. Do NOT mix with feature work.
 
-**Status:** Completed. `lib.rs` reduced from ~1900 lines to ~150 lines (module declarations + `run()` + tray setup). All commands extracted to `commands/{mysql,apache,php,config,logs,system,tray}.rs`. Path and process helpers extracted to `utils/{paths,process}.rs`. Shared types in `types.rs`. Default HTML/PHP templates moved out of Rust strings into `templates/default_*.{html,php}` and pulled in via `include_str!`. `cargo check` and `pnpm exec tsc --noEmit` are clean; current clippy follow-up is tracked in KNOWN_ISSUES.md ISSUE-017.
+**Status:** Completed. `lib.rs` reduced from ~1900 lines to ~150 lines (module declarations + `run()` + tray setup). All commands extracted to `commands/{mysql,apache,php,config,logs,system,tray}.rs`. Path and process helpers extracted to `utils/{paths,process}.rs`. Shared types in `types.rs`. Default HTML/PHP templates moved out of Rust strings into `templates/default_*.{html,php}` and pulled in via `include_str!`. `cargo check` and `pnpm exec tsc --noEmit` are clean; current clippy follow-up is tracked in advanced/troubleshooting ISSUE-017.
 
 ### Target structure
 
@@ -229,7 +229,7 @@ src-tauri/src/
 ### 4.2 64-bit Apache Bundle
 
 - [ ] Replace any 32-bit Apache binaries with ApacheLounge 64-bit (VC17)
-- [ ] Document the Apache source and build in `docs/APACHE_64BIT_GUIDE.md`
+- [ ] Document the Apache source and build in `advanced/troubleshooting`
 - [ ] Test DLL dependencies on clean Windows 11
 
 ### 4.3 Auto-Updater
@@ -249,14 +249,14 @@ src-tauri/src/
 - [ ] Implement backup-before-update (copy current configs to config-backups/)
 - [ ] Implement config migration runner (reads configVersion, applies migrations)
 - [ ] Test update flow: install v0.X.Y, update to v0.X.Y+1, verify user data intact
-- [ ] Document full release + signing flow in `docs/RELEASE_PROCESS.md`
+- [ ] Document full release + signing flow in `development/release-process`
 
-See `docs/UPDATES_AND_MIGRATIONS.md` for the full architecture and checklist.
+See `reference/installer` for the full architecture and checklist.
 
 ### 4.4 Code Signing
 
 - [ ] Research signing options (Azure Code Signing, EV cert, self-signed)
-- [ ] Document the decision in `docs/adr/006-code-signing.md`
+- [ ] Document the decision in `docs/development/adr/006-code-signing`
 - [ ] Implement if Windows Defender SmartScreen is blocking the installer
 
 ---

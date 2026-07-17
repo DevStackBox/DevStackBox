@@ -1,5 +1,5 @@
 // Single source of truth for Tauri command names.
-// Keep this in sync with docs/TAURI_COMMANDS.md and src-tauri/src/lib.rs.
+// Keep this in sync with docs/reference/commands.mdx and src-tauri/src/lib.rs.
 // No raw command string should appear anywhere else in src/.
 
 export const TAURI_COMMANDS = {

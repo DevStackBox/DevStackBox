@@ -234,7 +234,7 @@ These rules are architectural, not optional style preferences.
 2. Keep business logic in one owner. Polling stays in `service-manager.tsx`; command strings stay in `src/lib/commands.ts`; shared types stay in `src/types/services.ts`.
 3. Prefer composition over cloning. If two screens need the same card, toolbar, or dialog shell, add props or children to the shared component instead of copying markup.
 4. Keep visual language consistent. The same action should use the same component, label pattern, spacing scale, and variant wherever it appears.
-5. If a new reusable pattern is introduced, document it in `docs/COMPONENTS.md` immediately so future work can extend it instead of recreating it.
+5. If a new reusable pattern is introduced, document it in `development/components` immediately so future work can extend it instead of recreating it.
 
 ---
 
@@ -270,7 +270,7 @@ C:\dsb-data\                      (or %APPDATA%\DevStackBox\ for installed mode)
 
 **Rule:** MySQL database files (`mysql/data/`) must NEVER live inside the app folder. A database inside the app folder will be destroyed or corrupted on update.
 
-**Current state (v0.1.6):** This separation does not exist yet. Everything is in one directory. Fixing this is Phase 1.8 (see ROADMAP.md).
+**Current state (v0.1.6):** This separation does not exist yet. Everything is in one directory. Fixing this is Phase 1.8 (see roadmap).
 
 **Config versioning:** All config files should contain a version field:
 
@@ -375,7 +375,7 @@ Resources bundled into the installer are declared in `tauri.conf.json`:
 3. **TypeScript types**: Add any new types to `src/types/services.ts`.
 4. **React component**: Create component in appropriate folder. Style with Tailwind + shadcn/ui only.
 5. **Translation keys**: Add EN and HI strings to `locales/en.json` and `locales/hi.json`.
-6. **Update this doc**: Update ARCHITECTURE.md and FEATURE_STATUS.md.
+6. **Update this doc**: Update development/architecture and feature-status.
 
 ---
 
@@ -391,5 +391,5 @@ Resources bundled into the installer are declared in `tauri.conf.json`:
 | `config-backups/` auto-backup           | Auto-backup before every config save prevents data loss                         |
 | Two-panel layout (sidebar + main)       | Standard desktop utility pattern; do not redesign                               |
 | Progressive disclosure in service UI    | Beginners see start/stop; experts expand for logs, config, PID                  |
-| App/data directory separation           | Required for safe auto-updates; see docs/UPDATES_AND_MIGRATIONS.md              |
+| App/data directory separation           | Required for safe auto-updates; see reference/installer              |
 | Installed mode only (no portable in v1) | Portable mode cannot support auto-updates reliably; adds architectural conflict |

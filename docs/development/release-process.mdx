@@ -25,8 +25,8 @@ Version format: `X.Y.Z` - always clean semver. No hyphens, no pre-release text. 
 
 Before changing any version number, verify:
 
-- [ ] All Phase 1 items in `docs/ROADMAP.md` are complete for this milestone
-- [ ] No CRITICAL issues in `docs/KNOWN_ISSUES.md` are newly introduced
+- [ ] All Phase 1 items in `roadmap` are complete for this milestone
+- [ ] No CRITICAL issues in `advanced/troubleshooting` are newly introduced
 - [ ] `cargo build` completes with zero errors
 - [ ] `pnpm tauri build` completes with zero errors
 - [ ] App starts and services can be started on a clean Windows test machine
@@ -188,7 +188,7 @@ Include these in the GitHub Release description.
 - [ ] Verify the download links in the GitHub Release page work
 - [ ] Update `README.md` version badge if necessary
 - [ ] Close GitHub Issues that were fixed in this release
-- [ ] Update `docs/FEATURE_STATUS.md` if feature status changed
+- [ ] Update `feature-status` if feature status changed
 
 ---
 
@@ -200,7 +200,7 @@ When the auto-updater is configured, an additional step will be needed:
 2. Upload to the updater endpoint URL
 3. Test that an older installation picks up the update
 
-The updater flow is not active yet. See `docs/KNOWN_ISSUES.md` ISSUE-011.
+The updater flow is not active yet. See `advanced/troubleshooting` ISSUE-011.
 
 ---
 
@@ -211,5 +211,5 @@ The updater flow is not active yet. See `docs/KNOWN_ISSUES.md` ISSUE-011.
 | MSI refuses to install              | Version has hyphens or letters - use clean semver only       |
 | Build fails with "version mismatch" | One of the three version files is different                  |
 | Antivirus blocks installer          | Publish SHA-256 hash - users can verify and allow            |
-| GitHub Actions build fails          | Check for emoji in .yml files - see KNOWN_ISSUES.md          |
+| GitHub Actions build fails          | Check for emoji in .yml files - see advanced/troubleshooting          |
 | MSI is larger than expected         | Check that `src-tauri/target/` was not accidentally included |

@@ -14,9 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { APP_VERSION } from "@/lib/version";
-
-const ISSUE_BASE_URL =
-  "https://github.com/DevStackBox/DevStackBox/issues/new";
+import { URLS } from "@/lib/urls";
 
 interface BugReportDialogProps {
   trigger?: React.ReactNode;
@@ -54,7 +52,7 @@ export function BugReportDialog({ trigger }: BugReportDialogProps) {
       body: buildBody(),
       labels: "bug",
     });
-    const url = `${ISSUE_BASE_URL}?${params.toString()}`;
+    const url = `${URLS.githubNewIssue}?${params.toString()}`;
     window.open(url, "_blank", "noopener,noreferrer");
     setOpen(false);
   };

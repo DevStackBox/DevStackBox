@@ -4,22 +4,36 @@ description: "Install DevStackBox on Windows 10 or 11."
 icon: "Download"
 since: "0.1.6"
 ---
-> Administrator rights are required for installation to `C:\devstackbox`.
 
-# DevStackBox Installation Guide
+# Install DevStackBox
 
-## Quick Install (Alpha)
+DevStackBox ships as a Windows NSIS installer. Administrator rights are required because the default install location is `C:\devstackbox`.
 
-1. **Download**: Get the latest `.msi` or `.exe` from [Releases](https://github.com/DevStackBox/DevStackBox/releases)
-2. **Install**: Run the installer (no admin rights required)
-3. **Launch**: Start DevStackBox from Start Menu or Desktop
-4. **Start Services**: Click "Start All" to launch Apache, MySQL, and PHP
-5. **Access phpMyAdmin**: Open http://localhost/phpmyadmin
+## Download
 
-## Auto-Updates
+Get the latest **Windows x64 installer** from:
 
-DevStackBox will automatically check for updates and notify you when new versions are available. Updates are downloaded and installed seamlessly.
+- [devstackbox.com/download](https://www.devstackbox.com/download)
+- [GitHub Releases](https://github.com/DevStackBox/DevStackBox/releases/latest)
+
+## Install
+
+1. Run the `.exe` installer (accept the UAC prompt when asked).
+2. Choose the install directory if prompted (default: `C:\devstackbox`).
+3. Launch DevStackBox from the Start Menu or desktop shortcut.
+4. Open the app and start Apache and MySQL when you need them.
+5. Open [http://localhost/phpmyadmin](http://localhost/phpmyadmin) to confirm the stack works.
+
+## Auto-updates
+
+DevStackBox checks for updates and can install them in place. See [Upgrading](upgrading) for what happens during an upgrade.
 
 ## Uninstall
 
-Use Windows "Add or Remove Programs" to uninstall DevStackBox completely.
+Use Windows **Settings → Apps → Installed apps**, find DevStackBox, and uninstall. Your sites under `www` and data under `%LOCALAPPDATA%\devstackbox` are preserved according to the uninstaller options.
+
+## Next steps
+
+- [Upgrading](upgrading) - in-place updates and `www` preservation
+- [Troubleshooting](../advanced/troubleshooting) - if services fail to start
+- [Roadmap](../roadmap) - planned features
