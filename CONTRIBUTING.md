@@ -120,7 +120,7 @@ Use [GitHub Issues](https://github.com/DevStackBox/DevStackBox/issues) to report
 - Feature requests
 - Documentation improvements
 
-For security vulnerabilities, follow [SECURITY.md](SECURITY.md) and email **security@devstackbox.com** - do not open a public issue.
+For security vulnerabilities, follow [SECURITY.md](SECURITY.md) and email **hello@devstackbox.com** - do not open a public issue.
 
 ### Bug Report Template
 

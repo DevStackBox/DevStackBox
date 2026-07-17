@@ -17,7 +17,7 @@
 
 Do NOT report security issues in public GitHub Issues.
 
-Send to: **security@devstackbox.com**
+Send to: **hello@devstackbox.com**
 
 Include:
 
