@@ -38,7 +38,7 @@
 | [RELEASE_PROCESS.md](RELEASE_PROCESS.md)               | Exact checklist for every release                               |
 | [UPDATES_AND_MIGRATIONS.md](UPDATES_AND_MIGRATIONS.md) | Auto-update architecture, app/data separation, config migration |
 | [TESTING.md](TESTING.md)                               | Manual and automated test strategy                              |
-| [SECURITY.md](SECURITY.md)                             | Security policy, unsafe operations, vulnerability reporting     |
+| [SECURITY.md](../SECURITY.md)                          | Security policy, unsafe operations, vulnerability reporting     |
 | [INSTALL.md](INSTALL.md)                               | End-user installation guide                                     |
 | [APACHE_64BIT_GUIDE.md](APACHE_64BIT_GUIDE.md)         | Apache architecture troubleshooting                             |
 | [archive/MSI_TROUBLESHOOTING.md](archive/MSI_TROUBLESHOOTING.md) | Legacy MSI notes (archived)                             |

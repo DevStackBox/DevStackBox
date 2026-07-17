@@ -59,4 +59,4 @@ Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_
 - Email: [hello@devstackbox.com](mailto:hello@devstackbox.com)
 - Issues: [GitHub Issues](https://github.com/DevStackBox/DevStackBox/issues)
 - Discussions: [GitHub Discussions](https://github.com/DevStackBox/DevStackBox/discussions)
-- Privacy: [PRIVACY.md](PRIVACY.md) · License: [MIT](LICENSE)
+- Privacy: [PRIVACY.md](PRIVACY.md) · Security: [SECURITY.md](SECURITY.md) · License: [MIT](LICENSE)

@@ -24,7 +24,7 @@ This means:
 - Services are NOT exposed to your local network or internet
 - This is intentional for a local dev environment
 
-**Do NOT change bind addresses unless you know the security implications.** See `docs/SECURITY.md`.
+**Do NOT change bind addresses unless you know the security implications.** See [SECURITY.md](../SECURITY.md).
 
 ---
 
