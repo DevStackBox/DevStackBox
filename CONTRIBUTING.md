@@ -63,7 +63,9 @@ DevStackBox/
 
 ## Development Guidelines
 
-Follow [docs/standards/WRITING_GUIDELINES.md](docs/standards/WRITING_GUIDELINES.md) for user-facing copy.
+Documentation lives in `docs/` as MDX. When you add or rename a page, update `docs/navigation.ts` in the same pull request. The website at [devstackbox.com/docs](https://www.devstackbox.com/docs) is built from this folder by [DevStackBox-Website](https://github.com/DevStackBox/DevStackBox-Website).
+
+Follow [docs/development/coding-standards.mdx](docs/development/coding-standards.mdx) for user-facing copy (also published on the website).
 
 ### UI/UX Rules
 

@@ -18,8 +18,7 @@ import { APP_VERSION } from "@/lib/version";
 const GITHUB_REPO_URL = "https://github.com/DevStackBox/DevStackBox";
 const GITHUB_ISSUES_URL =
   "https://github.com/DevStackBox/DevStackBox/issues";
-const GITHUB_DOCS_URL =
-  "https://github.com/DevStackBox/DevStackBox/tree/main/docs";
+const GITHUB_DOCS_URL = "https://www.devstackbox.com/docs";
 
 // ---------------------------------------------------------------------------
 // Helpers

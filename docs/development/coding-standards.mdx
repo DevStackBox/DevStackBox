@@ -1,3 +1,9 @@
+---
+title: "Coding Standards"
+description: "Writing, UI, and terminology guidelines."
+icon: "FileText"
+---
+
 # DevStackBox Writing Guidelines
 
 Product-wide rules for UI, installer, documentation, release notes, and changelog.
@@ -207,3 +213,89 @@ Branded component names in logs: `Apache`, `MySQL`, `PHP`, `phpMyAdmin`.
 ## Scope
 
 These rules apply to: app UI, README, installer/uninstaller, docs, release notes, and changelog.
+
+
+---
+
+
+# DevStackBox Terminology
+
+Glossary for consistent product language. When in doubt, use the **Preferred** term.
+
+| Preferred | Avoid | Notes |
+|-----------|-------|-------|
+| website | site | User-facing copy |
+| database | DB | Spell out in UI |
+| application | app | OK in technical docs only |
+| terminal | console | UI label |
+| restart | reboot | Services and application |
+| remove | erase, delete (when uninstalling) | uninstall context: remove |
+| install | setup | Installer wording |
+| update | upgrade | In-app updater |
+| Apache | apache | Log labels and titles |
+| MySQL | mysql | Log labels and titles |
+| phpMyAdmin | phpmyadmin | Log labels only; folder stays lowercase |
+
+Install location: `C:\devstackbox`
+
+Application data: `%LOCALAPPDATA%\devstackbox`
+
+
+---
+
+
+# DevStackBox UI Guidelines
+
+Stub - expand as the design system matures. Writing rules: [WRITING_GUIDELINES.md](WRITING_GUIDELINES.md).
+
+## Button variants
+
+| Action                      | Variant             |
+| --------------------------- | ------------------- |
+| Delete, destructive actions | `destructive` (red) |
+| Cancel                      | `secondary`         |
+| Save, primary action        | `default` / primary |
+| Close, dismiss              | `outline`           |
+
+## Confirmation dialogs
+
+- Short title (noun phrase)
+- One or two sentence body explaining consequence
+- Confirm button matches action verb (`Delete`, not `OK`)
+- Cancel always available
+
+## Icons
+
+See [ICON_GUIDELINES.md](ICON_GUIDELINES.md).
+
+
+---
+
+
+# DevStackBox Color Guidelines
+
+Stub - expand later.
+
+Use Tailwind CSS and shadcn/ui theme tokens. Support light and dark mode.
+
+Destructive actions use the `destructive` button variant and semantic error colors from the theme - do not hardcode one-off reds in feature code.
+
+
+---
+
+
+# DevStackBox Icon Guidelines
+
+Stub - expand later.
+
+## Library
+
+Use [Lucide](https://lucide.dev/) icons only (via `lucide-react`).
+
+## Selection indicators
+
+Use the Lucide `Check` icon for selected items (language switcher, lists). Do not use Unicode checkmarks or the text `Selected`.
+
+## Status
+
+Use `Loader2` with spin animation for in-progress states.

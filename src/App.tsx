@@ -318,7 +318,7 @@ function AppShell() {
                       label: "View Roadmap",
                       onClick: () =>
                         window.open(
-                          "https://github.com/DevStackBox/DevStackBox/blob/main/docs/ROADMAP.md",
+                          "https://www.devstackbox.com/roadmap",
                           "_blank",
                         ),
                     }}

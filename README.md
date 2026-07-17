@@ -11,43 +11,22 @@ DevStackBox is free and open source. It gives you a modern interface to start se
 ## Why DevStackBox?
 
 - **All-in-one** - Apache, PHP, MySQL, and phpMyAdmin in a single setup
-- **Modern UI** - Desktop app built with Tauri and React, not a tray of loose tools
+- **Modern UI** - Desktop app built with Tauri and React
 - **Fixed layout** - Installs to `C:\devstackbox`; app data in `%LOCALAPPDATA%\devstackbox`
-- **Useful extras** - Config editor, SSL, backup/restore, dark/light themes, English and Hindi
 - **Your machine stays yours** - No telemetry; offline-friendly for everyday development
 - **Open source** - MIT license
 
-If you use XAMPP, Laragon, or WAMP today, DevStackBox targets the same stack with less manual wiring.
-
 ## Quick start
 
-1. Download the latest installer from [GitHub Releases](https://github.com/DevStackBox/DevStackBox/releases/latest).
+1. Download the latest installer from [devstackbox.com/download](https://www.devstackbox.com/download) or [GitHub Releases](https://github.com/DevStackBox/DevStackBox/releases/latest).
 2. Run setup (administrator rights required).
 3. Open DevStackBox and start Apache, MySQL, and PHP when you need them.
 
-Full guide: [docs/INSTALL.md](docs/INSTALL.md)
-
-## Build from source
-
-```bash
-git clone https://github.com/DevStackBox/DevStackBox.git
-cd DevStackBox
-pnpm install
-pnpm tauri dev
-```
-
-You need Windows 10 or 11, Node.js 18+, Rust, pnpm, and Git. See [docs/DEVELOPMENT_GUIDE.md](docs/DEVELOPMENT_GUIDE.md).
-
 ## Documentation
 
-| Guide                                    | Description           |
-| ---------------------------------------- | --------------------- |
-| [Installation](docs/INSTALL.md)          | Install and first run |
-| [Development](docs/DEVELOPMENT_GUIDE.md) | Local build setup     |
-| [Feature status](docs/FEATURE_STATUS.md) | Shipped vs planned    |
-| [Roadmap](docs/ROADMAP.md)               | What is next          |
-| [Changelog](CHANGELOG.md)                | Release history       |
-| [Docs index](docs/README.md)             | Everything else       |
+Full guides, troubleshooting, and contributor docs:
+
+**[devstackbox.com/docs](https://www.devstackbox.com/docs)**
 
 ## Contributing
 
@@ -55,8 +34,7 @@ Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_
 
 ## Links
 
-- Website: [devstackbox.com](https://devstackbox.com)
+- Website: [devstackbox.com](https://www.devstackbox.com)
 - Email: [hello@devstackbox.com](mailto:hello@devstackbox.com)
 - Issues: [GitHub Issues](https://github.com/DevStackBox/DevStackBox/issues)
-- Discussions: [GitHub Discussions](https://github.com/DevStackBox/DevStackBox/discussions)
 - Privacy: [PRIVACY.md](PRIVACY.md) · Security: [SECURITY.md](SECURITY.md) · License: [MIT](LICENSE)
