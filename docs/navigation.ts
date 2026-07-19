@@ -86,9 +86,8 @@ export const docsNav: NavSection[] = [
 
 export const siteHeaderNav = [
   { label: "Download", href: "/download" },
-  { label: "Documentation", href: "/docs" },
+  { label: "Docs", href: "/docs" },
   { label: "Releases", href: "/releases" },
-  { label: "Roadmap", href: "/roadmap" },
   { label: "Community", href: "/community" },
 ] as const;
 

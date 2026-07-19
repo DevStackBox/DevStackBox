@@ -1,14 +1,22 @@
-# Screenshots
+# DevStackBox marketing screenshots
 
-Drop PNG (or WebP) captures here for the main README.
+Images here sync to the website at build time (`public/docs-images/` on [DevStackBox-website](https://github.com/DevStackBox/DevStackBox-website)).
 
-| File | Suggested content |
-|------|-------------------|
-| `dashboard.png` | Main dashboard with service status |
-| `apache.png` | Apache controls / config view |
-| `php.png` | PHP version or settings view |
-| `mysql.png` | MySQL status or databases view |
-| `ssl.png` | SSL certificate management |
-| `settings.png` | App settings |
+## Required filenames
 
-Aim for a consistent window size and theme (dark or light) across the set. Prefer 1280px-wide captures so they stay sharp on GitHub.
+| File | Use on homepage |
+| ---- | ---------------- |
+| `hero-dashboard.webp` | Hero — primary app window (right column) |
+| `showcase-services.webp` | Feature showcase — service management |
+| `showcase-config.webp` | Feature showcase — configuration / settings |
+| `showcase-dashboard.webp` | Feature showcase — dashboard (optional third row) |
+| `screenshot-*.webp` | Extra gallery shots (optional) |
+
+## Guidelines
+
+- Format: WebP or PNG
+- Size: 1440×900 or 1280×800
+- Theme: light UI preferred for marketing
+- Avoid visible personal paths, passwords, or machine names
+
+Replace placeholder assets on the website with real captures from the running app when ready.
