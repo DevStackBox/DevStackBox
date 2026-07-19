@@ -4,13 +4,13 @@ Images here sync to the website at build time (`public/docs-images/` on [DevStac
 
 ## Required filenames
 
-| File | Use on homepage |
-| ---- | ---------------- |
-| `hero-dashboard.webp` | Hero — primary app window (right column) |
-| `showcase-services.webp` | Feature showcase — service management |
-| `showcase-config.webp` | Feature showcase — configuration / settings |
-| `showcase-dashboard.webp` | Feature showcase — dashboard (optional third row) |
-| `screenshot-*.webp` | Extra gallery shots (optional) |
+| File                      | Use on homepage                                   |
+| ------------------------- | ------------------------------------------------- |
+| `hero-dashboard.webp`     | Hero - primary app window (right column)          |
+| `showcase-services.webp`  | Feature showcase - service management             |
+| `showcase-config.webp`    | Feature showcase - configuration / settings       |
+| `showcase-dashboard.webp` | Feature showcase - dashboard (optional third row) |
+| `screenshot-*.webp`       | Extra gallery shots (optional)                    |
 
 ## Guidelines
 
