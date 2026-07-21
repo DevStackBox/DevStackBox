@@ -4,4 +4,58 @@ description: "Upgrade DevStackBox in place without losing your data."
 icon: "ArrowUpCircle"
 since: "0.1.8"
 ---
-## Auto-Update Flow
+
+# Upgrade DevStackBox
+
+DevStackBox upgrades preserve user data in `%LOCALAPPDATA%\DevStackBox\`. Your web projects, databases, configs, and logs live in that folder - not in the install directory - so reinstalling or updating the app does not wipe your work.
+
+## Check for updates in the app
+
+DevStackBox can check GitHub Releases for a newer version:
+
+1. Open **Settings → Updates**.
+2. Turn on **Auto-check updates** (stored in `localStorage` as `devstackbox.settings.autoCheckUpdates`).
+3. When enabled, the app checks on launch (after a short delay) and every 6 hours.
+4. Use **Check for updates** on the About page for a manual check.
+
+When an update is available, the header shows an indicator and the About page guides you through download and install. When you are already on the latest release, a manual check shows an “up to date” message.
+
+## Manual upgrade (recommended today)
+
+Until the full signed in-place auto-install flow ships (see [Roadmap](../roadmap) Phase 4.3), upgrade by installing a newer release over the existing install:
+
+1. **Stop services** - stop Apache and MySQL from the dashboard or tray menu.
+2. **Optional backup** - use **Settings → Backup & Restore** to create a full backup, or copy `%LOCALAPPDATA%\DevStackBox\` if you want a manual safety copy.
+3. **Download** the latest Windows installer from [devstackbox.com/download](https://www.devstackbox.com/download) or [GitHub Releases](https://github.com/DevStackBox/DevStackBox/releases/latest).
+4. **Run the installer** - accept the UAC prompt. Choose the same install directory as before (default: `C:\devstackbox`).
+5. **Launch DevStackBox** - start services and confirm your sites and databases are intact.
+
+Your user data layout:
+
+```
+%LOCALAPPDATA%\DevStackBox\
+  config\           Apache, MySQL, PHP configs
+  config-backups\   timestamped backups
+  logs\             service logs
+  mysql-data\       MySQL database files
+  www\              web document root
+  backups\          app-created backups
+```
+
+Binaries under the install directory (Apache, PHP, MySQL, phpMyAdmin) are replaced by the installer; the user data folder is not.
+
+## What is coming: in-place auto-update
+
+Phase 4.3 adds a signed Tauri updater that stops services, backs up configs, replaces app binaries, and migrates configs safely. Prerequisites (Phase 1.8 app/data separation) are complete. See [Installer & updates](../reference/installer) for architecture and [Release process](../development/release-process) for how releases are published.
+
+## If something goes wrong
+
+- Services fail after upgrade → [Troubleshooting](../advanced/troubleshooting)
+- Port conflicts → [Configuration](../reference/configuration) and [Environment](../advanced/environment)
+- Restore from backup → **Settings → Backup & Restore**
+
+## Related
+
+- [Installation](installation) - first-time setup
+- [Installer reference](../reference/installer) - NSIS/MSI and update architecture
+- [Feature status](../feature-status) - what is shipped vs planned

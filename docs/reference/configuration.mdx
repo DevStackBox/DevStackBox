@@ -3,4 +3,56 @@ title: "Configuration"
 description: "Ports, config files, and service defaults."
 icon: "Settings"
 ---
-## Default Ports
+
+# Configuration reference
+
+Quick reference for DevStackBox service defaults. For port conflicts, localhost binding, and firewall behavior, see [Environment & Networking](../advanced/environment).
+
+## Default ports
+
+| Service     | Default port | Config file (under user data) | Config key        |
+| ----------- | ------------ | ----------------------------- | ----------------- |
+| Apache HTTP | 80           | `config/httpd.conf`           | `Listen 80`       |
+| MySQL       | 3306         | `config/my.cnf`               | `port = 3306`     |
+| phpMyAdmin  | (via Apache) | `config/phpmyadmin.conf`      | served on port 80 |
+
+Apache and MySQL bind to `127.0.0.1` by default (localhost only).
+
+## Config file locations
+
+Runtime configs are generated and stored under the user data root:
+
+```
+%LOCALAPPDATA%\DevStackBox\
+  config\
+    httpd.conf
+    my.cnf
+    php.ini          (via php/current/)
+    phpmyadmin.conf
+  config-backups\    timestamped .bak files from in-app edits
+```
+
+The install directory (`C:\devstackbox` by default) holds binaries only. Edit configs from the DevStackBox UI or directly in `%LOCALAPPDATA%\DevStackBox\config\`.
+
+Override the user data root with the `DEVSTACKBOX_DATA_DIR` environment variable (advanced).
+
+## configVersion
+
+Generated config files include a `configVersion` field (or `# configVersion: N` header in `php.ini`). This supports future migrations when defaults change between releases. Do not remove the version marker when editing by hand.
+
+## Common changes
+
+| Goal                    | Where to edit                          |
+| ----------------------- | -------------------------------------- |
+| Change Apache port      | `config/httpd.conf` → `Listen`         |
+| Change MySQL port       | `config/my.cnf` → `port`               |
+| PHP settings            | `config/php.ini` or in-app PHP editor  |
+| Document root           | `config/httpd.conf` → `DocumentRoot`   |
+
+After editing, restart the affected service from the dashboard.
+
+## Related
+
+- [Environment & Networking](../advanced/environment) - port conflicts, binding, virtual hosts
+- [Troubleshooting](../advanced/troubleshooting) - errors and fixes
+- [Commands](commands) - Tauri config read/write commands

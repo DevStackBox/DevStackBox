@@ -43,7 +43,7 @@ C:\Program Files\DevStackBox\
 **User Data Root** (never touched by updater):
 
 ```
-C:\dsb-data\
+%LOCALAPPDATA%\DevStackBox\
   www/
   mysql-data/
   logs/
@@ -53,7 +53,7 @@ C:\dsb-data\
   backups/
 ```
 
-The user data path (`C:\dsb-data\` by default) is configurable at first run and stored in the app's settings.
+The user data path defaults to `%LOCALAPPDATA%\DevStackBox\` and can be overridden with the `DEVSTACKBOX_DATA_DIR` environment variable.
 
 ---
 
@@ -63,15 +63,9 @@ The user data path (`C:\dsb-data\` by default) is configurable at first run and 
 
 **Rejected.** Exclusion lists are fragile. Any new file added to the app that happens to overlap with a user data path could be excluded from updates incorrectly. The Tauri updater does not natively support granular exclusion lists.
 
-### 2. Store user data in `%APPDATA%\DevStackBox\`
+### 2. Store user data in `%LOCALAPPDATA%\DevStackBox\`
 
-**Partially accepted.** `%APPDATA%` is the correct Windows convention for user-specific app data. However, `C:\dsb-data\` is preferred for user-facing directories (`www/`, `mysql-data/`) because:
-
-- Users need to easily locate and access their web projects
-- `C:\dsb-data\www\` is easier to explain to beginners than `C:\Users\name\AppData\Roaming\DevStackBox\www\`
-- Consistent with how tools like XAMPP expose `C:\xampp\htdocs\`
-
-**Implementation note:** App settings and non-user-facing data (certs, internal logs) can use `%APPDATA%\DevStackBox\`. The `www/` and `mysql-data/` directories use `C:\dsb-data\`.
+**Accepted.** Windows convention for per-user app data. `%LOCALAPPDATA%\DevStackBox\` keeps projects and databases out of the install directory and safe from updates. Override with `DEVSTACKBOX_DATA_DIR` when needed.
 
 ### 3. Portable mode with everything in one folder, no updates
 
@@ -84,7 +78,7 @@ The user data path (`C:\dsb-data\` by default) is configurable at first run and 
 ### Positive
 
 - Auto-updates become safe: replacing App Root never touches user data
-- Clear mental model for users: "my projects are in `C:\dsb-data\www\`"
+- Clear mental model for users: "my projects are in `%LOCALAPPDATA%\DevStackBox\www\`"
 - MySQL database files are protected from update accidents
 - Allows future features like "open data folder" button in the UI
 
@@ -100,7 +94,7 @@ The user data path (`C:\dsb-data\` by default) is configurable at first run and 
 When a user with v0.1.x (mixed layout) updates to v0.2.0 (separated layout):
 
 1. App detects no User Data Root exists at first launch
-2. Prompts user to confirm `C:\dsb-data\` as data directory (or choose custom)
+2. Uses `%LOCALAPPDATA%\DevStackBox\` as the default data directory (or honors `DEVSTACKBOX_DATA_DIR`)
 3. Migrates existing `www/`, `mysql/data/`, `logs/`, `config/` to the new location
 4. Updates config file paths to point to new locations
 5. Backs up original directory before migrating

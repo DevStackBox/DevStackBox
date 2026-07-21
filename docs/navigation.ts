@@ -49,9 +49,9 @@ export const docsNav: NavSection[] = [
       { title: "Testing", slug: "development/testing" },
       {
         title: "Architecture Decisions",
-        slug: "development/adr/index",
+        slug: "development/adr",
         children: [
-          { title: "ADR Index", slug: "development/adr/index" },
+          { title: "ADR Index", slug: "development/adr" },
           { title: "001 - Use Tauri", slug: "development/adr/001-use-tauri" },
           {
             title: "002 - Tailwind + shadcn",
@@ -96,9 +96,9 @@ export const siteFooterNav = {
     { label: "Documentation", href: "/docs" },
     { label: "Download", href: "/download" },
     { label: "Releases", href: "/releases" },
-    { label: "Roadmap", href: "/roadmap" },
+    { label: "Roadmap", href: "/docs/roadmap" },
     { label: "Changelog", href: "/changelog" },
-    { label: "FAQ", href: "/faq" },
+    { label: "FAQ", href: "/docs/faq" },
   ],
   community: [
     {

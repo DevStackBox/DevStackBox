@@ -3,8 +3,86 @@ title: "Installer & Updates"
 description: "NSIS installer, paths, and auto-update architecture."
 icon: "Package"
 ---
-## App/Data Directory Separation
 
----
+# Installer and updates
 
-## Auto-Update Flow
+DevStackBox ships as Windows installers (NSIS and MSI). This page describes install paths, how user data is kept separate from app binaries, and how updates work today vs what Phase 4 adds.
+
+## Installers
+
+| Format | Typical size | Notes                                      |
+| ------ | ------------ | ------------------------------------------ |
+| NSIS   | ~150 MB      | Default download from GitHub Releases      |
+| MSI    | ~290 MB      | Alternative bundle for enterprise-style deploy |
+
+Both installers require **Windows 10/11 (64-bit)** and administrator rights for installation.
+
+**Default install directory:** `C:\devstackbox` (you can choose another path during setup).
+
+Download: [devstackbox.com/download](https://www.devstackbox.com/download)
+
+## App vs data directory separation
+
+DevStackBox separates **replaceable app files** from **user data** so updates never destroy databases or projects. See [ADR 006](../development/adr/006-app-data-separation) for the full decision record.
+
+**App root** (install directory - safe to replace on upgrade):
+
+```
+C:\devstackbox\
+  DevStackBox.exe
+  apache/
+  php/
+  mysql/
+  phpmyadmin/
+  resources/
+```
+
+**User data root** (never touched by the updater or installer uninstall options that preserve data):
+
+```
+%LOCALAPPDATA%\DevStackBox\
+  www/              web projects
+  mysql-data/       MySQL data directory
+  config/           runtime Apache, MySQL, PHP configs
+  config-backups/   automatic config backups
+  logs/             service logs
+  backups/          full backups created in-app
+```
+
+Override the user data path with `DEVSTACKBOX_DATA_DIR` if needed.
+
+Config files in `httpd.conf` and `my.cnf` reference paths under the user data root, not under the install directory.
+
+## Update check (shipped)
+
+The app includes `tauri-plugin-updater` and an **Auto-check updates** preference (Settings → Updates). When enabled:
+
+- Checks GitHub Releases on launch and every 6 hours
+- Shows a header indicator when a newer version exists
+- Manual **Check for updates** on the About page always available
+
+This finds updates; **installing** them today is via downloading and running the latest installer (see [Upgrading](../getting-started/upgrading)).
+
+## Auto-update flow (Phase 4.3 - in progress)
+
+Safe in-place auto-install requires:
+
+- [x] Phase 1.8 - user data outside the install directory
+- [x] Updater plugin wired in the app
+- [ ] Updater endpoint and signing keys in `tauri.conf.json`
+- [ ] Pre-update service shutdown (Apache + MySQL)
+- [ ] Config backup and `configVersion` migration runner
+- [ ] End-to-end test: install v0.X.Y → update to v0.X.Y+1 with data intact
+
+Target milestone: **v0.2.0** ([Roadmap](../roadmap)). Release signing and publishing steps are in [Release process](../development/release-process).
+
+## Uninstall
+
+Use **Settings → Apps → Installed apps** in Windows. Uninstall options can preserve `%LOCALAPPDATA%\DevStackBox\` so sites and databases remain if you reinstall later.
+
+## Related
+
+- [Installation](../getting-started/installation)
+- [Upgrading](../getting-started/upgrading)
+- [Configuration](configuration) - ports and config paths
+- [Release process](../development/release-process)
