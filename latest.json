@@ -1,0 +1,11 @@
+{
+  "version": "0.1.8",
+  "notes": "DevStackBox v0.1.8 - new branding and logo, signed Windows installer.",
+  "pub_date": "2026-07-23T13:12:46Z",
+  "platforms": {
+    "windows-x86_64": {
+      "url": "https://github.com/DevStackBox/DevStackBox/releases/download/v0.1.8/DevStackBox_0.1.8_x64-setup.exe",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRMTM4U1RGRFJNV2gyUVNNOEVJdDVpV0RNZXlQaDl5bzZ4NVJldUVuajNGdTQrZ0JHU2hOK0E1SkRBYTVNN0UzZ2xzWnF0T1R2KzI1RjNjeFlaVWRyVWV4WnNDaFQ3VWdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg0ODEyMzY2CWZpbGU6RGV2U3RhY2tCb3hfMC4xLjhfeDY0LXNldHVwLmV4ZQo3OTBQR0h4K2xPS0EwUDJrZldDNjF5dWFLYUtsdkkyVjJTWXp6WjJLK04xRDdMSS81ZWptejU1NDNEa0ZZZVU3Qjh6MEwxdkdnQ1FxWXpXUWI1a0FCdz09Cg=="
+    }
+  }
+}
