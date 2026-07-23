@@ -4,7 +4,9 @@
   "description": "A lightweight, portable, open-source local development environment for PHP developers",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/sync-logo.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/sync-logo.mjs",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",

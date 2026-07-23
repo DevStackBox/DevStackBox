@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import { NavLink } from "react-router-dom";
-import { ChevronLeft, ChevronRight, Server } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { APP_VERSION } from "@/lib/version";
@@ -23,34 +24,42 @@ export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
       className="fixed left-0 top-0 h-full bg-card border-r border-border z-50 flex flex-col"
     >
       <div className="p-4 border-b border-border flex items-center justify-between">
-        {!collapsed && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="flex items-center space-x-2"
-          >
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Server className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <div>
-              <h2 className="font-semibold text-sm">DevStackBox</h2>
-              <p className="text-xs text-muted-foreground">v{APP_VERSION}</p>
-            </div>
-          </motion.div>
+        {collapsed ? (
+          <div className="flex w-full flex-col items-center gap-2">
+            <AppLogo className="h-7 w-7" />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggleCollapse}
+              className="h-8 w-8"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="flex items-center space-x-2 min-w-0"
+            >
+              <AppLogo />
+              <div className="min-w-0">
+                <h2 className="font-semibold text-sm truncate">DevStackBox</h2>
+                <p className="text-xs text-muted-foreground">v{APP_VERSION}</p>
+              </div>
+            </motion.div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onToggleCollapse}
+              className="h-8 w-8 shrink-0"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+          </>
         )}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onToggleCollapse}
-          className="h-8 w-8"
-        >
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
-          )}
-        </Button>
       </div>
 
       <nav className="flex-1 p-4 space-y-2">
