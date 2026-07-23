@@ -8,8 +8,8 @@
 
 | Version  | Security Fixes          |
 | -------- | ----------------------- |
-| v0.1.6+  | Yes                     |
-| < v0.1.6 | No - update immediately |
+| v0.1.8+  | Yes                     |
+| < v0.1.8 | No - update immediately |
 
 ---
 

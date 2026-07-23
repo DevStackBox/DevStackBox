@@ -52,9 +52,9 @@ Do NOT require users to download core components on first launch. Bad first-laun
 
 ---
 
-## Current State: v0.1.7-dev
+## Current State: v0.1.8
 
-Phases 1, 2, and 3 are complete. The focus is now Phase 4 (installer / distribution) and incremental Phase 5 polish. Current validation: `cargo check` and `pnpm exec tsc --noEmit` are clean; `cargo clippy --all-targets -- -D warnings` has two release-hardening warnings tracked in `advanced/troubleshooting` ISSUE-017.
+Phases 1, 2, and 3 are complete. v0.1.8 is the current stable release on GitHub. The focus is now Phase 4 (installer / distribution) and incremental Phase 5 polish. Current validation: `cargo check` and `pnpm exec tsc --noEmit` are clean; `cargo clippy --all-targets -- -D warnings` has two release-hardening warnings tracked in `advanced/troubleshooting` ISSUE-017.
 
 ---
 
@@ -376,7 +376,8 @@ DevStackBox uses **MySQL** as its bundled database server.
 | Version   | Goal                                                                                                            |
 | --------- | --------------------------------------------------------------------------------------------------------------- |
 | v0.1.6    | Architecture and docs complete, MSI/NSIS builds working, zero dead code, zero Rust warnings                     |
-| v0.1.7    | PHP 8.4 CGI compatibility, configVersion 7 vhost fix, docs refresh                                             |
-| v0.2.0    | Phase 4 - MSI bundle verification, code signing, safe auto-update enabled                                       |
+| v0.1.7    | PHP 8.4 CGI compatibility, configVersion 7 vhost fix, docs refresh, NSIS-only releases                       |
+| v0.1.8    | Branding refresh, signed installer, in-place upgrade with data preservation, MDX docs on devstackbox.com       |
+| v0.2.0    | Phase 4 complete; Phase 5 polish  HTTPS localhost, tray polish, startup-on-login                          |
 | v0.3.0    | Phase 5 - HTTPS localhost, tray polish, startup-on-login, PHP error visibility                                  |
 | v1.0.0    | Phase 6 - workspace UI refresh, real Settings, useful About, all Phase 6 items done                            |

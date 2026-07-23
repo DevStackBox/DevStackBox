@@ -349,7 +349,7 @@ Paste the private key content into GitHub repository secrets:
 **Status:** Release verification pending
 
 **Description:**
-The development workspace is working, but the MSI and NSIS installers still need clean-machine validation before v0.1.7 can be treated as release-ready.
+The NSIS installer was validated for v0.1.8. Re-run clean-machine checks before each new release if bundled binaries or install hooks change.
 
 **Required checks:**
 
@@ -436,10 +436,10 @@ During installer verification, confirm the bundled `www/` seed files are present
 | `switch_php_version` could not call `mklink` directly         | Uses `cmd /C mklink /J`                                                            | v0.1.6     |
 | Dev-machine path used as production fallback                  | Removed `C:\xampp\htdocs\DevStackBox` from production fallback paths               | v0.1.6     |
 | `DebugPanel` visible in production                            | Guarded behind development mode                                                    | v0.1.6     |
-| Raw frontend command strings                                  | Centralized in `src/lib/commands.ts`; no raw `safeInvoke("...")` matches found     | v0.1.7-dev |
-| localhost 500 on PHP 8.4 due to `session.sid_*` deprecations  | `patch_php_ini()` comments out deprecated directives                               | v0.1.7-dev |
-| phpMyAdmin timeout or 500 on PHP 8.4 due to deprecation flood | `patch_php_ini()` sets compatible `error_reporting` and disables `html_errors`     | v0.1.7-dev |
-| localhost and phpMyAdmin broke after adding a vhost           | configVersion 7 template keeps localhost VirtualHost and phpMyAdmin Alias together | v0.1.7-dev |
+| Raw frontend command strings                                  | Centralized in `src/lib/commands.ts`; no raw `safeInvoke("...")` matches found     | v0.1.7 |
+| localhost 500 on PHP 8.4 due to `session.sid_*` deprecations  | `patch_php_ini()` comments out deprecated directives                               | v0.1.7 |
+| phpMyAdmin timeout or 500 on PHP 8.4 due to deprecation flood | `patch_php_ini()` sets compatible `error_reporting` and disables `html_errors`     | v0.1.7 |
+| localhost and phpMyAdmin broke after adding a vhost           | configVersion 7 template keeps localhost VirtualHost and phpMyAdmin Alias together | v0.1.7 |
 
 
 ---

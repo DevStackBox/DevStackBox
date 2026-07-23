@@ -87,8 +87,7 @@ npm run tauri:build
 
 Produces:
 
-- `src-tauri/target/release/bundle/msi/DevStackBox_0.1.6_x64_en-US.msi`
-- `src-tauri/target/release/bundle/nsis/DevStackBox_0.1.6_x64-setup.exe`
+- `src-tauri/target/release/bundle/nsis/DevStackBox_0.1.8_x64-setup.exe`
 
 **Pre-build check:**
 
@@ -339,9 +338,9 @@ const { t } = useTranslation();
 
 Version must be identical in all three files. Change all three at once:
 
-1. `package.json` - `"version": "0.1.7"`
-2. `src-tauri/Cargo.toml` - `version = "0.1.7"`
-3. `src-tauri/tauri.conf.json` - `"version": "0.1.7"`
+1. `package.json` - `"version": "0.1.8"`
+2. `src-tauri/Cargo.toml` - `version = "0.1.8"`
+3. `src-tauri/tauri.conf.json` - `"version": "0.1.8"`
 
 Rule: Version must be clean semver only: `X.Y.Z` - no hyphens, no letters (MSI requirement).
 

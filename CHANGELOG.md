@@ -4,24 +4,29 @@ All notable changes to DevStackBox are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [0.1.8] - 2026-06-09
+## [0.1.8] - 2026-07-23
 
 ### Added
 
+- New DevStackBox branding and logo across the app, installer, and website
 - One-click in-place upgrade dialog when installing a newer version over an existing install
 - Automatic Apache and MySQL shutdown before upgrade file copy
 - `www` folder preservation during upgrade when websites already exist
+- Signed Windows NSIS installer with auto-update support (`latest.json` on GitHub Releases)
+- MDX documentation structure synced to [devstackbox.com/docs](https://www.devstackbox.com/docs)
 
 ### Changed
 
 - Installer details log: phase order, duration timing, summary copy, and spacing
 - README install section uses evergreen GitHub Releases download link
+- Expanded upgrade and installer documentation
 
 ### Fixed
 
 - NSIS `DsbExecSilent` comma-split build failure in force-stop macro
 - Negative install duration on systems with long uptime (`GetLocalTime`-based timing)
 - Duplicate `Output folder` noise from redundant `SetOutPath` in PREINSTALL hook
+- NSIS upgrade flow preserves user configs, MySQL data, SSL certs, and `www` projects
 
 ## [0.1.7] - 2026-06-01
 

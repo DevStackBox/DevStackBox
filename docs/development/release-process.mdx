@@ -7,17 +7,19 @@ icon: "Rocket"
 
 **The exact checklist for every release. Follow this every time without shortcuts.**
 
+**Current stable release:** v0.1.8
+
 ---
 
 ## Release Types
 
 | Type  | When                                | Example           |
 | ----- | ----------------------------------- | ----------------- |
-| Patch | Bug fix only, no new features       | `0.1.6` → `0.1.7` |
-| Minor | New working feature added           | `0.1.6` → `0.2.0` |
+| Patch | Bug fix only, no new features       | `0.1.8` → `0.1.9` |
+| Minor | New working feature added           | `0.1.8` → `0.2.0` |
 | Major | Breaking changes or large milestone | `0.x.x` → `1.0.0` |
 
-Version format: `X.Y.Z` - always clean semver. No hyphens, no pre-release text. (MSI requirement)
+Version format: `X.Y.Z` - always clean semver. No hyphens, no pre-release text.
 
 ---
 
@@ -41,7 +43,7 @@ Change version in ALL THREE files at the same time:
 
 ```json
 {
-  "version": "0.1.7"
+  "version": "0.1.9"
 }
 ```
 
@@ -49,14 +51,14 @@ Change version in ALL THREE files at the same time:
 
 ```toml
 [package]
-version = "0.1.7"
+version = "0.1.9"
 ```
 
 ### `src-tauri/tauri.conf.json`
 
 ```json
 {
-  "version": "0.1.7"
+  "version": "0.1.9"
 }
 ```
 
@@ -75,7 +77,7 @@ grep '"version"' src-tauri/tauri.conf.json
 Add an entry at the top:
 
 ```markdown
-## v0.1.7 - 2026-MM-DD
+## [0.1.9] - 2026-MM-DD
 
 ### Fixed
 
@@ -96,14 +98,19 @@ Keep the format consistent. Do not delete old entries.
 
 ## Step 4 - Build Release
 
-```bash
+Set signing key (required for auto-update):
+
+```powershell
+$env:TAURI_SIGNING_PRIVATE_KEY = "path-or-content-of-your-private-key"
 pnpm tauri build
 ```
 
 Expected output files:
 
-- `src-tauri/target/release/bundle/msi/DevStackBox_0.1.7_x64_en-US.msi`
-- `src-tauri/target/release/bundle/nsis/DevStackBox_0.1.7_x64-setup.exe`
+- `src-tauri/target/release/bundle/nsis/DevStackBox_0.1.9_x64-setup.exe`
+- `src-tauri/target/release/bundle/nsis/DevStackBox_0.1.9_x64-setup.exe.sig`
+
+Create `latest.json` in the repo root (use the v0.1.8 file as a template). Paste the `.sig` file content into the `signature` field.
 
 If the build fails:
 
@@ -115,11 +122,11 @@ If the build fails:
 
 ## Step 5 - Smoke Tests
 
-Run this checklist on the **MSI installer** (not dev mode) on a clean Windows 11 machine or VM:
+Run this checklist on the **NSIS installer** (not dev mode) on a clean Windows 11 machine or VM:
 
 **Installation:**
 
-- [ ] MSI installs without errors
+- [ ] NSIS installer installs without errors
 - [ ] App opens from Start Menu
 - [ ] App opens without antivirus immediately blocking it
 
@@ -149,16 +156,13 @@ Run this checklist on the **MSI installer** (not dev mode) on a clean Windows 11
 
 ---
 
-## Step 6 - Generate SHA-256 Hashes
-
-Generate hashes for both installers (required for security transparency):
+## Step 6 - Generate SHA-256 Hash (optional)
 
 ```powershell
-Get-FileHash "src-tauri\target\release\bundle\msi\DevStackBox_0.1.7_x64_en-US.msi" -Algorithm SHA256
-Get-FileHash "src-tauri\target\release\bundle\nsis\DevStackBox_0.1.7_x64-setup.exe" -Algorithm SHA256
+Get-FileHash "src-tauri\target\release\bundle\nsis\DevStackBox_0.1.9_x64-setup.exe" -Algorithm SHA256
 ```
 
-Include these in the GitHub Release description.
+Include the hash in the GitHub Release description if you want transparency for users.
 
 ---
 
@@ -167,17 +171,17 @@ Include these in the GitHub Release description.
 1. Create a git tag:
 
    ```bash
-   git tag v0.1.7
-   git push origin v0.1.7
+   git tag v0.1.9
+   git push origin v0.1.9
    ```
 
 2. Go to [GitHub Releases](https://github.com/DevStackBox/DevStackBox/releases/new)
 
 3. Fill in:
-   - **Tag:** `v0.1.7`
-   - **Title:** `DevStackBox v0.1.7`
-   - **Description:** Copy from CHANGELOG.md + paste SHA-256 hashes
-   - **Attach files:** Both MSI and NSIS installers
+   - **Tag:** `v0.1.9`
+   - **Title:** `v0.1.9`
+   - **Description:** Copy from CHANGELOG.md
+   - **Attach files:** `DevStackBox_0.1.9_x64-setup.exe` and `latest.json`
 
 4. Click Publish Release.
 
@@ -186,21 +190,25 @@ Include these in the GitHub Release description.
 ## Step 8 - Post-Release
 
 - [ ] Verify the download links in the GitHub Release page work
-- [ ] Update `README.md` version badge if necessary
+- [ ] Verify `releases/latest/download/latest.json` shows the new version
 - [ ] Close GitHub Issues that were fixed in this release
 - [ ] Update `feature-status` if feature status changed
 
 ---
 
-## Auto-Updater (Phase 4 - Not Yet Active)
+## Auto-Updater
 
-When the auto-updater is configured, an additional step will be needed:
+The in-app updater is **active** as of v0.1.8. Every release must include:
 
-1. Generate `latest.json` with new version info, download URLs, and signatures
-2. Upload to the updater endpoint URL
-3. Test that an older installation picks up the update
+1. Signed NSIS build (`TAURI_SIGNING_PRIVATE_KEY` set during `pnpm tauri build`)
+2. `latest.json` in the repo root  signature from the `.sig` file, download URL matching the uploaded `.exe`
+3. Upload **`latest.json`** as a release asset named exactly `latest.json`
 
-The updater flow is not active yet. See `advanced/troubleshooting` ISSUE-011.
+Updater endpoint (configured in `tauri.conf.json`):
+
+`https://github.com/DevStackBox/DevStackBox/releases/latest/download/latest.json`
+
+After publishing, test **About → Check for updates** from an older install.
 
 ---
 
@@ -208,8 +216,8 @@ The updater flow is not active yet. See `advanced/troubleshooting` ISSUE-011.
 
 | Problem                             | Fix                                                          |
 | ----------------------------------- | ------------------------------------------------------------ |
-| MSI refuses to install              | Version has hyphens or letters - use clean semver only       |
 | Build fails with "version mismatch" | One of the three version files is different                  |
 | Antivirus blocks installer          | Publish SHA-256 hash - users can verify and allow            |
-| GitHub Actions build fails          | Check for emoji in .yml files - see advanced/troubleshooting          |
-| MSI is larger than expected         | Check that `src-tauri/target/` was not accidentally included |
+| GitHub Actions build fails          | Check for emoji in .yml files - see advanced/troubleshooting |
+| Auto-update fails                   | Check `latest.json` signature matches `.sig`; URL matches `.exe` filename |
+| `releases/latest` wrong version     | Ensure release is not marked pre-release; `latest.json` uploaded |
