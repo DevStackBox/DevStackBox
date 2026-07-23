@@ -20,6 +20,11 @@ dist-ssr/
 *.local
 package-lock.json
 
+# Generated logo assets (source: docs/images/logo/)
+public/logo.svg
+public/logo-dark.svg
+public/favicon.ico
+
 # Environment variable files - never commit secrets
 .env
 .env.local
