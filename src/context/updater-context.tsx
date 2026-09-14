@@ -29,6 +29,7 @@ import {
 import { APP_VERSION } from "@/lib/version";
 import { isTauri } from "@/lib/tauri";
 import { useToast } from "@/hooks/use-toast";
+import { getUpdateChannel } from "@/lib/app-settings";
 import { useTranslation } from "react-i18next";
 
 // ---------------------------------------------------------------------------
@@ -115,7 +116,13 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
 
       try {
         const { check } = await import("@tauri-apps/plugin-updater");
-        const update = await check();
+        const channel = getUpdateChannel();
+        const update =
+          channel === "beta"
+            ? await check({
+                headers: { "X-DevStackBox-Update-Channel": "beta" },
+              })
+            : await check();
 
         setLastCheckedAt(new Date());
 

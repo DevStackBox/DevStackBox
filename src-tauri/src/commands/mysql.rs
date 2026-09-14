@@ -6,7 +6,10 @@ use tokio::time::sleep;
 
 use crate::types::ServiceInfo;
 use crate::utils::config_version::needs_config_migration;
-use crate::utils::mysql_connection::{mysqldump_command, mysql_command, prepare_mysql_client};
+use crate::utils::mysql_connection::{
+    mysqldump_command, mysql_command, mysqladmin_command, prepare_mysql_client,
+};
+use crate::utils::mysql_credentials::write_stored_root_password;
 use crate::utils::paths::{get_installation_path, get_mysqld_exe, user_config_dir, user_mysql_data_dir};
 use crate::utils::process::{
     create_hidden_command, ensure_port_available, find_our_processes, is_our_process_running,
@@ -18,6 +21,29 @@ pub const MYSQL_CONFIG_VERSION: u32 = 2;
 fn mysqld_exe_path() -> std::path::PathBuf {
     let base = get_installation_path();
     get_mysqld_exe(&base)
+}
+
+fn is_port_listening(port: u16) -> bool {
+    match create_hidden_command("netstat").arg("-ano").output() {
+        Ok(netstat_output) => {
+            let needle = format!(":{} ", port);
+            String::from_utf8_lossy(&netstat_output.stdout).contains(&needle)
+        }
+        Err(_) => false,
+    }
+}
+
+async fn wait_for_mysql_port(max_wait: Duration) -> Result<(), String> {
+    let step = Duration::from_millis(500);
+    let mut elapsed = Duration::ZERO;
+    while elapsed < max_wait {
+        if is_port_listening(3306) {
+            return Ok(());
+        }
+        sleep(step).await;
+        elapsed += step;
+    }
+    Err("MySQL started but port 3306 is not listening".to_string())
 }
 
 #[tauri::command]
@@ -88,21 +114,9 @@ pub async fn start_mysql() -> Result<bool, String> {
         Ok(child) => {
             let pid = child.id();
             println!("MySQL started with PID: {}", pid);
-
-            sleep(Duration::from_secs(2)).await;
-
-            match create_hidden_command("netstat").arg("-ano").output() {
-                Ok(netstat_output) => {
-                    let output_str = String::from_utf8_lossy(&netstat_output.stdout);
-                    if output_str.contains(":3306 ") {
-                        let _ = pid;
-                        Ok(true)
-                    } else {
-                        Err("MySQL started but port 3306 is not listening".to_string())
-                    }
-                }
-                Err(_) => Err("Failed to verify MySQL is running".to_string()),
-            }
+            wait_for_mysql_port(Duration::from_secs(15)).await?;
+            let _ = pid;
+            Ok(true)
         }
         Err(e) => Err(format!("Failed to start MySQL: {}", e)),
     }
@@ -116,6 +130,16 @@ pub async fn stop_mysql() -> Result<bool, String> {
         return Err("DevStackBox MySQL is not running".to_string());
     }
 
+    if let Ok(mut admin) = mysqladmin_command() {
+        let _ = admin.arg("shutdown").output();
+        for _ in 0..20 {
+            if find_our_processes("mysqld.exe", &mysql_path).is_empty() {
+                return Ok(true);
+            }
+            sleep(Duration::from_millis(500)).await;
+        }
+    }
+
     let mut errors: Vec<String> = Vec::new();
     for attempt in 0..4 {
         let pids = find_our_processes("mysqld.exe", &mysql_path);
@@ -127,14 +151,14 @@ pub async fn stop_mysql() -> Result<bool, String> {
                 errors.push(e);
             }
         }
-        std::thread::sleep(Duration::from_millis(if attempt == 0 { 1000 } else { 500 }));
+        sleep(Duration::from_millis(if attempt == 0 { 1000 } else { 500 })).await;
     }
 
     if find_our_processes("mysqld.exe", &mysql_path).is_empty() {
         Ok(true)
     } else {
         Err(format!(
-            "DevStackBox MySQL process still running after kill attempts. Errors: {}",
+            "DevStackBox MySQL process still running after shutdown attempts. Errors: {}",
             errors.join("; ")
         ))
     }
@@ -546,5 +570,15 @@ pub async fn set_mysql_user_password(
     };
 
     run_mysql_query(&query)?;
+
+    if username == "root" && (host == "localhost" || host == "127.0.0.1" || host.is_empty()) {
+        let stored = if password.is_empty() {
+            None
+        } else {
+            Some(password)
+        };
+        write_stored_root_password(stored)?;
+    }
+
     Ok(format!("Password updated for '{}'", username))
 }

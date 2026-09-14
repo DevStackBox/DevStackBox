@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { safeInvoke } from "@/lib/tauri";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import {
@@ -68,7 +68,7 @@ export function SslPage() {
 
   const fetchStatus = async () => {
     try {
-      const s = await invoke<SslStatus>(TAURI_COMMANDS.ssl.getStatus);
+      const s = await safeInvoke<SslStatus>(TAURI_COMMANDS.ssl.getStatus);
       setStatus(s);
     } catch {
       // status unavailable - stays null
@@ -79,12 +79,14 @@ export function SslPage() {
     fetchStatus();
   }, []);
 
-  const run = async (fn: () => Promise<string>) => {
+  const run = async (fn: () => Promise<string | null>) => {
     setLoading(true);
     setActionMsg(null);
     try {
       const msg = await fn();
-      setActionMsg({ type: "ok", text: msg });
+      if (msg) {
+        setActionMsg({ type: "ok", text: msg });
+      }
       await fetchStatus();
     } catch (err) {
       setActionMsg({ type: "err", text: String(err) });
@@ -94,13 +96,13 @@ export function SslPage() {
   };
 
   const handleGenerate = () =>
-    run(() => invoke<string>(TAURI_COMMANDS.ssl.generateCert));
+    run(() => safeInvoke<string>(TAURI_COMMANDS.ssl.generateCert));
 
   const handleEnable = () =>
-    run(() => invoke<string>(TAURI_COMMANDS.ssl.enable));
+    run(() => safeInvoke<string>(TAURI_COMMANDS.ssl.enable));
 
   const handleDisable = () =>
-    run(() => invoke<string>(TAURI_COMMANDS.ssl.disable));
+    run(() => safeInvoke<string>(TAURI_COMMANDS.ssl.disable));
 
   return (
     <div className="space-y-6">

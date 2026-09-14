@@ -184,7 +184,7 @@ Update this file every time a feature changes status. Do not maintain feature st
 | Tray context menu           | DONE   | Show / Hide / Toggle MySQL / Toggle Apache / Quit; wired to same start-stop pipeline as the UI                          |
 | Tray click opens app        | DONE   | Left-click on tray icon shows the main window (`lib.rs`)                                                                |
 | Tray service status display | DONE   | `set_tray_tooltip` updated every 5s by `ServiceManager` with Apache/MySQL/PHP state                                     |
-| Tray service start/stop     | DONE   | Tray menu emits `tray-toggle-service`; `ServiceManager` routes to the same toggle pipeline as the UI                    |
+| Tray service start/stop     | DONE   | Tray menu toggles services in Rust and emits `tray-services-updated`; `ServiceStatusProvider` refreshes UI badges      |
 | Notifications from tray     | DONE   | Service start/stop and crash notifications via `src/lib/notify.ts`                                                      |
 
 ---

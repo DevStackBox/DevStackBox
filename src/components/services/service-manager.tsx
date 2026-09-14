@@ -5,19 +5,13 @@
  * All polling, caching, and state ownership has moved to ServiceStatusProvider.
  * This component only reads from context and handles user toggle actions.
  */
-import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { safeInvoke, isTauri } from "@/lib/tauri";
-import { TAURI_COMMANDS } from "@/lib/commands";
 import { motion } from "framer-motion";
 import { ApacheService, MySQLService, PHPService } from "./index";
 import type { ServiceStatus } from "@/types/services";
-import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { notify } from "@/lib/notify";
 import { ROUTES } from "@/lib/routes";
-import { useTranslation } from "react-i18next";
 import { useServiceStatus } from "@/context/service-status-context";
 
 // Re-export ServiceStatus so importers that use the old path still work.
@@ -42,7 +36,6 @@ interface ServiceManagerProps {
 
 export function ServiceManager({
   compact = false,
-  onServiceToggle,
   onOpenConfig,
   onViewLogs,
   onOpenPHPVersionSelector,
@@ -50,142 +43,14 @@ export function ServiceManager({
   selectedService,
   onSelectService,
 }: ServiceManagerProps) {
-  const { t } = useTranslation();
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   const {
     services,
     initialLoading,
     loading,
-    setLoading,
-    refresh,
-    optimisticUpdate,
+    toggleService,
   } = useServiceStatus();
-
-  // Keep toggleService stable reference for any external callers (tray events
-  // are now handled inside ServiceStatusProvider, but kept here for safety).
-  const toggleServiceRef = useRef<(service: string) => void>(() => {});
-
-  // Toggle a service with optimistic state update
-  const toggleService = async (service: string) => {
-    setLoading(service);
-
-    if (!isTauri()) {
-      toast({
-        variant: "destructive",
-        title: t("serviceManager.browserMode", "Browser Mode"),
-        description: t(
-          "serviceManager.browserModeDesc",
-          "Service control requires running in Tauri app",
-        ),
-      });
-      setLoading(null);
-      return;
-    }
-
-    const isCurrentlyRunning =
-      services[service as "apache" | "mysql" | "php"].running;
-    const serviceName = service.charAt(0).toUpperCase() + service.slice(1);
-
-    // Optimistic update - show transition state immediately
-    optimisticUpdate(service as "apache" | "mysql" | "php", {
-      state: isCurrentlyRunning ? "stopping" : "starting",
-    });
-
-    try {
-      let result: boolean | null;
-      if (service === "apache") {
-        result = await safeInvoke<boolean>(
-          TAURI_COMMANDS.services.toggleApache,
-        );
-      } else if (service === "mysql") {
-        result = await safeInvoke<boolean>(TAURI_COMMANDS.services.toggleMysql);
-      } else {
-        result = await safeInvoke<boolean>(TAURI_COMMANDS.services.togglePhp);
-      }
-
-      if (result === null) {
-        await refresh(); // revert optimistic state
-        setLoading(null);
-        return;
-      }
-
-      // Get confirmed real state
-      await refresh();
-      onServiceToggle?.(service, result);
-
-      // Sync tray menu immediately
-      void safeInvoke(TAURI_COMMANDS.tray.refreshMenu);
-
-      toast({
-        variant: "success",
-        title: result
-          ? t("serviceManager.serviceStarted", "{{service}} Started", {
-              service: serviceName,
-            })
-          : t("serviceManager.serviceStopped", "{{service}} Stopped", {
-              service: serviceName,
-            }),
-        description: result
-          ? t(
-              "serviceManager.serviceNowRunning",
-              "{{service}} service is now running",
-              { service: serviceName },
-            )
-          : t(
-              "serviceManager.serviceNowStopped",
-              "{{service}} service has been stopped",
-              { service: serviceName },
-            ),
-      });
-      void notify(
-        result
-          ? t("serviceManager.serviceStarted", "{{service}} Started", {
-              service: serviceName,
-            })
-          : t("serviceManager.serviceStopped", "{{service}} Stopped", {
-              service: serviceName,
-            }),
-        result
-          ? t(
-              "serviceManager.serviceNowRunning",
-              "{{service}} service is now running",
-              { service: serviceName },
-            )
-          : t(
-              "serviceManager.serviceNowStopped",
-              "{{service}} service has been stopped",
-              { service: serviceName },
-            ),
-      );
-    } catch (error) {
-      console.error(`Failed to toggle ${service}:`, error);
-      // RULE: on error revert to real state via refresh(), not a hardcoded error state.
-      await refresh();
-      const errorMsg =
-        typeof error === "string"
-          ? error
-          : error instanceof Error
-            ? error.message
-            : String(error);
-      toast({
-        variant: "destructive",
-        title: t("serviceManager.serviceError", "Service Error"),
-        description:
-          errorMsg ||
-          t(
-            "serviceManager.serviceErrorDesc",
-            "Failed to start/stop {{service}}.",
-            { service },
-          ),
-      });
-    } finally {
-      setLoading(null);
-    }
-  };
-
-  toggleServiceRef.current = toggleService;
 
   const handleOpenConfig = (service: string) => onOpenConfig?.(service);
   const handleViewLogs = (service: string) => onViewLogs?.(service);

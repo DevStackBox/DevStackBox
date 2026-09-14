@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { safeInvoke } from "@/lib/tauri";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import {
@@ -72,7 +72,7 @@ export function BackupPage() {
   const loadBackups = useCallback(async () => {
     setLoading(true);
     try {
-      const list = await invoke<BackupInfo[]>(TAURI_COMMANDS.backup.listFull);
+      const list = await safeInvoke<BackupInfo[]>(TAURI_COMMANDS.backup.listFull);
       setBackups(list ?? []);
     } catch (err) {
       console.error("list_full_backups failed", err);
@@ -111,10 +111,14 @@ export function BackupPage() {
 
     try {
       const ts = new Date().toISOString();
-      const result = await invoke<FullBackupResult>(
+      const result = await safeInvoke<FullBackupResult>(
         TAURI_COMMANDS.backup.createFull,
         { timestamp: ts },
       );
+      if (!result) {
+        setFeedback({ ok: false, message: t("backup.createFailed", "Backup failed") });
+        return;
+      }
       const msg = result.mysql_included
         ? `${t("backup.createBackup", "Backup saved")}: ${result.path}`
         : t("backup.binariesNote", "Backup created but MySQL databases were NOT included - MySQL was not running. Start MySQL and create another backup to include database data.");
@@ -152,7 +156,7 @@ export function BackupPage() {
     }
 
     try {
-      await invoke(TAURI_COMMANDS.backup.restoreFull, {
+      await safeInvoke(TAURI_COMMANDS.backup.restoreFull, {
         path: confirmRestore.path,
       });
       setFeedback({
@@ -172,7 +176,7 @@ export function BackupPage() {
   const handleDelete = async () => {
     if (!confirmDelete) return;
     try {
-      await invoke(TAURI_COMMANDS.backup.deleteFull, {
+      await safeInvoke(TAURI_COMMANDS.backup.deleteFull, {
         path: confirmDelete.path,
       });
       await loadBackups();
@@ -186,7 +190,7 @@ export function BackupPage() {
 
   const handleOpenFolder = async () => {
     try {
-      await invoke(TAURI_COMMANDS.backup.openFolder);
+      await safeInvoke(TAURI_COMMANDS.backup.openFolder);
     } catch (err) {
       setFeedback({ ok: false, message: String(err) });
     }

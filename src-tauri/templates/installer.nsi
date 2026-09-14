@@ -33,7 +33,7 @@ ${StrCase}
 ${StrLoc}
 
 ; Comment out for release builds - macros and helpers stay in the project.
-!define DEBUG_UPGRADE
+; !define DEBUG_UPGRADE
 
 ; Bisection: 0=normal, 1=noop SetFixedInstallDir, 2=noop DisableInstallDirEdit,
 ;            3=noop PageLeaveReinstall, 4=omit MUI_PAGE_DIRECTORY, 5=omit MUI_PAGE_STARTMENU

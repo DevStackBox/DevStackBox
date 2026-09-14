@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { safeInvoke } from "@/lib/tauri";
 import { motion } from "framer-motion";
 import {
   Globe,
@@ -93,8 +93,8 @@ export function VhostsPage() {
     setLoading(true);
     try {
       const [v, h] = await Promise.all([
-        invoke<VhostEntry[]>(TAURI_COMMANDS.vhosts.list).catch(() => []),
-        invoke<string[]>(TAURI_COMMANDS.vhosts.getHostsEntries).catch(() => []),
+        safeInvoke<VhostEntry[]>(TAURI_COMMANDS.vhosts.list).then((v) => v ?? []).catch(() => []),
+        safeInvoke<string[]>(TAURI_COMMANDS.vhosts.getHostsEntries).then((v) => v ?? []).catch(() => []),
       ]);
       setVhosts(v ?? []);
       setHostsEntries(h ?? []);
@@ -115,7 +115,7 @@ export function VhostsPage() {
     if (!domain.trim() || !docRoot.trim()) return;
     setAdding(true);
     try {
-      await invoke(TAURI_COMMANDS.vhosts.add, {
+      await safeInvoke(TAURI_COMMANDS.vhosts.add, {
         domain: domain.trim(),
         docRoot: docRoot.trim(),
       });
@@ -139,7 +139,7 @@ export function VhostsPage() {
     if (!removeTarget) return;
     setRemoving(true);
     try {
-      await invoke(TAURI_COMMANDS.vhosts.remove, {
+      await safeInvoke(TAURI_COMMANDS.vhosts.remove, {
         domain: removeTarget.domain,
       });
       showMsg("ok", `Virtual host '${removeTarget.domain}' removed.`);
@@ -158,7 +158,7 @@ export function VhostsPage() {
 
   const handleToggle = async (entry: VhostEntry) => {
     try {
-      await invoke(TAURI_COMMANDS.vhosts.toggle, {
+      await safeInvoke(TAURI_COMMANDS.vhosts.toggle, {
         domain: entry.domain,
         enabled: !entry.enabled,
       });
@@ -176,11 +176,11 @@ export function VhostsPage() {
     setHostsLoading(d + action);
     setActionMsg(null);
     try {
-      const msg = await invoke<string>(TAURI_COMMANDS.vhosts.updateHostsEntry, {
+      const msg = await safeInvoke<string>(TAURI_COMMANDS.vhosts.updateHostsEntry, {
         domain: d,
         action,
       });
-      showMsg("ok", msg);
+      showMsg("ok", msg ?? t("vhosts.hostsUpdated", "Hosts file updated"));
       await loadAll();
     } catch (err) {
       showMsg("err", String(err));

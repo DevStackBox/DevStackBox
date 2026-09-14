@@ -14,6 +14,8 @@ export const TAURI_COMMANDS = {
     createDirectoryStructure: "create_directory_structure",
     getAutostart: "get_autostart",
     setAutostart: "set_autostart",
+    getAppSettings: "get_app_settings",
+    setAppSettings: "set_app_settings",
     getSystemInfo: "get_system_info",
   },
   services: {

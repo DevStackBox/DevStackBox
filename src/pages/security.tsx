@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { safeInvoke } from "@/lib/tauri";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
@@ -183,7 +183,7 @@ export function SecurityPage() {
     setLoading(true);
     setError(null);
     try {
-      const result = await invoke<SecurityFinding[]>(
+      const result = await safeInvoke<SecurityFinding[]>(
         TAURI_COMMANDS.security.analyze,
       );
       setFindings(result);

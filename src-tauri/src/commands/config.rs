@@ -61,14 +61,15 @@ pub async fn update_config(service: String, content: String) -> Result<String, S
 
         let timestamp = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
+            .map_err(|e| format!("System clock error: {}", e))?
             .as_secs();
 
-        let backup_name = format!(
-            "{}_{}.bak",
-            config_file.file_name().unwrap().to_str().unwrap(),
-            timestamp
-        );
+        let file_name = config_file
+            .file_name()
+            .and_then(|n| n.to_str())
+            .ok_or_else(|| "Config file name is not valid UTF-8".to_string())?;
+
+        let backup_name = format!("{}_{}.bak", file_name, timestamp);
         let backup_path = backup_dir.join(backup_name);
 
         std::fs::copy(&config_file, &backup_path)
@@ -93,14 +94,15 @@ pub async fn backup_config(service: String) -> Result<String, String> {
 
     let timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
+        .map_err(|e| format!("System clock error: {}", e))?
         .as_secs();
 
-    let backup_name = format!(
-        "{}_{}.bak",
-        config_file.file_name().unwrap().to_str().unwrap(),
-        timestamp
-    );
+    let file_name = config_file
+        .file_name()
+        .and_then(|n| n.to_str())
+        .ok_or_else(|| "Config file name is not valid UTF-8".to_string())?;
+
+    let backup_name = format!("{}_{}.bak", file_name, timestamp);
     let backup_path = backup_dir.join(backup_name);
 
     std::fs::copy(&config_file, &backup_path)

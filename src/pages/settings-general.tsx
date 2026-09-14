@@ -22,14 +22,17 @@ import { useToast } from "@/hooks/use-toast";
 import { getAppLanguageCode } from "@/lib/app-language";
 import { safeInvoke, isTauri } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
-
-const AUTO_CHECK_KEY = "devstackbox.settings.autoCheckUpdates";
-const AUTOSTART_APACHE_KEY = "devstackbox.settings.autoStartApache";
-const AUTOSTART_MYSQL_KEY = "devstackbox.settings.autoStartMysql";
-const MINIMIZE_TO_TRAY_KEY = "devstackbox.settings.minimizeToTray";
-const UPDATE_CHANNEL_KEY = "devstackbox.settings.updateChannel";
+import {
+  AUTOSTART_APACHE_KEY,
+  AUTOSTART_MYSQL_KEY,
+  MINIMIZE_TO_TRAY_KEY,
+  UPDATE_CHANNEL_KEY,
+  syncAppSettingsToBackend,
+} from "@/lib/app-settings";
 
 interface SettingsPageProps {}
+
+const AUTO_CHECK_KEY = "devstackbox.settings.autoCheckUpdates";
 
 export function SettingsPage({}: SettingsPageProps) {
   const { t, i18n } = useTranslation();
@@ -56,6 +59,7 @@ export function SettingsPage({}: SettingsPageProps) {
 
   const persistBool = (key: string, value: boolean) => {
     localStorage.setItem(key, String(value));
+    void syncAppSettingsToBackend();
   };
 
   // Read the current autostart status on mount so the toggle matches reality.
@@ -288,6 +292,7 @@ export function SettingsPage({}: SettingsPageProps) {
               onValueChange={(v) => {
                 setUpdateChannel(v);
                 localStorage.setItem(UPDATE_CHANNEL_KEY, v);
+                void syncAppSettingsToBackend();
                 toast({
                   title: t("settings.updateChannelSet", "Update channel set"),
                   description: t(

@@ -6,6 +6,7 @@
 use std::path::PathBuf;
 use std::process::Command;
 
+use crate::utils::mysql_credentials::read_stored_root_password;
 use crate::utils::paths::{
     get_installation_path, get_mysql_client_exe, get_mysqld_exe, get_mysqldump_exe,
     user_config_dir, user_mysql_data_dir,
@@ -28,7 +29,7 @@ pub fn build_mysql_connection() -> Result<MysqlConnection, String> {
         port: 3306,
         protocol: "TCP".to_string(),
         user: "root".to_string(),
-        password: None,
+        password: read_stored_root_password(),
     })
 }
 

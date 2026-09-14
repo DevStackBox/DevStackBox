@@ -20,7 +20,7 @@ import { Sidebar } from "./components/sidebar";
 import { Breadcrumb } from "./components/breadcrumb";
 import { OnboardingDialog } from "./components/onboarding-dialog";
 import { CommandPalette } from "./components/command-palette";
-import { ServiceStatusProvider } from "./context/service-status-context";
+import { ServiceStatusProvider, useServiceStatus } from "./context/service-status-context";
 import { DatabaseCacheProvider } from "./context/database-cache-context";
 import { UpdaterProvider } from "./context/updater-context";
 import { initializeSystemInfoCache } from "./lib/system-info-cache";
@@ -62,11 +62,13 @@ import { BackupPage as SettingsBackupPage } from "./pages/settings/backup";
 import { Toaster } from "@/components/ui/toaster";
 import type { ServiceName } from "@/types/services";
 import { ROUTES } from "@/lib/routes";
+import { syncAppSettingsToBackend } from "@/lib/app-settings";
 import "./lib/i18n";
 
 function AppShell() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { toggleService } = useServiceStatus();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [currentPhpVersion, setCurrentPhpVersion] = useState("8.3");
@@ -98,6 +100,7 @@ function AppShell() {
         );
         return;
       }
+      await syncAppSettingsToBackend();
       const binaries =
         (await safeInvoke<Record<string, boolean>>(
           TAURI_COMMANDS.system.checkBinaries,
@@ -123,7 +126,7 @@ function AppShell() {
   };
 
   const handleServiceToggle = (service: string) => {
-    console.log(`Toggle ${service} service`);
+    void toggleService(service);
   };
 
   useEffect(() => {
@@ -135,22 +138,6 @@ function AppShell() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
-
-  // Re-fetch service statuses when the Rust tray toggles a service so the
-  // dashboard badges update immediately regardless of which page is active.
-  useEffect(() => {
-    if (!isTauri()) return;
-    let unlisten: (() => void) | undefined;
-    (async () => {
-      const { listen } = await import("@tauri-apps/api/event");
-      unlisten = await listen("tray-services-updated", () => {
-        void safeInvoke(TAURI_COMMANDS.system.checkBinaries);
-      });
-    })();
-    return () => {
-      if (unlisten) unlisten();
-    };
   }, []);
 
   // Keep currentPhpVersion in sync when the user activates a version from

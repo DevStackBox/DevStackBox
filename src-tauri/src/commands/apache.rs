@@ -215,7 +215,7 @@ pub async fn stop_apache() -> Result<bool, String> {
             .args(["-f", config_path.to_str().unwrap_or(""), "-k", "stop"])
             .output();
 
-        std::thread::sleep(Duration::from_millis(2000));
+        sleep(Duration::from_millis(2000)).await;
     }
 
     let mut errors: Vec<String> = Vec::new();
@@ -229,7 +229,7 @@ pub async fn stop_apache() -> Result<bool, String> {
                 errors.push(e);
             }
         }
-        std::thread::sleep(Duration::from_millis(if attempt == 0 { 1000 } else { 500 }));
+        sleep(Duration::from_millis(if attempt == 0 { 1000 } else { 500 })).await;
     }
 
     if find_our_processes("httpd.exe", &apache_path).is_empty() {

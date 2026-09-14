@@ -8,7 +8,7 @@ pub mod tray;
 pub mod types;
 pub mod utils;
 
-use tauri::Emitter;
+use tauri::{Emitter, Manager};
 
 use crate::commands::apache::{get_apache_status, start_apache, stop_apache, toggle_apache};
 use crate::commands::config::{
@@ -26,15 +26,16 @@ use crate::commands::php::{
     open_php_terminal, switch_php_version, toggle_php, toggle_php_extension,
 };
 use crate::commands::system::{
-    check_binaries, create_directory_structure, debug_installation, debug_paths, get_autostart,
-    get_system_info, set_autostart, start_all_services, stop_all_services, test_apache_config,
-    test_mysql_config,
+    check_binaries, create_directory_structure, debug_installation, debug_paths, get_app_settings,
+    get_autostart, get_system_info, set_app_settings, set_autostart, start_all_services,
+    stop_all_services, test_apache_config, test_mysql_config,
 };
 use crate::commands::security::analyze_security;
 use crate::commands::ssl::{disable_ssl, enable_ssl, generate_ssl_cert, get_ssl_status};
 use crate::commands::vhosts::{add_vhost, get_hosts_entries, list_vhosts, remove_vhost, toggle_vhost, update_hosts_entry};
 use crate::commands::terminal::{kill_terminal_session, resize_terminal, send_terminal_input, spawn_terminal, TerminalSessions};
 use crate::commands::tray::{hide_to_tray, quit_app, refresh_tray_menu, set_tray_tooltip, show_main_window};
+use crate::utils::app_settings::read_app_settings;
 use crate::utils::paths::ensure_user_data_dirs;
 use std::sync::Arc;
 
@@ -90,6 +91,8 @@ pub fn run() {
             create_directory_structure,
             get_autostart,
             set_autostart,
+            get_app_settings,
+            set_app_settings,
             get_system_info,
             show_main_window,
             hide_to_tray,
@@ -128,15 +131,15 @@ pub fn run() {
             Ok(())
         })
         .on_window_event(|window, event| {
-            // Intercept the native close button (X) so the app hides to the
-            // system tray instead of exiting.  The user can quit via the
-            // tray context menu "Quit" item.
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                // Tell the frontend BEFORE hiding so the notification can
-                // be dispatched while the webview is still active.
-                let _ = window.emit("window-hidden-to-tray", ());
-                window.hide().unwrap_or_default();
-                api.prevent_close();
+                let settings = read_app_settings();
+                if settings.minimize_to_tray {
+                    let _ = window.emit("window-hidden-to-tray", ());
+                    window.hide().unwrap_or_default();
+                    api.prevent_close();
+                } else {
+                    window.app_handle().exit(0);
+                }
             }
         })
         .run(tauri::generate_context!())

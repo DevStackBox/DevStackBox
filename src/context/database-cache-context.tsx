@@ -115,12 +115,11 @@ const DatabaseCacheContext = createContext<DatabaseCacheContextValue | null>(
 export function DatabaseCacheProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
-  const cached = readDatabaseCache();
-  const [databases, setDatabases] = useState<DatabaseInfo[]>(
-    cached?.databases ?? [],
-  );
+  const [databases, setDatabases] = useState<DatabaseInfo[]>(() => {
+    return readDatabaseCache()?.databases ?? [];
+  });
   const [loading, setLoading] = useState(false);
-  const [hasCache, setHasCache] = useState(!!cached);
+  const [hasCache, setHasCache] = useState(() => !!readDatabaseCache());
 
   // Shared promise - prevents duplicate in-flight requests
   const refreshPromiseRef = useRef<Promise<void> | null>(null);

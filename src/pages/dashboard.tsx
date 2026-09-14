@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { safeInvoke, isTauri } from "@/lib/tauri";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -41,7 +41,8 @@ export function DashboardPage({
   const [vhosts, setVhosts] = useState<VhostEntry[]>([]);
 
   useEffect(() => {
-    invoke<VhostEntry[]>(TAURI_COMMANDS.vhosts.list)
+    if (!isTauri()) return;
+    void safeInvoke<VhostEntry[]>(TAURI_COMMANDS.vhosts.list)
       .then((v) => setVhosts(v ?? []))
       .catch(() => {});
   }, []);
@@ -61,9 +62,10 @@ export function DashboardPage({
         : "bg-gray-500 hover:bg-gray-600";
 
   const handleStartAll = async () => {
+    if (!isTauri()) return;
     setBulkBusy("start");
     try {
-      await invoke(TAURI_COMMANDS.system.startAllServices);
+      await safeInvoke(TAURI_COMMANDS.system.startAllServices);
     } catch (err) {
       console.error("start_all_services failed", err);
     } finally {
@@ -72,9 +74,10 @@ export function DashboardPage({
   };
 
   const handleStopAll = async () => {
+    if (!isTauri()) return;
     setBulkBusy("stop");
     try {
-      await invoke(TAURI_COMMANDS.system.stopAllServices);
+      await safeInvoke(TAURI_COMMANDS.system.stopAllServices);
     } catch (err) {
       console.error("stop_all_services failed", err);
     } finally {

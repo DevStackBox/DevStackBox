@@ -6,6 +6,7 @@ use std::path::PathBuf;
 
 use crate::commands::apache::{start_apache, stop_apache};
 use crate::commands::mysql::{start_mysql, stop_mysql};
+use crate::utils::app_settings::{read_app_settings, write_app_settings, AppSettings};
 use crate::utils::paths::{
     ensure_user_data_dirs, get_apache_exe, get_installation_path, get_mysqld_exe,
     get_user_data_root, user_config_dir, user_www_dir,
@@ -410,6 +411,16 @@ pub async fn set_autostart(enabled: bool) -> Result<bool, String> {
         }
     }
     Ok(enabled)
+}
+
+#[tauri::command]
+pub async fn get_app_settings() -> Result<AppSettings, String> {
+    Ok(read_app_settings())
+}
+
+#[tauri::command]
+pub async fn set_app_settings(settings: AppSettings) -> Result<(), String> {
+    write_app_settings(&settings)
 }
 
 /// Run an executable with a single argument and return its trimmed stdout
