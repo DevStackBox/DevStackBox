@@ -28,22 +28,29 @@ import {
   ExternalLink,
   Search,
   Copy,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { useDatabaseCache } from "@/context/database-cache-context";
-
-function formatBytes(bytes: number): string {
-  if (!bytes || bytes <= 0) return "0 B";
-  const units = ["B", "KB", "MB", "GB", "TB"];
-  let value = bytes;
-  let unit = 0;
-  while (value >= 1024 && unit < units.length - 1) {
-    value /= 1024;
-    unit += 1;
-  }
-  const rounded =
-    value >= 100 || unit === 0 ? Math.round(value) : value.toFixed(1);
-  return `${rounded} ${units[unit]}`;
-}
+import { formatBytes } from "@/lib/utils";
+import { phpMyAdminUrlForDatabase, getPhpMyAdminBaseUrl } from "@/lib/phpmyadmin";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export function DatabasesPage() {
   const { t } = useTranslation();
@@ -52,6 +59,9 @@ export function DatabasesPage() {
   const { databases, loading, hasCache, refresh } = useDatabaseCache();
   const [busy, setBusy] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newDbName, setNewDbName] = useState("");
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
 
   // Lazy warmup: trigger the first fetch when this page is first visited.
   useEffect(() => {
@@ -82,9 +92,59 @@ export function DatabasesPage() {
   };
 
   const openInPhpMyAdmin = (name: string) => {
-    openExternalUrl(
-      `http://localhost/phpmyadmin/?db=${encodeURIComponent(name)}`,
-    );
+    void phpMyAdminUrlForDatabase(name).then((url) => openExternalUrl(url));
+  };
+
+  const createDatabase = async () => {
+    const name = newDbName.trim();
+    if (!name) return;
+    setBusy("__create__");
+    try {
+      await safeInvoke(TAURI_COMMANDS.services.createMysqlDatabase, {
+        name,
+      });
+      toast({
+        variant: "success",
+        title: t("databases.created", "Database created"),
+        description: name,
+      });
+      setCreateOpen(false);
+      setNewDbName("");
+      await refresh();
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: t("databases.createFailed", "Create failed"),
+        description: String(err),
+      });
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const dropDatabase = async () => {
+    if (!dropTarget) return;
+    setBusy(dropTarget);
+    try {
+      await safeInvoke(TAURI_COMMANDS.services.dropMysqlDatabase, {
+        name: dropTarget,
+      });
+      toast({
+        variant: "success",
+        title: t("databases.dropped", "Database dropped"),
+        description: dropTarget,
+      });
+      setDropTarget(null);
+      await refresh();
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: t("databases.dropFailed", "Drop failed"),
+        description: String(err),
+      });
+    } finally {
+      setBusy(null);
+    }
   };
 
   const copyName = async (name: string) => {
@@ -132,7 +192,17 @@ export function DatabasesPage() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => openExternalUrl("http://localhost/phpmyadmin")}
+          onClick={() => setCreateOpen(true)}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          {t("databases.create", "Create")}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            void getPhpMyAdminBaseUrl().then((url) => openExternalUrl(url))
+          }
         >
           <ExternalLink className="mr-2 h-4 w-4" />
           {t("databases.openPhpMyAdmin", "phpMyAdmin")}
@@ -242,6 +312,14 @@ export function DatabasesPage() {
                       <Copy className="mr-2 h-4 w-4" />
                       {t("databases.copyName", "Copy database name")}
                     </ContextMenuItem>
+                    <ContextMenuSeparator />
+                    <ContextMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onSelect={() => setDropTarget(db.name)}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      {t("databases.drop", "Drop database")}
+                    </ContextMenuItem>
                   </ContextMenuContent>
                 </ContextMenu>
               ))}
@@ -249,6 +327,62 @@ export function DatabasesPage() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {t("databases.createTitle", "Create database")}
+            </DialogTitle>
+          </DialogHeader>
+          <Input
+            value={newDbName}
+            onChange={(e) => setNewDbName(e.target.value)}
+            placeholder={t("databases.namePlaceholder", "my_app_db")}
+            autoFocus
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)}>
+              {t("common.cancel", "Cancel")}
+            </Button>
+            <Button
+              onClick={() => void createDatabase()}
+              disabled={busy === "__create__" || !newDbName.trim()}
+            >
+              {t("databases.create", "Create")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog
+        open={dropTarget !== null}
+        onOpenChange={(o) => !o && setDropTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("databases.dropConfirmTitle", "Drop database?")}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t(
+                "databases.dropConfirmDescription",
+                "This permanently deletes {{name}} and all its data.",
+                { name: dropTarget ?? "" },
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel", "Cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => void dropDatabase()}
+            >
+              {t("databases.drop", "Drop database")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 }

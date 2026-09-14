@@ -8,16 +8,13 @@ import { ErrorLogPreview } from "@/components/error-log-preview";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TAURI_COMMANDS } from "@/lib/commands";
 import { ROUTES } from "@/lib/routes";
 import { Play, Square, Server, Loader2, Globe, ArrowRight } from "lucide-react";
 import { useServiceStatus } from "@/context/service-status-context";
-
-interface VhostEntry {
-  domain: string;
-  doc_root: string;
-  enabled: boolean;
-}
+import { useToast } from "@/hooks/use-toast";
+import type { VhostEntry } from "@/types/vhosts";
 
 interface DashboardPageProps {
   onOpenPHPVersionSelector: () => void;
@@ -37,27 +34,44 @@ export function DashboardPage({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { services } = useServiceStatus();
+  const { toast } = useToast();
   const [bulkBusy, setBulkBusy] = useState<"start" | "stop" | null>(null);
   const [vhosts, setVhosts] = useState<VhostEntry[]>([]);
+  const [vhostsLoading, setVhostsLoading] = useState(true);
 
   useEffect(() => {
-    if (!isTauri()) return;
+    if (!isTauri()) {
+      setVhostsLoading(false);
+      return;
+    }
+    setVhostsLoading(true);
     void safeInvoke<VhostEntry[]>(TAURI_COMMANDS.vhosts.list)
       .then((v) => setVhosts(v ?? []))
-      .catch(() => {});
-  }, []);
+      .catch(() => {
+        toast({
+          variant: "destructive",
+          title: t("vhosts.loadError", "Could not load virtual hosts"),
+        });
+      })
+      .finally(() => setVhostsLoading(false));
+  }, [t, toast]);
 
-  const runningCount = [services.apache.running, services.mysql.running].filter(Boolean).length;
+  const runningCount = [
+    services.apache.running,
+    services.mysql.running,
+    services.php.running,
+  ].filter(Boolean).length;
+  const totalServices = 3;
   const statusLabel =
-    runningCount === 2
+    runningCount === totalServices
       ? t("status.operational", "All services running")
-      : runningCount === 1
+      : runningCount > 0
         ? t("status.partiallyRunning", "Partially running")
         : t("status.offline", "All services stopped");
   const statusBadgeClass =
-    runningCount === 2
+    runningCount === totalServices
       ? "bg-green-500 hover:bg-green-600"
-      : runningCount === 1
+      : runningCount > 0
         ? "bg-orange-500 hover:bg-orange-600"
         : "bg-gray-500 hover:bg-gray-600";
 
@@ -101,7 +115,7 @@ export function DashboardPage({
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             <Badge className={statusBadgeClass}>{statusLabel}</Badge>
             <span>
-              {runningCount}/2{" "}
+              {runningCount}/{totalServices}{" "}
               {t("dashboard.stats.servicesActive", "services active")}
             </span>
             <span className="text-muted-foreground/70">|</span>
@@ -172,7 +186,12 @@ export function DashboardPage({
           </Button>
         </CardHeader>
         <CardContent className="px-4 pb-4">
-          {vhosts.length === 0 ? (
+          {vhostsLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          ) : vhosts.length === 0 ? (
             <p className="text-xs text-muted-foreground">
               {t("vhosts.noVhosts", "No virtual hosts configured yet.")}
             </p>

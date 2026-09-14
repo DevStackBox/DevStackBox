@@ -10,6 +10,7 @@ pub mod utils;
 
 use tauri::{Emitter, Manager};
 
+use crate::commands::app_update::{check_app_update, get_updater_endpoint};
 use crate::commands::apache::{get_apache_status, start_apache, stop_apache, toggle_apache};
 use crate::commands::config::{
     backup_config, list_config_backups, read_config, restore_config_backup, update_config,
@@ -17,7 +18,8 @@ use crate::commands::config::{
 use crate::commands::fullbackup::{create_full_backup, delete_full_backup, list_full_backups, open_backups_folder, restore_full_backup};
 use crate::commands::logs::{get_service_logs, log_crash_event};
 use crate::commands::mysql::{
-    backup_mysql_database, backup_mysql_database_named, create_mysql_user, drop_mysql_user,
+    backup_mysql_database, backup_mysql_database_named, create_mysql_database, create_mysql_user,
+    drop_mysql_database, drop_mysql_user,
     get_mysql_status, list_mysql_databases, list_mysql_databases_detailed, list_mysql_users,
     restore_mysql_database, set_mysql_user_password, start_mysql, stop_mysql, toggle_mysql,
 };
@@ -26,8 +28,9 @@ use crate::commands::php::{
     open_php_terminal, switch_php_version, toggle_php, toggle_php_extension,
 };
 use crate::commands::system::{
-    check_binaries, create_directory_structure, debug_installation, debug_paths, get_app_settings,
-    get_autostart, get_system_info, set_app_settings, set_autostart, start_all_services,
+    check_binaries, create_directory_structure, debug_installation, debug_paths, export_diagnostics_bundle,
+    get_app_settings, get_autostart, get_phpmyadmin_url, get_system_info, list_www_projects,
+    restart_all_services, set_app_settings, set_autostart, start_all_services,
     stop_all_services, test_apache_config, test_mysql_config,
 };
 use crate::commands::security::analyze_security;
@@ -53,6 +56,7 @@ pub fn run() {
             debug_paths,
             debug_installation,
             start_all_services,
+            restart_all_services,
             stop_all_services,
             test_apache_config,
             test_mysql_config,
@@ -78,6 +82,8 @@ pub fn run() {
             restore_mysql_database,
             list_mysql_users,
             create_mysql_user,
+            create_mysql_database,
+            drop_mysql_database,
             drop_mysql_user,
             set_mysql_user_password,
             open_php_terminal,
@@ -94,6 +100,11 @@ pub fn run() {
             get_app_settings,
             set_app_settings,
             get_system_info,
+            get_phpmyadmin_url,
+            list_www_projects,
+            export_diagnostics_bundle,
+            get_updater_endpoint,
+            check_app_update,
             show_main_window,
             hide_to_tray,
             set_tray_tooltip,

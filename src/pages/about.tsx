@@ -42,16 +42,20 @@ function Row({
   );
 }
 
-/** Formats a Date as a relative time string: "just now", "2 minutes ago", etc. */
-function formatRelativeTime(date: Date): string {
+function formatRelativeTime(
+  date: Date,
+  t: ReturnType<typeof useTranslation>["t"],
+): string {
   const diffMs = Date.now() - date.getTime();
   const diffSec = Math.floor(diffMs / 1000);
-  if (diffSec < 10) return "just now";
-  if (diffSec < 60) return `${diffSec} seconds ago`;
+  if (diffSec < 10) return t("time.justNow", "just now");
+  if (diffSec < 60)
+    return t("time.secondsAgo", "{{count}} seconds ago", { count: diffSec });
   const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `${diffMin} minute${diffMin === 1 ? "" : "s"} ago`;
+  if (diffMin < 60)
+    return t("time.minutesAgo", "{{count}} minutes ago", { count: diffMin });
   const diffHr = Math.floor(diffMin / 60);
-  return `${diffHr} hour${diffHr === 1 ? "" : "s"} ago`;
+  return t("time.hoursAgo", "{{count}} hours ago", { count: diffHr });
 }
 
 // ---------------------------------------------------------------------------
@@ -119,7 +123,7 @@ export function AboutPage() {
   });
 
   const lastCheckedText = lastCheckedAt
-    ? formatRelativeTime(lastCheckedAt)
+    ? formatRelativeTime(lastCheckedAt, t)
     : t("updater.lastCheckedNever", "never");
 
   // ---- Determine status text color ----

@@ -231,6 +231,13 @@ pub async fn start_all_services() -> Result<String, String> {
 }
 
 #[tauri::command]
+pub async fn restart_all_services() -> Result<String, String> {
+    stop_all_services().await?;
+    tokio::time::sleep(std::time::Duration::from_millis(750)).await;
+    start_all_services().await
+}
+
+#[tauri::command]
 pub async fn test_apache_config() -> Result<String, String> {
     let base_path = get_installation_path();
     let apache_path = get_apache_exe(&base_path);
@@ -490,4 +497,91 @@ pub async fn get_system_info() -> Result<crate::types::SystemInfo, String> {
         mysql_version: read_version(&mysqld, "--version"),
         php_versions,
     })
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WwwProjectEntry {
+    pub name: String,
+    pub path: String,
+}
+
+#[tauri::command]
+pub async fn get_phpmyadmin_url() -> Result<String, String> {
+    use crate::commands::ssl::get_ssl_status;
+    use crate::utils::config_ports::apache_listen_port;
+
+    let port = apache_listen_port();
+    let ssl_enabled = get_ssl_status().await.map(|s| s.enabled).unwrap_or(false);
+    let scheme = if ssl_enabled { "https" } else { "http" };
+    let url = if (port == 80 && !ssl_enabled) || (port == 443 && ssl_enabled) {
+        format!("{scheme}://localhost/phpmyadmin/")
+    } else {
+        format!("{scheme}://localhost:{port}/phpmyadmin/")
+    };
+    Ok(url)
+}
+
+#[tauri::command]
+pub async fn list_www_projects() -> Result<Vec<WwwProjectEntry>, String> {
+    let www = user_www_dir();
+    let mut entries = Vec::new();
+    if www.exists() {
+        for entry in std::fs::read_dir(&www).map_err(|e| format!("Failed to read www: {}", e))? {
+            let entry = entry.map_err(|e| format!("Failed to read www entry: {}", e))?;
+            if entry.path().is_dir() {
+                if let Some(name) = entry.file_name().to_str() {
+                    entries.push(WwwProjectEntry {
+                        name: name.to_string(),
+                        path: entry.path().display().to_string(),
+                    });
+                }
+            }
+        }
+    }
+    entries.sort_by(|a, b| a.name.cmp(&b.name));
+    Ok(entries)
+}
+
+#[tauri::command]
+pub async fn export_diagnostics_bundle() -> Result<String, String> {
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    let root = get_user_data_root();
+    let secs = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let path = root.join(format!("diagnostics-{secs}.json"));
+
+    let settings = read_app_settings();
+    let mut payload = serde_json::Map::new();
+    payload.insert(
+        "appVersion".into(),
+        serde_json::Value::String(env!("CARGO_PKG_VERSION").to_string()),
+    );
+    payload.insert(
+        "installPath".into(),
+        serde_json::Value::String(get_installation_path().display().to_string()),
+    );
+    payload.insert(
+        "userDataRoot".into(),
+        serde_json::Value::String(root.display().to_string()),
+    );
+    payload.insert(
+        "settings".into(),
+        serde_json::to_value(&settings).map_err(|e| e.to_string())?,
+    );
+    payload.insert(
+        "apachePort".into(),
+        serde_json::json!(crate::utils::config_ports::apache_listen_port()),
+    );
+    payload.insert(
+        "mysqlPort".into(),
+        serde_json::json!(crate::utils::config_ports::mysql_port()),
+    );
+
+    let json = serde_json::to_string_pretty(&payload).map_err(|e| e.to_string())?;
+    std::fs::write(&path, json).map_err(|e| format!("Failed to write diagnostics: {}", e))?;
+    Ok(path.display().to_string())
 }

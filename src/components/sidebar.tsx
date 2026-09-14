@@ -11,9 +11,14 @@ import { SIDEBAR_ROUTES } from "@/lib/routes";
 interface SidebarProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
+  onNavigate?: () => void;
 }
 
-export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
+export function Sidebar({
+  collapsed,
+  onToggleCollapse,
+  onNavigate,
+}: SidebarProps) {
   const { t } = useTranslation();
 
   return (
@@ -21,7 +26,7 @@ export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
       initial={{ x: -100 }}
       animate={{ x: 0, width: collapsed ? 60 : 240 }}
       transition={{ duration: 0.3 }}
-      className="fixed left-0 top-0 h-full bg-card border-r border-border z-50 flex flex-col"
+      className="fixed left-0 top-0 h-full bg-card border-r border-border z-50 flex flex-col md:z-50"
     >
       <div className="p-4 border-b border-border flex items-center justify-between">
         {collapsed ? (
@@ -75,6 +80,7 @@ export function Sidebar({ collapsed, onToggleCollapse }: SidebarProps) {
               <NavLink
                 to={route.path}
                 end={route.path === "/"}
+                onClick={() => onNavigate?.()}
                 className={({ isActive }) =>
                   cn(
                     "flex items-center w-full rounded-md text-sm font-medium transition-colors",

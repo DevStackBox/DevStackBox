@@ -210,6 +210,24 @@ export function TerminalPane({
     return () => observer.disconnect();
   }, [isActive, sessionId]);
 
+  useEffect(() => {
+    const term = termRef.current;
+    if (!term) return;
+    term.options.theme = isDark
+      ? {
+          background: "#09090b",
+          foreground: "#e4e4e7",
+          cursor: "#e4e4e7",
+          selectionBackground: "#3f3f46",
+        }
+      : {
+          background: "#ffffff",
+          foreground: "#18181b",
+          cursor: "#18181b",
+          selectionBackground: "#d4d4d8",
+        };
+  }, [isDark]);
+
   return (
     <div
       style={{

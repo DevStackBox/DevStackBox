@@ -1,5 +1,7 @@
 // Process and executable utilities.
 
+use std::collections::HashMap;
+use std::path::PathBuf;
 use std::process::Command;
 
 // Returns true if the given .exe is 32-bit (PE header IMAGE_FILE_MACHINE_I386).
@@ -134,6 +136,70 @@ pub fn get_process_pid(process_name: &str) -> Option<u32> {
 // `wmic` which is deprecated and missing on newer Windows 11 builds).
 // =====================================================================
 
+// Returns PIDs grouped by process image name (lowercase), one PowerShell invocation.
+#[cfg(windows)]
+pub fn batch_find_processes_by_image(process_names: &[&str]) -> HashMap<String, Vec<(u32, PathBuf)>> {
+    let mut map: HashMap<String, Vec<(u32, PathBuf)>> = HashMap::new();
+    for name in process_names {
+        map.insert(name.to_lowercase(), Vec::new());
+    }
+    if process_names.is_empty() {
+        return map;
+    }
+
+    for name in process_names {
+        if name.is_empty()
+            || name
+                .chars()
+                .any(|c| !c.is_ascii_alphanumeric() && c != '.' && c != '_' && c != '-')
+        {
+            return map;
+        }
+    }
+
+    let in_list = process_names
+        .iter()
+        .map(|n| format!("'{}'", n))
+        .collect::<Vec<_>>()
+        .join(",");
+
+    let script = format!(
+        "Get-CimInstance Win32_Process | Where-Object {{ $_.Name -in @({in_list}) }} | \
+         ForEach-Object {{ \"$($_.Name)|$($_.ProcessId)|$($_.ExecutablePath)\" }}"
+    );
+
+    let output = match create_hidden_command("powershell.exe")
+        .args(["-NoProfile", "-NonInteractive", "-Command", &script])
+        .output()
+    {
+        Ok(o) => o,
+        Err(_) => return map,
+    };
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    for line in stdout.lines() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        let mut parts = line.splitn(3, '|');
+        let img = parts.next().unwrap_or("").trim().to_lowercase();
+        let pid_str = parts.next().unwrap_or("").trim();
+        let path_str = parts.next().unwrap_or("").trim();
+        if let Ok(pid) = pid_str.parse::<u32>() {
+            map.entry(img)
+                .or_default()
+                .push((pid, PathBuf::from(path_str)));
+        }
+    }
+    map
+}
+
+#[cfg(not(windows))]
+pub fn batch_find_processes_by_image(_process_names: &[&str]) -> HashMap<String, Vec<(u32, PathBuf)>> {
+    HashMap::new()
+}
+
 #[cfg(windows)]
 pub fn find_processes_by_image(process_name: &str) -> Vec<(u32, std::path::PathBuf)> {
     // Sanitize: only allow simple filenames, never anything that could break
@@ -192,11 +258,15 @@ pub fn is_our_process_running(process_name: &str, expected_path: &std::path::Pat
 // Returns the PIDs of processes whose ExecutablePath matches `expected_path`.
 pub fn find_our_processes(process_name: &str, expected_path: &std::path::Path) -> Vec<u32> {
     let expected = normalize_path(expected_path);
-    find_processes_by_image(process_name)
+    let batch = batch_find_processes_by_image(&["httpd.exe", "mysqld.exe"]);
+    let key = process_name.to_lowercase();
+    batch
+        .get(&key)
         .into_iter()
+        .flat_map(|entries| entries.iter())
         .filter_map(|(pid, p)| {
-            if normalize_path(&p) == expected {
-                Some(pid)
+            if normalize_path(p) == expected {
+                Some(*pid)
             } else {
                 None
             }

@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { TAURI_COMMANDS } from "@/lib/commands";
 import { isTauri } from "@/lib/tauri";
+import { formatBytes } from "@/lib/utils";
 
 interface BackupInfo {
   path: string;
@@ -45,18 +46,8 @@ interface FullBackupResult {
   mysql_included: boolean;
 }
 
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function formatDate(secs: number): string {
-  return new Date(secs * 1000).toLocaleString();
-}
-
 export function BackupPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [backups, setBackups] = useState<BackupInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -307,7 +298,10 @@ export function BackupPage() {
                   <div className="min-w-0">
                     <p className="text-sm font-mono truncate">{b.filename}</p>
                     <p className="text-xs text-muted-foreground">
-                      {formatDate(b.created_at_secs)} &middot;{" "}
+                      {new Date(b.created_at_secs * 1000).toLocaleString(
+                        i18n.language,
+                      )}{" "}
+                      &middot;{" "}
                       {formatBytes(b.size_bytes)}
                     </p>
                   </div>

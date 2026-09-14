@@ -5,11 +5,13 @@ use std::time::Duration;
 use tokio::time::sleep;
 
 use crate::types::ServiceInfo;
+use crate::utils::config_ports::mysql_port;
 use crate::utils::config_version::needs_config_migration;
 use crate::utils::mysql_connection::{
     mysqldump_command, mysql_command, mysqladmin_command, prepare_mysql_client,
 };
 use crate::utils::mysql_credentials::write_stored_root_password;
+use crate::utils::mysql_sql::{escape_mysql_string_literal, quote_mysql_user_host, validate_mysql_host};
 use crate::utils::paths::{get_installation_path, get_mysqld_exe, user_config_dir, user_mysql_data_dir};
 use crate::utils::process::{
     create_hidden_command, ensure_port_available, find_our_processes, is_our_process_running,
@@ -34,16 +36,20 @@ fn is_port_listening(port: u16) -> bool {
 }
 
 async fn wait_for_mysql_port(max_wait: Duration) -> Result<(), String> {
+    let port = mysql_port();
     let step = Duration::from_millis(500);
     let mut elapsed = Duration::ZERO;
     while elapsed < max_wait {
-        if is_port_listening(3306) {
+        if is_port_listening(port) {
             return Ok(());
         }
         sleep(step).await;
         elapsed += step;
     }
-    Err("MySQL started but port 3306 is not listening".to_string())
+    Err(format!(
+        "MySQL started but port {} is not listening",
+        port
+    ))
 }
 
 #[tauri::command]
@@ -56,7 +62,7 @@ pub async fn get_mysql_status() -> Result<ServiceInfo, String> {
     Ok(ServiceInfo {
         running,
         pid,
-        port: Some(3306),
+        port: Some(mysql_port()),
         version: get_mysql_version().await,
     })
 }
@@ -103,9 +109,8 @@ pub async fn start_mysql() -> Result<bool, String> {
 
     initialize_mysql_data().await?;
 
-    // Phase 5.2 - fail fast with a clear message if port 3306 is taken
-    // (commonly another MySQL install or a previous DevStackBox run).
-    ensure_port_available(3306, "MySQL")?;
+    let port = mysql_port();
+    ensure_port_available(port, "MySQL")?;
 
     match create_hidden_command(&mysql_path.to_string_lossy())
         .arg(format!("--defaults-file={}", config_path.display()))
@@ -357,7 +362,21 @@ pub async fn list_mysql_databases_detailed() -> Result<Vec<crate::types::Databas
         detailed.insert(name, (table_count, size_bytes));
     }
 
-    let all_names = list_mysql_databases().await?;
+    let show_out = mysql_command()?
+        .args(["-N", "-B", "-e", "SHOW DATABASES"])
+        .output()
+        .map_err(|e| format!("Failed to list databases: {}", e))?;
+    if !show_out.status.success() {
+        let stderr = String::from_utf8_lossy(&show_out.stderr);
+        return Err(format!("SHOW DATABASES failed: {}", stderr.trim()));
+    }
+    let system = ["information_schema", "performance_schema", "mysql", "sys"];
+    let all_names: Vec<String> = String::from_utf8_lossy(&show_out.stdout)
+        .lines()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty() && !system.contains(&s.as_str()))
+        .collect();
+
     let mut result: Vec<crate::types::DatabaseInfo> = all_names
         .into_iter()
         .map(|name| {
@@ -499,49 +518,25 @@ pub async fn create_mysql_user(
     host: String,
     password: String,
 ) -> Result<String, String> {
-    if username.is_empty() {
-        return Err("Username cannot be empty".to_string());
-    }
-
-    let host = if host.is_empty() {
-        "localhost".to_string()
-    } else {
-        host
-    };
+    let user_host = quote_mysql_user_host(&username, &host)?;
 
     let query = if password.is_empty() {
-        format!(
-            "CREATE USER '{}'@'{}'; FLUSH PRIVILEGES;",
-            username.replace('\'', "\\'"),
-            host.replace('\'', "\\'")
-        )
+        format!("CREATE USER {user_host}; FLUSH PRIVILEGES;")
     } else {
-        format!(
-            "CREATE USER '{}'@'{}' IDENTIFIED BY '{}'; FLUSH PRIVILEGES;",
-            username.replace('\'', "\\'"),
-            host.replace('\'', "\\'"),
-            password.replace('\'', "\\'")
-        )
+        let pwd = escape_mysql_string_literal(&password);
+        format!("CREATE USER {user_host} IDENTIFIED BY '{pwd}'; FLUSH PRIVILEGES;")
     };
 
     run_mysql_query(&query)?;
-    Ok(format!("User '{}' created", username))
+    Ok(format!("User '{}' created", username.trim()))
 }
 
 #[tauri::command]
 pub async fn drop_mysql_user(username: String, host: String) -> Result<String, String> {
-    if username.is_empty() {
-        return Err("Username cannot be empty".to_string());
-    }
-
-    let query = format!(
-        "DROP USER IF EXISTS '{}'@'{}'; FLUSH PRIVILEGES;",
-        username.replace('\'', "\\'"),
-        host.replace('\'', "\\'")
-    );
-
+    let user_host = quote_mysql_user_host(&username, &host)?;
+    let query = format!("DROP USER IF EXISTS {user_host}; FLUSH PRIVILEGES;");
     run_mysql_query(&query)?;
-    Ok(format!("User '{}' dropped", username))
+    Ok(format!("User '{}' dropped", username.trim()))
 }
 
 #[tauri::command]
@@ -550,28 +545,21 @@ pub async fn set_mysql_user_password(
     host: String,
     password: String,
 ) -> Result<String, String> {
-    if username.is_empty() {
-        return Err("Username cannot be empty".to_string());
-    }
+    let user_host = quote_mysql_user_host(&username, &host)?;
+    let host_norm = validate_mysql_host(&host)?;
 
     let query = if password.is_empty() {
-        format!(
-            "ALTER USER '{}'@'{}' IDENTIFIED BY ''; FLUSH PRIVILEGES;",
-            username.replace('\'', "\\'"),
-            host.replace('\'', "\\'")
-        )
+        format!("ALTER USER {user_host} IDENTIFIED BY ''; FLUSH PRIVILEGES;")
     } else {
-        format!(
-            "ALTER USER '{}'@'{}' IDENTIFIED BY '{}'; FLUSH PRIVILEGES;",
-            username.replace('\'', "\\'"),
-            host.replace('\'', "\\'"),
-            password.replace('\'', "\\'")
-        )
+        let pwd = escape_mysql_string_literal(&password);
+        format!("ALTER USER {user_host} IDENTIFIED BY '{pwd}'; FLUSH PRIVILEGES;")
     };
 
     run_mysql_query(&query)?;
 
-    if username == "root" && (host == "localhost" || host == "127.0.0.1" || host.is_empty()) {
+    if username.trim() == "root"
+        && (host_norm == "localhost" || host_norm == "127.0.0.1" || host.trim().is_empty())
+    {
         let stored = if password.is_empty() {
             None
         } else {
@@ -580,5 +568,42 @@ pub async fn set_mysql_user_password(
         write_stored_root_password(stored)?;
     }
 
-    Ok(format!("Password updated for '{}'", username))
+    Ok(format!("Password updated for '{}'", username.trim()))
+}
+
+fn validate_database_name(name: &str) -> Result<String, String> {
+    let name = name.trim();
+    if name.is_empty() {
+        return Err("Database name is required".to_string());
+    }
+    if name.len() > 64 {
+        return Err("Database name is too long".to_string());
+    }
+    if !name
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+    {
+        return Err("Invalid database name".to_string());
+    }
+    Ok(name.to_string())
+}
+
+#[tauri::command]
+pub async fn create_mysql_database(name: String) -> Result<String, String> {
+    let name = validate_database_name(&name)?;
+    prepare_mysql_client()?;
+    let escaped = name.replace('`', "``");
+    let query = format!("CREATE DATABASE `{escaped}`;");
+    run_mysql_query(&query)?;
+    Ok(format!("Database '{}' created", name))
+}
+
+#[tauri::command]
+pub async fn drop_mysql_database(name: String) -> Result<String, String> {
+    let name = validate_database_name(&name)?;
+    prepare_mysql_client()?;
+    let escaped = name.replace('`', "``");
+    let query = format!("DROP DATABASE `{escaped}`;");
+    run_mysql_query(&query)?;
+    Ok(format!("Database '{}' dropped", name))
 }

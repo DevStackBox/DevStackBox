@@ -22,6 +22,7 @@ import { TAURI_COMMANDS } from "@/lib/commands";
 import { useToast } from "@/hooks/use-toast";
 import { ROUTES } from "@/lib/routes";
 import type { ServiceName } from "@/types/services";
+import { useServiceStatus } from "@/context/service-status-context";
 
 interface ServicesPageProps {
   onOpenPHPVersionSelector: () => void;
@@ -40,6 +41,7 @@ export function ServicesPage({
   const { t } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { refresh } = useServiceStatus();
 
   const [bulkLoading, setBulkLoading] = useState<
     "start" | "stop" | "restart" | null
@@ -103,9 +105,8 @@ export function ServicesPage({
     setBulkLoading("restart");
     try {
       if (!isTauri()) return;
-      await safeInvoke(TAURI_COMMANDS.system.stopAllServices);
-      await new Promise((r) => setTimeout(r, 750));
-      await safeInvoke(TAURI_COMMANDS.system.startAllServices);
+      await safeInvoke(TAURI_COMMANDS.system.restartAllServices);
+      await refresh();
       toast({ title: t("toast.restartAllOk", "Services restarted") });
     } catch (error) {
       toast({

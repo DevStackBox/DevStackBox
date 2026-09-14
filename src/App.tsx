@@ -8,10 +8,10 @@ import {
 } from "react-router-dom";
 import { safeInvoke, isTauri, getMockBinariesStatus } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
-import { URLS } from "@/lib/urls";
-import { FolderOpen } from "lucide-react";
+import { Menu } from "lucide-react";
+import { ProjectsPage } from "./pages/projects";
+import { RootPasswordPrompt } from "./components/root-password-prompt";
 import { useTranslation } from "react-i18next";
-import { EmptyState } from "@/components/ui/empty-state";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "./components/language-switcher";
@@ -19,7 +19,9 @@ import { AutoUpdater } from "./components/auto-updater";
 import { Sidebar } from "./components/sidebar";
 import { Breadcrumb } from "./components/breadcrumb";
 import { OnboardingDialog } from "./components/onboarding-dialog";
+import { ErrorBoundary } from "./components/error-boundary";
 import { CommandPalette } from "./components/command-palette";
+import { Button } from "@/components/ui/button";
 import { ServiceStatusProvider, useServiceStatus } from "./context/service-status-context";
 import { DatabaseCacheProvider } from "./context/database-cache-context";
 import { UpdaterProvider } from "./context/updater-context";
@@ -70,6 +72,7 @@ function AppShell() {
   const navigate = useNavigate();
   const { toggleService } = useServiceStatus();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [currentPhpVersion, setCurrentPhpVersion] = useState("8.3");
 
@@ -155,19 +158,41 @@ function AppShell() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar
-        collapsed={sidebarCollapsed}
-        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-      />
+      {mobileNavOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={() => setMobileNavOpen(false)}
+        />
+      )}
+      <div className={`${mobileNavOpen ? "block" : "hidden"} md:block`}>
+        <Sidebar
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+          onNavigate={() => setMobileNavOpen(false)}
+        />
+      </div>
 
       <div
         className={`transition-all duration-200 ${
-          sidebarCollapsed ? "ml-16" : "ml-64"
+          sidebarCollapsed ? "md:ml-16" : "md:ml-64"
         }`}
       >
         <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-            <Breadcrumb />
+          <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden shrink-0"
+                aria-label={t("navigation.openMenu", "Open menu")}
+                onClick={() => setMobileNavOpen(true)}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+              <Breadcrumb />
+            </div>
             <div className="flex items-center gap-2">
               <AutoUpdater mode="indicator" />
               <LanguageSwitcher />
@@ -177,6 +202,7 @@ function AppShell() {
         </header>
 
         <main className="container mx-auto px-4 py-6">
+          <ErrorBoundary>
           <Routes>
             <Route
               path="/"
@@ -291,29 +317,11 @@ function AppShell() {
               path="/backup"
               element={<Navigate to={ROUTES.settingsBackup.path} replace />}
             />
-            <Route
-              path="/projects"
-              element={
-                <div className="space-y-6">
-                  <h2 className="text-3xl font-bold">
-                    {t("navigation.projects")}
-                  </h2>
-                  <EmptyState
-                    icon={FolderOpen}
-                    title="Project Management Coming Soon"
-                    description="Create and manage your PHP projects with virtual hosts, SSL certificates, and automatic configuration."
-                    action={{
-                      label: "View Roadmap",
-                      onClick: () =>
-                        window.open(URLS.roadmap, "_blank"),
-                    }}
-                  />
-                </div>
-              }
-            />
+            <Route path="/projects" element={<ProjectsPage />} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          </ErrorBoundary>
         </main>
       </div>
 
@@ -325,7 +333,11 @@ function AppShell() {
 
       <Toaster />
 
-      <OnboardingDialog onOpenServices={() => navigate(ROUTES.services.path)} />
+      <OnboardingDialog
+        onOpenServices={() => navigate(ROUTES.services.path)}
+        activePhpVersion={currentPhpVersion}
+      />
+      <RootPasswordPrompt />
     </div>
   );
 }

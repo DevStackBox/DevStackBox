@@ -165,6 +165,14 @@ The auto-generated `my.cnf` and startup configuration:
 
 **Important:** DevStackBox is for LOCAL DEVELOPMENT ONLY. Never expose the MySQL or Apache ports to a public network.
 
+### phpMyAdmin on localhost
+
+phpMyAdmin is served through Apache at `/phpmyadmin/` on your configured Apache port (default port 80). It uses the same MySQL credentials you configure in DevStackBox.
+
+**Risk:** Anyone who can open `http://localhost/phpmyadmin` on your PC can manage databases while Apache is running. This is acceptable for solo local development; use a MySQL root password and do not share the machine account if that is a concern.
+
+**Mitigation:** DevStackBox binds Apache to localhost by default. The Security Analyzer warns when MySQL `root` has an empty password. Set a root password under Databases → Users.
+
 ---
 
 ## Apache Default Security

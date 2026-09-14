@@ -24,12 +24,6 @@ interface ServiceManagerProps {
   onViewLogs?: (service: string) => void;
   onOpenPHPVersionSelector?: () => void;
   currentPhpVersion?: string;
-  /** @deprecated status is now read from ServiceStatusContext */
-  onStatusesChange?: (statuses: {
-    apache: ServiceStatus;
-    mysql: ServiceStatus;
-    php: ServiceStatus;
-  }) => void;
   selectedService?: "apache" | "mysql" | "php";
   onSelectService?: (service: "apache" | "mysql" | "php") => void;
 }

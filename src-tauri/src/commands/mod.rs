@@ -2,6 +2,7 @@
 // Roadmap Phase 2: extracted from monolithic lib.rs.
 
 pub mod apache;
+pub mod app_update;
 pub mod config;
 pub mod fullbackup;
 pub mod logs;

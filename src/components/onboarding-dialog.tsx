@@ -19,9 +19,13 @@ const STORAGE_KEY = "devstackbox.onboarding.completed";
 
 interface OnboardingDialogProps {
   onOpenServices: () => void;
+  activePhpVersion?: string;
 }
 
-export function OnboardingDialog({ onOpenServices }: OnboardingDialogProps) {
+export function OnboardingDialog({
+  onOpenServices,
+  activePhpVersion = "8.3",
+}: OnboardingDialogProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { refresh } = useServiceStatus();
@@ -56,8 +60,10 @@ export function OnboardingDialog({ onOpenServices }: OnboardingDialogProps) {
     }
     setStarting(true);
     try {
-      await safeInvoke(TAURI_COMMANDS.services.startMysql);
-      await safeInvoke(TAURI_COMMANDS.services.startApache);
+      await Promise.all([
+        safeInvoke(TAURI_COMMANDS.services.startMysql),
+        safeInvoke(TAURI_COMMANDS.services.startApache),
+      ]);
       // Give Win32_Process a moment to register the newly-started processes.
       // This delay lives here only - not in the normal polling loop.
       await new Promise((r) => setTimeout(r, 800));
@@ -122,7 +128,7 @@ export function OnboardingDialog({ onOpenServices }: OnboardingDialogProps) {
           </div>
           <div className="flex flex-col items-center gap-1 rounded-lg border bg-card p-3 text-center">
             <Code className="h-5 w-5 text-purple-500" />
-            <span className="text-xs font-medium">PHP 8.3</span>
+            <span className="text-xs font-medium">PHP {activePhpVersion}</span>
             <span className="text-[10px] text-muted-foreground">
               {t("onboarding.bundled", "Bundled")}
             </span>

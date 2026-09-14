@@ -24,7 +24,17 @@ use tauri_plugin_opener::OpenerExt;
 
 use crate::commands::apache::get_apache_status;
 use crate::commands::mysql::get_mysql_status;
+use crate::commands::php::get_php_status;
+use crate::types::ServiceInfo;
+use crate::utils::config_ports::apache_listen_port;
 use crate::utils::paths::user_www_dir;
+
+#[derive(serde::Serialize, Clone)]
+pub struct ServiceStatusSnapshot {
+    pub apache: ServiceInfo,
+    pub mysql: ServiceInfo,
+    pub php: ServiceInfo,
+}
 
 // ─── State ───────────────────────────────────────────────────────────────────
 
@@ -56,14 +66,34 @@ fn fmt_label(service: &str, running: bool) -> String {
 // Queries both services, updates menu item labels and tray tooltip.
 // Called by the poller and by the frontend-exposed `refresh_tray_menu` command.
 pub async fn refresh_tray_status(app: &AppHandle) {
-    let apache_running = get_apache_status()
-        .await
-        .map(|s| s.running)
-        .unwrap_or(false);
-    let mysql_running = get_mysql_status()
-        .await
-        .map(|s| s.running)
-        .unwrap_or(false);
+    let apache = get_apache_status().await.unwrap_or(ServiceInfo {
+        running: false,
+        pid: None,
+        port: Some(80),
+        version: None,
+    });
+    let mysql = get_mysql_status().await.unwrap_or(ServiceInfo {
+        running: false,
+        pid: None,
+        port: Some(3306),
+        version: None,
+    });
+    let php = get_php_status().await.unwrap_or(ServiceInfo {
+        running: false,
+        pid: None,
+        port: None,
+        version: None,
+    });
+
+    let snapshot = ServiceStatusSnapshot {
+        apache: apache.clone(),
+        mysql: mysql.clone(),
+        php: php.clone(),
+    };
+    let _ = app.emit("service-status-snapshot", snapshot);
+
+    let apache_running = apache.running;
+    let mysql_running = mysql.running;
 
     // Update menu item labels
     if let Some(state) = app.try_state::<TrayMenuState>() {
@@ -92,7 +122,13 @@ fn open_www_folder(app: &AppHandle) {
 }
 
 fn open_phpmyadmin(app: &AppHandle) {
-    let _ = app.opener().open_url("http://localhost/phpmyadmin", None::<&str>);
+    let port = apache_listen_port();
+    let url = if port == 80 {
+        "http://localhost/phpmyadmin".to_string()
+    } else {
+        format!("http://localhost:{port}/phpmyadmin")
+    };
+    let _ = app.opener().open_url(&url, None::<&str>);
 }
 
 // ─── Setup ───────────────────────────────────────────────────────────────────

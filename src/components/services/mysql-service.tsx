@@ -4,6 +4,7 @@ import { Database } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
 import { useToast } from "@/hooks/use-toast";
 import { openExternalUrl } from "@/lib/tauri";
+import { getPhpMyAdminBaseUrl } from "@/lib/phpmyadmin";
 import { ServiceCard } from "./service-card";
 import { StatusBadge } from "./status-badge";
 import { ServiceOverflowMenu } from "./service-overflow-menu";
@@ -49,22 +50,35 @@ export function MySQLService({
   const { toast } = useToast();
 
   const openPhpMyAdmin = () => {
-    openExternalUrl("http://localhost/phpmyadmin").catch((err) =>
-      toast({
-        title: "Failed to open phpMyAdmin",
-        description: String(err),
-        variant: "destructive",
-      }),
-    );
+    void getPhpMyAdminBaseUrl()
+      .then((url) => openExternalUrl(url.replace(/\/$/, "")))
+      .catch((err) =>
+        toast({
+          title: t("databases.phpMyAdminOpenFailed", "Failed to open phpMyAdmin"),
+          description: String(err),
+          variant: "destructive",
+        }),
+      );
   };
 
-  const copyConnectionString = () => {
+  const copyConnectionString = async () => {
     const connectionString = `mysql://root@localhost:${status.port || 3306}`;
-    navigator.clipboard.writeText(connectionString);
-    toast({
-      title: "Copied!",
-      description: "MySQL connection string copied to clipboard",
-    });
+    try {
+      await navigator.clipboard.writeText(connectionString);
+      toast({
+        title: t("databases.copied", "Copied"),
+        description: t(
+          "mysql.connectionCopied",
+          "MySQL connection string copied to clipboard",
+        ),
+      });
+    } catch (err) {
+      toast({
+        title: t("common.error", "Error"),
+        description: String(err),
+        variant: "destructive",
+      });
+    }
   };
 
   // Primary actions: Start/Stop + one Open (phpMyAdmin while running).

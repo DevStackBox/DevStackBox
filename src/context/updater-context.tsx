@@ -27,9 +27,10 @@ import {
   type ReactNode,
 } from "react";
 import { APP_VERSION } from "@/lib/version";
-import { isTauri } from "@/lib/tauri";
+import { isTauri, safeInvoke } from "@/lib/tauri";
 import { useToast } from "@/hooks/use-toast";
-import { getUpdateChannel } from "@/lib/app-settings";
+import { getUpdateChannel, syncAppSettingsToBackend } from "@/lib/app-settings";
+import { TAURI_COMMANDS } from "@/lib/commands";
 import { useTranslation } from "react-i18next";
 
 // ---------------------------------------------------------------------------
@@ -37,10 +38,19 @@ import { useTranslation } from "react-i18next";
 // ---------------------------------------------------------------------------
 
 // Minimal shape of the object returned by @tauri-apps/plugin-updater `check()`
+interface UpdateCheckMetadata {
+  rid: number;
+  currentVersion: string;
+  version: string;
+  body?: string;
+  rawJson: Record<string, unknown>;
+}
+
 interface UpdateInfo {
   version: string;
   body?: string;
   available: boolean;
+  rid: number;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   downloadAndInstall: (onEvent: (event: any) => void) => Promise<void>;
 }
@@ -48,7 +58,7 @@ interface UpdateInfo {
 export interface UpdaterContextValue {
   /** True once an update is confirmed available from the server */
   updateAvailable: boolean;
-  /** Full update object from the Tauri updater plugin */
+  /** Full update object from channel-aware check */
   updateInfo: UpdateInfo | null;
   /** True while checkForUpdates() is running */
   checking: boolean;
@@ -115,25 +125,37 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
       setCheckError(null); // clear any previous error before each attempt
 
       try {
-        const { check } = await import("@tauri-apps/plugin-updater");
-        const channel = getUpdateChannel();
-        const update =
-          channel === "beta"
-            ? await check({
-                headers: { "X-DevStackBox-Update-Channel": "beta" },
-              })
-            : await check();
+        await syncAppSettingsToBackend();
+        void getUpdateChannel(); // channel read from storage → synced to Rust
+
+        const meta = await safeInvoke<UpdateCheckMetadata | null>(
+          TAURI_COMMANDS.system.checkAppUpdate,
+        );
 
         setLastCheckedAt(new Date());
 
-        if (update?.available) {
-          setUpdateInfo(update as UpdateInfo);
+        if (meta?.version) {
+          const { Channel, invoke } = await import("@tauri-apps/api/core");
+          const updateInfo: UpdateInfo = {
+            version: meta.version,
+            body: meta.body,
+            available: true,
+            rid: meta.rid,
+            downloadAndInstall: async (onEvent) => {
+              const channel = new Channel();
+              channel.onmessage = (msg) => onEvent(msg);
+              await invoke("plugin:updater|download_and_install", {
+                rid: meta.rid,
+                onEvent: channel,
+              });
+            },
+          };
+          setUpdateInfo(updateInfo);
           setUpdateAvailable(true);
-          // Auto-open dialog on first detection (not after dismissal or re-check)
           const dismissedVersion = localStorage.getItem(
             "devstackbox.dismissedUpdate",
           );
-          if (dismissedVersion !== update.version) {
+          if (dismissedVersion !== meta.version) {
             setShowDialog(true);
           }
         } else if (showNotification) {

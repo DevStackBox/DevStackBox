@@ -29,4 +29,8 @@ export default defineConfig(async () => ({
       "@": path.resolve("./src"),
     },
   },
+  test: {
+    environment: "jsdom",
+    globals: false,
+  },
 }));

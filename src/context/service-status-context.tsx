@@ -391,15 +391,55 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
     };
   }, [refresh]);
 
-  // Single polling loop for the entire app lifetime
+  // Poll when visible; tray emits service-status-snapshot every 5s.
   useEffect(() => {
     primeNotificationPermission();
     void refresh();
-    const id = setInterval(() => void refresh(), 5000);
-    return () => clearInterval(id);
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") void refresh();
+    }, 15000);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      clearInterval(id);
+    };
   }, [refresh]);
 
-  // Tray toggles run in Rust; refresh badges when the tray notifies us.
+  useEffect(() => {
+    if (!isTauri()) return;
+    let unlisten: (() => void) | undefined;
+    (async () => {
+      const { listen } = await import("@tauri-apps/api/event");
+      unlisten = await listen<{
+        apache: RawServiceStatus;
+        mysql: RawServiceStatus;
+        php: RawServiceStatus;
+      }>("service-status-snapshot", (event) => {
+        const p = event.payload;
+        const next = {
+          apache: mapRawStatus(p.apache),
+          mysql: mapRawStatus(p.mysql),
+          php: mapRawStatus(p.php),
+        };
+        setServices(next);
+        const now = Date.now();
+        setLastSuccessfulRefresh(now);
+        writeServiceCache(next, now);
+        setInitialLoading(false);
+      });
+    })();
+    return () => {
+      if (unlisten) unlisten();
+    };
+  }, []);
+
+  // Tray menu actions still emit tray-services-updated after toggles.
   useEffect(() => {
     if (!isTauri()) return;
     let unlisten: (() => void) | undefined;

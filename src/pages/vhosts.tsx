@@ -53,12 +53,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { TAURI_COMMANDS } from "@/lib/commands";
-
-interface VhostEntry {
-  domain: string;
-  doc_root: string;
-  enabled: boolean;
-}
+import type { VhostEntry } from "@/types/vhosts";
 
 export function VhostsPage() {
   const { t } = useTranslation();

@@ -5,6 +5,7 @@ use tokio::time::sleep;
 
 use crate::commands::php::patch_php_ini;
 use crate::types::ServiceInfo;
+use crate::utils::config_ports::apache_listen_port;
 use crate::utils::paths::{
     get_apache_exe, get_installation_path, get_user_data_root, user_config_dir, user_logs_dir,
     user_www_dir,
@@ -53,7 +54,7 @@ pub async fn get_apache_status() -> Result<ServiceInfo, String> {
     Ok(ServiceInfo {
         running,
         pid,
-        port: Some(80),
+        port: Some(apache_listen_port()),
         version,
     })
 }
@@ -116,9 +117,9 @@ pub async fn start_apache() -> Result<bool, String> {
     // Seed the www dir with default files if it is still empty.
     seed_www_dir();
 
-    // Phase 5.2 - fail fast with a clear message if port 80 is taken
-    // (commonly by IIS, Skype, or another web server).
-    ensure_port_available(80, "Apache")?;
+    let listen_port = apache_listen_port();
+    // Phase 5.2 - fail fast if the configured listen port is taken.
+    ensure_port_available(listen_port, "Apache")?;
 
     // Run config syntax test first so we get a clear error message.
     // NOTE: on some Apache Lounge Win64 builds mod_ssl causes httpd -t to
@@ -174,8 +175,9 @@ pub async fn start_apache() -> Result<bool, String> {
     match child.try_wait() {
         Ok(Some(status)) => {
             println!(
-                "Apache parent process exited (code: {}) - checking port 80 for worker process",
-                status.code().map(|c| c.to_string()).unwrap_or_else(|| "unknown".into())
+                "Apache parent process exited (code: {}) - checking port {} for worker process",
+                status.code().map(|c| c.to_string()).unwrap_or_else(|| "unknown".into()),
+                listen_port
             );
         }
         Ok(None) => {} // parent still running - good
@@ -184,16 +186,19 @@ pub async fn start_apache() -> Result<bool, String> {
         }
     }
 
-    // Verify the worker is actually listening on port 80.
+    // Verify the worker is listening on the configured port.
+    let port_needle = format!(":{} ", listen_port);
+    let port_needle_tab = format!(":{}\t", listen_port);
     match create_hidden_command("netstat").arg("-ano").output() {
         Ok(netstat_output) => {
             let output_str = String::from_utf8_lossy(&netstat_output.stdout);
-            if output_str.contains(":80 ") || output_str.contains(":80\t") {
+            if output_str.contains(&port_needle) || output_str.contains(&port_needle_tab) {
                 Ok(true)
             } else {
-                Err("Apache did not start: port 80 is not listening. \
-                     Check the Apache error log for details."
-                    .to_string())
+                Err(format!(
+                    "Apache did not start: port {} is not listening. Check the Apache error log for details.",
+                    listen_port
+                ))
             }
         }
         Err(_) => Ok(true), // netstat failed, assume success

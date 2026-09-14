@@ -4,6 +4,26 @@ All notable changes to DevStackBox are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.9] - 2026-09-14
+
+### Added
+
+- Full audit remediation: MySQL user/database DDL validation; create/drop database from the Databases page
+- Error boundary, channel-aware updater check (stable/beta endpoints from settings)
+- Tray `service-status-snapshot`, batched process scan, `restart_all_services`
+- Projects MVP (lists `www` folders), diagnostics export, port-aware status and phpMyAdmin URLs
+- Minimal Vitest coverage; first-run MySQL root password prompt; mobile nav drawer
+
+### Fixed
+
+- MySQL start readiness polling and graceful shutdown via `mysqladmin`
+- Async stop paths for Apache/MySQL (no blocking Tokio sleeps)
+- Stored MySQL root password for CLI tools after UI password change
+- Tray/service status sync, auto-start settings, minimize-to-tray on close
+- Raw `invoke` replaced with `safeInvoke` on several pages; config/installer hardening
+- Terminal tab state, theme sync, dashboard PHP service count, onboarding parallel start
+- i18n and deduplicated helpers (`VhostEntry`, `formatBytes`)
+
 ## [0.1.8] - 2026-07-23
 
 ### Added

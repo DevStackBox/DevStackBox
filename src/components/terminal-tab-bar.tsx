@@ -70,9 +70,9 @@ export function TerminalTabBar() {
               title={`Close ${tab.title}`}
               className={cn(
                 "rounded p-0.5 transition-colors",
-                "opacity-0 group-hover:opacity-100",
-                isActive && "opacity-60",
-                "hover:bg-destructive/20 hover:text-destructive hover:!opacity-100",
+                "opacity-100",
+                isActive && "opacity-100",
+                "hover:bg-destructive/20 hover:text-destructive",
               )}
               aria-label={`Close ${tab.title}`}
             >
