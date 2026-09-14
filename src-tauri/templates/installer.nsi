@@ -916,12 +916,12 @@ Section Install
     CreateDirectory "$INSTDIR\\{{this}}"
   {{/each}}
   {{#each resources}}
-    File /a "/oname={{this.[1]}}" "{{no-escape @key}}"
+    File /a "/oname={{this.[1]}}" "{{@key}}"
   {{/each}}
 
   ; Copy external binaries
   {{#each binaries}}
-    File /a "/oname={{this}}" "{{no-escape @key}}"
+    File /a "/oname={{this}}" "{{@key}}"
   {{/each}}
 
   DetailPrint ""
