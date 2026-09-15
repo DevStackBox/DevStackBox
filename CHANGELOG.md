@@ -4,7 +4,7 @@ All notable changes to DevStackBox are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [0.1.9] - 2026-09-14
+## [0.1.9] - 2026-09-15
 
 ### Added
 
@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Raw `invoke` replaced with `safeInvoke` on several pages; config/installer hardening
 - Terminal tab state, theme sync, dashboard PHP service count, onboarding parallel start
 - i18n and deduplicated helpers (`VhostEntry`, `formatBytes`)
+- NSIS installer detail log panel was blank during file installation (`SetDetailsPrint textonly` → `both` in `hooks.nsh`, applied consistently at all silent-exec restore points); added component headers around the file-copy phase and richer install/uninstall summaries so the log now scrolls with real progress, matching the file-extraction status text
 
 ## [0.1.8] - 2026-07-23
 

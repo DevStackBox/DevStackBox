@@ -1,11 +1,22 @@
-{
-  "version": "0.1.9",
-  "notes": "DevStackBox v0.1.9 - audit batch + full remediation: MySQL reliability, security, performance, UX, and feature gaps.",
-  "pub_date": "2026-09-14T00:00:00Z",
-  "platforms": {
-    "windows-x86_64": {
-      "url": "https://github.com/DevStackBox/DevStackBox/releases/download/v0.1.9/DevStackBox_0.1.9_x64-setup.exe",
-      "signature": "REPLACE_WITH_SIG_FILE_CONTENT_AFTER_BUILD"
-    }
-  }
-}
+{
+
+  "version": "0.1.9",
+
+  "notes": "DevStackBox v0.1.9 - audit batch + full remediation: MySQL reliability, security, performance, UX, and feature gaps.",
+
+  "pub_date": "2026-09-15T00:00:00Z",
+
+  "platforms": {
+
+    "windows-x86_64": {
+
+      "url": "https://github.com/DevStackBox/DevStackBox/releases/download/v0.1.9/DevStackBox_0.1.9_x64-setup.exe",
+
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRMTM4U1RGRFJNV2s3MG13VHg5YzJoZE0yOHBuRGpLcTRDd0NsU2RMd3B3Q3Nha0xHVFJuckcwYldEQzdoeWV4NEdOd2gwb3NJeFVZUHdIQzBtc3dreU01d1Z4VXR3NkFBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzg5NDU2MjYxCWZpbGU6RGV2U3RhY2tCb3hfMC4xLjlfeDY0LXNldHVwLmV4ZQpEWEdGUExIUzJBanM5VzdXUnVib2lDRWdNWTk5ZFg4Yk40WnRhaCtScmdyb1l1MEZidXgyNTVadS9BZ2hPc1dIU3ltTXoxTE1hcGpHRDZHUUlPc0JCdz09Cg=="
+
+    }
+
+  }
+
+}
+

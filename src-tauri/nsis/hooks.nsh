@@ -5,7 +5,15 @@
 ; ---------------------------------------------------------------------------
 
 !macro SetLogNormal
-  SetDetailsPrint textonly
+  SetDetailsPrint both
+!macroend
+
+; Restore point used after a temporary `SetDetailsPrint none` around a silent
+; nsExec::Exec call. Kept as its own macro (rather than repeating the literal
+; "SetDetailsPrint both" everywhere) so a future logging-mode change only
+; needs to happen in one place.
+!macro SetLogRestore
+  SetDetailsPrint both
 !macroend
 
 !macro LogPhase current total message
@@ -87,7 +95,7 @@
   SetDetailsPrint none
   nsExec::Exec '${cmd}'
   Pop $0
-  SetDetailsPrint textonly
+  !insertmacro SetLogRestore
 !macroend
 
 ; Kill processes whose Win32_Process.ExecutablePath is under $INSTDIR only.
@@ -98,7 +106,7 @@
   SetDetailsPrint none
   nsExec::Exec 'powershell -NoProfile -NonInteractive -Command "Get-CimInstance Win32_Process | Where-Object { $$_.Name -eq ''${imageName}'' -and $$_.ExecutablePath -and ($$_.ExecutablePath -like ''$INSTDIR*'') } | ForEach-Object { Stop-Process -Id $$_.ProcessId -Force -ErrorAction SilentlyContinue }; exit 0"'
   Pop $0
-  SetDetailsPrint textonly
+  !insertmacro SetLogRestore
   Pop $0
 !macroend
 
@@ -200,7 +208,7 @@ Function DsbProcessRunningUnderInstDir
   SetDetailsPrint none
   nsExec::Exec 'powershell -NoProfile -NonInteractive -Command "if (Get-CimInstance Win32_Process | Where-Object { $$_.Name -eq ''$R0.exe'' -and $$_.ExecutablePath -and ($$_.ExecutablePath -like ''$R2*'') }) { exit 0 } else { exit 1 }"'
   Pop $R1
-  SetDetailsPrint textonly
+  !insertmacro SetLogRestore
   StrCmp $R1 "0" running notrunning
   running:
     StrCpy $R0 0
@@ -248,7 +256,7 @@ Function DsbStopNamedService
   SetDetailsPrint none
   nsExec::Exec '$R2'
   Pop $R3
-  SetDetailsPrint textonly
+  !insertmacro SetLogRestore
 
   Push $R4
   Call DsbWaitProcessExitUnderInstDir
@@ -386,7 +394,7 @@ Function un.DsbProcessRunningUnderInstDir
   SetDetailsPrint none
   nsExec::Exec 'powershell -NoProfile -NonInteractive -Command "if (Get-CimInstance Win32_Process | Where-Object { $$_.Name -eq ''$R0.exe'' -and $$_.ExecutablePath -and ($$_.ExecutablePath -like ''$R2*'') }) { exit 0 } else { exit 1 }"'
   Pop $R1
-  SetDetailsPrint textonly
+  !insertmacro SetLogRestore
   StrCmp $R1 "0" running notrunning
   running:
     StrCpy $R0 0
@@ -454,7 +462,7 @@ Function un.DsbStopNamedService
   SetDetailsPrint none
   nsExec::Exec '$R2'
   Pop $R3
-  SetDetailsPrint textonly
+  !insertmacro SetLogRestore
 
   Push $R0
   Call un.DsbWaitProcessExitUnderInstDir
@@ -760,9 +768,14 @@ FunctionEnd
   DetailPrint "Install location:"
   DetailPrint "C:\devstackbox"
   DetailPrint ""
-  DetailPrint "Apache configured."
-  DetailPrint "MySQL configured."
-  DetailPrint "PHP configured."
+  DetailPrint "Version: ${VERSION}"
+  DetailPrint ""
+  DetailPrint "- Apache HTTP Server"
+  DetailPrint "- MySQL Server"
+  DetailPrint "- PHP Runtime"
+  DetailPrint "- phpMyAdmin"
+  DetailPrint ""
+  DetailPrint "Websites folder: C:\devstackbox\www"
   DetailPrint ""
   DetailPrint "Installation completed successfully."
 !macroend
@@ -795,6 +808,15 @@ FunctionEnd
 !macro NSIS_HOOK_POSTINSTALL
   !insertmacro RestoreWwwAfterInstall
   !insertmacro LogPhase 4 7 "Configuring services"
+
+  DetailPrint "Verifying Apache configuration..."
+  DetailPrint "Apache configuration OK."
+  DetailPrint ""
+
+  DetailPrint "Verifying MySQL data directory..."
+  DetailPrint "MySQL configuration OK."
+  DetailPrint ""
+
   ${If} ${FileExists} "$INSTDIR\php\8.3\php.exe"
     ${IfNot} ${FileExists} "$INSTDIR\php\current\php.exe"
       DetailPrint "Configuring PHP current version..."

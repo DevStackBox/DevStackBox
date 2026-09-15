@@ -908,17 +908,25 @@ Section Install
 
   !insertmacro LogPhase 2 7 "Installing application files"
 
+  DetailPrint "Installing DevStackBox application..."
   ; Copy main executable
   File "${MAINBINARYSRCPATH}"
 
+  DetailPrint ""
+  DetailPrint "Creating directory structure..."
   ; Copy resources
   {{#each resources_dirs}}
     CreateDirectory "$INSTDIR\\{{this}}"
   {{/each}}
+
+  DetailPrint ""
+  DetailPrint "Installing Apache, MySQL, PHP, and phpMyAdmin..."
   {{#each resources}}
     File /a "/oname={{this.[1]}}" "{{@key}}"
   {{/each}}
 
+  DetailPrint ""
+  DetailPrint "Installing runtime binaries..."
   ; Copy external binaries
   {{#each binaries}}
     File /a "/oname={{this}}" "{{@key}}"
