@@ -7,7 +7,7 @@ icon: "Rocket"
 
 **The exact checklist for every release. Follow this every time without shortcuts.**
 
-**Current stable release:** v0.1.8
+**Current stable release:** v0.1.9
 
 ---
 
@@ -110,7 +110,7 @@ Expected output files:
 - `src-tauri/target/release/bundle/nsis/DevStackBox_0.1.9_x64-setup.exe`
 - `src-tauri/target/release/bundle/nsis/DevStackBox_0.1.9_x64-setup.exe.sig`
 
-Create `latest.json` in the repo root (use the v0.1.8 file as a template). Paste the `.sig` file content into the `signature` field.
+Create or update `latest.json` in the repo root (use the previous release file as a template). Paste the `.sig` file content into the `signature` field. Commit this file so the repo stays in sync, but **installed apps download the manifest from GitHub**, not from `main`.
 
 If the build fails:
 
@@ -181,16 +181,29 @@ Include the hash in the GitHub Release description if you want transparency for 
    - **Tag:** `v0.1.9`
    - **Title:** `v0.1.9`
    - **Description:** Copy from CHANGELOG.md
-   - **Attach files:** `DevStackBox_0.1.9_x64-setup.exe` and `latest.json`
+   - **Attach files:** `DevStackBox_0.1.9_x64-setup.exe`, `DevStackBox_0.1.9_x64-setup.exe.sig`, and **`latest.json`** (filename must be exactly `latest.json`)
+   - Do **not** mark the release as a pre-release (otherwise GitHub `releases/latest` will not point here)
 
 4. Click Publish Release.
+
+Alternatively, from a signed build directory:
+
+```powershell
+gh release create v0.1.9 `
+  "src-tauri\target\release\bundle\nsis\DevStackBox_0.1.9_x64-setup.exe" `
+  "src-tauri\target\release\bundle\nsis\DevStackBox_0.1.9_x64-setup.exe.sig" `
+  "latest.json" `
+  --title "DevStackBox v0.1.9" `
+  --notes "Copy from CHANGELOG.md"
+```
 
 ---
 
 ## Step 8 - Post-Release
 
 - [ ] Verify the download links in the GitHub Release page work
-- [ ] Verify `releases/latest/download/latest.json` shows the new version
+- [ ] Verify `https://github.com/DevStackBox/DevStackBox/releases/latest/download/latest.json` returns the new `version`, and that `signature` matches the uploaded `.sig` asset
+- [ ] Verify **About → Check for updates** from an install on the previous version (or confirm “up to date” on the new version)
 - [ ] Close GitHub Issues that were fixed in this release
 - [ ] Update `feature-status` if feature status changed
 
@@ -201,8 +214,8 @@ Include the hash in the GitHub Release description if you want transparency for 
 The in-app updater is **active** as of v0.1.8. Every release must include:
 
 1. Signed NSIS build (`TAURI_SIGNING_PRIVATE_KEY` set during `pnpm tauri build`)
-2. `latest.json` in the repo root  signature from the `.sig` file, download URL matching the uploaded `.exe`
-3. Upload **`latest.json`** as a release asset named exactly `latest.json`
+2. `latest.json` in the repo root with `signature` from the `.sig` file and a `platforms.windows-x86_64.url` that matches the uploaded `.exe` filename
+3. Upload **`latest.json`** as a release asset named exactly `latest.json` — the updater fetches **`releases/latest/download/latest.json`**, not the copy on the default branch alone
 
 Updater endpoint (configured in `tauri.conf.json`):
 
