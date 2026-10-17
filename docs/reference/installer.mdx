@@ -6,16 +6,13 @@ icon: "Package"
 
 # Installer and updates
 
-DevStackBox ships as Windows installers (NSIS and MSI). This page describes install paths, how user data is kept separate from app binaries, and how updates work today vs what Phase 4 adds.
+The primary DevStackBox download is the Windows NSIS installer. Use GitHub Releases to check which assets are available for a particular version. This page describes install paths, how user data is kept separate from app binaries, and how updates work today vs what Phase 4 adds.
 
 ## Installers
 
-| Format | Typical size | Notes                                      |
-| ------ | ------------ | ------------------------------------------ |
-| NSIS   | ~150 MB      | Default download from GitHub Releases      |
-| MSI    | ~290 MB      | Alternative bundle for enterprise-style deploy |
+The download page displays the actual installer size from GitHub.
 
-Both installers require **Windows 10/11 (64-bit)** and administrator rights for installation.
+Installation requires **Windows 10/11 (64-bit)** and administrator rights for installation.
 
 **Default install directory:** `C:\devstackbox` (you can choose another path during setup).
 
@@ -23,9 +20,9 @@ Download: [devstackbox.com/download](https://www.devstackbox.com/download)
 
 ## App vs data directory separation
 
-DevStackBox separates **replaceable app files** from **user data** so updates never destroy databases or projects. See [ADR 006](../development/adr/006-app-data-separation) for the full decision record.
+DevStackBox separates **replaceable app files** from **user data** to keep runtime data separate from bundled binaries; always back up projects and databases before an update. See [ADR 006](../development/adr/006-app-data-separation) for the full decision record.
 
-**App root** (install directory - safe to replace on upgrade):
+**Install directory** (contains binaries and the project folder; do not delete it wholesale):
 
 ```
 C:\devstackbox\
@@ -35,13 +32,13 @@ C:\devstackbox\
   mysql/
   phpmyadmin/
   resources/
+  www/              web projects (preserved by the installer)
 ```
 
 **User data root** (never touched by the updater or installer uninstall options that preserve data):
 
 ```
 %LOCALAPPDATA%\DevStackBox\
-  www/              web projects
   mysql-data/       MySQL data directory
   config/           runtime Apache, MySQL, PHP configs
   config-backups/   automatic config backups
@@ -51,7 +48,7 @@ C:\devstackbox\
 
 Override the user data path with `DEVSTACKBOX_DATA_DIR` if needed.
 
-Config files in `httpd.conf` and `my.cnf` reference paths under the user data root, not under the install directory.
+Runtime configs live under the user data root. Apache serves projects from the install folder’s `www`; MySQL data remains under the user data root. `DEVSTACKBOX_DATA_DIR` does not relocate `www`.
 
 ## Update check (shipped)
 
@@ -71,7 +68,7 @@ When a newer semver is published, the About page and header guide the user throu
 
 Download, signature verification, and in-app install are **shipped** as of v0.1.8+. Remaining safety work:
 
-- [x] Phase 1.8 - user data outside the install directory
+- [x] Runtime configs, logs, and database data outside the install directory
 - [x] Updater plugin wired in the app
 - [x] Updater endpoint and signing public key in `tauri.conf.json`
 - [ ] Pre-update service shutdown (Apache + MySQL) before the installer runs
@@ -82,7 +79,7 @@ Target milestone for the remaining items: **v0.2.0** ([Roadmap](../roadmap)). Pu
 
 ## Uninstall
 
-Use **Settings → Apps → Installed apps** in Windows. Uninstall options can preserve `%LOCALAPPDATA%\DevStackBox\` so sites and databases remain if you reinstall later.
+Use **Settings → Apps → Installed apps** in Windows. Uninstall options can preserve `%LOCALAPPDATA%\DevStackBox\` for runtime data. Back up the install folder’s `www` separately and read the uninstaller options before proceeding.
 
 ## Related
 

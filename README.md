@@ -6,7 +6,7 @@
 
 **Free XAMPP alternative for Windows** - Apache, MySQL 8.4 LTS, phpMyAdmin, and PHP 8.3 in one MIT-licensed desktop app.
 
-![DevStackBox on Windows](docs/images/feature-tour.gif)
+![DevStackBox Services with MySQL 8.4.11](docs/images/services-current.png)
 
 ## Stack
 

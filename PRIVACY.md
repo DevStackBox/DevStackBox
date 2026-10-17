@@ -12,7 +12,8 @@ DevStackBox runs on your computer. Your projects and databases stay local.
 
 | When | Destination | Why |
 | ---- | ----------- | --- |
-| You check for updates | GitHub Releases API | Show latest version |
+| Manual check or enabled automatic update checks | GitHub Releases API | Show latest version |
+| You install an update | GitHub release downloads | Download the signed installer |
 | You download a PHP version | windows.php.net | Fetch the PHP build you selected |
 | Normal use | None | Stack runs offline |
 

@@ -42,8 +42,8 @@ Port 80 is blocked when another service is running on it.
 **Typical culprits on Windows:**
 
 | Service                             | How to Check                    | How to Stop                   |
-| ----------------------------------- | ------------------------------- | ----------------------------- | --------------------- |
-| IIS (Internet Information Services) | `netstat -ano                   | findstr :80`                  | Services → IIS → Stop |
+| ----------------------------------- | ------------------------------- | ----------------------------- |
+| IIS (Internet Information Services) | `netstat -ano` | Services → IIS → Stop |
 | World Wide Web Publishing Service   | Task Manager → Services         | `net stop W3SVC`              |
 | Skype (older versions)              | Skype Settings → Advanced       | Uncheck "use port 80 and 443" |
 | Windows 10/11 Device Portal         | Check Settings → Developer Mode | Disable Device Portal         |
@@ -179,43 +179,13 @@ DevStackBox does NOT modify this file unless you use the virtual hosts feature (
 
 ---
 
-## Virtual Hosts (Phase 3 - Not Yet Available)
+## Virtual hosts
 
-When virtual hosts are added, DevStackBox will:
+Virtual-host management is available in the app. Add a local domain and document root from the Apache workspace. Updating the Windows hosts file requires elevation. Review the requested changes before accepting a UAC prompt.
 
-1. Add entries to the Windows `hosts` file:
+## HTTPS / SSL
 
-   ```
-   127.0.0.1   myapp.local
-   127.0.0.1   shop.local
-   ```
-
-2. Add vhost blocks to Apache config (`extra/httpd-vhosts.conf`):
-
-   ```apache
-   <VirtualHost *:80>
-       ServerName myapp.local
-       DocumentRoot "C:/dsb/www/myapp"
-   </VirtualHost>
-   ```
-
-3. Require UAC elevation for the `hosts` file edit.
-
-**Current status:** Not implemented. See `roadmap` Phase 3.3.
-
----
-
-## HTTPS / SSL (Phase 5 - Not Yet Available)
-
-Local HTTPS for `localhost` and virtual hosts is planned for Phase 5. The approach will be:
-
-1. Generate a local root CA with `mkcert` or similar
-2. Trust it in Windows Certificate Store (requires elevation)
-3. Issue certificates for `localhost` and configured virtual hosts
-
-**Current status:** Not implemented. See `roadmap` Phase 5.1.
-
----
+Localhost SSL is available through the app's SSL controls. DevStackBox creates a local CA and localhost certificate; trusting the CA in Windows is a separate user action. Per-virtual-host HTTPS remains planned. See [Feature status](../feature-status) for current scope.
 
 ## Network Diagnostics
 

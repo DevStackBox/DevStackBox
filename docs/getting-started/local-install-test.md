@@ -14,8 +14,8 @@ After `scripts/release-build.ps1`:
 2. Run the setup exe (More info → Run anyway if SmartScreen appears).
 3. Start Apache + MySQL; open `http://localhost/phpmyadmin/`.
 4. **About** should show **0.1.11**; MySQL version **8.4.x**.
-5. **Services → PHP → Versions** — download **8.4** or **8.5** and switch once.
-6. **Settings → Import from XAMPP** — optional htdocs copy test.
+5. **Services → PHP → Versions** - download **8.4** or **8.5** and switch once.
+6. **Settings → Import from XAMPP** - optional htdocs copy test.
 
 ## Automated check (after install)
 

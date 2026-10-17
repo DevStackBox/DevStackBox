@@ -110,7 +110,7 @@ This is a prerequisite for enabling auto-updates. Without it, updates will destr
 
 - [x] Define User Data Root path: `%LOCALAPPDATA%\DevStackBox\` (override via `DEVSTACKBOX_DATA_DIR` env var)
 - [x] Move MySQL `data/` directory out of `mysql/` and into User Data Root (`<root>/mysql-data/`)
-- [x] Move `www/` to User Data Root
+- [x] Preserve the install-directory `www/` project folder during upgrades; configs, logs, and databases use the User Data Root
 - [x] Move `logs/` to User Data Root
 - [x] Move runtime `config/` to User Data Root (default configs are now generated into `<root>/config/` on first run; source `config/` in repo is dev-only)
 - [x] Update `get_installation_path()` and add `get_user_data_root()` to `lib.rs`
@@ -126,11 +126,10 @@ This is a prerequisite for enabling auto-updates. Without it, updates will destr
   config-backups\   timestamped .bak files
   logs\             error.log, access.log, mysql.log, php_error.log, httpd.pid
   mysql-data\       MySQL data directory (initialized on first start)
-  www\              web document root (index.html, etc.)
   backups\          mysql dumps and other app backups
 ```
 
-Binaries (Apache, PHP, MySQL, phpMyAdmin) remain inside the install dir and may be replaced by auto-update without touching user data.
+Binaries remain in the install directory alongside `www`, which holds projects and must be preserved. Back up projects and export databases before updating.
 
 See `reference/installer` for the full architecture.
 
@@ -243,7 +242,7 @@ src-tauri/src/
 
 **Implementation tasks:**
 
-- [ ] Configure updater endpoint in `tauri.conf.json` (GitHub Releases JSON URL)
+- [x] Configure updater endpoint in `tauri.conf.json` (GitHub Releases JSON URL)
 - [ ] Generate signing key pair and store private key in GitHub Secrets
 - [ ] Implement pre-update service shutdown (stop Apache + MySQL cleanly before update)
 - [ ] Implement backup-before-update (copy current configs to config-backups/)

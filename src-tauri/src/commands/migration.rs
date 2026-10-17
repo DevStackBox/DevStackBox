@@ -1,6 +1,7 @@
 //! Import projects from a legacy XAMPP installation.
 
 use std::fs;
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
 use serde::Serialize;
@@ -8,6 +9,15 @@ use serde::Serialize;
 use crate::utils::paths::{get_installation_path, user_www_dir};
 
 const XAMPP_CANDIDATES: &[&str] = &["C:\\xampp", "C:\\XAMPP"];
+
+// Candidates may differ only in spelling on Windows. Keep the first display path.
+fn unique_candidates<'a>(candidates: &'a [&'a str]) -> Vec<&'a str> {
+    let mut seen = HashSet::new();
+    candidates.iter().copied().filter(|candidate| {
+        let key = candidate.replace('/', "\\").trim_end_matches('\\').to_lowercase();
+        seen.insert(key)
+    }).collect()
+}
 
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -35,7 +45,7 @@ fn count_files(dir: &Path, limit: u32) -> u32 {
 #[tauri::command]
 pub fn detect_xampp_installations() -> Result<Vec<XamppDetection>, String> {
     let mut found = Vec::new();
-    for candidate in XAMPP_CANDIDATES {
+    for candidate in unique_candidates(XAMPP_CANDIDATES) {
         let root = PathBuf::from(candidate);
         if !root.is_dir() {
             continue;
@@ -52,6 +62,19 @@ pub fn detect_xampp_installations() -> Result<Vec<XamppDetection>, String> {
         });
     }
     Ok(found)
+}
+
+#[cfg(test)]
+mod detection_tests {
+    use super::unique_candidates;
+
+    #[test]
+    fn deduplicates_windows_spelling_but_preserves_distinct_installations() {
+        assert_eq!(
+            unique_candidates(&["C:\\xampp", "C:\\XAMPP\\", "c:/xampp/", "D:\\xampp"]),
+            vec!["C:\\xampp", "D:\\xampp"]
+        );
+    }
 }
 
 fn copy_tree(src: &Path, dest: &Path) -> Result<u32, String> {

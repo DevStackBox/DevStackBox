@@ -33,7 +33,7 @@ Downloads use HTTPS from `windows.php.net`. The app verifies SHA-256 checksums f
 
 ## Windows SmartScreen
 
-The installer is signed for in-app updates (minisign). It is not Windows Authenticode-signed. If SmartScreen warns about an unknown publisher, use **More info → Run anyway**, or verify the SHA-256 on [devstackbox.com/download](https://www.devstackbox.com/download).
+The installer is signed for in-app updates (minisign). It is not Windows Authenticode-signed. If SmartScreen warns about an unknown publisher, verify that the file came from the official GitHub release and compare its SHA-256 digest where provided. Only continue if you trust the source. Updater signature verification does not establish Windows publisher identity. See [Downloads](https://www.devstackbox.com/download).
 
 ## Binary integrity
 

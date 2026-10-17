@@ -27,17 +27,17 @@ When an update is available, the header shows an indicator. Use **Download and i
 As of v0.1.8+, this is the normal upgrade path when **Auto-check updates** is enabled (default on):
 
 1. Open DevStackBox - a check runs shortly after launch, then every 6 hours while the app is open.
-2. When a newer version (e.g. **v0.1.10**) is available, confirm the update dialog and allow UAC when prompted.
+2. When a newer version is available, confirm the update dialog and allow UAC when prompted.
 3. After install, the app relaunches; your data under `%LOCALAPPDATA%\DevStackBox\` is preserved.
 
-Services may still be running during update; stop Apache and MySQL first if you hit file-lock errors (see [Roadmap](../roadmap) Phase 4.3 for automatic pre-update shutdown).
+Back up projects and export databases before updating. Stop Apache and MySQL before starting the update to avoid file-lock errors (see [Roadmap](../roadmap) Phase 4.3 for automatic pre-update shutdown).
 
 ## Manual upgrade (fallback)
 
 If auto-update fails or you prefer a browser download, install a newer release over the existing install:
 
 1. **Stop services** - stop Apache and MySQL from the dashboard or tray menu.
-2. **Optional backup** - use **Settings → Backup & Restore** to create a full backup, or copy `%LOCALAPPDATA%\DevStackBox\` if you want a manual safety copy.
+2. **Back up first** - use **Settings → Backup & Restore** to create a full backup, or back up both your install folder’s `www` and `%LOCALAPPDATA%\DevStackBox\`.
 3. **Download** the latest Windows installer from [devstackbox.com/download](https://www.devstackbox.com/download) or [GitHub Releases](https://github.com/DevStackBox/DevStackBox/releases/latest).
 4. **Run the installer** - accept the UAC prompt. Choose the same install directory as before (default: `C:\devstackbox`).
 5. **Launch DevStackBox** - start services and confirm your sites and databases are intact.
@@ -50,7 +50,6 @@ Your user data layout:
   config-backups\   timestamped backups
   logs\             service logs
   mysql-data\       MySQL database files
-  www\              web document root
   backups\          app-created backups
 ```
 

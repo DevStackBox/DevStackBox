@@ -315,32 +315,9 @@ No open critical issues.
 
 ## High Priority Issues
 
-### ISSUE-011: Auto-Updater Signing Keys Not Configured
+### Updater signing
 
-**Priority:** HIGH
-**Files:** `src-tauri/tauri.conf.json`, GitHub repository secrets
-**Status:** Keys generated; GitHub Secrets still need the private key pasted in
-
-**Description:**
-`tauri-plugin-updater` is installed, `auto-updater.tsx` is wired up, and `tauri.conf.json` points to the GitHub Releases `latest.json` endpoint.
-
-**Work done:**
-
-- Key pair generated with `pnpm tauri signer generate --ci`.
-- Private key saved to `%USERPROFILE%\.tauri\devstackbox.key` (local machine, not committed).
-- Public key updated in `src-tauri/tauri.conf.json`.
-- Local build signing configured via the `TAURI_SIGNING_PRIVATE_KEY_PATH` user env var.
-- Workflow updated to use Tauri v2 env var names: `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
-
-**Remaining step:**
-Paste the private key content into GitHub repository secrets:
-
-1. Go to `https://github.com/DevStackBox/DevStackBox/settings/secrets/actions`.
-2. Add secret `TAURI_SIGNING_PRIVATE_KEY` - value is the full content of `%USERPROFILE%\.tauri\devstackbox.key`.
-3. `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` can be left empty (key has no password).
-4. Do not commit the private key file or paste it anywhere in the repo.
-
----
+Signed in-app downloads are shipped. Windows Authenticode signing is separate; see [Security](/security) and [Installer & updates](../reference/installer). If an update fails verification, do not install it; check the release and report the failure.
 
 ### ISSUE-016: Clean Installer Smoke Test Still Pending
 
@@ -412,10 +389,10 @@ Upgrade bundled phpMyAdmin to 5.2.2 or later.
 **Status:** Partially mitigated
 
 **Description:**
-`seed_www_dir` copies default files from the installed `www/` directory to the user data `www/` directory on first run. If the installer ever omits the source `www/` seed files, Apache can fall back to an empty document root and show a directory listing.
+`seed_www_dir` checks the install-directory `www` used as the document root. If the installer ever omits the source `www/` seed files, Apache can fall back to an empty document root and show a directory listing.
 
 **Fix:**
-During installer verification, confirm the bundled `www/` seed files are present and copied into `%LOCALAPPDATA%\DevStackBox\www\` on first launch.
+During installer verification, confirm the bundled `www/` seed files are present in the install-directory `www` on first launch.
 
 ---
 

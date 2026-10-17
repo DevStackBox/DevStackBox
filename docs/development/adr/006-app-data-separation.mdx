@@ -1,15 +1,19 @@
 ---
-title: "006 app data separation"
+title: "006 - App and data separation"
 description: "Architecture decision record."
 icon: "FileQuestion"
 ---
 # ADR 006: App/Data Directory Separation
 
-**Status:** Accepted  
+**Status:** Accepted with subsequent implementation changes
 **Date:** May 2026  
 **Deciders:** Project maintainer
 
 ---
+
+## Current implementation note
+
+This record preserves the original proposal. The current `user_www_dir()` keeps projects under the install directory’s `www` (default `C:\devstackbox\www`). Runtime configs, logs, MySQL data, and backups use `%LOCALAPPDATA%\devstackbox`. The proposed project relocation below is not the current path contract. See [Installer & updates](../../reference/installer).
 
 ## Context
 
