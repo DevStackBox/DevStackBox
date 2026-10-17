@@ -22,3 +22,14 @@ After `scripts/release-build.ps1`:
 ```powershell
 .\scripts\test-installed.ps1 -InstallRoot C:\devstackbox -State Running
 ```
+
+## Local disk cleanup (dev machine)
+
+Remove bundle refresh backups, Rust `target/`, `release/`, on-demand PHP copies, and runtime logs (does not delete committed stack bundles):
+
+```powershell
+.\scripts\cleanup-local.ps1          # dry run
+.\scripts\cleanup-local.ps1 -Force   # delete
+```
+
+On the website repo: `node scripts/cleanup-local.mjs --force` (`.next`, `.source`, optional `devstackbox/` clone).

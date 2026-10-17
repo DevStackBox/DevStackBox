@@ -1,8 +1,7 @@
 # Logs and runtime data only
-logs/*.log
-logs/*.err
-logs/*.pid
+logs/
 *.log
+.tmp-tauri-build.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -112,7 +111,10 @@ src-tauri/php/
 src-tauri/phpmyadmin/
 src-tauri/www/
 src-tauri/config/
+apache-backup/
+apache-backup-*/
 apache-backup-32bit/*
+/php/8.5
 /php/8.4
 /php/8.2
 /php/8.1

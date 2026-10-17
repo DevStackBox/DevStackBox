@@ -3,7 +3,8 @@
 param(
   [string]$Version = "8.4.11",
   [string]$ZipPath = "",
-  [string]$RepoRoot = (Split-Path -Parent $PSScriptRoot)
+  [string]$RepoRoot = (Split-Path -Parent $PSScriptRoot),
+  [bool]$RemovePreviousBackup = $true
 )
 $ErrorActionPreference = "Stop"
 $mysqlDir = Join-Path $RepoRoot "mysql"
@@ -20,9 +21,16 @@ if (-not (Test-Path -LiteralPath $zipPath)) { throw "MySQL zip not found: $zipPa
 Expand-Archive -Path $zipPath -DestinationPath $temp -Force
 $extracted = Get-ChildItem -Path $temp -Directory | Where-Object { $_.Name -like "mysql-*" } | Select-Object -First 1
 if (-not $extracted) { throw "Extracted folder not found" }
+$backupDir = $null
 if (Test-Path $mysqlDir) {
-  Rename-Item -Path $mysqlDir -NewName ("mysql-backup-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
+  $backupName = "mysql-backup-" + (Get-Date -Format "yyyyMMdd-HHmmss")
+  Rename-Item -Path $mysqlDir -NewName $backupName
+  $backupDir = Join-Path $RepoRoot $backupName
 }
 Copy-Item -Path $extracted.FullName -Destination $mysqlDir -Recurse
 & (Join-Path $mysqlDir "bin\mysqld.exe") --version
+if ($RemovePreviousBackup -and $backupDir -and (Test-Path -LiteralPath $backupDir)) {
+  Remove-Item -LiteralPath $backupDir -Recurse -Force
+  Write-Host "Removed previous backup: $(Split-Path -Leaf $backupDir)"
+}
 Write-Host "MySQL bundle updated under $mysqlDir"
