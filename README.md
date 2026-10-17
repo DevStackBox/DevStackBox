@@ -1,19 +1,12 @@
 # DevStackBox
 
-[![Release](https://img.shields.io/github/v/release/DevStackBox/DevStackBox?style=flat-square)](https://github.com/DevStackBox/DevStackBox/releases/latest)
-[![License: MIT](https://img.shields.io/github/license/DevStackBox/DevStackBox?style=flat-square)](LICENSE)
-[![Windows 10/11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?style=flat-square&logo=windows&logoColor=white)](https://github.com/DevStackBox/DevStackBox/releases)
+![Release](https://img.shields.io/github/v/release/DevStackBox/DevStackBox?style=flat-square)
+![License: MIT](https://img.shields.io/github/license/DevStackBox/DevStackBox?style=flat-square)
+![Windows 10/11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?style=flat-square&logo=windows&logoColor=white)
 
 **Free XAMPP alternative for Windows** - Apache, MySQL 8.4 LTS, phpMyAdmin, and PHP 8.3 in one MIT-licensed desktop app.
 
-![DevStackBox on Windows](docs/images/demo.gif)
-
-<details>
-<summary>Static screenshot</summary>
-
-![DevStackBox dashboard](docs/images/dashboard.png)
-
-</details>
+![DevStackBox on Windows](docs/images/feature-tour.gif)
 
 ## Stack
 
