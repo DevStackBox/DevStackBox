@@ -1,4 +1,4 @@
-# release-build.ps1 — see docs/development/RELEASE-RUNBOOK.md
+# release-build.ps1 - see docs/development/RELEASE-RUNBOOK.md
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
