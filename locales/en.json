@@ -303,7 +303,7 @@
       "username": "Username",
       "host": "Host",
       "password": "Password",
-      "noUsers": "No users found. Is MySQL running?",
+      "noUsers": "No MySQL users found.",
       "createTitle": "Create MySQL User",
       "passwordOptional": "Password (optional)",
       "leaveBlank": "Leave blank for no password",

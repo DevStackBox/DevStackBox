@@ -6,7 +6,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::utils::mysql_connection::{mysql_command, prepare_mysql_client};
-use crate::utils::paths::{get_installation_path, user_config_dir};
+use crate::utils::paths::user_config_dir;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SecurityFinding {
@@ -20,15 +20,14 @@ pub struct SecurityFinding {
 // ── PHP checks ────────────────────────────────────────────────────────────────
 
 fn check_php(findings: &mut Vec<SecurityFinding>) {
-    let base_path = get_installation_path();
-    let php_ini = base_path.join("php").join("current").join("php.ini");
+    let php_ini = crate::utils::paths::active_php_ini();
 
     if !php_ini.exists() {
         findings.push(SecurityFinding {
             service: "php".into(),
             severity: "warning".into(),
             title: "php.ini not found".into(),
-            description: "No php.ini was found at php/current/php.ini.".into(),
+            description: "The managed PHP configuration has not been created.".into(),
             recommendation: "Switch to an installed PHP version to generate php.ini.".into(),
         });
         return;
@@ -61,7 +60,8 @@ fn check_php(findings: &mut Vec<SecurityFinding>) {
             severity: "warning".into(),
             title: "display_errors is On".into(),
             description: "PHP errors are displayed in browser output.".into(),
-            recommendation: "Set display_errors = Off and log errors instead (log_errors = On).".into(),
+            recommendation: "Set display_errors = Off and log errors instead (log_errors = On)."
+                .into(),
         });
     }
 
@@ -82,7 +82,8 @@ fn check_php(findings: &mut Vec<SecurityFinding>) {
             service: "php".into(),
             severity: "error".into(),
             title: "allow_url_include is On".into(),
-            description: "Remote file inclusion is enabled - a major security risk even locally.".into(),
+            description: "Remote file inclusion is enabled - a major security risk even locally."
+                .into(),
             recommendation: "Set allow_url_include = Off in php.ini.".into(),
         });
     }
@@ -93,13 +94,35 @@ fn check_php(findings: &mut Vec<SecurityFinding>) {
             service: "php".into(),
             severity: "info".into(),
             title: "allow_url_fopen is On".into(),
-            description: "PHP can open remote URLs as files (e.g. file_get_contents with http://).".into(),
+            description: "PHP can open remote URLs as files (e.g. file_get_contents with http://)."
+                .into(),
             recommendation: "Set allow_url_fopen = Off if your code does not need it.".into(),
         });
     }
 }
 
 // ── Apache checks ─────────────────────────────────────────────────────────────
+
+fn options_enable_indexes(content: &str) -> bool {
+    content.lines().any(|line| {
+        let line = line.trim();
+        if line.starts_with('#') {
+            return false;
+        }
+        let mut parts = line.split_whitespace();
+        if !parts
+            .next()
+            .is_some_and(|directive| directive.eq_ignore_ascii_case("Options"))
+        {
+            return false;
+        }
+        parts.any(|option| {
+            let option_name = option.trim_start_matches(['+', '-']);
+            option_name.eq_ignore_ascii_case("All") && !option.starts_with('-')
+                || option_name.eq_ignore_ascii_case("Indexes") && !option.starts_with('-')
+        })
+    })
+}
 
 fn check_apache(findings: &mut Vec<SecurityFinding>) {
     let config_dir = user_config_dir();
@@ -122,24 +145,27 @@ fn check_apache(findings: &mut Vec<SecurityFinding>) {
     };
 
     // Directory listing
-    let has_options_indexes = content.lines().any(|l| {
-        let t = l.trim();
-        !t.starts_with('#') && t.to_lowercase().contains("options") && t.to_lowercase().contains("indexes")
-    });
-    if has_options_indexes {
+    if options_enable_indexes(&content) {
         findings.push(SecurityFinding {
             service: "apache".into(),
             severity: "warning".into(),
             title: "Directory listing enabled (Options Indexes)".into(),
-            description: "Apache will show a file listing for directories without an index file.".into(),
-            recommendation: "Replace 'Options Indexes' with 'Options -Indexes' in httpd.conf.".into(),
+            description: "Apache will show a file listing for directories without an index file."
+                .into(),
+            recommendation: "Replace 'Options Indexes' with 'Options -Indexes' in httpd.conf."
+                .into(),
         });
     }
 
     // ServerTokens
     let server_tokens_full = content.lines().any(|l| {
         let t = l.trim().to_lowercase();
-        !t.starts_with('#') && t.starts_with("servertokens") && (t.contains("full") || t.contains("os") || t.contains("major") || t.contains("minor"))
+        !t.starts_with('#')
+            && t.starts_with("servertokens")
+            && (t.contains("full")
+                || t.contains("os")
+                || t.contains("major")
+                || t.contains("minor"))
     });
     let server_tokens_set = content.lines().any(|l| {
         let t = l.trim().to_lowercase();
@@ -151,7 +177,8 @@ fn check_apache(findings: &mut Vec<SecurityFinding>) {
             severity: "info".into(),
             title: "ServerTokens not minimal".into(),
             description: "Apache may expose its version and OS in HTTP response headers.".into(),
-            recommendation: "Add 'ServerTokens Prod' and 'ServerSignature Off' to httpd.conf.".into(),
+            recommendation: "Add 'ServerTokens Prod' and 'ServerSignature Off' to httpd.conf."
+                .into(),
         });
     }
 
@@ -168,6 +195,25 @@ fn check_apache(findings: &mut Vec<SecurityFinding>) {
             description: "Apache appends server version info to error pages.".into(),
             recommendation: "Set ServerSignature Off in httpd.conf.".into(),
         });
+    }
+}
+
+#[cfg(test)]
+mod apache_security_tests {
+    use super::options_enable_indexes;
+
+    #[test]
+    fn does_not_flag_disabled_or_commented_indexes() {
+        assert!(!options_enable_indexes(
+            "# Options Indexes\n<Directory x>\n Options -Indexes +FollowSymLinks\n</Directory>"
+        ));
+    }
+
+    #[test]
+    fn flags_enabled_indexes_and_all_options() {
+        assert!(options_enable_indexes("Options Indexes FollowSymLinks"));
+        assert!(options_enable_indexes("Options +Indexes"));
+        assert!(options_enable_indexes("Options All"));
     }
 }
 
@@ -196,7 +242,8 @@ fn check_mysql(findings: &mut Vec<SecurityFinding>) {
             service: "mysql".into(),
             severity: "info".into(),
             title: "MySQL not reachable".into(),
-            description: "MySQL is not running or root has a password set. Some checks were skipped.".into(),
+            description:
+                "MySQL is not running or root has a password set. Some checks were skipped.".into(),
             recommendation: "Start MySQL and run the analyzer again.".into(),
         });
         return;
@@ -217,9 +264,7 @@ fn check_mysql(findings: &mut Vec<SecurityFinding>) {
     }
 
     // Anonymous users
-    let anon = run_mysql_scalar(
-        "SELECT COUNT(*) FROM mysql.user WHERE User='';"
-    );
+    let anon = run_mysql_scalar("SELECT COUNT(*) FROM mysql.user WHERE User='';");
     if anon.as_deref().map(|v| v != "0").unwrap_or(false) {
         findings.push(SecurityFinding {
             service: "mysql".into(),
@@ -246,14 +291,15 @@ fn check_mysql(findings: &mut Vec<SecurityFinding>) {
 
     // Test database
     let test_db = run_mysql_scalar(
-        "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='test';"
+        "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME='test';",
     );
     if test_db.as_deref() == Some("1") {
         findings.push(SecurityFinding {
             service: "mysql".into(),
             severity: "info".into(),
             title: "Test database exists".into(),
-            description: "The default 'test' database is present and accessible to any user.".into(),
+            description: "The default 'test' database is present and accessible to any user."
+                .into(),
             recommendation: "Drop it if unused: DROP DATABASE test;".into(),
         });
     }

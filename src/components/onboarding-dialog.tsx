@@ -10,9 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { safeInvoke, isTauri } from "@/lib/tauri";
-import { TAURI_COMMANDS } from "@/lib/commands";
-import { useToast } from "@/hooks/use-toast";
+import { isTauri } from "@/lib/tauri";
 import { useServiceStatus } from "@/context/service-status-context";
 
 const STORAGE_KEY = "devstackbox.onboarding.completed";
@@ -27,8 +25,7 @@ export function OnboardingDialog({
   activePhpVersion = "8.3",
 }: OnboardingDialogProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
-  const { refresh } = useServiceStatus();
+  const { runBulk, loading } = useServiceStatus();
   const [open, setOpen] = useState(false);
   const [starting, setStarting] = useState(false);
 
@@ -60,31 +57,12 @@ export function OnboardingDialog({
     }
     setStarting(true);
     try {
-      await Promise.all([
-        safeInvoke(TAURI_COMMANDS.services.startMysql),
-        safeInvoke(TAURI_COMMANDS.services.startApache),
-      ]);
-      // Give Win32_Process a moment to register the newly-started processes.
-      // This delay lives here only - not in the normal polling loop.
-      await new Promise((r) => setTimeout(r, 800));
-      await refresh();
-      toast({
-        title: t("onboarding.startedTitle", "Services started"),
-        description: t(
-          "onboarding.startedDescription",
-          "Apache and MySQL are running. Open http://localhost to see your site.",
-        ),
-      });
-    } catch (err) {
-      toast({
-        title: t("onboarding.startFailedTitle", "Could not start services"),
-        description: String(err),
-        variant: "destructive",
-      });
+      if (await runBulk("start")) {
+        markCompleted();
+        onOpenServices();
+      }
     } finally {
       setStarting(false);
-      markCompleted();
-      onOpenServices();
     }
   };
 
@@ -113,21 +91,21 @@ export function OnboardingDialog({
 
         <div className="grid grid-cols-3 gap-3 py-2">
           <div className="flex flex-col items-center gap-1 rounded-lg border bg-card p-3 text-center">
-            <Server className="h-5 w-5 text-orange-500" />
+            <Server className="h-5 w-5 text-primary" />
             <span className="text-xs font-medium">Apache</span>
             <span className="text-[10px] text-muted-foreground">
               {t("onboarding.bundled", "Bundled")}
             </span>
           </div>
           <div className="flex flex-col items-center gap-1 rounded-lg border bg-card p-3 text-center">
-            <Database className="h-5 w-5 text-blue-500" />
+            <Database className="h-5 w-5 text-primary" />
             <span className="text-xs font-medium">MySQL</span>
             <span className="text-[10px] text-muted-foreground">
               {t("onboarding.bundled", "Bundled")}
             </span>
           </div>
           <div className="flex flex-col items-center gap-1 rounded-lg border bg-card p-3 text-center">
-            <Code className="h-5 w-5 text-purple-500" />
+            <Code className="h-5 w-5 text-primary" />
             <span className="text-xs font-medium">PHP {activePhpVersion}</span>
             <span className="text-[10px] text-muted-foreground">
               {t("onboarding.bundled", "Bundled")}
@@ -143,10 +121,10 @@ export function OnboardingDialog({
         </p>
 
         <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-center">
-          <Button variant="outline" onClick={markCompleted} disabled={starting}>
+          <Button variant="outline" onClick={markCompleted} disabled={starting || loading !== null}>
             {t("onboarding.exploreFirst", "Explore first")}
           </Button>
-          <Button onClick={handleStartAll} disabled={starting}>
+          <Button onClick={handleStartAll} disabled={starting || loading !== null}>
             {starting
               ? t("onboarding.starting", "Starting...")
               : t("onboarding.startAll", "Start all services")}

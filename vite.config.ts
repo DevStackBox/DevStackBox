@@ -1,9 +1,13 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import { realpathSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+const root = realpathSync(fileURLToPath(new URL(".", import.meta.url)));
 
 // https://vitejs.dev/config/
 export default defineConfig(async () => ({
+  root,
   plugins: [react()],
   
   // Allow importing package.json
@@ -26,7 +30,7 @@ export default defineConfig(async () => ({
   },
   resolve: {
     alias: {
-      "@": path.resolve("./src"),
+      "@": path.join(root, "src"),
     },
   },
   test: {

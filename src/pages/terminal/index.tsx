@@ -9,6 +9,7 @@
  * inactive - they are NEVER unmounted while the tab exists.
  */
 
+import { useLocation } from "react-router-dom";
 import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { SquareTerminal } from "lucide-react";
@@ -23,6 +24,7 @@ type ClearFnMap = Map<string, () => void>;
 
 export function UniversalTerminalPage() {
   const { t } = useTranslation();
+  const visible = useLocation().pathname === "/terminal";
   const { tabs, activeTabId, createTab, closeTab } = useTerminal();
   const clearFnsRef = useRef<ClearFnMap>(new Map());
 
@@ -50,7 +52,7 @@ export function UniversalTerminalPage() {
       <div className="flex items-center justify-between mb-3 shrink-0">
         <div className="flex items-center gap-2">
           <SquareTerminal className="h-6 w-6 text-muted-foreground" />
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="text-lg font-semibold tracking-tight">
             {t("navigation.terminal", "Terminal")}
           </h1>
         </div>
@@ -86,8 +88,8 @@ export function UniversalTerminalPage() {
               <TerminalPane
                 key={tab.id}
                 sessionId={tab.id}
-                initialCommand={tab.shellType.initialCommand}
-                isActive={tab.id === activeTabId}
+                shellTypeId={tab.shellType.id}
+                isActive={visible && tab.id === activeTabId}
                 onMount={(clearFn) => {
                   clearFnsRef.current.set(tab.id, clearFn);
                   return () => clearFnsRef.current.delete(tab.id);

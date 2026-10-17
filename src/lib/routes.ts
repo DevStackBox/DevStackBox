@@ -4,6 +4,7 @@
  */
 import {
   LayoutDashboard,
+  FolderOpen,
   Database,
   FileText,
   Settings,
@@ -39,6 +40,7 @@ export const ROUTES = {
     defaultLabel: "Dashboard",
     icon: LayoutDashboard,
   },
+  projects: { path: "/projects", labelKey: "navigation.projects", defaultLabel: "Projects", icon: FolderOpen },
   services: {
     path: "/services",
     labelKey: "navigation.services",
@@ -213,6 +215,7 @@ export const ROUTES = {
 export const SIDEBAR_ROUTES = [
   ROUTES.dashboard,
   ROUTES.services,
+  ROUTES.projects,
   ROUTES.databases,
   ROUTES.logs,
   ROUTES.terminal,

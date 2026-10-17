@@ -47,7 +47,7 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const initialTab = buildTab(DEFAULT_SHELL);
+  const [initialTab] = useState(() => buildTab(DEFAULT_SHELL));
   const [tabs, setTabs] = useState<TerminalTab[]>(() => [initialTab]);
   const [activeTabId, setActiveTabId] = useState<string | null>(
     () => initialTab.id,
@@ -59,8 +59,11 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
     (shellType: ShellType) => {
       if (tabs.length >= MAX_TABS) return;
       const tab = buildTab(shellType);
-      setTabs((prev) => [...prev, tab]);
-      setActiveTabId(tab.id);
+      setTabs((prev) => {
+        if (prev.length >= MAX_TABS) return prev;
+        setActiveTabId(tab.id);
+        return [...prev, tab];
+      });
     },
     [buildTab, tabs.length],
   );

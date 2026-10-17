@@ -200,21 +200,23 @@ pub fn setup_tray(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
                 "apache" => {
                     let app = app.clone();
                     tauri::async_runtime::spawn(async move {
+                        let _ = app.emit("tray-service-action", "apache");
                         let _ = crate::commands::apache::toggle_apache().await;
                         refresh_tray_status(&app).await;
                         // Notify frontend so its status badges also update
                         if let Some(w) = app.get_webview_window("main") {
-                            let _ = w.emit("tray-services-updated", ());
+                            let _ = w.emit("tray-service-action", "complete");
                         }
                     });
                 }
                 "mysql" => {
                     let app = app.clone();
                     tauri::async_runtime::spawn(async move {
+                        let _ = app.emit("tray-service-action", "mysql");
                         let _ = crate::commands::mysql::toggle_mysql().await;
                         refresh_tray_status(&app).await;
                         if let Some(w) = app.get_webview_window("main") {
-                            let _ = w.emit("tray-services-updated", ());
+                            let _ = w.emit("tray-service-action", "complete");
                         }
                     });
                 }

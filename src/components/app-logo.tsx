@@ -15,7 +15,7 @@ export function AppLogo({ className }: AppLogoProps) {
         className={cn("h-8 w-8 dark:hidden", className)}
       />
       <img
-        src="/logo-dark.svg"
+        src="/logo-white.svg"
         alt="DevStackBox"
         width={32}
         height={32}

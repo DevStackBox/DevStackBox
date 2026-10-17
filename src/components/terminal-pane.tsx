@@ -27,7 +27,7 @@ import "@xterm/xterm/css/xterm.css";
 
 interface TerminalPaneProps {
   sessionId: string;
-  initialCommand: string | null;
+  shellTypeId: string;
   isActive: boolean;
   /**
    * Called once when the xterm instance is ready.
@@ -39,30 +39,27 @@ interface TerminalPaneProps {
 
 export function TerminalPane({
   sessionId,
-  initialCommand,
+  shellTypeId,
   isActive,
   onMount,
 }: TerminalPaneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef = useRef<Terminal | null>(null);
+  const sessionReadyRef = useRef(false);
   const fitAddonRef = useRef<FitAddon | null>(null);
   const unlistenOutputRef = useRef<UnlistenFn | null>(null);
   // Stub for future terminal-process-changed events (tab indicators / dynamic titles)
   const unlistenProcessRef = useRef<UnlistenFn | null>(null);
-  const { theme } = useTheme();
-
-  const isDark =
-    theme === "dark" ||
-    (theme === "system" &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   const syncTerminalSize = (term: Terminal) => {
-    if (!isTauri()) return;
+    if (!isTauri() || !sessionReadyRef.current) return;
     void safeInvoke(TAURI_COMMANDS.terminal.resize, {
-      session_id: sessionId,
+      sessionId,
       cols: term.cols,
       rows: term.rows,
-    });
+    }).catch(() => { /* The session can close while a resize is queued. */ });
   };
 
   const fitAndSync = (term: Terminal, fitAddon: FitAddon) => {
@@ -110,7 +107,7 @@ export function TerminalPane({
 
     if (!isTauri()) {
       term.writeln("\x1b[33m[Browser mode - terminal unavailable]\x1b[0m");
-      return;
+      return () => { term.dispose(); onMountCleanup?.(); };
     }
 
     let cancelled = false;
@@ -153,33 +150,39 @@ export function TerminalPane({
       // 3. Forward keystrokes to Rust pty
       inputDisposable = term.onData((data) => {
         void safeInvoke(TAURI_COMMANDS.terminal.sendInput, {
-          session_id: sessionId,
+          sessionId,
           data,
         });
       });
 
       // 4. Spawn the Rust pty session safely
       await safeInvoke(TAURI_COMMANDS.terminal.spawn, {
-        session_id: sessionId,
-        initial_command: initialCommand ?? null,
+        sessionId,
+        shellTypeId,
       });
 
+      if (cancelled) {
+        await safeInvoke(TAURI_COMMANDS.terminal.kill, { sessionId });
+        return;
+      }
+      sessionReadyRef.current = true;
       // 5. Sync PTY size after spawn so the shell matches xterm dimensions
       fitAndSync(term, fitAddon);
     };
 
     let inputDisposable: { dispose: () => void } | null = null;
-    void setupTerminal();
+    void setupTerminal().catch(error => { if (!cancelled) term.writeln(`\r\nUnable to open terminal: ${String(error)}`); });
 
     return () => {
       cancelled = true;
+      sessionReadyRef.current = false;
       clearTimeout(initTimer);
       onMountCleanup?.();
       inputDisposable?.dispose();
       unlistenOutputRef.current?.();
       unlistenProcessRef.current?.();
       void safeInvoke(TAURI_COMMANDS.terminal.kill, {
-        session_id: sessionId,
+        sessionId,
       });
       term.dispose();
       termRef.current = null;

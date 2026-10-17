@@ -118,8 +118,7 @@ export function MySQLService({
         "Database server for storing application data",
       )}
       icon={Database}
-      iconColor="text-blue-500"
-      logoSrc="/mysql.svg"
+      iconColor="text-primary"
       isRunning={status.running}
       compact={compact}
       delay={0.1}

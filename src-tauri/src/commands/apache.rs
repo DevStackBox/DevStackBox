@@ -6,11 +6,11 @@ use tokio::time::sleep;
 use crate::commands::php::patch_php_ini;
 use crate::types::ServiceInfo;
 use crate::utils::config_ports::apache_listen_port;
+use crate::utils::config_version::needs_config_migration;
 use crate::utils::paths::{
     get_apache_exe, get_installation_path, get_user_data_root, user_config_dir, user_logs_dir,
     user_www_dir,
 };
-use crate::utils::config_version::needs_config_migration;
 use crate::utils::process::{
     create_hidden_command, ensure_port_available, find_our_processes, is_32bit_executable,
     is_our_process_running, kill_pid,
@@ -34,7 +34,94 @@ pub async fn ensure_apache_config() -> Result<(), String> {
         );
         create_default_apache_config().await?;
     }
+    harden_directory_listing(&config_path)
+}
+
+/// Disable automatic directory indexes in managed Apache directories while
+/// preserving the rest of each active Options directive.
+fn harden_directory_listing(config_path: &std::path::Path) -> Result<(), String> {
+    let content = std::fs::read_to_string(config_path)
+        .map_err(|e| format!("Failed to read Apache config: {e}"))?;
+    let mut changed = false;
+    let lines: Vec<String> = content
+        .lines()
+        .map(|line| {
+            let trimmed = line.trim_start();
+            if trimmed.starts_with('#')
+                || !trimmed
+                    .get(..7)
+                    .is_some_and(|s| s.eq_ignore_ascii_case("Options"))
+            {
+                return line.to_owned();
+            }
+            let mut parts = trimmed.split_whitespace();
+            let Some(directive) = parts.next() else {
+                return line.to_owned();
+            };
+            let options: Vec<&str> = parts.collect();
+            if !options.iter().any(|option| {
+                option
+                    .trim_start_matches(['+', '-'])
+                    .eq_ignore_ascii_case("Indexes")
+            }) {
+                return line.to_owned();
+            }
+            changed = true;
+            // Apache requires every option in a directive to use an explicit
+            // `+` or `-` once any option does. Keep the existing effective
+            // behavior while disabling Indexes.
+            let replacement = options
+                .iter()
+                .map(|option| {
+                    if option
+                        .trim_start_matches(['+', '-'])
+                        .eq_ignore_ascii_case("Indexes")
+                    {
+                        "-Indexes".to_owned()
+                    } else if option.starts_with('+') || option.starts_with('-') {
+                        (*option).to_owned()
+                    } else {
+                        format!("+{option}")
+                    }
+                })
+                .collect::<Vec<_>>()
+                .join(" ");
+            let indent = &line[..line.len() - trimmed.len()];
+            format!("{indent}{directive} {replacement}")
+        })
+        .collect();
+    if changed {
+        let mut updated = lines.join("\n");
+        if content.ends_with('\n') {
+            updated.push('\n');
+        }
+        std::fs::write(config_path, updated)
+            .map_err(|e| format!("Failed to disable Apache directory indexes: {e}"))?;
+    }
     Ok(())
+}
+
+#[cfg(test)]
+mod apache_config_tests {
+    use super::harden_directory_listing;
+
+    #[test]
+    fn disables_indexes_without_changing_other_options() {
+        let path = std::env::temp_dir().join(format!(
+            "devstackbox-httpd-test-{}.conf",
+            std::process::id()
+        ));
+        std::fs::write(
+            &path,
+            "# Options Indexes\n<Directory x>\n    Options Indexes FollowSymLinks\n</Directory>\n",
+        )
+        .unwrap();
+        harden_directory_listing(&path).unwrap();
+        let content = std::fs::read_to_string(&path).unwrap();
+        let _ = std::fs::remove_file(&path);
+        assert!(content.contains("# Options Indexes"));
+        assert!(content.contains("Options -Indexes +FollowSymLinks"));
+    }
 }
 
 fn apache_exe_path() -> std::path::PathBuf {
@@ -69,6 +156,10 @@ pub async fn start_apache() -> Result<bool, String> {
             "Apache binary not found at {}. Please ensure Apache is installed.",
             apache_path.display()
         ));
+    }
+
+    if is_our_process_running("httpd.exe", &apache_path) {
+        return Ok(true);
     }
 
     #[cfg(target_arch = "x86_64")]
@@ -176,7 +267,10 @@ pub async fn start_apache() -> Result<bool, String> {
         Ok(Some(status)) => {
             println!(
                 "Apache parent process exited (code: {}) - checking port {} for worker process",
-                status.code().map(|c| c.to_string()).unwrap_or_else(|| "unknown".into()),
+                status
+                    .code()
+                    .map(|c| c.to_string())
+                    .unwrap_or_else(|| "unknown".into()),
                 listen_port
             );
         }
@@ -186,22 +280,16 @@ pub async fn start_apache() -> Result<bool, String> {
         }
     }
 
-    // Verify the worker is listening on the configured port.
-    let port_needle = format!(":{} ", listen_port);
-    let port_needle_tab = format!(":{}\t", listen_port);
-    match create_hidden_command("netstat").arg("-ano").output() {
-        Ok(netstat_output) => {
-            let output_str = String::from_utf8_lossy(&netstat_output.stdout);
-            if output_str.contains(&port_needle) || output_str.contains(&port_needle_tab) {
-                Ok(true)
-            } else {
-                Err(format!(
-                    "Apache did not start: port {} is not listening. Check the Apache error log for details.",
-                    listen_port
-                ))
-            }
-        }
-        Err(_) => Ok(true), // netstat failed, assume success
+    if is_our_process_running("httpd.exe", &apache_path)
+        && std::net::TcpStream::connect_timeout(
+            &std::net::SocketAddr::from(([127, 0, 0, 1], listen_port)),
+            Duration::from_secs(2),
+        )
+        .is_ok()
+    {
+        Ok(true)
+    } else {
+        Err(format!("DevStackBox Apache did not become ready on port {listen_port}. Check the Apache error log."))
     }
 }
 
@@ -210,7 +298,7 @@ pub async fn stop_apache() -> Result<bool, String> {
     let apache_path = apache_exe_path();
 
     if !is_our_process_running("httpd.exe", &apache_path) {
-        return Err("DevStackBox Apache is not running".to_string());
+        return Ok(true);
     }
 
     if apache_path.exists() {
@@ -326,7 +414,7 @@ ServerName localhost:80
 DocumentRoot "{www_root_str}"
 
 <Directory "{www_root_str}">
-    Options Indexes FollowSymLinks
+    Options -Indexes +FollowSymLinks
     AllowOverride All
     Require all granted
     DirectoryIndex index.php index.html index.htm
@@ -373,7 +461,7 @@ IncludeOptional "{user_config_str}/ssl.conf"
     ServerAlias 127.0.0.1
     DocumentRoot "{www_root_str}"
     <Directory "{www_root_str}">
-        Options Indexes FollowSymLinks
+        Options -Indexes +FollowSymLinks
         AllowOverride All
         Require all granted
         DirectoryIndex index.php index.html index.htm
@@ -423,7 +511,7 @@ IncludeOptional "{user_config_str}/vhosts.conf"
 Alias /phpmyadmin "{}"
 
 <Directory "{}">
-    Options Indexes FollowSymLinks
+    Options -Indexes +FollowSymLinks
     AllowOverride None
     DirectoryIndex index.php index.html
     Require ip 127.0.0.1
@@ -457,7 +545,8 @@ Alias /pma "{}"
 
     let config_dir = user_config_dir();
     std::fs::write(config_dir.join("httpd.conf"), config_content).map_err(|e| e.to_string())?;
-    std::fs::write(config_dir.join("phpmyadmin.conf"), phpmyadmin_config).map_err(|e| e.to_string())?;
+    std::fs::write(config_dir.join("phpmyadmin.conf"), phpmyadmin_config)
+        .map_err(|e| e.to_string())?;
 
     // Seed the user www dir with default files if it is empty.
     seed_www_dir();
@@ -492,7 +581,10 @@ async fn get_apache_version() -> Option<String> {
         return None;
     }
 
-    match create_hidden_command(apache_path.to_str()?).arg("-v").output() {
+    match create_hidden_command(apache_path.to_str()?)
+        .arg("-v")
+        .output()
+    {
         Ok(output) => {
             let version_str = String::from_utf8_lossy(&output.stdout);
             if let Some(start) = version_str.find("Apache/") {

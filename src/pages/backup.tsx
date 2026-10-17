@@ -241,7 +241,7 @@ export function BackupPage() {
         <div
           className={`rounded-md px-4 py-3 text-sm ${
             feedback.ok
-              ? "bg-green-500/10 text-green-700 dark:text-green-400 border border-green-500/30"
+              ? "bg-primary/10 text-primary dark:text-primary border border-primary/30"
               : "bg-destructive/10 text-destructive border border-destructive/30"
           }`}
         >

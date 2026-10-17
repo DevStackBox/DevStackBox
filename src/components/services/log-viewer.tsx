@@ -33,14 +33,14 @@ function classifyLine(line: string): string {
     lower.includes("fatal") ||
     lower.includes("critical")
   ) {
-    return "text-red-400";
+    return "text-primary";
   }
   if (
     lower.includes("[warn]") ||
     lower.includes("warning") ||
     lower.includes(" warn ")
   ) {
-    return "text-amber-300";
+    return "text-primary";
   }
   if (
     lower.includes("[info]") ||

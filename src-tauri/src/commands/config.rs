@@ -56,28 +56,14 @@ pub async fn update_config(service: String, content: String) -> Result<String, S
     ensure_service_config(&service).await?;
     let config_file = config_file_for(&service)?;
 
-    if config_file.exists() {
-        let backup_dir = user_config_backups_dir();
-
-        let timestamp = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map_err(|e| format!("System clock error: {}", e))?
-            .as_secs();
-
-        let file_name = config_file
-            .file_name()
-            .and_then(|n| n.to_str())
-            .ok_or_else(|| "Config file name is not valid UTF-8".to_string())?;
-
-        let backup_name = format!("{}_{}.bak", file_name, timestamp);
-        let backup_path = backup_dir.join(backup_name);
-
-        std::fs::copy(&config_file, &backup_path)
-            .map_err(|e| format!("Failed to create backup: {}", e))?;
-    }
-
-    std::fs::write(&config_file, content)
-        .map_err(|e| format!("Failed to write config file: {}", e))?;
+    let staged = config_file.with_extension(format!("{}.pending", unique_stamp()?));
+    std::fs::write(&staged, &content).map_err(|e| e.to_string())?;
+    let result = validate_file(&service, &staged).and_then(|_| {
+        if config_file.exists() { snapshot(&config_file)?; }
+        std::fs::rename(&staged, &config_file).map_err(|e| format!("Cannot replace configuration: {e}"))
+    });
+    let _ = std::fs::remove_file(&staged);
+    result?;
 
     Ok(format!("Config updated successfully: {}", config_file.display()))
 }
@@ -85,30 +71,9 @@ pub async fn update_config(service: String, content: String) -> Result<String, S
 #[tauri::command]
 pub async fn backup_config(service: String) -> Result<String, String> {
     ensure_service_config(&service).await?;
-    let backup_dir = user_config_backups_dir();
     let config_file = config_file_for(&service)?;
-
-    if !config_file.exists() {
-        return Err(format!("Config file not found: {}", config_file.display()));
-    }
-
-    let timestamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map_err(|e| format!("System clock error: {}", e))?
-        .as_secs();
-
-    let file_name = config_file
-        .file_name()
-        .and_then(|n| n.to_str())
-        .ok_or_else(|| "Config file name is not valid UTF-8".to_string())?;
-
-    let backup_name = format!("{}_{}.bak", file_name, timestamp);
-    let backup_path = backup_dir.join(backup_name);
-
-    std::fs::copy(&config_file, &backup_path)
-        .map_err(|e| format!("Failed to create backup: {}", e))?;
-
-    Ok(format!("Backup created: {}", backup_path.display()))
+    let path = snapshot(&config_file)?;
+    Ok(format!("Backup created: {}", path.display()))
 }
 
 #[tauri::command]
@@ -151,14 +116,66 @@ pub async fn restore_config_backup(
     let backup_dir = user_config_backups_dir();
     let config_file = config_file_for(&service)?;
 
-    let backup_path = backup_dir.join(&backup_name);
+    let prefix = format!("{}_", config_file.file_name().unwrap().to_string_lossy());
+    if !valid_backup_name(&backup_name, &prefix) { return Err("Invalid configuration backup".into()); }
+    let base = std::fs::canonicalize(&backup_dir).map_err(|e| e.to_string())?;
+    let backup_path = std::fs::canonicalize(backup_dir.join(&backup_name)).map_err(|e| e.to_string())?;
+    if !backup_path.starts_with(base) { return Err("Backup is outside the backup folder".into()); }
+    let content = std::fs::read_to_string(backup_path).map_err(|e| e.to_string())?;
+    update_config(service, content).await?;
+    Ok(format!("Configuration restored from {backup_name}. Restart the service to apply."))
+}
 
-    if !backup_path.exists() {
-        return Err(format!("Backup file not found: {}", backup_name));
+fn valid_backup_name(name: &str, prefix: &str) -> bool {
+    name.starts_with(prefix) && name.ends_with(".bak") && !name.contains(['/', '\\', ':']) && !name.contains("..")
+}
+
+fn unique_stamp() -> Result<u128, String> {
+    Ok(std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_err(|e| e.to_string())?.as_nanos())
+}
+
+fn snapshot(path: &std::path::Path) -> Result<PathBuf, String> {
+    let name = path.file_name().ok_or("Invalid configuration path")?.to_string_lossy();
+    let target = user_config_backups_dir().join(format!("{name}_{}.bak", unique_stamp()?));
+    std::fs::copy(path, &target).map_err(|e| format!("Cannot back up configuration: {e}"))?;
+    Ok(target)
+}
+
+fn validate_file(service: &str, path: &std::path::Path) -> Result<(), String> {
+    use crate::utils::paths::{get_installation_path, get_apache_exe, get_mysqld_exe, active_php_dir};
+    use crate::utils::process::create_hidden_command;
+    let root = get_installation_path();
+    let mut cmd = match service {
+        "apache" | "httpd" => {
+            let mut cmd = create_hidden_command(&get_apache_exe(&root).to_string_lossy());
+            cmd.arg("-t").arg("-f").arg(path); cmd
+        }
+        "mysql" => {
+            let mut cmd = create_hidden_command(&get_mysqld_exe(&root).to_string_lossy());
+            cmd.arg(format!("--defaults-file={}", path.display())).arg("--validate-config"); cmd
+        }
+        "php" => {
+            let mut cmd = create_hidden_command(&active_php_dir().join("php.exe").to_string_lossy());
+            cmd.arg("-c").arg(path).args(["-r", "echo 'Configuration checked';"]); cmd
+        }
+        _ => return Err("This configuration cannot be validated independently.".into()),
+    };
+    let output = cmd.output().map_err(|e| format!("Cannot validate configuration: {e}"))?;
+    let errors = String::from_utf8_lossy(&output.stderr);
+    if !output.status.success() || (service == "php" && !errors.trim().is_empty()) {
+        return Err(format!("Configuration was not saved. {} {}", errors.trim(), String::from_utf8_lossy(&output.stdout).trim()));
     }
+    Ok(())
+}
 
-    std::fs::copy(&backup_path, &config_file)
-        .map_err(|e| format!("Failed to restore backup: {}", e))?;
-
-    Ok(format!("Config restored from: {}", backup_name))
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn rejects_untrusted_backup_names() {
+        assert!(valid_backup_name("php.ini_123.bak", "php.ini_"));
+        for name in ["../php.ini_123.bak", "C:\\php.ini_123.bak", "httpd.conf_123.bak", "php.ini_../x.bak"] {
+            assert!(!valid_backup_name(name, "php.ini_"));
+        }
+    }
 }

@@ -114,7 +114,7 @@ export function VhostsPage() {
         domain: domain.trim(),
         docRoot: docRoot.trim(),
       });
-      showMsg("ok", `Virtual host '${domain.trim()}' added.`);
+      showMsg("ok", `Virtual host '${domain.trim()}' added. Restart Apache to apply the change.`);
       setAddOpen(false);
       setDomain("");
       setDocRoot("");
@@ -137,7 +137,7 @@ export function VhostsPage() {
       await safeInvoke(TAURI_COMMANDS.vhosts.remove, {
         domain: removeTarget.domain,
       });
-      showMsg("ok", `Virtual host '${removeTarget.domain}' removed.`);
+      showMsg("ok", `Virtual host '${removeTarget.domain}' removed. Restart Apache to apply the change.`);
       setRemoveTarget(null);
       await loadAll();
     } catch (err) {
@@ -158,6 +158,7 @@ export function VhostsPage() {
         enabled: !entry.enabled,
       });
       await loadAll();
+      showMsg("ok", "Virtual host updated. Restart Apache to apply the change.");
     } catch (err) {
       toast({
         title: "Failed to toggle virtual host",
@@ -211,7 +212,7 @@ export function VhostsPage() {
           animate={{ opacity: 1, y: 0 }}
           className={`rounded-lg border px-4 py-3 text-sm flex items-start gap-2 ${
             actionMsg.type === "ok"
-              ? "border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400"
+              ? "border-primary/30 bg-primary/10 text-primary dark:text-primary"
               : "border-destructive/30 bg-destructive/10 text-destructive"
           }`}
         >
@@ -258,7 +259,7 @@ export function VhostsPage() {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-xs">
+                  <div className="flex items-center gap-1 text-primary dark:text-primary text-xs">
                     <CheckCircle2 className="w-3 h-3" />
                     Built-in
                   </div>
@@ -327,7 +328,7 @@ export function VhostsPage() {
                       </TableCell>
                       <TableCell>
                         {inHosts ? (
-                          <div className="flex items-center gap-1 text-green-600 dark:text-green-400 text-xs">
+                          <div className="flex items-center gap-1 text-primary dark:text-primary text-xs">
                             <CheckCircle2 className="w-3 h-3" />
                             {t("vhosts.inHosts")}
                           </div>
@@ -392,7 +393,7 @@ export function VhostsPage() {
           <CardDescription>{t("vhosts.hostsFileDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-start gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3">
+          <div className="flex items-start gap-2 text-sm text-primary dark:text-primary bg-primary/10 border border-primary/30 rounded-lg px-4 py-3">
             <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
             <span>{t("vhosts.uacWarning")}</span>
           </div>

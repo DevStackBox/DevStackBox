@@ -33,7 +33,7 @@ export function DashboardPage({
 }: DashboardPageProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { services } = useServiceStatus();
+  const { services, loading, runBulk } = useServiceStatus();
   const { toast } = useToast();
   const [bulkBusy, setBulkBusy] = useState<"start" | "stop" | null>(null);
   const [vhosts, setVhosts] = useState<VhostEntry[]>([]);
@@ -59,9 +59,8 @@ export function DashboardPage({
   const runningCount = [
     services.apache.running,
     services.mysql.running,
-    services.php.running,
   ].filter(Boolean).length;
-  const totalServices = 3;
+  const totalServices = 2;
   const statusLabel =
     runningCount === totalServices
       ? t("status.operational", "All services running")
@@ -70,34 +69,17 @@ export function DashboardPage({
         : t("status.offline", "All services stopped");
   const statusBadgeClass =
     runningCount === totalServices
-      ? "bg-green-500 hover:bg-green-600"
+      ? "bg-primary text-primary-foreground hover:bg-primary/90"
       : runningCount > 0
-        ? "bg-orange-500 hover:bg-orange-600"
+        ? "bg-primary text-primary-foreground hover:bg-primary/90"
         : "bg-gray-500 hover:bg-gray-600";
 
-  const handleStartAll = async () => {
-    if (!isTauri()) return;
-    setBulkBusy("start");
-    try {
-      await safeInvoke(TAURI_COMMANDS.system.startAllServices);
-    } catch (err) {
-      console.error("start_all_services failed", err);
-    } finally {
-      setBulkBusy(null);
-    }
+  const runAll = async (action: "start" | "stop") => {
+    setBulkBusy(action);
+    try { await runBulk(action); } finally { setBulkBusy(null); }
   };
-
-  const handleStopAll = async () => {
-    if (!isTauri()) return;
-    setBulkBusy("stop");
-    try {
-      await safeInvoke(TAURI_COMMANDS.system.stopAllServices);
-    } catch (err) {
-      console.error("stop_all_services failed", err);
-    } finally {
-      setBulkBusy(null);
-    }
-  };
+  const handleStartAll = () => runAll("start");
+  const handleStopAll = () => runAll("stop");
 
   return (
     <motion.div
@@ -109,7 +91,7 @@ export function DashboardPage({
       {/* Compact welcome + status + bulk strip */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="text-lg font-semibold tracking-tight">
             {t("pages.dashboard.title", "Dashboard")}
           </h1>
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
@@ -126,7 +108,7 @@ export function DashboardPage({
           <Button
             size="sm"
             onClick={handleStartAll}
-            disabled={bulkBusy !== null}
+            disabled={loading !== null || bulkBusy !== null}
           >
             {bulkBusy === "start" ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -139,7 +121,7 @@ export function DashboardPage({
             size="sm"
             variant="outline"
             onClick={handleStopAll}
-            disabled={bulkBusy !== null}
+            disabled={loading !== null || bulkBusy !== null}
           >
             {bulkBusy === "stop" ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

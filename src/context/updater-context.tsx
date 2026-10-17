@@ -1,3 +1,4 @@
+import { useServiceStatus } from "@/context/service-status-context";
 /**
  * UpdaterContext
  *
@@ -97,6 +98,7 @@ const UpdaterContext = createContext<UpdaterContextValue | null>(null);
 // ---------------------------------------------------------------------------
 
 export function UpdaterProvider({ children }: { children: ReactNode }) {
+  const { runBulk } = useServiceStatus();
   const { t } = useTranslation();
   const { toast } = useToast();
 
@@ -158,8 +160,11 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
           if (dismissedVersion !== meta.version) {
             setShowDialog(true);
           }
-        } else if (showNotification) {
-          toast({
+        } else {
+          setUpdateInfo(null);
+          setUpdateAvailable(false);
+          setReadyToInstall(false);
+          if (showNotification) toast({
             title: t("updater.upToDate"),
             description: `v${APP_VERSION} ${t("updater.latestVersion")}`,
           });
@@ -198,6 +203,8 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
       const { relaunch } = await import("@tauri-apps/plugin-process");
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await safeInvoke(TAURI_COMMANDS.backup.createFull, { timestamp: new Date().toISOString() });
+      if (!(await runBulk("stop"))) throw new Error("Services could not be stopped. Try the update again after stopping them.");
       await updateInfo.downloadAndInstall((event: any) => {
         switch (event.event) {
           case "Started":
@@ -234,8 +241,9 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
       console.error("[UpdaterContext] downloadAndInstall failed:", err);
       setCheckError(t("updater.downloadFailed", "Failed to download update"));
       setDownloading(false);
+      setReadyToInstall(false);
     }
-  }, [updateInfo, t]);
+  }, [updateInfo, t, runBulk]);
 
   // ---------------------------------------------------------------------------
   // dismissUpdate

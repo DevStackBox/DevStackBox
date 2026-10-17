@@ -1,12 +1,13 @@
 // PHP commands.
 
 use std::fs;
-use std::io::{Cursor, Read, Write};
+use std::io::Cursor;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use futures_util::StreamExt;
 use serde::Serialize;
+use sha2::{Digest, Sha256};
 use tauri::{AppHandle, Emitter};
 
 use crate::types::{PHPVersionInfo, ServiceInfo};
@@ -125,6 +126,7 @@ async fn check_active_php_version(version: &str) -> bool {
 }
 
 async fn update_php_config(_version: &str) -> Result<(), String> {
+    patch_php_ini();
     // The httpd.conf ScriptAlias points to php/current/ (a junction).
     // Switching PHP versions only requires updating the junction target,
     // which switch_php_version already does via mklink /J.
@@ -249,7 +251,8 @@ pub fn patch_php_ini() {
     let php_ini = user_config_dir().join("php.ini");
 
     // Seed from the bundled template on first run.
-    if !php_ini.exists() {
+    let first_run = !php_ini.exists();
+    if first_run {
         if let Err(e) = std::fs::copy(&template_ini, &php_ini) {
             println!("Failed to copy php.ini template: {}", e);
             return;
@@ -265,18 +268,19 @@ pub fn patch_php_ini() {
     // Absolute is required here because this php.ini lives in a different
     // directory from the PHP binaries.  The path is runtime-computed from the
     // actual install location, so it is correct on every user's machine.
-    let ext_dir = template_ini
-        .parent()
-        .map(|p| p.join("ext"))
-        .unwrap_or_else(|| php_branch_dir(BUNDLED_PHP_VERSION).join("ext"));
+    let ext_dir = crate::utils::paths::active_php_dir().join("ext");
     let ext_dir_str = to_apache_path(&ext_dir);
 
     // Sessions go under the user data root so PHP CGI can always write there.
     let sessions_str = to_apache_path(&user_sessions_dir());
+    let error_log = to_apache_path(&crate::utils::paths::user_logs_dir().join("php_error.log"));
 
     let mut new_content = String::with_capacity(content.len() + 256);
     let mut session_save_path_set = false;
     let mut extension_dir_set = false;
+    let mut display_errors_set = false;
+    let mut log_errors_set = false;
+    let mut error_log_set = false;
 
     for line in content.lines() {
         let trimmed = line.trim();
@@ -302,6 +306,22 @@ pub fn patch_php_ini() {
                 sessions_str
             ));
             session_save_path_set = true;
+            continue;
+        }
+
+        if trimmed.starts_with("display_errors") && !trimmed.starts_with(';') {
+            new_content.push_str("display_errors = Off\n");
+            display_errors_set = true;
+            continue;
+        }
+        if trimmed.starts_with("log_errors") && !trimmed.starts_with(';') {
+            new_content.push_str("log_errors = On\n");
+            log_errors_set = true;
+            continue;
+        }
+        if trimmed.starts_with("error_log") && !trimmed.starts_with(';') {
+            new_content.push_str(&format!("error_log = \"{}\"\n", error_log));
+            error_log_set = true;
             continue;
         }
 
@@ -373,9 +393,12 @@ pub fn patch_php_ini() {
             ext_dir_str
         ));
     }
+    if !display_errors_set { new_content.push_str("\ndisplay_errors = Off\n"); }
+    if !log_errors_set { new_content.push_str("log_errors = On\n"); }
+    if !error_log_set { new_content.push_str(&format!("error_log = \"{}\"\n", error_log)); }
 
     // Enable essential extensions if not already active.
-    new_content = enable_essential_extensions(new_content, &ext_dir);
+    if first_run { new_content = enable_essential_extensions(new_content, &ext_dir); }
 
     let _ = std::fs::write(&php_ini, new_content);
     println!("php.ini patched at user config dir: session.save_path={} extension_dir={}", sessions_str, ext_dir_str);
@@ -413,6 +436,7 @@ pub async fn get_php_versions() -> Result<Vec<PHPVersionInfo>, String> {
 
 #[tauri::command]
 pub async fn switch_php_version(version: String) -> Result<bool, String> {
+    if !PHP_BRANCHES.contains(&version.as_str()) { return Err("Unsupported PHP version".into()); }
     let exe = php_branch_exe(&version);
     if !exe.exists() {
         return Err(format!("PHP {} is not installed", version));
@@ -421,37 +445,26 @@ pub async fn switch_php_version(version: String) -> Result<bool, String> {
     let current_link = php_root().join("current");
     let branch_dir = php_branch_dir(&version);
 
-    if current_link.exists() {
-        fs::remove_dir_all(&current_link).map_err(|e| e.to_string())?;
-    }
-
-    // `mklink` is a cmd.exe builtin, not a standalone exe, so it must be invoked via `cmd /C`.
-    match create_hidden_command("cmd")
-        .args([
-            "/C",
-            "mklink",
-            "/J",
-            &current_link.display().to_string(),
-            &branch_dir.display().to_string(),
-        ])
-        .output()
-    {
-        Ok(output) => {
-            if !output.status.success() {
-                let stderr = String::from_utf8_lossy(&output.stderr);
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                return Err(format!(
-                    "Failed to switch PHP version (mklink failed). \
-                    On some systems junction creation requires admin rights.\n\
-                    stdout: {}\nstderr: {}",
-                    stdout.trim(),
-                    stderr.trim()
-                ));
-            }
+    let previous = php_root().join("current-previous");
+    if previous.exists() { return Err("A previous PHP switch needs recovery. Restore php/current-previous before switching.".into()); }
+    let had_current = current_link.exists();
+    if had_current { fs::rename(&current_link, &previous).map_err(|e| e.to_string())?; }
+    let result = create_hidden_command("cmd")
+        .args(["/D", "/C", "mklink", "/J"])
+        .arg(&current_link).arg(&branch_dir).output();
+    match result {
+        Ok(output) if output.status.success() => {
             update_php_config(&version).await?;
+            if had_current { fs::remove_dir(&previous).map_err(|e| e.to_string())?; }
             Ok(true)
         }
-        Err(e) => Err(format!("Failed to switch PHP version: {}", e)),
+        result => {
+            if had_current { fs::rename(&previous, &current_link).map_err(|e| format!("PHP switch recovery failed: {e}"))?; }
+            Err(match result {
+                Ok(output) => format!("Could not switch PHP: {}", String::from_utf8_lossy(&output.stderr)),
+                Err(error) => format!("Could not switch PHP: {error}"),
+            })
+        }
     }
 }
 
@@ -478,7 +491,7 @@ fn emit_progress(app: &AppHandle, payload: PhpDownloadProgress) {
     let _ = app.emit("php-download-progress", payload);
 }
 
-fn pick_zip_url(branch: &str, releases_json: &serde_json::Value) -> Option<(String, String)> {
+fn pick_zip_url(branch: &str, releases_json: &serde_json::Value) -> Option<(String, String, String)> {
     // releases.json shape (excerpt):
     // { "8.3": { "version": "8.3.31",
     //            "ts-vs16-x64": { "zip": { "path": "php-8.3.31-Win32-vs16-x64.zip" } } } }
@@ -492,11 +505,14 @@ fn pick_zip_url(branch: &str, releases_json: &serde_json::Value) -> Option<(Stri
         .or_else(|| branch_obj.get("ts-vs16-x64"))?;
     let zip = ts.get("zip")?;
     let path = zip.get("path")?.as_str()?;
+    if path.contains(['/', '\\']) || !path.ends_with(".zip") { return None; }
+    let digest = zip.get("sha256")?.as_str()?.to_string();
+    if digest.len() != 64 || !digest.chars().all(|c| c.is_ascii_hexdigit()) { return None; }
     let url = format!("https://windows.php.net/downloads/releases/{}", path);
-    Some((full_version, url))
+    Some((full_version, url, digest))
 }
 
-async fn resolve_php_zip_url(branch: &str) -> Result<(String, String), String> {
+async fn resolve_php_zip_url(branch: &str) -> Result<(String, String, String), String> {
     let client = reqwest::Client::builder()
         .user_agent("DevStackBox")
         .build()
@@ -531,6 +547,7 @@ async fn download_to_memory(app: &AppHandle, version: &str, url: &str) -> Result
         return Err(format!("Download returned HTTP {}", resp.status()));
     }
     let total = resp.content_length().unwrap_or(0);
+    if total > 256 * 1024 * 1024 { return Err("PHP download exceeds the size limit".into()); }
     let mut downloaded: u64 = 0;
     let mut buf: Vec<u8> = Vec::with_capacity(total as usize);
     let mut stream = resp.bytes_stream();
@@ -538,6 +555,7 @@ async fn download_to_memory(app: &AppHandle, version: &str, url: &str) -> Result
     while let Some(chunk) = stream.next().await {
         let bytes = chunk.map_err(|e| format!("Download interrupted: {}", e))?;
         downloaded += bytes.len() as u64;
+        if downloaded > 256 * 1024 * 1024 { return Err("PHP download exceeds the size limit".into()); }
         buf.extend_from_slice(&bytes);
 
         let percent = if total > 0 {
@@ -563,6 +581,9 @@ async fn download_to_memory(app: &AppHandle, version: &str, url: &str) -> Result
     Ok(buf)
 }
 
+struct StagingDirectory(PathBuf);
+impl Drop for StagingDirectory { fn drop(&mut self) { let _ = fs::remove_dir_all(&self.0); } }
+
 fn extract_zip_to(zip_bytes: &[u8], target_dir: &Path) -> Result<(), String> {
     fs::create_dir_all(target_dir)
         .map_err(|e| format!("Failed to create {}: {}", target_dir.display(), e))?;
@@ -576,7 +597,7 @@ fn extract_zip_to(zip_bytes: &[u8], target_dir: &Path) -> Result<(), String> {
             .map_err(|e| format!("Zip entry {} unreadable: {}", i, e))?;
         let rel_path = match entry.enclosed_name() {
             Some(p) => p.to_path_buf(),
-            None => continue,
+            None => return Err("Unsafe path in PHP archive".into()),
         };
         let out_path = target_dir.join(&rel_path);
 
@@ -587,10 +608,9 @@ fn extract_zip_to(zip_bytes: &[u8], target_dir: &Path) -> Result<(), String> {
         if let Some(parent) = out_path.parent() {
             fs::create_dir_all(parent).map_err(|e| e.to_string())?;
         }
-        let mut data = Vec::with_capacity(entry.size() as usize);
-        entry.read_to_end(&mut data).map_err(|e| e.to_string())?;
+        if entry.size() > 512 * 1024 * 1024 { return Err("PHP archive entry exceeds size limit".into()); }
         let mut out = fs::File::create(&out_path).map_err(|e| e.to_string())?;
-        out.write_all(&data).map_err(|e| e.to_string())?;
+        std::io::copy(&mut entry, &mut out).map_err(|e| e.to_string())?;
     }
     Ok(())
 }
@@ -615,6 +635,7 @@ fn write_default_php_ini(branch_dir: &Path) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn download_php_version(app: AppHandle, version: String) -> Result<bool, String> {
+    if !PHP_BRANCHES.contains(&version.as_str()) { return Err("Unsupported PHP version".into()); }
     let target_dir = php_branch_dir(&version);
     if target_dir.join("php.exe").exists() {
         emit_progress(
@@ -643,7 +664,7 @@ pub async fn download_php_version(app: AppHandle, version: String) -> Result<boo
         },
     );
 
-    let (full_version, url) = match resolve_php_zip_url(&version).await {
+    let (full_version, url, expected_digest) = match resolve_php_zip_url(&version).await {
         Ok(v) => v,
         Err(e) => {
             emit_progress(
@@ -691,7 +712,12 @@ pub async fn download_php_version(app: AppHandle, version: String) -> Result<boo
         },
     );
 
-    if let Err(e) = extract_zip_to(&zip_bytes, &target_dir) {
+    if format!("{:x}", Sha256::digest(&zip_bytes)) != expected_digest.to_lowercase() {
+        return Err("PHP download checksum mismatch; installation cancelled".into());
+    }
+    let staging = StagingDirectory(php_root().join(format!(".download-{}-{}", version, std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_nanos())));
+    let staging_dir = &staging.0;
+    if let Err(e) = extract_zip_to(&zip_bytes, staging_dir) {
         emit_progress(
             &app,
             PhpDownloadProgress {
@@ -717,7 +743,7 @@ pub async fn download_php_version(app: AppHandle, version: String) -> Result<boo
             message: Some("Writing default php.ini...".to_string()),
         },
     );
-    if let Err(e) = write_default_php_ini(&target_dir) {
+    if let Err(e) = write_default_php_ini(staging_dir) {
         emit_progress(
             &app,
             PhpDownloadProgress {
@@ -732,7 +758,7 @@ pub async fn download_php_version(app: AppHandle, version: String) -> Result<boo
         return Err(e);
     }
 
-    let exe = target_dir.join("php.exe");
+    let exe = staging_dir.join("php.exe");
     if !exe.exists() {
         let msg = format!("PHP {} extracted but php.exe is missing", version);
         emit_progress(
@@ -748,6 +774,20 @@ pub async fn download_php_version(app: AppHandle, version: String) -> Result<boo
         );
         return Err(msg);
     }
+
+    let validation = create_hidden_command(&exe.to_string_lossy()).args(["-n", "-v"]).output().map_err(|e| e.to_string())?;
+    if !validation.status.success() { return Err("Downloaded PHP failed its runtime check".into()); }
+    let previous = if target_dir.exists() {
+        let previous = php_root().join(format!(".incomplete-{}-{}", version, std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_nanos()));
+        fs::rename(&target_dir, &previous).map_err(|e| e.to_string())?;
+        Some(previous)
+    } else { None };
+    if let Err(error) = fs::rename(staging_dir, &target_dir) {
+        if let Some(previous) = previous { let _ = fs::rename(previous, &target_dir); }
+        return Err(format!("Could not publish PHP installation: {error}"));
+    }
+    drop(staging);
+    if let Some(previous) = previous { let _ = fs::remove_dir_all(previous); }
 
     emit_progress(
         &app,
@@ -772,6 +812,7 @@ pub async fn toggle_php() -> Result<bool, String> {
 
 #[tauri::command]
 pub async fn open_php_terminal(version: String) -> Result<String, String> {
+    if !PHP_BRANCHES.contains(&version.as_str()) { return Err("Unsupported PHP version".into()); }
     let base_path = get_installation_path();
     let php_exe = php_branch_exe(&version);
 
@@ -795,10 +836,11 @@ pub async fn open_php_terminal(version: String) -> Result<String, String> {
         // Write a small batch file to avoid quoting hell in the /K command string.
         let bat_path = std::env::temp_dir().join(format!("dsb_php_{}_terminal.bat", version));
         let bat = format!(
-            "@echo off\r\ntitle PHP {ver} Terminal - DevStackBox\r\ncd /d \"{base}\"\r\nset PATH={php};%PATH%\r\necho.\r\necho PHP {ver} terminal ready. Type 'php -v' to verify.\r\ncmd /k\r\n",
+            "@echo off\r\ntitle PHP {ver} Terminal - DevStackBox\r\ncd /d \"{base}\"\r\nset PHPRC=\"{config}\"\r\nset PATH={php};%PATH%\r\necho.\r\necho PHP {ver} terminal ready. Type 'php -v' to verify.\r\ncmd /k\r\n",
             ver = version,
             base = base_path.display(),
             php = php_dir.display(),
+            config = crate::utils::paths::active_php_ini().display(),
         );
         std::fs::write(&bat_path, bat)
             .map_err(|e| format!("Failed to write terminal script: {}", e))?;
@@ -862,7 +904,16 @@ fn resolve_branch(version: &str) -> String {
 fn extract_ext_value(raw: &str) -> String {
     let no_comment = raw.split(';').next().unwrap_or("").trim();
     // Some inis use `extension="curl"`; strip quotes.
-    no_comment.trim_matches('"').trim().to_string()
+    let value = no_comment.trim_matches('"').trim();
+    // Accept PHP's extension names and DLL spellings, but reject paths and
+    // sample placeholders such as `/path/to/extension/mysqli.so`.
+    if value.contains(['/', '\\']) { return String::new(); }
+    let value = value.strip_suffix(".dll").or_else(|| value.strip_suffix(".so")).unwrap_or(value);
+    let value = value.strip_prefix("php_").unwrap_or(value);
+    if value.is_empty() || !value.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
+        return String::new();
+    }
+    value.to_string()
 }
 
 /// Returns Some(("extension"|"zend_extension", value, was_commented)) if the
@@ -929,7 +980,7 @@ pub async fn list_php_extensions(version: String) -> Result<Vec<crate::types::Ph
         }
     }
 
-    let ini_path = branch_dir.join("php.ini");
+    let ini_path = crate::utils::paths::active_php_ini();
     if ini_path.exists() {
         let contents = fs::read_to_string(&ini_path).map_err(|e| e.to_string())?;
         for line in contents.lines() {
@@ -958,8 +1009,13 @@ pub async fn toggle_php_extension(
     enable: bool,
 ) -> Result<bool, String> {
     let branch = resolve_branch(&version);
-    let branch_dir = php_branch_dir(&branch);
-    let ini_path = branch_dir.join("php.ini");
+    if !check_active_php_version(&branch).await {
+        return Err("Select this PHP version before changing its extensions.".into());
+    }
+    if !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') || name.is_empty() {
+        return Err("Invalid extension name".into());
+    }
+    let ini_path = crate::utils::paths::active_php_ini();
     if !ini_path.exists() {
         return Err(format!("php.ini not found for PHP {}", version));
     }
@@ -1008,3 +1064,34 @@ pub async fn toggle_php_extension(
     Ok(true)
 }
 
+
+#[cfg(test)]
+mod download_tests {
+    use super::{parse_ext_line, pick_zip_url};
+    #[test]
+    fn release_requires_trusted_filename_and_checksum() {
+        let mut release = serde_json::json!({"8.4": {"version": "8.4.1", "ts-vs17-x64": {"zip": {"path": "php-test.zip", "sha256": "a".repeat(64)}}}});
+        assert!(pick_zip_url("8.4", &release).is_some());
+        release["8.4"]["ts-vs17-x64"]["zip"]["path"] = "../other.zip".into();
+        assert!(pick_zip_url("8.4", &release).is_none());
+        release["8.4"]["ts-vs17-x64"]["zip"]["path"] = "php-test.zip".into();
+        release["8.4"]["ts-vs17-x64"]["zip"]["sha256"] = "".into();
+        assert!(pick_zip_url("8.4", &release).is_none());
+    }
+
+    #[test]
+    fn parses_only_supported_extension_names() {
+        assert_eq!(
+            parse_ext_line("extension=php_mysqli.dll"),
+            Some(("extension", "mysqli".to_string(), false))
+        );
+        assert_eq!(
+            parse_ext_line("; extension=redis.so"),
+            Some(("extension", "redis".to_string(), true))
+        );
+        assert_eq!(
+            parse_ext_line("; extension=/path/to/extension/mysqli.so"),
+            None
+        );
+    }
+}

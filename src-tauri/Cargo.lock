@@ -726,13 +726,14 @@ dependencies = [
 
 [[package]]
 name = "devstackbox"
-version = "0.1.9"
+version = "0.1.10-rc.1"
 dependencies = [
  "futures-util",
  "portable-pty",
  "reqwest 0.12.28",
  "serde",
  "serde_json",
+ "sha2",
  "tauri",
  "tauri-build",
  "tauri-plugin-opener",
@@ -740,6 +741,7 @@ dependencies = [
  "tauri-plugin-updater",
  "tokio",
  "url",
+ "windows-sys 0.59.0",
  "zip 2.4.2",
 ]
 

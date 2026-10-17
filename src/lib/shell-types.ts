@@ -18,7 +18,6 @@ import {
   SquareTerminal,
   Code,
   Database,
-  GitBranch,
   type LucideIcon,
 } from "lucide-react";
 
@@ -64,13 +63,7 @@ export const SHELL_TYPES: ShellType[] = [
     icon: Database,
     initialCommand: "mysql -u root",
   },
-  {
-    id: "git-bash",
-    label: "Git Bash",
-    icon: GitBranch,
-    // null here - the Rust backend resolves git-bash.exe via shellTypeId="git-bash"
-    initialCommand: null,
-  },
+
 ] as const;
 
 /** Default shell opened when the terminal page first mounts. */

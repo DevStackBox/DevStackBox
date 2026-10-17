@@ -1,6 +1,6 @@
 {
   "name": "devstackbox",
-  "version": "0.1.9",
+  "version": "0.1.10-rc.1",
   "description": "A lightweight, portable, open-source local development environment for PHP developers",
   "type": "module",
   "scripts": {
@@ -12,12 +12,13 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build",
-    "prepare-binaries": "powershell -ExecutionPolicy Bypass -File scripts/prepare-binaries.ps1",
-    "prepare-binaries-optimized": "powershell -ExecutionPolicy Bypass -File scripts/prepare-binaries-optimized.ps1",
-    "build:optimized": "npm run prepare-binaries-optimized && npm run tauri:build",
-    "build:release": "npm run prepare-binaries && npm run tauri:build",
-    "release": "npm version patch && git push --tags"
+    "tauri:build": "npm run build:release",
+    "prepare-binaries": "node scripts/verify-release.mjs",
+    "prepare-binaries-optimized": "node scripts/verify-release.mjs",
+    "build:optimized": "npm run build:release",
+    "build:release": "node scripts/build-release.mjs",
+    "release": "node scripts/verify-release.mjs",
+    "check": "npm test && tsc --noEmit && node scripts/validate-docs.mjs && node scripts/verify-release.mjs"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
@@ -38,7 +39,7 @@
     "@tauri-apps/plugin-opener": "^2.5.4",
     "@tauri-apps/plugin-process": "^2.3.0",
     "@tauri-apps/plugin-shell": "^2.0.0",
-    "@tauri-apps/plugin-updater": "^2.9.0",
+    "@tauri-apps/plugin-updater": "~2.10.0",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/addon-web-links": "^0.12.0",
     "@xterm/xterm": "^6.0.0",
@@ -48,6 +49,7 @@
     "i18next": "^25.3.2",
     "i18next-browser-languagedetector": "^8.0.2",
     "lucide-react": "^0.468.0",
+    "monaco-editor": "0.56.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-i18next": "^15.1.3",
@@ -78,5 +80,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/DevStackBox/DevStackBox.git"
+  },
+  "overrides": {
+    "dompurify": "3.4.17"
   }
 }

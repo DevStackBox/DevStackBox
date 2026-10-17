@@ -59,8 +59,8 @@ export function RootPasswordPrompt() {
     <Dialog open={open} onOpenChange={(o) => !o && dismiss()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-yellow-500/10">
-            <ShieldAlert className="h-5 w-5 text-yellow-600" />
+          <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+            <ShieldAlert className="h-5 w-5 text-primary" />
           </div>
           <DialogTitle className="text-center">
             {t("security.rootPasswordTitle", "Set a MySQL root password")}

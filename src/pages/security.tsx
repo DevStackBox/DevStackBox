@@ -43,13 +43,13 @@ const SEVERITY_META = {
   warning: {
     icon: AlertTriangle,
     badgeClass:
-      "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/30",
+      "bg-primary/10 text-primary dark:text-primary border-primary/30",
     rowClass: "border-l-4 border-l-yellow-500",
   },
   info: {
     icon: Info,
     badgeClass:
-      "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30",
+      "bg-primary/10 text-primary dark:text-primary border-primary/30",
     rowClass: "border-l-4 border-l-blue-500",
   },
 } as const;
@@ -165,7 +165,7 @@ function SummaryCard({
       <CardContent className="flex items-center gap-3 pt-4 pb-4">
         <Icon className="w-5 h-5 text-muted-foreground" />
         <div>
-          <p className="text-2xl font-bold leading-none">{count}</p>
+          <p className="text-lg font-semibold leading-none">{count}</p>
           <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
         </div>
       </CardContent>
@@ -245,7 +245,7 @@ export function SecurityPage() {
           animate={{ opacity: 1, scale: 1 }}
           className="flex flex-col items-center justify-center py-16 gap-3 text-center"
         >
-          <ShieldCheck className="w-12 h-12 text-green-500" />
+          <ShieldCheck className="w-12 h-12 text-primary" />
           <p className="text-lg font-semibold">{t("security.noIssues", "No issues found")}</p>
           <p className="text-sm text-muted-foreground">
             {t("security.noIssuesDesc", "Your PHP, Apache, and MySQL configurations look good.")}

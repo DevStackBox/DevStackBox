@@ -8,7 +8,7 @@
 //     Override: env var `DEVSTACKBOX_DATA_DIR`.
 
 use std::env;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 // Helper function to get the project root directory.
 // Used by a few legacy helpers; prefer get_installation_path or get_user_data_root.
@@ -23,77 +23,18 @@ pub fn get_project_root() -> Result<PathBuf, String> {
 
 // Resolves the install dir that contains apache/, php/, mysql/, phpmyadmin/.
 pub fn get_installation_path() -> PathBuf {
-    // For development environment, check if we're in src-tauri
-    if let Ok(current_dir) = env::current_dir() {
-        let dir_name = current_dir.file_name().and_then(|name| name.to_str());
-
-        // If in src-tauri, go up one level
-        if dir_name == Some("src-tauri") {
-            if let Some(parent) = current_dir.parent() {
-                return parent.to_path_buf();
-            }
-        }
-
-        // Check if current directory has the server components
-        if current_dir.join("apache").join("bin").join("httpd.exe").exists() {
-            println!("Found server components in current dir: {}", current_dir.display());
-            return current_dir;
-        }
+    // Release builds resolve only beside their own executable. Never inspect
+    // the launch working directory or borrow another installation's binaries.
+    #[cfg(debug_assertions)]
+    {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .parent().expect("Cargo manifest has a parent").to_path_buf()
     }
-
-    // Try to get the path from the installed location.
-    // Resources are bundled with explicit destination mappings in tauri.conf.json,
-    // so they land directly at $INSTDIR\apache\, $INSTDIR\mysql\, etc. (no _up_\ prefix).
-    // The _up_\ fallback is kept for compatibility with any older installs.
-    if let Ok(exe_path) = env::current_exe() {
-        if let Some(parent) = exe_path.parent() {
-            // Direct: resources at $INSTDIR\apache\
-            if parent.join("apache").join("bin").join("httpd.exe").exists() {
-                println!("Found server components at exe location: {}", parent.display());
-                return parent.to_path_buf();
-            }
-
-            // Flat layout: NSIS resource bundler strips the bin/ subdirectory.
-            if parent.join("apache").join("httpd.exe").exists() {
-                println!("Found server components (flat layout) at exe location: {}", parent.display());
-                return parent.to_path_buf();
-            }
-
-            // Legacy fallback: older installs may have resources at $INSTDIR\_up_\apache\
-            let up = parent.join("_up_");
-            if up.join("apache").join("bin").join("httpd.exe").exists() {
-                println!("Found server components at _up_ location: {}", up.display());
-                return up;
-            }
-
-            if let Some(grandparent) = parent.parent() {
-                if grandparent.join("apache").join("bin").join("httpd.exe").exists() {
-                    println!("Found server components at grandparent: {}", grandparent.display());
-                    return grandparent.to_path_buf();
-                }
-            }
-        }
+    #[cfg(not(debug_assertions))]
+    {
+        env::current_exe().expect("Cannot locate DevStackBox executable")
+            .parent().expect("Executable has a parent").to_path_buf()
     }
-
-    // Try common installation paths as a last resort.
-    // ARCH-001: install root is strictly C:\devstackbox.
-    let possible_paths = [
-        PathBuf::from("C:\\devstackbox"),
-    ];
-
-    for path in &possible_paths {
-        if path.join("apache").join("bin").join("httpd.exe").exists()
-            || path.join("apache").join("httpd.exe").exists()
-        {
-            println!("Found server components at: {}", path.display());
-            return path.clone();
-        }
-    }
-
-    // Ultimate fallback to current directory
-    let fallback = env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-    println!("Using fallback path: {}", fallback.display());
-    fallback
 }
 
 // =====================================================================
@@ -204,7 +145,7 @@ pub fn ensure_user_data_dirs() {
 
 /// Returns the httpd.exe path under the given base install directory.
 /// Checks apache/bin/httpd.exe first (dev / standard), then apache/httpd.exe (flat NSIS install).
-pub fn get_apache_exe(base: &PathBuf) -> PathBuf {
+pub fn get_apache_exe(base: &Path) -> PathBuf {
     let with_bin = base.join("apache").join("bin").join("httpd.exe");
     if with_bin.exists() {
         return with_bin;
@@ -214,7 +155,7 @@ pub fn get_apache_exe(base: &PathBuf) -> PathBuf {
 
 /// Returns the mysqld.exe path under the given base install directory.
 /// Checks mysql/bin/mysqld.exe first (dev / standard), then mysql/mysqld.exe (flat NSIS install).
-pub fn get_mysqld_exe(base: &PathBuf) -> PathBuf {
+pub fn get_mysqld_exe(base: &Path) -> PathBuf {
     let with_bin = base.join("mysql").join("bin").join("mysqld.exe");
     if with_bin.exists() {
         return with_bin;
@@ -224,7 +165,7 @@ pub fn get_mysqld_exe(base: &PathBuf) -> PathBuf {
 
 /// Returns the mysql.exe client path under the given base install directory.
 /// Checks mysql/bin/mysql.exe first (dev / standard), then mysql/mysql.exe (flat NSIS install).
-pub fn get_mysql_client_exe(base: &PathBuf) -> PathBuf {
+pub fn get_mysql_client_exe(base: &Path) -> PathBuf {
     let with_bin = base.join("mysql").join("bin").join("mysql.exe");
     if with_bin.exists() {
         return with_bin;
@@ -234,7 +175,7 @@ pub fn get_mysql_client_exe(base: &PathBuf) -> PathBuf {
 
 /// Returns the mysql binary directory under the given base install directory.
 /// Returns mysql/bin if mysqld.exe is found there, otherwise mysql/ (flat NSIS install).
-pub fn get_mysql_bin_dir(base: &PathBuf) -> PathBuf {
+pub fn get_mysql_bin_dir(base: &Path) -> PathBuf {
     let with_bin = base.join("mysql").join("bin");
     if with_bin.join("mysqld.exe").exists() {
         return with_bin;
@@ -244,7 +185,7 @@ pub fn get_mysql_bin_dir(base: &PathBuf) -> PathBuf {
 
 /// Returns the mysqldump.exe path under the given base install directory.
 /// Checks mysql/bin/mysqldump.exe first (dev / standard), then mysql/mysqldump.exe (flat NSIS install).
-pub fn get_mysqldump_exe(base: &PathBuf) -> PathBuf {
+pub fn get_mysqldump_exe(base: &Path) -> PathBuf {
     let with_bin = base.join("mysql").join("bin").join("mysqldump.exe");
     if with_bin.exists() {
         return with_bin;
@@ -254,10 +195,21 @@ pub fn get_mysqldump_exe(base: &PathBuf) -> PathBuf {
 
 /// Returns the openssl.exe path under the given base install directory.
 /// Checks apache/bin/openssl.exe first (dev / standard), then apache/openssl.exe (flat NSIS install).
-pub fn get_openssl_exe(base: &PathBuf) -> PathBuf {
+pub fn get_openssl_exe(base: &Path) -> PathBuf {
     let with_bin = base.join("apache").join("bin").join("openssl.exe");
     if with_bin.exists() {
         return with_bin;
     }
     base.join("apache").join("openssl.exe")
 }
+
+/// Shared runtime resolution. Never resolves a PHP binary from PATH.
+pub fn active_php_dir() -> PathBuf {
+    let root = get_installation_path().join("php");
+    for candidate in [root.join("current"), root.join("8.3"), root.clone()] {
+        if candidate.join("php.exe").is_file() { return candidate; }
+    }
+    root.join("8.3")
+}
+
+pub fn active_php_ini() -> PathBuf { user_config_dir().join("php.ini") }

@@ -35,7 +35,7 @@ const BRANCH_NOTES: Record<
   { description: string; features: string[] }
 > = {
   "8.4": {
-    description: "Latest stable release with enhanced performance",
+    description: "PHP 8.4 runtime",
     features: ["Property hooks", "Improved performance", "New array helpers"],
   },
   "8.3": {
@@ -56,7 +56,7 @@ const BRANCH_NOTES: Record<
     ],
   },
   "8.1": {
-    description: "Stable version with enums and fibers",
+    description: "PHP 8.1 runtime",
     features: ["Enums", "Fibers", "Readonly properties"],
   },
 };
@@ -260,7 +260,7 @@ export function PhpVersionsPage() {
     }
     if (v.is_active) {
       return (
-        <Badge className="bg-green-600 hover:bg-green-700 text-white">
+        <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">
           {t("php.active", "Active")}
         </Badge>
       );

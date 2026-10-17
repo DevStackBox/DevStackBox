@@ -26,6 +26,7 @@ import { TAURI_COMMANDS } from "@/lib/commands";
 
 interface SslStatus {
   ca_exists: boolean;
+  ca_trusted: boolean;
   ca_path: string;
   cert_exists: boolean;
   enabled: boolean;
@@ -47,7 +48,7 @@ function StatusRow({
   return (
     <div className="flex items-center gap-3 py-2">
       <Icon
-        className={`w-4 h-4 shrink-0 ${ok ? "text-green-500" : "text-muted-foreground"}`}
+        className={`w-4 h-4 shrink-0 ${ok ? "text-primary" : "text-muted-foreground"}`}
       />
       <span className="text-sm font-medium">{label}</span>
       {detail && (
@@ -120,6 +121,12 @@ export function SslPage() {
         </Button>
       </div>
 
+      <div className="flex items-center justify-between rounded border p-3 text-sm">
+        <span>{status?.ca_trusted ? "Local certificate is trusted by Windows" : "Trust the local certificate to use HTTPS without browser warnings"}</span>
+        <Button size="sm" variant="outline" disabled={loading || !status?.ca_exists || status.ca_trusted} onClick={() => {
+          if (window.confirm("Trust the DevStackBox local certificate authority for your Windows account? Only certificates issued by your local DevStackBox CA will be trusted.")) void run(() => safeInvoke<string>(TAURI_COMMANDS.ssl.trustCa));
+        }}>Trust local certificate</Button>
+      </div>
       {/* Action feedback */}
       {actionMsg && (
         <motion.div
@@ -127,7 +134,7 @@ export function SslPage() {
           animate={{ opacity: 1, y: 0 }}
           className={`rounded-lg border px-4 py-3 text-sm flex items-start gap-2 ${
             actionMsg.type === "ok"
-              ? "border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400"
+              ? "border-primary/30 bg-primary/10 text-primary dark:text-primary"
               : "border-destructive/30 bg-destructive/10 text-destructive"
           }`}
         >
@@ -280,44 +287,21 @@ export function SslPage() {
         </Card>
       </div>
 
-      {/* Trust instructions */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-sm">
-            {t("ssl.trustTitle", "Trust the Root CA in Windows (one-time)")}
-          </CardTitle>
+          <CardTitle className="text-sm">{t("ssl.trustTitle", "Trust the local certificate")}</CardTitle>
           <CardDescription className="text-xs">
-            {t("ssl.trustDesc", "Import the CA certificate once. Every certificate DevStackBox generates - for localhost and future virtual hosts - is then trusted automatically. No more browser warnings.")}
+            {status?.ca_trusted
+              ? "HTTPS certificates issued by DevStackBox are trusted for your Windows account."
+              : "Trust the DevStackBox local CA once to remove browser certificate warnings for your local sites."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside">
-            <li>
-              {t("ssl.trustStep1", "Open certmgr.msc (Windows Certificate Manager).")}
-            </li>
-            <li>
-              {t("ssl.trustStep2", "Navigate to Trusted Root Certification Authorities > Certificates.")}
-            </li>
-            <li>
-              {t("ssl.trustStep3", "Right-click and choose All Tasks > Import...")}
-            </li>
-            <li>
-              {t("ssl.trustStep4", "Browse to ca.crt (path shown below) and complete the import wizard.")}
-            </li>
-            <li>
-              {t("ssl.trustStep5", "Restart your browser. All DevStackBox HTTPS sites will be trusted without any further action.")}
-            </li>
-          </ol>
-          {status?.ca_path && (
-            <p className="text-xs font-mono text-muted-foreground break-all border rounded px-2 py-1 bg-muted/40">
-              {status.ca_path}
-            </p>
-          )}
-          {!status?.ca_path && (
-            <p className="text-xs text-muted-foreground">
-              {t("ssl.generateFirst", "Generate the CA first to see its path.")}
-            </p>
-          )}
+          <Button variant="outline" disabled={loading || !status?.ca_exists || status.ca_trusted} onClick={() => {
+            if (window.confirm("Trust the DevStackBox local certificate authority for your Windows account? Only certificates issued by your local DevStackBox CA will be trusted.")) void run(() => safeInvoke<string>(TAURI_COMMANDS.ssl.trustCa));
+          }}>{status?.ca_trusted ? "Trusted for this Windows account" : "Trust local certificate"}</Button>
+          {status?.ca_path && <p className="text-xs font-mono text-muted-foreground break-all border rounded px-2 py-1 bg-muted/40">{status.ca_path}</p>}
+          {!status?.ca_exists && <p className="text-xs text-muted-foreground">Generate the certificate before trusting the local CA.</p>}
         </CardContent>
       </Card>
     </div>

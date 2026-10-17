@@ -1,3 +1,4 @@
+import { MySQLRequired } from "@/components/mysql-required";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
@@ -53,10 +54,14 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export function DatabasesPage() {
+  return <MySQLRequired><DatabasesPageContent /></MySQLRequired>;
+}
+
+function DatabasesPageContent() {
   const { t } = useTranslation();
   const { toast } = useToast();
   // All fetching is owned by DatabaseCacheProvider - no local fetch here.
-  const { databases, loading, hasCache, refresh } = useDatabaseCache();
+  const { databases, loading, hasCache, error, refresh } = useDatabaseCache();
   const [busy, setBusy] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
@@ -170,6 +175,8 @@ export function DatabasesPage() {
     return databases.filter((d) => d.name.toLowerCase().includes(q));
   }, [databases, search]);
 
+  if (error) return <div role="alert" className="rounded-md border p-6 space-y-3"><h2 className="font-semibold">Could not read databases</h2><p className="text-sm text-muted-foreground">{error}</p><Button onClick={() => void refresh()} disabled={loading}>Try again</Button></div>;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -253,11 +260,11 @@ export function DatabasesPage() {
               <Skeleton className="h-12 w-full" />
               <Skeleton className="h-12 w-full" />
             </div>
-          ) : !hasCache && databases.length === 0 ? (
+          ) : databases.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               {t(
-                "databases.empty",
-                "No user databases yet. Create one in phpMyAdmin.",
+                "databases.emptyCreate",
+                "No user databases yet. Select Create to add your first database.",
               )}
             </p>
           ) : filtered.length === 0 ? (

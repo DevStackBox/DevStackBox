@@ -17,7 +17,7 @@ import {
   Database,
   Code,
 } from "lucide-react";
-import { safeInvoke, isTauri } from "@/lib/tauri";
+import { safeInvoke } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
 import { useToast } from "@/hooks/use-toast";
 import { ROUTES } from "@/lib/routes";
@@ -41,7 +41,7 @@ export function ServicesPage({
   const { t } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { refresh } = useServiceStatus();
+  const { loading, runBulk } = useServiceStatus();
 
   const [bulkLoading, setBulkLoading] = useState<
     "start" | "stop" | "restart" | null
@@ -55,69 +55,13 @@ export function ServicesPage({
     onViewLogs(service as ServiceName);
   };
 
-  const startAllServices = async () => {
-    if (bulkLoading) return;
-    setBulkLoading("start");
-    try {
-      if (!isTauri()) {
-        toast({
-          title: t("toast.browserOnly", "Browser mode"),
-          description: t(
-            "toast.requiresTauri",
-            "This action requires the desktop app.",
-          ),
-        });
-        return;
-      }
-      await safeInvoke(TAURI_COMMANDS.system.startAllServices);
-      toast({ title: t("toast.startAllOk", "Services starting") });
-    } catch (error) {
-      toast({
-        title: t("toast.startAllErr", "Start all failed"),
-        description: String(error),
-        variant: "destructive",
-      });
-    } finally {
-      setBulkLoading(null);
-    }
+  const runAll = async (action: "start" | "stop" | "restart") => {
+    setBulkLoading(action);
+    try { await runBulk(action); } finally { setBulkLoading(null); }
   };
-
-  const stopAllServices = async () => {
-    if (bulkLoading) return;
-    setBulkLoading("stop");
-    try {
-      if (!isTauri()) return;
-      await safeInvoke(TAURI_COMMANDS.system.stopAllServices);
-      toast({ title: t("toast.stopAllOk", "All services stopped") });
-    } catch (error) {
-      toast({
-        title: t("toast.stopAllErr", "Stop all failed"),
-        description: String(error),
-        variant: "destructive",
-      });
-    } finally {
-      setBulkLoading(null);
-    }
-  };
-
-  const restartAllServices = async () => {
-    if (bulkLoading) return;
-    setBulkLoading("restart");
-    try {
-      if (!isTauri()) return;
-      await safeInvoke(TAURI_COMMANDS.system.restartAllServices);
-      await refresh();
-      toast({ title: t("toast.restartAllOk", "Services restarted") });
-    } catch (error) {
-      toast({
-        title: t("toast.restartAllErr", "Restart all failed"),
-        description: String(error),
-        variant: "destructive",
-      });
-    } finally {
-      setBulkLoading(null);
-    }
-  };
+  const startAllServices = () => runAll("start");
+  const stopAllServices = () => runAll("stop");
+  const restartAllServices = () => runAll("restart");
 
   const [toolLoading, setToolLoading] = useState<string | null>(null);
 
@@ -148,7 +92,7 @@ export function ServicesPage({
       {/* Page header */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="text-lg font-semibold tracking-tight">
             {t("pages.services.title", "Services")}
           </h1>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -168,7 +112,7 @@ export function ServicesPage({
           <Button
             size="sm"
             onClick={startAllServices}
-            disabled={bulkLoading !== null}
+            disabled={loading !== null || bulkLoading !== null}
           >
             <Play className="mr-2 h-4 w-4" />
             {bulkLoading === "start"
@@ -179,7 +123,7 @@ export function ServicesPage({
             size="sm"
             variant="outline"
             onClick={stopAllServices}
-            disabled={bulkLoading !== null}
+            disabled={loading !== null || bulkLoading !== null}
           >
             <Square className="mr-2 h-4 w-4" />
             {bulkLoading === "stop"
@@ -190,7 +134,7 @@ export function ServicesPage({
             size="sm"
             variant="outline"
             onClick={restartAllServices}
-            disabled={bulkLoading !== null}
+            disabled={loading !== null || bulkLoading !== null}
           >
             <RefreshCw className="mr-2 h-4 w-4" />
             {bulkLoading === "restart"

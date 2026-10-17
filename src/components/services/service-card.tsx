@@ -77,13 +77,13 @@ export function ServiceCard({
               )}
               {isRunning && (
                 <motion.div
-                  className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-green-500"
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
+                  className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary"
+                  
+                  
                 />
               )}
             </div>
-            <CardTitle className={compact ? "text-lg" : "text-xl"}>
+            <CardTitle className={compact ? "text-base" : "text-lg"}>
               {title}
             </CardTitle>
           </div>

@@ -902,9 +902,12 @@ Section Install
   !insertmacro CheckIfAppIsRunning "${MAINBINARYNAME}.exe" "${PRODUCTNAME}"
   DetailPrint "Application is not running."
 
+  ; Use the new maintenance command even when upgrading an older application.
+  File /oname=devstackbox-maintenance.exe "${MAINBINARYSRCPATH}"
   !ifmacrodef NSIS_HOOK_PREINSTALL
     !insertmacro NSIS_HOOK_PREINSTALL
   !endif
+  Delete "$INSTDIR\devstackbox-maintenance.exe"
 
   !insertmacro LogPhase 2 7 "Installing application files"
 

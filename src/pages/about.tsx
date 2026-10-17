@@ -129,9 +129,9 @@ export function AboutPage() {
   // ---- Determine status text color ----
   const statusColor =
     checkError || (updateAvailable && !readyToInstall && !downloading)
-      ? "text-amber-500"
+      ? "text-primary"
       : readyToInstall
-        ? "text-green-500"
+        ? "text-primary"
         : "text-muted-foreground";
 
   return (

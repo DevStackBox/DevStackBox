@@ -104,7 +104,7 @@
 !macro DsbForceKillImageUnderInstDir imageName
   Push $0
   SetDetailsPrint none
-  nsExec::Exec 'powershell -NoProfile -NonInteractive -Command "Get-CimInstance Win32_Process | Where-Object { $$_.Name -eq ''${imageName}'' -and $$_.ExecutablePath -and ($$_.ExecutablePath -like ''$INSTDIR*'') } | ForEach-Object { Stop-Process -Id $$_.ProcessId -Force -ErrorAction SilentlyContinue }; exit 0"'
+  nsExec::Exec 'powershell -NoProfile -NonInteractive -Command "Get-CimInstance Win32_Process | Where-Object { $$_.Name -eq ''${imageName}'' -and $$_.ExecutablePath -and ($$_.ExecutablePath -like ''$INSTDIR\*'') } | ForEach-Object { Stop-Process -Id $$_.ProcessId -Force -ErrorAction SilentlyContinue }; exit 0"'
   Pop $0
   !insertmacro SetLogRestore
   Pop $0
@@ -206,7 +206,7 @@ Function DsbProcessRunningUnderInstDir
   Push $R2
   StrCpy $R2 "$INSTDIR"
   SetDetailsPrint none
-  nsExec::Exec 'powershell -NoProfile -NonInteractive -Command "if (Get-CimInstance Win32_Process | Where-Object { $$_.Name -eq ''$R0.exe'' -and $$_.ExecutablePath -and ($$_.ExecutablePath -like ''$R2*'') }) { exit 0 } else { exit 1 }"'
+  nsExec::Exec 'powershell -NoProfile -NonInteractive -Command "if (Get-CimInstance Win32_Process | Where-Object { $$_.Name -eq ''$R0.exe'' -and $$_.ExecutablePath -and ($$_.ExecutablePath -like ''$R2\*'') }) { exit 0 } else { exit 1 }"'
   Pop $R1
   !insertmacro SetLogRestore
   StrCmp $R1 "0" running notrunning
@@ -313,7 +313,7 @@ Function DsbStopServicesBeforeUpgrade
 
     StrCpy $R0 "mysqld"
     StrCpy $R1 "MySQL"
-    StrCpy $R2 '"$R9" --defaults-file="$R7\my.cnf" -h 127.0.0.1 --protocol=TCP shutdown'
+    StrCpy $R2 '"$INSTDIR\devstackbox-maintenance.exe" --stop-services'
     Call DsbStopNamedService
 
     DetailPrint "Ensuring no service processes remain..."
@@ -392,7 +392,7 @@ Function un.DsbProcessRunningUnderInstDir
   Push $R2
   StrCpy $R2 "$INSTDIR"
   SetDetailsPrint none
-  nsExec::Exec 'powershell -NoProfile -NonInteractive -Command "if (Get-CimInstance Win32_Process | Where-Object { $$_.Name -eq ''$R0.exe'' -and $$_.ExecutablePath -and ($$_.ExecutablePath -like ''$R2*'') }) { exit 0 } else { exit 1 }"'
+  nsExec::Exec 'powershell -NoProfile -NonInteractive -Command "if (Get-CimInstance Win32_Process | Where-Object { $$_.Name -eq ''$R0.exe'' -and $$_.ExecutablePath -and ($$_.ExecutablePath -like ''$R2\*'') }) { exit 0 } else { exit 1 }"'
   Pop $R1
   !insertmacro SetLogRestore
   StrCmp $R1 "0" running notrunning
@@ -515,7 +515,7 @@ FunctionEnd
 
   StrCpy $R0 "mysqld"
   StrCpy $R1 "MySQL"
-  StrCpy $R2 '"$R9" --defaults-file="$R7\my.cnf" -h 127.0.0.1 --protocol=TCP shutdown'
+  StrCpy $R2 '"$INSTDIR\devstackbox.exe" --stop-services'
   Call un.DsbStopNamedService
 
   Push "httpd"
@@ -784,6 +784,16 @@ FunctionEnd
 ; before we stop Apache/MySQL and before file copy.
 !macro NSIS_HOOK_PREINSTALL
   StrCpy $INSTDIR "C:\devstackbox"
+  ; Remove a stale per-user uninstall entry left by earlier builds when this
+  ; product migrates to a machine-wide install. Match the exact install path
+  ; so another per-user installation can never be removed accidentally.
+  !if "${INSTALLMODE}" == "perMachine"
+    ReadRegStr $R7 HKCU "${UNINSTKEY}" "InstallLocation"
+    ${If} $R7 == "$\"$INSTDIR$\""
+      DetailPrint "Removing stale per-user registration for this install path."
+      DeleteRegKey HKCU "${UNINSTKEY}"
+    ${EndIf}
+  !endif
   !insertmacro InstallBegin
   !insertmacro LogPhase 1 7 "Checking existing installation"
   DetailPrint "Install location: C:\devstackbox"
@@ -809,12 +819,10 @@ FunctionEnd
   !insertmacro RestoreWwwAfterInstall
   !insertmacro LogPhase 4 7 "Configuring services"
 
-  DetailPrint "Verifying Apache configuration..."
-  DetailPrint "Apache configuration OK."
+  DetailPrint "Apache configuration will be initialized and validated on first start."
   DetailPrint ""
 
-  DetailPrint "Verifying MySQL data directory..."
-  DetailPrint "MySQL configuration OK."
+  DetailPrint "MySQL data will be initialized on first start."
   DetailPrint ""
 
   ${If} ${FileExists} "$INSTDIR\php\8.3\php.exe"

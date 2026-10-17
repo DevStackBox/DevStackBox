@@ -5,14 +5,16 @@
 //
 // Event emitted:  "terminal-output"  payload: { session_id: String, data: String }
 
+use portable_pty::{native_pty_system, CommandBuilder, MasterPty, PtySize};
 use std::collections::HashMap;
 use std::io::{Read, Write};
-use std::path::PathBuf;
+use std::path::Path;
 use std::sync::{Arc, Mutex};
-use portable_pty::{native_pty_system, CommandBuilder, MasterPty, PtySize};
 use tauri::{AppHandle, Emitter};
 
-use crate::utils::paths::{get_installation_path, get_mysql_bin_dir};
+use crate::utils::paths::{
+    active_php_dir, get_installation_path, get_mysql_bin_dir, user_config_dir, user_www_dir,
+};
 
 // ── shared state ─────────────────────────────────────────────────────────────
 
@@ -51,11 +53,7 @@ fn emit_output(app: &AppHandle, session_id: &str, data: &str) {
 }
 
 /// Read PTY output in a background thread and batch-emits to the frontend.
-fn spawn_pty_output_forwarder(
-    app: AppHandle,
-    session_id: String,
-    reader: Box<dyn Read + Send>,
-) {
+fn spawn_pty_output_forwarder(app: AppHandle, session_id: String, reader: Box<dyn Read + Send>) {
     use std::sync::mpsc;
     use std::time::Duration;
 
@@ -85,8 +83,8 @@ fn spawn_pty_output_forwarder(
     });
 }
 
-fn build_shell_path(base_path: &PathBuf) -> String {
-    let php_path = base_path.join("php").join("current");
+fn build_shell_path(base_path: &Path) -> String {
+    let php_path = active_php_dir();
     let mysql_bin = get_mysql_bin_dir(base_path);
     let existing_path = std::env::var("PATH").unwrap_or_default();
     format!(
@@ -97,6 +95,31 @@ fn build_shell_path(base_path: &PathBuf) -> String {
     )
 }
 
+fn windows_shell(windows: &Path, shell: &str) -> Option<CommandBuilder> {
+    let mut command = match shell {
+        "shell" | "cmd" => {
+            // CMD parses argv[0] itself; forward slashes produce a syntax error.
+            let mut command = CommandBuilder::new(windows.join("System32").join("cmd.exe"));
+            command.args(["/D", "/K"]);
+            command
+        }
+        "powershell" => {
+            let mut command = CommandBuilder::new(
+                windows
+                    .join("System32")
+                    .join("WindowsPowerShell")
+                    .join("v1.0")
+                    .join("powershell.exe"),
+            );
+            command.args(["-NoLogo", "-NoProfile"]);
+            command
+        }
+        _ => return None,
+    };
+    command.env("PROMPT", "$P$G");
+    Some(command)
+}
+
 // ── commands ──────────────────────────────────────────────────────────────────
 
 #[tauri::command]
@@ -104,7 +127,7 @@ pub async fn spawn_terminal(
     app: AppHandle,
     state: tauri::State<'_, Arc<TerminalSessions>>,
     session_id: String,
-    initial_command: Option<String>,
+    shell_type_id: String,
 ) -> Result<(), String> {
     let base_path = get_installation_path();
     let new_path = build_shell_path(&base_path);
@@ -119,11 +142,43 @@ pub async fn spawn_terminal(
         })
         .map_err(|e| format!("Failed to open PTY: {}", e))?;
 
-    let mut cmd = CommandBuilder::new("cmd.exe");
-    cmd.env("PATH", &new_path);
-    if let Some(cwd) = base_path.to_str() {
-        cmd.cwd(cwd);
+    let windows = std::env::var_os("SystemRoot")
+        .map(std::path::PathBuf::from)
+        .ok_or("Windows system directory is unavailable")?;
+    let mut cmd = if let Some(command) = windows_shell(&windows, &shell_type_id) {
+        command
+    } else {
+        let executable = match shell_type_id.as_str() {
+            "php-cli" => active_php_dir().join("php.exe"),
+            "mysql-cli" => {
+                crate::utils::mysql_connection::prepare_mysql_client()?;
+                crate::utils::paths::get_mysql_client_exe(&base_path)
+            }
+            _ => return Err("Unsupported terminal type".into()),
+        };
+        if !executable.is_file() {
+            return Err(format!(
+                "Required executable is missing: {}",
+                executable.display()
+            ));
+        }
+        CommandBuilder::new(executable)
+    };
+    if shell_type_id == "php-cli" {
+        cmd.arg("-a");
     }
+    if shell_type_id == "mysql-cli" {
+        let conn = crate::utils::mysql_connection::build_mysql_connection()?;
+        cmd.arg(format!("--defaults-file={}", conn.defaults_file.display()));
+        cmd.args(["--protocol=TCP", "--host=127.0.0.1", "--user=root"]);
+        cmd.arg(format!("--port={}", conn.port));
+        if let Some(password) = conn.password {
+            cmd.env("MYSQL_PWD", password);
+        }
+    }
+    cmd.env("PATH", &new_path);
+    cmd.env("PHPRC", user_config_dir());
+    cmd.cwd(user_www_dir());
 
     let child = pair
         .slave
@@ -134,22 +189,12 @@ pub async fn spawn_terminal(
         .master
         .try_clone_reader()
         .map_err(|e| format!("Failed to clone PTY reader: {}", e))?;
-    let mut writer = pair
+    let writer = pair
         .master
         .take_writer()
         .map_err(|e| format!("Failed to take PTY writer: {}", e))?;
 
     spawn_pty_output_forwarder(app.clone(), session_id.clone(), reader);
-
-    if let Some(cmd) = initial_command {
-        let line = format!("{}\r\n", cmd);
-        writer
-            .write_all(line.as_bytes())
-            .map_err(|e| format!("Failed to write initial command: {}", e))?;
-        writer
-            .flush()
-            .map_err(|e| format!("Failed to flush initial command: {}", e))?;
-    }
 
     let session = TerminalSession {
         writer,
@@ -161,7 +206,9 @@ pub async fn spawn_terminal(
         .inner
         .lock()
         .map_err(|_| "State lock poisoned".to_string())?;
-    sessions.insert(session_id, session);
+    if let Some(mut previous) = sessions.insert(session_id, session) {
+        let _ = previous.child.kill();
+    }
 
     Ok(())
 }
@@ -237,4 +284,77 @@ pub async fn kill_terminal_session(
     }
 
     Ok(())
+}
+
+#[cfg(all(test, windows))]
+mod tests {
+    use super::*;
+    use std::time::{Duration, Instant};
+
+    #[test]
+    fn windows_shells_open_and_execute_without_startup_errors() {
+        let windows = std::path::PathBuf::from(std::env::var_os("SystemRoot").unwrap());
+        for shell in ["shell", "cmd", "powershell"] {
+            let pair = native_pty_system()
+                .openpty(PtySize {
+                    rows: 24,
+                    cols: 120,
+                    pixel_width: 0,
+                    pixel_height: 0,
+                })
+                .unwrap();
+            let mut command = windows_shell(&windows, shell).unwrap();
+            command.cwd(std::env::temp_dir());
+            let mut child = pair.slave.spawn_command(command).unwrap();
+            let mut reader = pair.master.try_clone_reader().unwrap();
+            let mut writer = pair.master.take_writer().unwrap();
+            let (tx, rx) = std::sync::mpsc::channel();
+            std::thread::spawn(move || {
+                let mut buf = [0; 4096];
+                while let Ok(n @ 1..) = reader.read(&mut buf) {
+                    if tx
+                        .send(String::from_utf8_lossy(&buf[..n]).to_string())
+                        .is_err()
+                    {
+                        break;
+                    }
+                }
+            });
+            let deadline = Instant::now() + Duration::from_secs(15);
+            let mut output = String::new();
+            let mut sent = false;
+            while Instant::now() < deadline {
+                if let Ok(chunk) = rx.recv_timeout(Duration::from_millis(100)) {
+                    if chunk.contains("\x1b[6n") {
+                        writer.write_all(b"\x1b[1;1R").unwrap();
+                        writer.flush().unwrap();
+                    }
+                    output.push_str(&chunk);
+                    if !sent && output.contains('>') {
+                        // The expected result is not present in the command echoed by the shell.
+                        let input = if shell == "powershell" {
+                            "Write-Output ('DSB_' + 'TERMINAL_OK')\r\n"
+                        } else {
+                            "set DSB_PROBE=TERMINAL_OK\r\necho DSB_%DSB_PROBE%\r\n"
+                        };
+                        writer.write_all(input.as_bytes()).unwrap();
+                        writer.flush().unwrap();
+                        sent = true;
+                    }
+                    if output.contains("DSB_TERMINAL_OK") {
+                        break;
+                    }
+                }
+            }
+            let _ = child.kill();
+            assert!(
+                output.contains("DSB_TERMINAL_OK"),
+                "{shell} did not execute: {output:?}"
+            );
+            assert!(
+                !output.contains("The syntax of the command is incorrect"),
+                "{shell}: {output:?}"
+            );
+        }
+    }
 }

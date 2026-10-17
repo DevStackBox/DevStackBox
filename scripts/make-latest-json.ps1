@@ -1,14 +1,12 @@
 # make-latest-json.ps1
 #
 # Generates release/latest.json from the Tauri build output.
-# Run this after "pnpm tauri build" completes successfully.
+# Run this after "npm run build:release" completes successfully.
 #
 # Output: release/latest.json  (ready to upload to GitHub Release)
 #
 # Usage (build + generate in one step):
-#   $env:TAURI_SIGNING_PRIVATE_KEY = (Get-Content "$env:USERPROFILE\.tauri\devstackbox.key" -Raw).Trim()
-#   $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD = ""
-#   pnpm tauri build
+#   npm run build:release
 #   .\scripts\make-latest-json.ps1
 #   .\scripts\make-latest-json.ps1 -Notes "Bug fixes and improvements"
 

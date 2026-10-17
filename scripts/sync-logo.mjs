@@ -10,6 +10,7 @@ const publicDest = path.join(root, "public");
 const FILES = [
   { src: "logo.svg", dest: "logo.svg" },
   { src: "logo-dark.svg", dest: "logo-dark.svg" },
+  { src: "logo-white.svg", dest: "logo-white.svg" },
   { src: "favicon.ico", dest: "favicon.ico" },
 ];
 

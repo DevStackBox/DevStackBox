@@ -91,7 +91,7 @@ export function ServiceManager({
     >
       <ApacheService
         status={services.apache}
-        loading={loading === "apache"}
+        loading={loading !== null}
         onToggle={() => toggleService("apache")}
         onOpenConfig={() => handleOpenConfig("apache")}
         onViewLogs={() => handleViewLogs("apache")}
@@ -102,7 +102,7 @@ export function ServiceManager({
 
       <MySQLService
         status={services.mysql}
-        loading={loading === "mysql"}
+        loading={loading !== null}
         onToggle={() => toggleService("mysql")}
         onOpenConfig={() => handleOpenConfig("mysql")}
         onViewLogs={() => handleViewLogs("mysql")}
@@ -114,7 +114,7 @@ export function ServiceManager({
 
       <PHPService
         status={services.php}
-        loading={loading === "php"}
+        loading={loading !== null}
         onVersionSelect={onOpenPHPVersionSelector}
         onOpenConfig={() => handleOpenConfig("php")}
         onViewLogs={() => handleViewLogs("php")}

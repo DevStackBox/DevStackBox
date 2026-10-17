@@ -1,4 +1,5 @@
 import * as React from "react"
+import { isTauri } from "@tauri-apps/api/core"
 
 type Theme = "dark" | "light" | "system"
 
@@ -10,11 +11,13 @@ type ThemeProviderProps = {
 
 type ThemeProviderState = {
   theme: Theme
+  resolvedTheme: "light" | "dark"
   setTheme: (theme: Theme) => void
 }
 
 const initialState: ThemeProviderState = {
   theme: "system",
+  resolvedTheme: "light",
   setTheme: () => null,
 }
 
@@ -30,26 +33,30 @@ export function ThemeProvider({
     () => (localStorage.getItem(storageKey) as Theme) || defaultTheme
   )
 
+  const [systemDark, setSystemDark] = React.useState(() => window.matchMedia("(prefers-color-scheme: dark)").matches)
+  const resolvedTheme = theme === "system" ? (systemDark ? "dark" : "light") : theme
   React.useEffect(() => {
-    const root = window.document.documentElement
-
+    const query = window.matchMedia("(prefers-color-scheme: dark)")
+    const update = () => setSystemDark(query.matches)
+    query.addEventListener("change", update)
+    return () => query.removeEventListener("change", update)
+  }, [])
+  React.useLayoutEffect(() => {
+    const root = document.documentElement
     root.classList.remove("light", "dark")
+    root.classList.add(resolvedTheme)
+    root.style.colorScheme = resolvedTheme
+  }, [resolvedTheme])
 
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light"
-
-      root.classList.add(systemTheme)
-      return
+  React.useEffect(() => {
+    if (isTauri()) {
+      import("@tauri-apps/api/window").then(({ getCurrentWindow }) => getCurrentWindow().setTheme(resolvedTheme)).catch(console.error)
     }
-
-    root.classList.add(theme)
-  }, [theme])
+  }, [resolvedTheme])
 
   const value = {
     theme,
+    resolvedTheme,
     setTheme: (theme: Theme) => {
       localStorage.setItem(storageKey, theme)
       setTheme(theme)

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import Editor from "@monaco-editor/react";
+import "@/lib/editor";
 import { Save, RotateCcw, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,18 +36,15 @@ export function WorkspaceConfigEditor({
   language = "ini",
 }: WorkspaceConfigEditorProps) {
   const { t } = useTranslation();
-  const { theme } = useTheme();
+  const { resolvedTheme } = useTheme();
   const { toast } = useToast();
   const [content, setContent] = useState("");
   const [original, setOriginal] = useState("");
+  const [backups, setBackups] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const draftKey = `devstackbox-config-draft-${service}`;
 
-  const monacoTheme =
-    theme === "dark" ||
-    (theme === "system" &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches)
-      ? "vs-dark"
-      : "vs";
+  const monacoTheme = resolvedTheme === "dark" ? "vs-dark" : "vs";
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -54,8 +52,10 @@ export function WorkspaceConfigEditor({
       const data = await safeInvoke<string>(TAURI_COMMANDS.config.read, {
         service,
       });
+      const history = await safeInvoke<string[]>(TAURI_COMMANDS.config.listBackups, { service });
+      setBackups(history ?? []);
       if (data != null) {
-        setContent(data);
+        setContent(localStorage.getItem(draftKey) ?? data);
         setOriginal(data);
       }
     } catch (err) {
@@ -67,7 +67,7 @@ export function WorkspaceConfigEditor({
     } finally {
       setLoading(false);
     }
-  }, [service, t, toast]);
+  }, [service, draftKey, t, toast]);
 
   useEffect(() => {
     load();
@@ -80,8 +80,9 @@ export function WorkspaceConfigEditor({
         service,
         content,
       });
-      setOriginal(content);
-      toast({ title: t("config.saved", "Configuration saved") });
+      localStorage.removeItem(draftKey);
+      await load();
+      toast({ title: "Configuration validated and saved", description: "Restart the service to apply your changes." });
     } catch (err) {
       toast({
         title: t("config.saveFailed", "Save failed"),
@@ -114,7 +115,7 @@ export function WorkspaceConfigEditor({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={load}
+                onClick={() => { if (content !== original && !window.confirm("Discard unsaved changes and reload?")) return; localStorage.removeItem(draftKey); void load(); }}
                 disabled={loading}
               >
                 <RefreshCw
@@ -125,7 +126,7 @@ export function WorkspaceConfigEditor({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setContent(original)}
+                onClick={() => { localStorage.removeItem(draftKey); setContent(original); }}
                 disabled={loading || !dirty}
               >
                 <RotateCcw className="mr-2 h-4 w-4" />
@@ -139,13 +140,29 @@ export function WorkspaceConfigEditor({
           </div>
         </CardHeader>
         <CardContent>
+          <div className="mb-3 flex items-center gap-2 text-sm">
+            <label htmlFor="config-history">Restore a saved backup</label>
+            <select id="config-history" className="rounded border bg-background p-1" value="" disabled={loading || backups.length === 0} onChange={async (event) => {
+              const backupName = event.target.value;
+              if (!backupName || !window.confirm("Restore this configuration? Your current configuration will be backed up first.")) return;
+              setLoading(true);
+              try {
+                await safeInvoke(TAURI_COMMANDS.config.restoreBackup, { service, backupName });
+                localStorage.removeItem(draftKey);
+                await load();
+                toast({ title: "Configuration restored", description: "Restart the service to apply." });
+              } catch (error) { toast({ title: "Restore failed", description: String(error), variant: "destructive" }); }
+              finally { setLoading(false); }
+            }}><option value="">{backups.length ? "Choose a backup" : "No backups yet"}</option>{backups.map(name => <option key={name} value={name}>{name}</option>)}</select>
+          </div>
+          {dirty && <p className="mb-2 text-xs text-muted-foreground" role="status">Unsaved changes. Your draft is kept locally when you leave this screen.</p>}
           <div className="overflow-hidden rounded-md border border-border">
             <Editor
               height="60vh"
               language={language}
               value={content}
               theme={monacoTheme}
-              onChange={(v) => setContent(v ?? "")}
+              onChange={(v) => { const next = v ?? ""; setContent(next); if (next === original) localStorage.removeItem(draftKey); else localStorage.setItem(draftKey, next); }}
               options={{
                 minimap: { enabled: false },
                 fontSize: 13,

@@ -34,7 +34,7 @@ function walkMdx(dir, base = "") {
 }
 
 function slugFromMdxPath(rel) {
-  return rel.replace(/\.mdx$/, "").replace(/\\/g, "/");
+  return rel.replace(/\.mdx$/, "").replace(/\\/g, "/").replace(/\/index$/, "");
 }
 
 function parseFrontmatter(content) {
@@ -152,7 +152,7 @@ for (const { rel, full } of mdxFiles) {
 for (const slug of allDocSlugs) {
   const fileSlug = slug === "" ? "index" : slug;
   const mdxPath = path.join(docsDir, `${fileSlug}.mdx`);
-  if (!fs.existsSync(mdxPath)) {
+  if (!fs.existsSync(mdxPath) && !fs.existsSync(path.join(docsDir, fileSlug, "index.mdx"))) {
     errors.push(
       `navigation.ts: slug "${slug}" has no docs/${fileSlug}.mdx file`,
     );

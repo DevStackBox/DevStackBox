@@ -18,7 +18,6 @@ node_modules/
 dist/
 dist-ssr/
 *.local
-package-lock.json
 
 # Generated logo assets (source: docs/images/logo/)
 public/logo.svg
@@ -116,3 +115,6 @@ apache-backup-32bit/*
 /php/8.2
 /php/8.1
 www/index.html
+
+public/logo-white.svg
+src-tauri/tauri.local-test.conf.json

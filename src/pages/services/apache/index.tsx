@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { openLocalSite } from "@/lib/phpmyadmin";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import {
@@ -11,7 +11,6 @@ import {
   Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -19,9 +18,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { safeInvoke, isTauri, openExternalUrl } from "@/lib/tauri";
-import { TAURI_COMMANDS } from "@/lib/commands";
-import { useToast } from "@/hooks/use-toast";
+import { useServiceStatus } from "@/context/service-status-context";
+import { StatusBadge } from "@/components/services/status-badge";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "@/lib/routes";
 
@@ -36,50 +34,11 @@ interface ServiceStatusInfo {
 
 export function ApacheOverviewPage() {
   const { t } = useTranslation();
-  const { toast } = useToast();
   const navigate = useNavigate();
-  const [status, setStatus] = useState<ServiceStatusInfo | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  const refresh = useCallback(async () => {
-    if (!isTauri()) {
-      setStatus({ running: false });
-      return;
-    }
-    try {
-      const s = await safeInvoke<ServiceStatusInfo>(
-        TAURI_COMMANDS.services.getApacheStatus,
-      );
-      setStatus(s ?? { running: false });
-    } catch {
-      setStatus({ running: false });
-    }
-  }, []);
-
-  useEffect(() => {
-    refresh();
-    const id = window.setInterval(refresh, 3000);
-    return () => window.clearInterval(id);
-  }, [refresh]);
-
-  const handleToggle = async () => {
-    setBusy(true);
-    try {
-      const cmd = status?.running
-        ? TAURI_COMMANDS.services.stopApache
-        : TAURI_COMMANDS.services.startApache;
-      await safeInvoke(cmd);
-      await refresh();
-    } catch (err) {
-      toast({
-        title: t("toast.actionFailed", "Action failed"),
-        description: String(err),
-        variant: "destructive",
-      });
-    } finally {
-      setBusy(false);
-    }
-  };
+  const { services, loading, initialLoading, refresh, toggleService } = useServiceStatus();
+  const status: ServiceStatusInfo = services.apache;
+  const busy = initialLoading || loading !== null;
+  const handleToggle = () => toggleService("apache");
 
   const running = Boolean(status?.running);
 
@@ -96,14 +55,7 @@ export function ApacheOverviewPage() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 {t("apache.status", "Status")}
-                <Badge
-                  variant={running ? "default" : "secondary"}
-                  className={running ? "bg-green-500 hover:bg-green-600" : ""}
-                >
-                  {running
-                    ? t("status.running", "Running")
-                    : t("status.stopped", "Stopped")}
-                </Badge>
+                <StatusBadge running={running} state={services.apache.state} />
               </CardTitle>
               <CardDescription>
                 {t(
@@ -176,7 +128,7 @@ export function ApacheOverviewPage() {
               variant="outline"
               size="sm"
               className="w-full"
-              onClick={() => openExternalUrl("http://localhost")}
+              onClick={() => openLocalSite()}
               disabled={!running}
             >
               <ExternalLink className="mr-2 h-4 w-4" />
@@ -203,7 +155,7 @@ export function ApacheOverviewPage() {
               variant="outline"
               size="sm"
               className="w-full"
-              onClick={() => openExternalUrl("http://localhost/phpmyadmin")}
+              onClick={() => openLocalSite("/phpmyadmin/")}
               disabled={!running}
             >
               <ExternalLink className="mr-2 h-4 w-4" />

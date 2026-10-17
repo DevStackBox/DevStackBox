@@ -26,7 +26,7 @@ pub fn build_mysql_connection() -> Result<MysqlConnection, String> {
     Ok(MysqlConnection {
         defaults_file: user_config_dir().join("my.cnf"),
         host: "127.0.0.1".to_string(),
-        port: 3306,
+        port: crate::utils::config_ports::mysql_port(),
         protocol: "TCP".to_string(),
         user: "root".to_string(),
         password: read_stored_root_password(),
@@ -40,7 +40,7 @@ fn apply_connection(cmd: &mut Command, conn: &MysqlConnection) {
     cmd.arg("-P").arg(conn.port.to_string());
     cmd.arg("-u").arg(&conn.user);
     if let Some(ref password) = conn.password {
-        cmd.arg(format!("-p{}", password));
+        cmd.env("MYSQL_PWD", password);
     }
 }
 
@@ -118,6 +118,44 @@ fn normalize_mysql_path(path: &str) -> String {
     }
 }
 
+/// Mandatory check that the pinned client reached DevStackBox's datadir.
+pub fn verify_mysql_datadir() -> Result<(), String> {
+    let output = mysql_command()?
+        .args(["--raw", "-N", "-B", "-e", "SELECT @@datadir"])
+        .output()
+        .map_err(|e| format!("Failed to verify MySQL datadir: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!(
+            "MySQL datadir check failed: {}",
+            stderr.trim()
+        ));
+    }
+
+    let actual = normalize_mysql_path(&String::from_utf8_lossy(&output.stdout));
+    let expected = normalize_mysql_path(&user_mysql_data_dir().to_string_lossy());
+
+    if actual != expected {
+        return Err(format!(
+            "Connected to the wrong MySQL instance (datadir: {}). \
+             Expected DevStackBox data at {}. Stop other MySQL installations \
+             (XAMPP, Laragon, WAMP, Docker) or ensure DevStackBox MySQL is running.",
+            String::from_utf8_lossy(&output.stdout).trim(),
+            user_mysql_data_dir().display()
+        ));
+    }
+
+    Ok(())
+}
+
+/// Guard + datadir verify before data-bearing client queries.
+pub fn prepare_mysql_client() -> Result<(), String> {
+    ensure_mysql_running()?;
+    verify_mysql_datadir()?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::normalize_mysql_path;
@@ -167,40 +205,3 @@ mod tests {
     }
 }
 
-/// Mandatory check that the pinned client reached DevStackBox's datadir.
-pub fn verify_mysql_datadir() -> Result<(), String> {
-    let output = mysql_command()?
-        .args(["-N", "-B", "-e", "SELECT @@datadir"])
-        .output()
-        .map_err(|e| format!("Failed to verify MySQL datadir: {}", e))?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!(
-            "MySQL datadir check failed: {}",
-            stderr.trim()
-        ));
-    }
-
-    let actual = normalize_mysql_path(&String::from_utf8_lossy(&output.stdout));
-    let expected = normalize_mysql_path(&user_mysql_data_dir().to_string_lossy());
-
-    if actual != expected {
-        return Err(format!(
-            "Connected to the wrong MySQL instance (datadir: {}). \
-             Expected DevStackBox data at {}. Stop other MySQL installations \
-             (XAMPP, Laragon, WAMP, Docker) or ensure DevStackBox MySQL is running.",
-            String::from_utf8_lossy(&output.stdout).trim(),
-            user_mysql_data_dir().display()
-        ));
-    }
-
-    Ok(())
-}
-
-/// Guard + datadir verify before data-bearing client queries.
-pub fn prepare_mysql_client() -> Result<(), String> {
-    ensure_mysql_running()?;
-    verify_mysql_datadir()?;
-    Ok(())
-}

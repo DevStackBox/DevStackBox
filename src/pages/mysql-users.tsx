@@ -1,3 +1,4 @@
+import { MySQLRequired } from "@/components/mysql-required";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
@@ -42,9 +43,14 @@ interface MySQLUser {
 }
 
 export function MySQLUsersPage() {
+  return <MySQLRequired><MySQLUsersPageContent /></MySQLRequired>;
+}
+
+function MySQLUsersPageContent() {
   const { t } = useTranslation();
   const { toast } = useToast();
 
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [users, setUsers] = useState<MySQLUser[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -71,17 +77,14 @@ export function MySQLUsersPage() {
 
   const loadUsers = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const result = await safeInvoke<MySQLUser[]>(
         TAURI_COMMANDS.services.listMysqlUsers,
       );
       setUsers(result ?? []);
     } catch (err) {
-      toast({
-        title: t("mysql.users.loadError", "Failed to load users"),
-        description: `${err}`,
-        variant: "destructive",
-      });
+      setLoadError(String(err));
     } finally {
       setLoading(false);
     }
@@ -169,6 +172,8 @@ export function MySQLUsersPage() {
     }
   };
 
+  if (loadError) return <div role="alert" className="rounded-md border p-6 space-y-3"><h2 className="font-semibold">Could not read MySQL users</h2><p className="text-sm text-muted-foreground">{loadError}</p><Button onClick={() => void loadUsers()} disabled={loading}>Try again</Button></div>;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -215,7 +220,7 @@ export function MySQLUsersPage() {
                 >
                   {t(
                     "mysql.users.noUsers",
-                    "No users found. Is MySQL running?",
+                    "No MySQL users found.",
                   )}
                 </TableCell>
               </TableRow>

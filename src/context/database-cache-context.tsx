@@ -24,7 +24,7 @@ import {
 } from "react";
 import { safeInvoke, isTauri } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
-import { useToast } from "@/hooks/use-toast";
+
 
 // ---------------------------------------------------------------------------
 // Types
@@ -96,6 +96,7 @@ interface DatabaseCacheContextValue {
    * | true     | false   | N                | List immediately   |
    */
   hasCache: boolean;
+  error: string | null;
   /**
    * The ONLY way to (re-)fetch the database list.
    * Call this after: create DB, delete DB, restore backup, import SQL, manual Refresh.
@@ -113,7 +114,7 @@ const DatabaseCacheContext = createContext<DatabaseCacheContextValue | null>(
 // ---------------------------------------------------------------------------
 
 export function DatabaseCacheProvider({ children }: { children: ReactNode }) {
-  const { toast } = useToast();
+  const [error, setError] = useState<string | null>(null);
 
   const [databases, setDatabases] = useState<DatabaseInfo[]>(() => {
     return readDatabaseCache()?.databases ?? [];
@@ -131,6 +132,7 @@ export function DatabaseCacheProvider({ children }: { children: ReactNode }) {
 
     refreshPromiseRef.current = (async () => {
       setLoading(true);
+      setError(null);
       try {
         if (!isTauri()) {
           // Browser / dev mode mock
@@ -168,11 +170,7 @@ export function DatabaseCacheProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         // RULE: never clear existing databases on failure - keep what was showing.
         console.error("[DatabaseCacheProvider] refresh failed:", err);
-        toast({
-          variant: "destructive",
-          title: "Failed to load databases",
-          description: `${err}`,
-        });
+        setError(String(err));
       } finally {
         setLoading(false);
         refreshPromiseRef.current = null;
@@ -180,14 +178,14 @@ export function DatabaseCacheProvider({ children }: { children: ReactNode }) {
     })();
 
     return refreshPromiseRef.current;
-  }, [toast]);
+  }, []);
 
   // NO useEffect here - lazy warmup only.
   // Data is fetched when the consumer calls refresh() for the first time.
 
   return (
     <DatabaseCacheContext.Provider
-      value={{ databases, loading, hasCache, refresh }}
+      value={{ databases, loading, hasCache, error, refresh }}
     >
       {children}
     </DatabaseCacheContext.Provider>

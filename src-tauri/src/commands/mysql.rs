@@ -12,7 +12,7 @@ use crate::utils::mysql_connection::{
 };
 use crate::utils::mysql_credentials::write_stored_root_password;
 use crate::utils::mysql_sql::{escape_mysql_string_literal, quote_mysql_user_host, validate_mysql_host};
-use crate::utils::paths::{get_installation_path, get_mysqld_exe, user_config_dir, user_mysql_data_dir};
+use crate::utils::paths::{get_installation_path, get_mysqld_exe, to_apache_path, user_config_dir, user_logs_dir, user_mysql_data_dir};
 use crate::utils::process::{
     create_hidden_command, ensure_port_available, find_our_processes, is_our_process_running,
     kill_pid,
@@ -81,10 +81,11 @@ async fn initialize_mysql_data() -> Result<(), String> {
             .arg(format!("--datadir={}", data_dir.display()))
             .output()
         {
-            Ok(_) => {
+            Ok(output) if output.status.success() => {
                 println!("MySQL data directory initialized successfully");
                 Ok(())
             }
+            Ok(output) => Err(format!("MySQL initialization failed: {}", String::from_utf8_lossy(&output.stderr))),
             Err(e) => Err(format!("Failed to initialize MySQL data directory: {}", e)),
         }
     } else {
@@ -104,6 +105,7 @@ pub async fn start_mysql() -> Result<bool, String> {
         ));
     }
 
+    if is_our_process_running("mysqld.exe", &mysql_path) { return Ok(true); }
     let config_path = user_config_dir().join("my.cnf");
     ensure_mysql_config().await?;
 
@@ -120,6 +122,7 @@ pub async fn start_mysql() -> Result<bool, String> {
             let pid = child.id();
             println!("MySQL started with PID: {}", pid);
             wait_for_mysql_port(Duration::from_secs(15)).await?;
+            prepare_mysql_client()?;
             let _ = pid;
             Ok(true)
         }
@@ -132,10 +135,10 @@ pub async fn stop_mysql() -> Result<bool, String> {
     let mysql_path = mysqld_exe_path();
 
     if !is_our_process_running("mysqld.exe", &mysql_path) {
-        return Err("DevStackBox MySQL is not running".to_string());
+        return Ok(true);
     }
 
-    if let Ok(mut admin) = mysqladmin_command() {
+    if let Ok(mut admin) = crate::utils::mysql_connection::verify_mysql_datadir().and_then(|_| mysqladmin_command()) {
         let _ = admin.arg("shutdown").output();
         for _ in 0..20 {
             if find_our_processes("mysqld.exe", &mysql_path).is_empty() {
@@ -183,8 +186,35 @@ pub async fn ensure_mysql_config() -> Result<(), String> {
             MYSQL_CONFIG_VERSION
         );
         create_default_mysql_config().await?;
+        return Ok(());
     }
+    ensure_mysql_error_log(&config_path)?;
     Ok(())
+}
+
+fn ensure_mysql_error_log(config_path: &std::path::Path) -> Result<(), String> {
+    let content = std::fs::read_to_string(config_path)
+        .map_err(|e| format!("Failed to read MySQL config: {e}"))?;
+    let has_log_setting = content.lines().any(|line| {
+        let line = line.trim();
+        !line.starts_with('#') && !line.starts_with(';')
+            && line.split_once('=').is_some_and(|(key, _)| key.trim().eq_ignore_ascii_case("log-error"))
+    });
+    if has_log_setting { return Ok(()); }
+
+    let log_path = to_apache_path(&user_logs_dir().join("mysql.log"));
+    let directive = format!("log-error=\"{log_path}\"");
+    let mut lines: Vec<String> = content.lines().map(str::to_owned).collect();
+    if let Some(section) = lines.iter().position(|line| line.trim().eq_ignore_ascii_case("[mysqld]")) {
+        lines.insert(section + 1, directive);
+    } else {
+        lines.push("[mysqld]".into());
+        lines.push(directive);
+    }
+    let mut updated = lines.join("\n");
+    if content.ends_with('\n') { updated.push('\n'); }
+    std::fs::write(config_path, updated)
+        .map_err(|e| format!("Failed to configure MySQL error log: {e}"))
 }
 
 pub async fn create_default_mysql_config() -> Result<(), String> {
@@ -211,6 +241,7 @@ key_buffer_size=8M
 sort_buffer_size=256K
 skip-networking=false
 bind-address=127.0.0.1
+log-error="{}"
 
 [mysql]
 default-character-set=utf8mb4
@@ -222,7 +253,8 @@ port=3306
 default-character-set=utf8mb4
 "#,
         mysql_base.display().to_string().replace("\\", "/"),
-        mysql_data.display().to_string().replace("\\", "/")
+        mysql_data.display().to_string().replace("\\", "/"),
+        to_apache_path(&user_logs_dir().join("mysql.log"))
     );
 
     let config_dir = user_config_dir();

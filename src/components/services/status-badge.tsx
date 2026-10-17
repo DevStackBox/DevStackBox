@@ -1,3 +1,4 @@
+import type { ServiceState } from "@/types/services";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
@@ -5,17 +6,18 @@ import { LucideIcon } from "lucide-react";
 
 interface StatusBadgeProps {
   running: boolean;
+  state?: ServiceState;
   icon?: LucideIcon;
   customLabel?: string;
 }
 
-export function StatusBadge({ running, customLabel }: StatusBadgeProps) {
+export function StatusBadge({ running, state, customLabel }: StatusBadgeProps) {
   const { t } = useTranslation();
 
   return (
     <Badge
       variant={running ? "default" : "secondary"}
-      className={`${running ? "bg-green-500 hover:bg-green-600" : "bg-gray-500 hover:bg-gray-600"} transition-colors`}
+      className={`${running ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-gray-500 hover:bg-gray-600"} transition-colors`}
     >
       <div className="flex items-center gap-1.5">
         {running && (
@@ -25,7 +27,7 @@ export function StatusBadge({ running, customLabel }: StatusBadgeProps) {
             transition={{ duration: 1.5, repeat: Infinity }}
           />
         )}
-        {customLabel ||
+        {customLabel || (state === "starting" ? "Starting…" : state === "stopping" ? "Stopping…" : state === "error" ? "Status unavailable" : null) ||
           (running
             ? t("status.running", "Running")
             : t("status.stopped", "Stopped"))}

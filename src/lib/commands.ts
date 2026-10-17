@@ -82,6 +82,7 @@ export const TAURI_COMMANDS = {
   },
   ssl: {
     getStatus: "get_ssl_status",
+    trustCa: "trust_ssl_ca",
     generateCert: "generate_ssl_cert",
     enable: "enable_ssl",
     disable: "disable_ssl",

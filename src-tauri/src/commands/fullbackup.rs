@@ -41,6 +41,10 @@ struct BackupProgress {
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
+struct PartialFileGuard(PathBuf);
+impl Drop for PartialFileGuard { fn drop(&mut self) { if !self.0.as_os_str().is_empty() { let _ = std::fs::remove_file(&self.0); } } }
+
+#[derive(serde::Serialize, serde::Deserialize)]
 struct BackupManifest {
     app_version: String,
     created_at_secs: u64,
@@ -70,25 +74,30 @@ fn emit(app: &tauri::AppHandle, stage: &str, percent: u32, message: &str) {
 
 /// Collect all files under `dir` recursively.
 /// Returns pairs of (zip_entry_name, absolute_file_path).
-fn collect_files(dir: &Path, prefix: &str, out: &mut Vec<(String, PathBuf)>) {
-    let Ok(entries) = std::fs::read_dir(dir) else {
-        return;
-    };
-    for entry in entries.flatten() {
+fn collect_files(dir: &Path, prefix: &str, out: &mut Vec<(String, PathBuf)>) -> Result<(), String> {
+    let entries = std::fs::read_dir(dir).map_err(|e| format!("Cannot read {}: {e}", dir.display()))?;
+    for entry in entries {
+        let entry = entry.map_err(|e| e.to_string())?;
         let path = entry.path();
-        let name = entry.file_name();
-        let name_str = name.to_string_lossy();
-        let zip_name = if prefix.is_empty() {
-            name_str.into_owned()
-        } else {
-            format!("{}/{}", prefix, name_str)
-        };
-        if path.is_dir() {
-            collect_files(&path, &zip_name, out);
-        } else if path.is_file() {
-            out.push((zip_name, path));
+        let meta = std::fs::symlink_metadata(&path).map_err(|e| e.to_string())?;
+        #[cfg(windows)]
+        { use std::os::windows::fs::MetadataExt;
+          if meta.file_attributes() & 0x400 != 0 { return Err(format!("Linked folder/file requires a separate backup: {}", path.display())); }
         }
+        let zip_name = format!("{prefix}/{}", entry.file_name().to_string_lossy());
+        if meta.is_dir() { collect_files(&path, &zip_name, out)?; }
+        else if meta.is_file() { out.push((zip_name, path)); }
     }
+    Ok(())
+}
+
+fn write_files(zip: &mut zip::ZipWriter<std::fs::File>, files: &[(String, PathBuf)], options: SimpleFileOptions) -> Result<(), String> {
+    for (name, path) in files {
+        let mut input = std::fs::File::open(path).map_err(|e| format!("Cannot back up {}: {e}", path.display()))?;
+        zip.start_file(name, options).map_err(|e| e.to_string())?;
+        std::io::copy(&mut input, zip).map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }
 
 /// Validate that a path supplied by the frontend actually lives inside
@@ -132,10 +141,12 @@ pub async fn create_full_backup(
     // Replace colons (invalid in filenames on Windows) with hyphens
     let safe_ts = timestamp.replace(':', "-");
     let filename = format!("devstackbox-backup-{}.zip", safe_ts);
-    let zip_path = full_backups_dir().join(&filename);
+    let final_path = full_backups_dir().join(&filename);
+    let zip_path = final_path.with_extension("partial");
 
     emit(&app, "preparing", 0, "Preparing backup...");
 
+    let mut partial_guard = PartialFileGuard(zip_path.clone());
     let zip_file =
         std::fs::File::create(&zip_path).map_err(|e| format!("Cannot create zip: {}", e))?;
     let mut zip = zip::ZipWriter::new(zip_file);
@@ -153,28 +164,12 @@ pub async fn create_full_backup(
     // --- config/ ---------------------------------------------------------
     emit(&app, "config", 10, "Backing up configuration files...");
     let mut config_files: Vec<(String, PathBuf)> = Vec::new();
-    collect_files(&user_config_dir(), "config", &mut config_files);
-    for (zip_name, file_path) in &config_files {
-        if let Ok(data) = std::fs::read(file_path) {
-            zip.start_file(zip_name, options)
-                .map_err(|e| format!("Zip error (config): {}", e))?;
-            zip.write_all(&data)
-                .map_err(|e| format!("Write error (config): {}", e))?;
-        }
-    }
-
-    // --- www/ ------------------------------------------------------------
+    collect_files(&user_config_dir(), "config", &mut config_files)?;
+    write_files(&mut zip, &config_files, options)?;
     emit(&app, "www", 30, "Backing up web root files...");
-    let mut www_files: Vec<(String, PathBuf)> = Vec::new();
-    collect_files(&user_www_dir(), "www", &mut www_files);
-    for (zip_name, file_path) in &www_files {
-        if let Ok(data) = std::fs::read(file_path) {
-            zip.start_file(zip_name, options)
-                .map_err(|e| format!("Zip error (www): {}", e))?;
-            zip.write_all(&data)
-                .map_err(|e| format!("Write error (www): {}", e))?;
-        }
-    }
+    let mut www_files = Vec::new();
+    collect_files(&user_www_dir(), "www", &mut www_files)?;
+    write_files(&mut zip, &www_files, options)?;
 
     // --- mysql/all-databases.sql ----------------------------------------
     emit(&app, "mysql", 70, "Backing up MySQL databases...");
@@ -182,32 +177,20 @@ pub async fn create_full_backup(
     let mysqld = get_mysqld_exe(&base);
     let mut mysql_included = false;
     if is_our_process_running("mysqld.exe", &mysqld) {
-        let mysql_dump_result = crate::utils::mysql_connection::prepare_mysql_client()
-            .and_then(|_| mysqldump_command())
-            .and_then(|mut cmd| {
-                cmd.arg("--all-databases")
-                    .output()
-                    .map_err(|e| format!("mysqldump failed: {}", e))
-            });
-        match mysql_dump_result {
-            Ok(output) if output.status.success() => {
-                zip.start_file("mysql/all-databases.sql", options)
-                    .map_err(|e| format!("Zip error (mysql): {}", e))?;
-                zip.write_all(&output.stdout)
-                    .map_err(|e| format!("Write error (mysql): {}", e))?;
-                contents.push("mysql".to_string());
-                mysql_included = true;
-            }
-            Ok(output) => {
-                let stderr = String::from_utf8_lossy(&output.stderr);
-                eprintln!("mysqldump skipped: {}", stderr.trim());
-                // Not fatal - we continue without MySQL data
-            }
-            Err(e) => {
-                eprintln!("mysqldump exec failed: {}", e);
-                // Not fatal
-            }
+        prepare_mysql_client()?;
+        let sql_path = zip_path.with_extension("sql.partial");
+        let _sql_guard = PartialFileGuard(sql_path.clone());
+        let sql_file = std::fs::File::create(&sql_path).map_err(|e| e.to_string())?;
+        let output = mysqldump_command()?.args(["--all-databases", "--routines", "--events", "--single-transaction"])
+            .stdout(std::process::Stdio::from(sql_file)).output().map_err(|e| e.to_string())?;
+        if !output.status.success() {
+            let _ = std::fs::remove_file(&sql_path);
+            return Err(format!("Database backup failed: {}", String::from_utf8_lossy(&output.stderr)));
         }
+        write_files(&mut zip, &[("mysql/all-databases.sql".into(), sql_path.clone())], options)?;
+        std::fs::remove_file(sql_path).map_err(|e| e.to_string())?;
+        contents.push("mysql".to_string());
+        mysql_included = true;
     } else {
         eprintln!("DevStackBox MySQL is not running, skipping MySQL backup");
     }
@@ -228,9 +211,11 @@ pub async fn create_full_backup(
     zip.finish()
         .map_err(|e| format!("Failed to finalize zip: {}", e))?;
 
+    std::fs::rename(&zip_path, &final_path).map_err(|e| e.to_string())?;
+    partial_guard.0.clear();
     emit(&app, "done", 100, "Backup complete.");
     Ok(FullBackupResult {
-        path: zip_path.to_string_lossy().into_owned(),
+        path: final_path.to_string_lossy().into_owned(),
         mysql_included,
     })
 }
@@ -305,6 +290,25 @@ pub async fn restore_full_backup(
         serde_json::from_str(&buf).map_err(|e| format!("Invalid manifest: {}", e))?
     };
 
+    let has_mysql = manifest.contents.iter().any(|c| c == "mysql");
+    if has_mysql {
+        let sql = archive.by_name("mysql/all-databases.sql").map_err(|_| "Backup is missing its database dump")?;
+        if sql.size() == 0 { return Err("Backup database dump is empty".into()); }
+        prepare_mysql_client()?;
+    }
+    for i in 0..archive.len() {
+        let mut entry = archive.by_index(i).map_err(|e| e.to_string())?;
+        let rel = entry.enclosed_name().ok_or("Unsafe archive path")?.to_path_buf();
+        if entry.size() > 16 * 1024 * 1024 * 1024 { return Err("Backup entry exceeds the restore size limit".into()); }
+        if let Ok(sub) = rel.strip_prefix("www") { ensure_safe_destination(&user_www_dir(), sub)?; }
+        if let Ok(sub) = rel.strip_prefix("config") { ensure_safe_destination(&user_config_dir(), sub)?; }
+        std::io::copy(&mut entry, &mut std::io::sink()).map_err(|e| format!("Backup is corrupt: {e}"))?;
+    }
+    let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_err(|e| e.to_string())?.as_millis();
+    let recovery = create_full_backup(app.clone(), format!("before-restore-{stamp}")).await?;
+    emit(&app, "recovery", 5, &format!("Recovery backup saved: {}", recovery.path));
+    crate::commands::apache::stop_apache().await?;
+
     emit(
         &app,
         "restoring_config",
@@ -317,6 +321,23 @@ pub async fn restore_full_backup(
 
     let config_dir = user_config_dir();
     let www_dir = user_www_dir();
+
+    if has_mysql {
+        emit(&app, "restoring_mysql", 20, "Restoring MySQL databases...");
+        let sql_path = full_backups_dir().join(format!("restore-{stamp}.sql.partial"));
+        let import = (|| -> Result<(), String> {
+            let mut entry = archive.by_name("mysql/all-databases.sql").map_err(|e| e.to_string())?;
+            let mut sql = std::fs::File::create(&sql_path).map_err(|e| e.to_string())?;
+            std::io::copy(&mut entry, &mut sql).map_err(|e| e.to_string())?;
+            drop(sql);
+            let input = std::fs::File::open(&sql_path).map_err(|e| e.to_string())?;
+            let output = mysql_command()?.stdin(std::process::Stdio::from(input)).output().map_err(|e| e.to_string())?;
+            if !output.status.success() { return Err(format!("Database restore failed: {}. Recovery backup: {}", String::from_utf8_lossy(&output.stderr), recovery.path)); }
+            Ok(())
+        })();
+        let _ = std::fs::remove_file(sql_path);
+        import?;
+    }
 
     // Extract config/ and www/ entries
     for i in 0..archive.len() {
@@ -355,54 +376,13 @@ pub async fn restore_full_backup(
         if let Some(parent) = target.parent() {
             std::fs::create_dir_all(parent).map_err(|e| e.to_string())?;
         }
-        let mut data = Vec::with_capacity(entry.size() as usize);
-        entry.read_to_end(&mut data).map_err(|e| e.to_string())?;
-        std::fs::write(&target, &data).map_err(|e| e.to_string())?;
+        let mut output = std::fs::File::create(&target).map_err(|e| e.to_string())?;
+        std::io::copy(&mut entry, &mut output).map_err(|e| e.to_string())?;
 
         if zip_name.starts_with("config/") {
             emit(&app, "restoring_config", 30, "Restoring config files...");
         } else {
             emit(&app, "restoring_www", 60, "Restoring web root files...");
-        }
-    }
-
-    // --- Restore MySQL if dump is present --------------------------------
-    if manifest.contents.iter().any(|c| c == "mysql") {
-        emit(&app, "restoring_mysql", 80, "Restoring MySQL databases...");
-
-        let sql_data: Option<Vec<u8>> = archive
-            .by_name("mysql/all-databases.sql")
-            .ok()
-            .map(|mut e| {
-                let mut buf = Vec::new();
-                e.read_to_end(&mut buf).ok();
-                buf
-            });
-
-        if let Some(sql) = sql_data {
-            if !sql.is_empty() {
-                prepare_mysql_client()?;
-                use std::process::Stdio;
-                let mut child = mysql_command()?
-                    .stdin(Stdio::piped())
-                    .stdout(Stdio::null())
-                    .stderr(Stdio::piped())
-                    .spawn()
-                    .map_err(|e| format!("Failed to start mysql: {}", e))?;
-
-                if let Some(stdin) = child.stdin.as_mut() {
-                    stdin
-                        .write_all(&sql)
-                        .map_err(|e| format!("Failed to pipe SQL: {}", e))?;
-                }
-                let output = child
-                    .wait_with_output()
-                    .map_err(|e| format!("mysql wait failed: {}", e))?;
-                if !output.status.success() {
-                    let stderr = String::from_utf8_lossy(&output.stderr);
-                    return Err(format!("MySQL restore failed: {}", stderr.trim()));
-                }
-            }
         }
     }
 
@@ -430,5 +410,21 @@ pub async fn open_backups_folder() -> Result<(), String> {
         .arg(dir)
         .spawn()
         .map_err(|e| format!("Failed to open folder: {}", e))?;
+    Ok(())
+}
+
+fn ensure_safe_destination(base: &Path, relative: &Path) -> Result<(), String> {
+    let mut current = base.to_path_buf();
+    for component in relative.components() {
+        if !matches!(component, std::path::Component::Normal(_)) { return Err("Unsafe restore path".into()); }
+        current.push(component);
+        if let Ok(meta) = std::fs::symlink_metadata(&current) {
+            #[cfg(windows)]
+            { use std::os::windows::fs::MetadataExt;
+              if meta.file_attributes() & 0x400 != 0 { return Err(format!("Cannot restore through a linked path: {}", current.display())); }
+            }
+            if meta.file_type().is_symlink() { return Err("Cannot restore through a symbolic link".into()); }
+        }
+    }
     Ok(())
 }

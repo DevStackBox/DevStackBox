@@ -70,7 +70,7 @@ export function PhpOverviewPage() {
                 {t("php.title", "PHP")}
                 <Badge
                   variant={ready ? "default" : "secondary"}
-                  className={ready ? "bg-green-500 hover:bg-green-600" : ""}
+                  className={ready ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}
                 >
                   {ready
                     ? t("php.statusReady", "Ready")

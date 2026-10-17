@@ -58,13 +58,14 @@ fn save_vhosts(entries: &[VhostEntry]) -> Result<(), String> {
     write_vhosts_conf(entries)
 }
 
-fn generate_vhost_block(entry: &VhostEntry) -> String {
+pub(crate) fn generate_vhost_block(entry: &VhostEntry) -> String {
     let doc_root = to_apache_path(std::path::Path::new(&entry.doc_root));
     let logs = to_apache_path(&user_logs_dir());
     let domain = &entry.domain;
+    let port = crate::utils::config_ports::apache_listen_port();
     format!(
         "# Virtual Host: {domain}\n\
-         <VirtualHost *:80>\n\
+         <VirtualHost *:{port}>\n\
          \x20\x20\x20\x20ServerName {domain}\n\
          \x20\x20\x20\x20DocumentRoot \"{doc_root}\"\n\
          \n\
@@ -90,6 +91,9 @@ fn write_vhosts_conf(entries: &[VhostEntry]) -> Result<(), String> {
         "# DevStackBox Virtual Hosts\n\
          # Auto-generated from vhosts.json. Do not edit manually.\n\n",
     );
+    if entries.iter().any(|e| e.enabled) {
+        conf.push_str(&generate_vhost_block(&VhostEntry { domain: "localhost".into(), doc_root: crate::utils::paths::user_www_dir().to_string_lossy().into_owned(), enabled: true }));
+    }
     for entry in entries.iter().filter(|e| e.enabled) {
         conf.push_str(&generate_vhost_block(entry));
         conf.push('\n');
@@ -99,6 +103,8 @@ fn write_vhosts_conf(entries: &[VhostEntry]) -> Result<(), String> {
 
 /// Validate that a domain string is safe (no path traversal, no whitespace).
 fn validate_domain(domain: &str) -> Result<(), String> {
+    if domain.eq_ignore_ascii_case("localhost") { return Err("localhost is managed by DevStackBox".into()); }
+    if domain.len() > 253 || domain.split('.').any(|part| part.is_empty() || part.len() > 63 || part.starts_with('-') || part.ends_with('-')) { return Err("Invalid domain name".into()); }
     if domain.is_empty() {
         return Err("Domain name cannot be empty".to_string());
     }
@@ -106,7 +112,7 @@ fn validate_domain(domain: &str) -> Result<(), String> {
         return Err("Invalid domain name: must not contain spaces, slashes, or '..'".to_string());
     }
     // Allow alphanumeric, dots, and hyphens only.
-    if !domain.chars().all(|c| c.is_alphanumeric() || c == '.' || c == '-') {
+    if !domain.chars().all(|c| c.is_ascii_alphanumeric() || c == '.' || c == '-') {
         return Err("Invalid domain name: only letters, digits, hyphens, and dots are allowed".to_string());
     }
     Ok(())
@@ -116,8 +122,9 @@ fn validate_domain(domain: &str) -> Result<(), String> {
 /// Blocks until the user responds to the UAC prompt and the script finishes.
 fn run_elevated_hosts_script(script: &str) -> Result<(), String> {
     let temp_dir = std::env::temp_dir();
-    let script_path = temp_dir.join("devstackbox_hosts_update.ps1");
-    std::fs::write(&script_path, script)
+    let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_err(|e| e.to_string())?.as_nanos();
+    let script_path = temp_dir.join(format!("devstackbox-hosts-{stamp}.ps1"));
+    std::fs::write(&script_path, format!("$ErrorActionPreference = 'Stop'\n{script}"))
         .map_err(|e| format!("Failed to write temp script: {e}"))?;
 
     // Escape single quotes in path for PowerShell single-quoted strings.
@@ -126,8 +133,8 @@ fn run_elevated_hosts_script(script: &str) -> Result<(), String> {
     // The outer (non-elevated) PowerShell spawns an elevated inner PowerShell
     // via Start-Process -Verb RunAs -Wait, then exits after the inner one is done.
     let elevate_cmd = format!(
-        "Start-Process powershell -Verb RunAs -Wait \
-         -ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-File','{safe_path}'"
+        "$p = Start-Process powershell -WindowStyle Hidden -Verb RunAs -Wait -PassThru \
+         -ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-File','{safe_path}'; exit $p.ExitCode"
     );
 
     let output = create_hidden_command("powershell")
@@ -160,6 +167,9 @@ pub async fn list_vhosts() -> Result<Vec<VhostEntry>, String> {
 pub async fn add_vhost(domain: String, doc_root: String) -> Result<(), String> {
     validate_domain(&domain)?;
 
+    if doc_root.contains(['"', '\n', '\r', '<', '>']) || !std::path::Path::new(&doc_root).is_absolute() {
+        return Err("Choose an absolute folder path without quotes or control characters.".into());
+    }
     if doc_root.is_empty() {
         return Err("Document root cannot be empty".to_string());
     }

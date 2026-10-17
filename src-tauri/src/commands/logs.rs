@@ -1,7 +1,7 @@
 // Service log commands.
 
 use crate::utils::paths::user_logs_dir;
-use std::io::Write;
+use std::io::{Read, Seek, SeekFrom, Write};
 
 #[tauri::command]
 pub async fn get_service_logs(service: String) -> Result<String, String> {
@@ -15,13 +15,17 @@ pub async fn get_service_logs(service: String) -> Result<String, String> {
     };
 
     if !log_file.exists() {
-        return Ok(format!(
-            "Log file for {} not found yet. Start the service to generate logs.",
-            service
-        ));
+        return Ok(format!("No {} log file has been written yet.", service));
     }
 
-    match std::fs::read_to_string(&log_file) {
+    let tail = (|| -> std::io::Result<String> {
+        let mut file = std::fs::File::open(&log_file)?;
+        let size = file.metadata()?.len();
+        file.seek(SeekFrom::Start(size.saturating_sub(512 * 1024)))?;
+        let mut bytes = Vec::new(); file.read_to_end(&mut bytes)?;
+        Ok(String::from_utf8_lossy(&bytes).into_owned())
+    })();
+    match tail {
         Ok(content) => {
             let lines: Vec<&str> = content.lines().collect();
             let start = if lines.len() > 1000 { lines.len() - 1000 } else { 0 };

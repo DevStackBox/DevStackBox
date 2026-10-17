@@ -1,7 +1,7 @@
+import { openLocalSite } from "@/lib/phpmyadmin";
 import { useTranslation } from "react-i18next";
 import { Code, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { openExternalUrl } from "@/lib/tauri";
 import { ServiceCard } from "./service-card";
 import { Badge } from "@/components/ui/badge";
 import { ServiceOverflowMenu } from "./service-overflow-menu";
@@ -44,13 +44,9 @@ export function PHPService({
   const navigate = useNavigate();
 
   const openPhpInfo = () => {
-    openExternalUrl("http://localhost/phpinfo.php");
+    openLocalSite("/phpinfo.php");
   };
 
-  const openComposer = () => {
-    // TODO: Implement composer interface
-    console.log("Opening Composer interface...");
-  };
 
   const title = t("services.php.title", "PHP");
 
@@ -71,9 +67,8 @@ export function PHPService({
         "PHP runtime environment (not a service)",
       )}
       icon={Code}
-      iconColor="text-purple-500"
-      logoSrc="/php.svg"
-      isRunning={true}
+      iconColor="text-primary"
+      isRunning={status.running}
       compact={compact}
       delay={0.2}
       isSelected={isSelected}
@@ -82,9 +77,9 @@ export function PHPService({
         <div className="flex items-center gap-1">
           <Badge
             variant="secondary"
-            className="bg-blue-500 hover:bg-blue-600 text-white"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            {t("status.ready", "Ready")} {currentVersion}
+            {status.running ? t("status.ready", "Ready") : "Unavailable"} {status.running ? currentVersion : ""}
           </Badge>
           <ServiceOverflowMenu
             label={title}
@@ -119,10 +114,6 @@ export function PHPService({
                   {
                     label: t("actions.extensions", "Extensions"),
                     onSelect: () => navigate(ROUTES.phpExtensions.path),
-                  },
-                  {
-                    label: t("actions.composer", "Composer"),
-                    onSelect: openComposer,
                   },
                 ],
               },

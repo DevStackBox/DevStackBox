@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { MySQLRequired } from "@/components/mysql-required";
+import { useDatabaseCache } from "@/context/database-cache-context";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { RefreshCw, Download, HardDriveDownload, Upload } from "lucide-react";
@@ -10,48 +12,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { safeInvoke, isTauri } from "@/lib/tauri";
+import { safeInvoke } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
 import { useToast } from "@/hooks/use-toast";
 
-interface RawDatabaseInfo {
-  name: string;
-  table_count: number;
-  size_bytes: number;
+export function DatabasesBackupsPage() {
+  return <MySQLRequired><DatabasesBackupsContent /></MySQLRequired>;
 }
 
-export function DatabasesBackupsPage() {
+function DatabasesBackupsContent() {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const [databases, setDatabases] = useState<RawDatabaseInfo[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { databases, loading, error, refresh: load } = useDatabaseCache();
   const [busy, setBusy] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    if (!isTauri()) {
-      setDatabases([]);
-      return;
-    }
-    setLoading(true);
-    try {
-      const list = await safeInvoke<RawDatabaseInfo[]>(
-        TAURI_COMMANDS.services.listMysqlDatabasesDetailed,
-      );
-      setDatabases(list ?? []);
-    } catch (err) {
-      toast({
-        title: t("common.error", "Error"),
-        description: String(err),
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [t, toast]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { void load(); }, [load]);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -129,6 +103,8 @@ export function DatabasesBackupsPage() {
       setBusy(null);
     }
   };
+
+  if (error) return <div role="alert" className="rounded-md border p-6 space-y-3"><p>{error}</p><Button disabled={loading} onClick={() => void load()}>Try again</Button></div>;
 
   return (
     <motion.div
@@ -216,7 +192,7 @@ export function DatabasesBackupsPage() {
                   <div>
                     <div className="font-mono text-sm">{db.name}</div>
                     <div className="text-xs text-muted-foreground">
-                      {db.table_count} tables
+                      {db.tableCount} tables
                     </div>
                   </div>
                   <Button

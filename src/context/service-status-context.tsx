@@ -1,3 +1,4 @@
+import { listen } from "@tauri-apps/api/event";
 /**
  * ServiceStatusContext
  *
@@ -125,7 +126,7 @@ interface ServiceStatusContextValue {
   lastSuccessfulRefresh: number | null;
   /** which service is being toggled right now */
   loading: string | null;
-  setLoading: (s: string | null) => void;
+  runBulk: (action: "start" | "stop" | "restart") => Promise<boolean>;
   /** force immediate re-fetch - awaitable, shared promise (no duplicate fetches) */
   refresh: () => Promise<void>;
   /** instantly update a single service's state for optimistic UI */
@@ -151,24 +152,30 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
 
   const [services, setServices] = useState(() => {
     const cached = readServiceCache();
-    return cached?.services ?? defaultServices;
+    return cached ? { apache: { ...cached.services.apache, ...STOPPED }, mysql: { ...cached.services.mysql, ...STOPPED }, php: { ...cached.services.php, ...STOPPED } } : defaultServices;
   });
-  const [initialLoading, setInitialLoading] = useState(() => !readServiceCache());
+  const [initialLoading, setInitialLoading] = useState(true);
   const [lastSuccessfulRefresh, setLastSuccessfulRefresh] = useState<
     number | null
-  >(() => readServiceCache()?.lastSuccessfulRefresh ?? null);
-  const [loading, setLoading] = useState<string | null>(null);
+  >(null);
+  const [loading, updateLoading] = useState<string | null>(null);
 
   // Ref mirrors loading for crash detection inside the polling closure
   const loadingRef = useRef<string | null>(null);
-  loadingRef.current = loading;
+  const generationRef = useRef(0);
+  const setLoading = useCallback((value: string | null) => {
+    loadingRef.current = value;
+    generationRef.current += 1;
+    updateLoading(value);
+  }, []);
 
   // Track previous running state to detect unexpected crashes
-  const prevRunningRef = useRef<Record<string, boolean>>({
-    apache: readServiceCache()?.services.apache.running ?? false,
-    mysql: readServiceCache()?.services.mysql.running ?? false,
-    php: readServiceCache()?.services.php.running ?? false,
-  });
+  // Only live observations can establish a crash baseline; cache is presentation only.
+  const prevRunningRef = useRef<Partial<Record<string, boolean>>>({});
+  // A stop command can return before Windows has fully reaped every child.
+  // Remember the expected stop until a live poll observes it so a delayed
+  // process exit cannot be misreported as a crash after the loading UI ends.
+  const expectedStopsRef = useRef(new Set<string>());
 
   // Ref to keep the latest toggleService for the tray listener
   const toggleServiceRef = useRef<(service: string) => void>(() => {});
@@ -187,6 +194,7 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
       return refreshPromiseRef.current;
     }
 
+    const generation = generationRef.current;
     refreshPromiseRef.current = (async () => {
       try {
         if (!isTauri()) {
@@ -217,25 +225,34 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
           safeInvoke<RawServiceStatus>(TAURI_COMMANDS.services.getPhpStatus),
         ]);
 
+        if (generation !== generationRef.current) return;
         const prev = servicesRef.current;
         const next = {
           apache:
-            apacheR.status === "fulfilled"
+            apacheR.status === "fulfilled" && apacheR.value !== null
               ? mapRawStatus(apacheR.value)
               : prev.apache,
           mysql:
-            mysqlR.status === "fulfilled"
+            mysqlR.status === "fulfilled" && mysqlR.value !== null
               ? mapRawStatus(mysqlR.value)
               : prev.mysql,
           php:
-            phpR.status === "fulfilled" ? mapRawStatus(phpR.value) : prev.php,
+            phpR.status === "fulfilled" && phpR.value !== null ? mapRawStatus(phpR.value) : prev.php,
         };
 
+        const results = { apache: apacheR, mysql: mysqlR, php: phpR };
         (["apache", "mysql", "php"] as const).forEach((name) => {
+          if (results[name].status !== "fulfilled" || results[name].value == null) {
+            if (prevRunningRef.current[name] === undefined || next[name].state === "starting" || next[name].state === "stopping") {
+              next[name] = { ...next[name], state: "error" };
+            }
+            return;
+          }
           const wasRunning = prevRunningRef.current[name];
           const isRunning = next[name].running;
-          if (wasRunning && !isRunning && loadingRef.current !== name) {
-            const label = name.charAt(0).toUpperCase() + name.slice(1);
+          const expectedStop = expectedStopsRef.current.has(name);
+          if (wasRunning && !isRunning && !expectedStop && loadingRef.current === null && name !== "php") {
+            const label = name === "mysql" ? "MySQL" : "Apache";
             toast({
               variant: "destructive",
               title: `${label} stopped unexpectedly`,
@@ -258,13 +275,19 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
               timestamp: new Date().toISOString(),
             });
           }
+          if (expectedStop && (!isRunning || loadingRef.current === null)) {
+            expectedStopsRef.current.delete(name);
+          }
           prevRunningRef.current[name] = isRunning;
         });
 
         const now = Date.now();
+        servicesRef.current = next;
         setServices(next);
-        setLastSuccessfulRefresh(now);
-        writeServiceCache(next, now);
+        if ([apacheR, mysqlR, phpR].some(result => result.status === "fulfilled" && result.value != null)) {
+          setLastSuccessfulRefresh(now);
+          writeServiceCache(next, now);
+        }
 
         setInitialLoading(false);
       } catch (err) {
@@ -279,19 +302,26 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
     return refreshPromiseRef.current;
   }, [toast]);
 
+  const refreshAfterAction = useCallback(async () => {
+    generationRef.current += 1;
+    await refreshPromiseRef.current;
+    await refresh();
+  }, [refresh]);
+
   const optimisticUpdate = useCallback(
     (service: "apache" | "mysql" | "php", partial: Partial<ServiceStatus>) => {
-      setServices((prev) => ({
-        ...prev,
-        [service]: { ...prev[service], ...partial },
-      }));
+      const next = { ...servicesRef.current, [service]: { ...servicesRef.current[service], ...partial } };
+      servicesRef.current = next;
+      setServices(next);
     },
     [],
   );
 
   const toggleService = useCallback(
     async (service: string) => {
+      if (loadingRef.current !== null) return;
       setLoading(service);
+      await refreshPromiseRef.current;
 
       if (!isTauri()) {
         toast({
@@ -308,7 +338,8 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
 
       const key = service as "apache" | "mysql" | "php";
       const isCurrentlyRunning = servicesRef.current[key].running;
-      const serviceName = service.charAt(0).toUpperCase() + service.slice(1);
+      if (isCurrentlyRunning && key !== "php") expectedStopsRef.current.add(key);
+      const serviceName = service === "mysql" ? "MySQL" : service === "php" ? "PHP" : "Apache";
 
       optimisticUpdate(key, {
         state: isCurrentlyRunning ? "stopping" : "starting",
@@ -329,11 +360,11 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
         }
 
         if (result === null) {
-          await refresh();
+          await refreshAfterAction();
           return;
         }
 
-        await refresh();
+        await refreshAfterAction();
         void safeInvoke(TAURI_COMMANDS.tray.refreshMenu);
 
         toast({
@@ -348,7 +379,7 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
         });
       } catch (error) {
         console.error(`Failed to toggle ${service}:`, error);
-        await refresh();
+        await refreshAfterAction();
         toast({
           variant: "destructive",
           title: t("serviceManager.serviceError", "Service Error"),
@@ -358,8 +389,32 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
         setLoading(null);
       }
     },
-    [optimisticUpdate, refresh, t, toast],
+    [optimisticUpdate, refreshAfterAction, setLoading, t, toast],
   );
+
+  const runBulk = useCallback(async (action: "start" | "stop" | "restart") => {
+    if (loadingRef.current !== null || !isTauri()) return false;
+    if (action !== "start") {
+      expectedStopsRef.current.add("apache");
+      expectedStopsRef.current.add("mysql");
+    }
+    setLoading("all");
+    await refreshPromiseRef.current;
+    for (const name of ["apache", "mysql"] as const) {
+      optimisticUpdate(name, { state: action === "stop" ? "stopping" : "starting" });
+    }
+    try {
+      const commands = { start: TAURI_COMMANDS.system.startAllServices, stop: TAURI_COMMANDS.system.stopAllServices, restart: TAURI_COMMANDS.system.restartAllServices };
+      await safeInvoke(commands[action]);
+      return true;
+    } catch (error) {
+      toast({ variant: "destructive", title: `Could not ${action} all services`, description: String(error) });
+      return false;
+    } finally {
+      await refreshAfterAction();
+      setLoading(null);
+    }
+  }, [optimisticUpdate, refreshAfterAction, setLoading, toast]);
 
   toggleServiceRef.current = toggleService;
 
@@ -374,6 +429,8 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
       const startApache =
         localStorage.getItem(AUTOSTART_APACHE_KEY) === "true";
       if (!startMysql && !startApache) return;
+      setLoading("all");
+      await refreshPromiseRef.current;
       try {
         if (startMysql) {
           await safeInvoke(TAURI_COMMANDS.services.startMysql);
@@ -381,15 +438,18 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
         if (startApache) {
           await safeInvoke(TAURI_COMMANDS.services.startApache);
         }
-        if (!cancelled) await refresh();
+        if (!cancelled) await refreshAfterAction();
       } catch (err) {
         console.warn("[ServiceStatusProvider] auto-start failed:", err);
+        if (!cancelled) await refreshAfterAction();
+      } finally {
+        setLoading(null);
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [refresh]);
+  }, [refreshAfterAction, setLoading]);
 
   // Poll when visible; tray emits service-status-snapshot every 5s.
   useEffect(() => {
@@ -397,12 +457,12 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
     void refresh();
 
     const onVisibility = () => {
-      if (document.visibilityState === "visible") void refresh();
+      if (document.visibilityState === "visible" && loadingRef.current === null) void refresh();
     };
     document.addEventListener("visibilitychange", onVisibility);
 
     const id = setInterval(() => {
-      if (document.visibilityState === "visible") void refresh();
+      if (document.visibilityState === "visible" && loadingRef.current === null) void refresh();
     }, 15000);
 
     return () => {
@@ -414,52 +474,49 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isTauri()) return;
     let unlisten: (() => void) | undefined;
+    let disposed = false;
     (async () => {
-      const { listen } = await import("@tauri-apps/api/event");
-      unlisten = await listen<{
-        apache: RawServiceStatus;
-        mysql: RawServiceStatus;
-        php: RawServiceStatus;
-      }>("service-status-snapshot", (event) => {
-        const p = event.payload;
-        const next = {
-          apache: mapRawStatus(p.apache),
-          mysql: mapRawStatus(p.mysql),
-          php: mapRawStatus(p.php),
-        };
-        setServices(next);
-        const now = Date.now();
-        setLastSuccessfulRefresh(now);
-        writeServiceCache(next, now);
-        setInitialLoading(false);
+      unlisten = await listen("service-status-snapshot", () => {
+        // Treat the tray event as invalidation, not a second independent source of state.
+        if (loadingRef.current === null) void refresh();
       });
+      if (disposed) unlisten?.();
     })();
     return () => {
+      disposed = true;
       if (unlisten) unlisten();
     };
-  }, []);
+  }, [refresh]);
 
   // Tray menu actions still emit tray-services-updated after toggles.
   useEffect(() => {
     if (!isTauri()) return;
     let unlisten: (() => void) | undefined;
+    let disposed = false;
     (async () => {
-      const { listen } = await import("@tauri-apps/api/event");
-      unlisten = await listen("tray-services-updated", () => {
-        void refresh();
+      unlisten = await listen<string>("tray-service-action", (event) => {
+        if (event.payload === "complete") {
+          void refreshAfterAction().finally(() => setLoading(null));
+        } else {
+          const service = event.payload as "apache" | "mysql";
+          if (servicesRef.current[service]?.running) expectedStopsRef.current.add(service);
+          setLoading(event.payload);
+        }
       });
+      if (disposed) unlisten?.();
     })();
     return () => {
+      disposed = true;
       if (unlisten) unlisten();
     };
-  }, [refresh]);
+  }, [refreshAfterAction, setLoading]);
 
   // Window hidden to tray notification
   useEffect(() => {
     if (!isTauri()) return;
     let unlisten: (() => void) | undefined;
+    let disposed = false;
     (async () => {
-      const { listen } = await import("@tauri-apps/api/event");
       unlisten = await listen("window-hidden-to-tray", () => {
         const SHOWN_KEY = "devstackbox.tray.hideNoticeShown";
         if (!localStorage.getItem(SHOWN_KEY)) {
@@ -470,8 +527,10 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
           );
         }
       });
+      if (disposed) unlisten?.();
     })();
     return () => {
+      disposed = true;
       if (unlisten) unlisten();
     };
   }, []);
@@ -483,7 +542,7 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
         initialLoading,
         lastSuccessfulRefresh,
         loading,
-        setLoading,
+        runBulk,
         refresh,
         optimisticUpdate,
         toggleService,

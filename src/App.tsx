@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   useNavigate,
+  useLocation,
   Navigate,
 } from "react-router-dom";
 import { safeInvoke, isTauri, getMockBinariesStatus } from "@/lib/tauri";
@@ -70,6 +71,9 @@ import "./lib/i18n";
 function AppShell() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [terminalVisited, setTerminalVisited] = useState(false);
+  useEffect(() => { if (location.pathname === "/terminal") setTerminalVisited(true); }, [location.pathname]);
   const { toggleService } = useServiceStatus();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -201,7 +205,7 @@ function AppShell() {
           </div>
         </header>
 
-        <main className="container mx-auto px-4 py-6">
+        <main className="container mx-auto px-4 py-4">
           <ErrorBoundary>
           <Routes>
             <Route
@@ -265,7 +269,7 @@ function AppShell() {
               <Route path="php" element={<LogsPhpPage />} />
             </Route>
             {/* Universal terminal - single route, sessions survive navigation */}
-            <Route path="/terminal" element={<UniversalTerminalPage />} />
+            <Route path="/terminal" element={null} />
             {/* Redirects from old sub-routes */}
             <Route
               path="/terminal/shell"
@@ -317,10 +321,11 @@ function AppShell() {
               path="/backup"
               element={<Navigate to={ROUTES.settingsBackup.path} replace />}
             />
-            <Route path="/projects" element={<ProjectsPage />} />
+            <Route path={ROUTES.projects.path} element={<ProjectsPage />} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          {terminalVisited && <div hidden={location.pathname !== "/terminal"}><UniversalTerminalPage /></div>}
           </ErrorBoundary>
         </main>
       </div>
@@ -344,7 +349,7 @@ function AppShell() {
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="devstackbox-ui-theme">
+    <ThemeProvider defaultTheme="system" storageKey="devstackbox-ui-theme">
       <HashRouter>
         <ServiceStatusProvider>
           <DatabaseCacheProvider>

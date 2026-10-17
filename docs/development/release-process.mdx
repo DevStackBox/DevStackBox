@@ -215,7 +215,7 @@ The in-app updater is **active** as of v0.1.8. Every release must include:
 
 1. Signed NSIS build (`TAURI_SIGNING_PRIVATE_KEY` set during `pnpm tauri build`)
 2. `latest.json` in the repo root with `signature` from the `.sig` file and a `platforms.windows-x86_64.url` that matches the uploaded `.exe` filename
-3. Upload **`latest.json`** as a release asset named exactly `latest.json` — the updater fetches **`releases/latest/download/latest.json`**, not the copy on the default branch alone
+3. Upload **`latest.json`** as a release asset named exactly `latest.json` - the updater fetches **`releases/latest/download/latest.json`**, not the copy on the default branch alone
 
 Updater endpoint (configured in `tauri.conf.json`):
 

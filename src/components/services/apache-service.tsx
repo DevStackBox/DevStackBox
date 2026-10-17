@@ -1,8 +1,8 @@
+import { openLocalSite } from "@/lib/phpmyadmin";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { Server } from "lucide-react";
 import { ROUTES } from "@/lib/routes";
-import { openExternalUrl } from "@/lib/tauri";
 import { ServiceCard } from "./service-card";
 import { StatusBadge } from "./status-badge";
 import { ServiceOverflowMenu } from "./service-overflow-menu";
@@ -45,11 +45,11 @@ export function ApacheService({
   const navigate = useNavigate();
 
   const openApache = () => {
-    openExternalUrl("http://localhost");
+    openLocalSite();
   };
 
   const openWWW = () => {
-    openExternalUrl("http://localhost/www");
+    openLocalSite();
   };
 
   // Primary actions stay in the card body: Start/Stop + one Open.
@@ -89,8 +89,7 @@ export function ApacheService({
         "Local web server for hosting PHP applications",
       )}
       icon={Server}
-      iconColor="text-orange-500"
-      logoSrc="/apache.svg"
+      iconColor="text-primary"
       isRunning={status.running}
       compact={compact}
       delay={0}

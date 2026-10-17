@@ -22,18 +22,23 @@ fn parse_listen_port(content: &str) -> Option<u16> {
 }
 
 fn parse_mysql_port(content: &str) -> Option<u16> {
+    let mut section = String::new();
+    let mut fallback = None;
     for line in content.lines() {
         let line = line.trim();
-        if line.is_empty() || line.starts_with('#') {
-            continue;
-        }
-        let lower = line.to_lowercase();
-        if lower.starts_with("port=") {
-            if let Ok(port) = line[5..].trim().parse::<u16>() {
-                return Some(port);
+        if line.starts_with(['#', ';']) { continue; }
+        if line.starts_with('[') && line.ends_with(']') { section = line.to_ascii_lowercase(); continue; }
+        if let Some((key, value)) = line.split_once('=') {
+            if key.trim().eq_ignore_ascii_case("port") {
+                if let Ok(port) = value.trim().parse::<u16>() {
+                    if port == 0 { continue; }
+                    if section == "[mysqld]" { return Some(port); }
+                    if section == "[client]" || section.is_empty() { fallback = Some(port); }
+                }
             }
         }
     }
+    if fallback.is_some() { return fallback; }
     None
 }
 
@@ -63,6 +68,10 @@ mod tests {
         assert_eq!(parse_listen_port(conf), Some(8080));
     }
 
+    #[test]
+    fn server_port_overrides_client_and_allows_spaces() {
+        assert_eq!(parse_mysql_port("[client]\nport=3306\n[mysqld]\nport = 3308\n"), Some(3308));
+    }
     #[test]
     fn parse_mysql_port_line() {
         let cnf = "[mysqld]\nport=3307\n";
