@@ -46,6 +46,7 @@ export const docsNav: NavSection[] = [
       { title: "Components", slug: "development/components" },
       { title: "Coding Standards", slug: "development/coding-standards" },
       { title: "Release Process", slug: "development/release-process" },
+      { title: "Release Runbook", slug: "development/release-runbook" },
       { title: "Testing", slug: "development/testing" },
       {
         title: "Architecture Decisions",

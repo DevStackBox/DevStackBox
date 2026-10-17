@@ -7,7 +7,9 @@ icon: "Rocket"
 
 **The exact checklist for every release. Follow this every time without shortcuts.**
 
-**Current stable release:** v0.1.9
+**Quick copy-paste runbook (PowerShell commands):** [Release runbook](./release-runbook)
+
+**Current stable release:** v0.1.10
 
 ---
 
@@ -96,21 +98,56 @@ Keep the format consistent. Do not delete old entries.
 
 ---
 
-## Step 4 - Build Release
+## Step 4 - Build Release (Windows signed NSIS)
 
-Set signing key (required for auto-update):
+**Canonical command** — use this every time (full runbook: [Release runbook](./release-runbook)):
 
 ```powershell
-$env:TAURI_SIGNING_PRIVATE_KEY = "path-or-content-of-your-private-key"
-pnpm tauri build
+cd D:\Websites\DevStackBox   # or your clone path
+
+Get-Process light -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Remove-Item "src-tauri\target\release\wix" -Recurse -Force -EA SilentlyContinue
+Remove-Item "src-tauri\target\release\bundle\msi" -Recurse -Force -EA SilentlyContinue
+
+$env:TAURI_SIGNING_PRIVATE_KEY = (Get-Content "$env:USERPROFILE\.tauri\devstackbox.key" -Raw).Trim()
+$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD = ""
+
+pnpm tauri build 2>&1
 ```
 
-Expected output files:
+**Why the cleanup lines matter**
 
-- `src-tauri/target/release/bundle/nsis/DevStackBox_0.1.9_x64-setup.exe`
-- `src-tauri/target/release/bundle/nsis/DevStackBox_0.1.9_x64-setup.exe.sig`
+- `light` (WiX) can stay running and lock files after a failed or partial build.
+- DevStackBox ships **NSIS only**; removing stale `wix` / `bundle\msi` output avoids Tauri bundling the wrong target.
 
-Create or update `latest.json` in the repo root (use the previous release file as a template). Paste the `.sig` file content into the `signature` field. Commit this file so the repo stays in sync, but **installed apps download the manifest from GitHub**, not from `main`.
+**Signing key**
+
+- Private key file: `%USERPROFILE%\.tauri\devstackbox.key` (never commit this file).
+- Tauri expects the **key contents** in `TAURI_SIGNING_PRIVATE_KEY`, not the path, during `pnpm tauri build`.
+- Public key is already in `src-tauri/tauri.conf.json` under `plugins.updater.pubkey`.
+
+**Alternative pipeline** (runs preflight checks first):
+
+```powershell
+$env:TAURI_SIGNING_PRIVATE_KEY_PATH = "$env:USERPROFILE\.tauri\devstackbox.key"
+npm run build:release
+```
+
+This calls [`scripts/build-release.mjs`](../../scripts/build-release.mjs) → `verify-release.mjs` → `tauri build --ci`.
+
+**Expected output files** (replace `X.Y.Z` with your version):
+
+- `src-tauri/target/release/bundle/nsis/DevStackBox_X.Y.Z_x64-setup.exe`
+- `src-tauri/target/release/bundle/nsis/DevStackBox_X.Y.Z_x64-setup.exe.sig`
+
+**Generate `latest.json` after a successful build:**
+
+```powershell
+.\scripts\make-latest-json.ps1 -Notes "DevStackBox vX.Y.Z - short summary"
+Copy-Item release\latest.json latest.json
+```
+
+[`make-latest-json.ps1`](../../scripts/make-latest-json.ps1) reads the version from `tauri.conf.json`, copies the `.sig` into the manifest, and sets the GitHub download URL. Commit `latest.json` on `main` for repo history, but **installed apps download the manifest from the GitHub Release asset**, not from `main` alone.
 
 If the build fails:
 

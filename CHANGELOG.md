@@ -4,6 +4,30 @@ All notable changes to DevStackBox are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.10] - 2026-10-17
+
+### Added
+
+- PHP **8.5** on the Versions page (on-demand download alongside 8.1, 8.2, and 8.4); **PHP 8.3** remains the only bundled default in the installer
+- Release runbook and `scripts/release-build.ps1` for repeatable signed NSIS builds
+- Expanded Vitest coverage; release verification scripts (`verify-release.mjs`, `build-release.mjs`)
+
+### Changed
+
+- MySQL/database pages: stopped-state UX, safer queries when MySQL is down, backup/restore improvements
+- Service status: tray snapshot events, fewer false crash alerts, improved Start All / Stop All behavior
+- Terminal: ConPTY shell fixes (CMD/PowerShell), theme sync, tab handling
+- Installer: scrolling detail log during file extraction; machine-wide uninstall registration migration
+- Monaco-based config editors; refreshed app icons and branding assets
+
+### Fixed
+
+- Port-aware Apache/MySQL status checks; phpMyAdmin URL resolution from config
+- SQL-safe MySQL account/database operations; stored root password for CLI tools
+- Dashboard, security scan, SSL, vhosts, and projects polish since v0.1.9
+
+**Installer SHA-256:** `DE1A60568FA6FE1D2653009E7E3253303966D00F9CEFBD5665BC5FF70BFDF853`
+
 ## [0.1.9] - 2026-09-15
 
 ### Added

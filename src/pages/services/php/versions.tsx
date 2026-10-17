@@ -34,6 +34,10 @@ const BRANCH_NOTES: Record<
   string,
   { description: string; features: string[] }
 > = {
+  "8.5": {
+    description: "PHP 8.5 runtime",
+    features: ["Latest stable branch", "On-demand download", "Switch from 8.3 anytime"],
+  },
   "8.4": {
     description: "PHP 8.4 runtime",
     features: ["Property hooks", "Improved performance", "New array helpers"],
@@ -91,7 +95,7 @@ export function PhpVersionsPage() {
       if (!isTauri()) {
         // Browser mode fallback - show static list with 8.3 as active.
         setVersions(
-          ["8.4", "8.3", "8.2", "8.1"].map((v) => ({
+          ["8.5", "8.4", "8.3", "8.2", "8.1"].map((v) => ({
             version: v,
             status: v === BUNDLED_DEFAULT_VERSION ? "installed" : "available",
             path: "",

@@ -1,0 +1,74 @@
+---
+title: "Release Runbook"
+description: "Windows signed NSIS build and GitHub publish commands."
+icon: "Terminal"
+---
+# DevStackBox release runbook (Windows)
+
+Single reference for **signed NSIS builds** and **GitHub publish** so every release follows the same steps.
+
+**Full checklist:** [Release process](./release-process)
+
+**Private signing key:** `%USERPROFILE%\.tauri\devstackbox.key` — never commit.
+
+---
+
+## 1. Preflight
+
+From repo root:
+
+```powershell
+pnpm run check
+# or: npm run check
+```
+
+Bump version in **all three** (must match):
+
+- `package.json` → `"version"`
+- `src-tauri/Cargo.toml` → `[package] version`
+- `src-tauri/tauri.conf.json` → `"version"`
+
+Update `CHANGELOG.md` before publishing (can draft after local build test).
+
+---
+
+## 2. Signed build (canonical)
+
+```powershell
+cd D:\Websites\DevStackBox   # your clone
+
+Get-Process light -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+Remove-Item "src-tauri\target\release\wix" -Recurse -Force -EA SilentlyContinue
+Remove-Item "src-tauri\target\release\bundle\msi" -Recurse -Force -EA SilentlyContinue
+
+$env:TAURI_SIGNING_PRIVATE_KEY = (Get-Content "$env:USERPROFILE\.tauri\devstackbox.key" -Raw).Trim()
+$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD = ""
+
+pnpm tauri build 2>&1
+```
+
+Or: `.\scripts\release-build.ps1`
+
+**Alternative with verify-release preflight:**
+
+```powershell
+$env:TAURI_SIGNING_PRIVATE_KEY_PATH = "$env:USERPROFILE\.tauri\devstackbox.key"
+npm run build:release
+```
+
+---
+
+## 3. `latest.json` (required for auto-update)
+
+```powershell
+.\scripts\make-latest-json.ps1 -Notes "DevStackBox vX.Y.Z - summary for users"
+Copy-Item release\latest.json latest.json
+```
+
+---
+
+## 4. Publish GitHub Release
+
+Upload: `.exe`, `.exe.sig`, and **`latest.json`** (exact name). Do not mark pre-release.
+
+See [Release process](./release-process) Step 7–8.

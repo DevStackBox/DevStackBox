@@ -16,7 +16,7 @@ use crate::utils::process::create_hidden_command;
 
 // Branches we surface in the UI. The bundled default is 8.3; the others are
 // downloadable on demand (Roadmap Phase 3.1).
-const PHP_BRANCHES: &[&str] = &["8.1", "8.2", "8.3", "8.4"];
+const PHP_BRANCHES: &[&str] = &["8.1", "8.2", "8.3", "8.4", "8.5"];
 
 // The version that ships bundled with the installer.  When the installer
 // flattens PHP straight into php/ (php/php.exe instead of php/8.3/php.exe),
