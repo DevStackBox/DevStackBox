@@ -71,4 +71,16 @@ Copy-Item release\latest.json latest.json
 
 Upload: `.exe`, `.exe.sig`, and **`latest.json`** (exact name). Do not mark pre-release.
 
+**Release notes:** paste the matching section from `CHANGELOG.md` (Added / Changed / Fixed + installer SHA-256), not a one-line summary:
+
+```powershell
+gh release edit vX.Y.Z --notes-file release\notes-vX.Y.Z.md
+```
+
+Or when creating:
+
+```powershell
+gh release create vX.Y.Z ... --notes-file release\notes-vX.Y.Z.md
+```
+
 See [Release process](./release-process) Step 7–8.
