@@ -155,6 +155,8 @@ Default credentials:
 - Username: `root`
 - Password: (empty)
 
+DevStackBox ships `phpmyadmin/config.inc.php` with `AllowNoPassword` enabled for this local default. If login says "Login without a password is forbidden", restart the app once (it recreates a missing config) or reinstall from the latest release.
+
 If phpMyAdmin shows "Cannot connect to MySQL server":
 
 1. Check MySQL is running (green status in DevStackBox)

@@ -41,6 +41,7 @@ use crate::commands::terminal::{kill_terminal_session, resize_terminal, send_ter
 use crate::commands::tray::{hide_to_tray, quit_app, refresh_tray_menu, set_tray_tooltip, show_main_window};
 use crate::utils::app_settings::read_app_settings;
 use crate::utils::paths::ensure_user_data_dirs;
+use crate::utils::phpmyadmin_config::ensure_phpmyadmin_config_inc;
 use std::sync::Arc;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -141,6 +142,7 @@ pub fn run() {
             // Roadmap Phase 1.8: ensure user data root and subdirs exist
             // before any service can try to read/write configs or data.
             ensure_user_data_dirs();
+            let _ = ensure_phpmyadmin_config_inc();
 
             crate::tray::setup_tray(app)?;
             Ok(())

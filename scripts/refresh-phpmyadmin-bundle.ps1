@@ -22,6 +22,9 @@ if (Test-Path $pmaDir) {
   $backupDir = Join-Path $RepoRoot $backupName
 }
 Copy-Item -Path $extracted.FullName -Destination $pmaDir -Recurse
+$devstackConfig = Join-Path $RepoRoot "config/phpmyadmin.config.inc.php"
+if (-not (Test-Path -LiteralPath $devstackConfig)) { throw "Missing DevStackBox phpMyAdmin template: $devstackConfig" }
+Copy-Item -LiteralPath $devstackConfig -Destination (Join-Path $pmaDir "config.inc.php") -Force
 if ($RemovePreviousBackup -and $backupDir -and (Test-Path -LiteralPath $backupDir)) {
   Remove-Item -LiteralPath $backupDir -Recurse -Force
   Write-Host "Removed previous backup: $(Split-Path -Leaf $backupDir)"

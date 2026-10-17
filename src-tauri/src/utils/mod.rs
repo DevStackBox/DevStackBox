@@ -8,4 +8,5 @@ pub mod mysql_connection;
 pub mod mysql_credentials;
 pub mod mysql_sql;
 pub mod paths;
+pub mod phpmyadmin_config;
 pub mod process;

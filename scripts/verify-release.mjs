@@ -16,7 +16,9 @@ for (const rel of ["apache/bin/httpd.exe", "apache/bin/openssl.exe", "mysql/bin/
  const fd = fs.openSync(file, "r"); const magic = Buffer.alloc(2); fs.readSync(fd, magic); fs.closeSync(fd);
  if (magic.toString() !== "MZ" || fs.statSync(file).size < 4096) throw new Error(`Missing or invalid bundled binary: ${rel}`);
 }
-for (const rel of ["phpmyadmin/index.php", "docs/images/logo/icon-512.png", "src-tauri/icons/icon.ico"]) if (!fs.existsSync(path.join(root, rel))) throw new Error(`Missing resource: ${rel}`);
+for (const rel of ["phpmyadmin/index.php", "phpmyadmin/config.inc.php", "docs/images/logo/icon-512.png", "src-tauri/icons/icon.ico"]) if (!fs.existsSync(path.join(root, rel))) throw new Error(`Missing resource: ${rel}`);
+const pmaConfig = fs.readFileSync(path.join(root, "phpmyadmin/config.inc.php"), "utf8");
+if (!/AllowNoPassword'\]\s*=\s*true/.test(pmaConfig)) throw new Error("phpmyadmin/config.inc.php must set AllowNoPassword = true for local empty root login");
 const mysqld = path.join(root, "mysql/bin/mysqld.exe");
 const mysqlVersion = execFileSync(mysqld, ["--version"], { encoding: "utf8" });
 if (!/Ver 8\.4\./.test(mysqlVersion)) throw new Error(`Expected bundled MySQL 8.4.x, got: ${mysqlVersion.trim()}`);
