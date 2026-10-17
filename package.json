@@ -1,6 +1,6 @@
 {
   "name": "devstackbox",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "A lightweight, portable, open-source local development environment for PHP developers",
   "type": "module",
   "scripts": {
@@ -18,7 +18,8 @@
     "build:optimized": "npm run build:release",
     "build:release": "node scripts/build-release.mjs",
     "release": "node scripts/verify-release.mjs",
-    "check": "npm test && tsc --noEmit && node scripts/validate-docs.mjs && node scripts/verify-release.mjs"
+    "check": "npm test && tsc --noEmit && node scripts/validate-docs.mjs && node scripts/verify-release.mjs",
+    "check:ci": "npm test && tsc --noEmit && node scripts/validate-docs.mjs"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

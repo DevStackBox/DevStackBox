@@ -1,0 +1,10 @@
+name: Winget manifest reminder
+on:
+  release:
+    types: [published]
+jobs:
+  note:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "Update packaging/winget/DevStackBox.DevStackBox.yaml version and SHA256, then open a PR to microsoft/winget-pkgs."

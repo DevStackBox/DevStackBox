@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json")));
@@ -16,4 +17,7 @@ for (const rel of ["apache/bin/httpd.exe", "apache/bin/openssl.exe", "mysql/bin/
  if (magic.toString() !== "MZ" || fs.statSync(file).size < 4096) throw new Error(`Missing or invalid bundled binary: ${rel}`);
 }
 for (const rel of ["phpmyadmin/index.php", "docs/images/logo/icon-512.png", "src-tauri/icons/icon.ico"]) if (!fs.existsSync(path.join(root, rel))) throw new Error(`Missing resource: ${rel}`);
+const mysqld = path.join(root, "mysql/bin/mysqld.exe");
+const mysqlVersion = execFileSync(mysqld, ["--version"], { encoding: "utf8" });
+if (!/Ver 8\.4\./.test(mysqlVersion)) throw new Error(`Expected bundled MySQL 8.4.x, got: ${mysqlVersion.trim()}`);
 console.log(`Release inputs verified: ${pkg.version}`);

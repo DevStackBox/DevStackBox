@@ -203,6 +203,13 @@ export const ROUTES = {
     icon: HardDriveDownload,
     parent: "/settings",
   },
+  settingsXampp: {
+    path: "/settings/xampp-import",
+    labelKey: "navigation.xamppImport",
+    defaultLabel: "Import from XAMPP",
+    icon: HardDriveDownload,
+    parent: "/settings",
+  },
   about: {
     path: "/about",
     labelKey: "navigation.about",

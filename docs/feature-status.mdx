@@ -294,6 +294,7 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 | Version         | Key Changes                                                                                                               |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| v0.1.11         | MySQL 8.4 LTS + phpMyAdmin 5.2.2; Import from XAMPP; website XAMPP positioning; CI `check:ci`                           |
 | v0.1.10         | Stable release: MySQL/DB UX, service status, terminal ConPTY fixes; NSIS detail log; PHP 8.3 bundled, 8.1–8.5 on-demand   |
 | v0.1.9          | Audit remediation batch; installer detail log fix; diagnostics, projects MVP, channel-aware updater                         |
 | v0.1.8          | Branding and logo refresh; signed NSIS installer; in-place upgrade with `www` preservation; MDX docs site                 |
@@ -303,6 +304,6 @@ Update this file every time a feature changes status. Do not maintain feature st
 | v0.1.0 - v0.1.4 | Early alpha, architecture setup                                                                                           |
 
 
-## Release verification (v0.1.10)
+## Release verification (v0.1.11)
 
-**v0.1.10** is published on [GitHub Releases](https://github.com/DevStackBox/DevStackBox/releases/tag/v0.1.10) with signed NSIS installer and `latest.json` for in-app updates. Windows QA notes: `docs/archive/QA-2026-10-17-release-gate.md`. Installer uses Tauri minisign (not Windows Authenticode).
+Ship with `npm run build:release` (runs `verify-release.mjs`, including MySQL **8.4.x** check). Installer uses Tauri minisign (not Windows Authenticode). Clean install checklist: `docs/getting-started/clean-install-checklist.md`.

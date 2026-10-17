@@ -6,6 +6,7 @@ pub mod app_update;
 pub mod config;
 pub mod fullbackup;
 pub mod logs;
+pub mod migration;
 pub mod mysql;
 pub mod php;
 pub mod security;

@@ -1,0 +1,14 @@
+# Submit to https://github.com/microsoft/winget-pkgs under manifests/d/DevStackBox/DevStackBox/
+# Update Version and InstallerSha256 on each release.
+PackageIdentifier: DevStackBox.DevStackBox
+PackageVersion: 0.1.11
+PackageName: DevStackBox
+Publisher: Nomad Programmer
+License: MIT
+ShortDescription: Free XAMPP alternative for Windows with PHP 8.3 and MySQL 8.4 LTS
+Installers:
+  - Architecture: x64
+    InstallerType: exe
+    InstallerUrl: https://github.com/DevStackBox/DevStackBox/releases/download/v0.1.11/DevStackBox_0.1.11_x64-setup.exe
+    InstallerSha256: PLACEHOLDER_UPDATE_ON_RELEASE
+    Scope: machine

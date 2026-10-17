@@ -68,6 +68,8 @@ php/sessions/
 php/current
 
 # Backup and temp files
+mysql-backup-*/
+phpmyadmin-backup-*/
 *.backup
 *.bak
 *~

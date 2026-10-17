@@ -81,6 +81,13 @@ const result = await safeInvoke<ReturnType>(
 | `drop_mysql_user`               | `commands/mysql.rs`  | `username: String`, `host: String`                      | `String`                   |                     |
 | `set_mysql_user_password`       | `commands/mysql.rs`  | `username: String`, `host: String`, `password: String`  | `String`                   |                     |
 
+### Migration Commands
+
+| Command Name                 | Source File              | Parameters                                      | Returns              | Notes                          |
+| ---------------------------- | ------------------------ | ----------------------------------------------- | -------------------- | ------------------------------ |
+| `detect_xampp_installations` | `commands/migration.rs`  | none                                            | `XamppDetection[]`   | Scans default XAMPP paths      |
+| `import_from_xampp`          | `commands/migration.rs`  | `xampp_root: String`, `copy_htdocs: bool`       | `XamppImportResult`  | Copies htdocs into `www`       |
+
 ### Apache Commands
 
 | Command Name         | Source File          | Parameters | Returns   | Notes           |

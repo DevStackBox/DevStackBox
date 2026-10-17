@@ -4,37 +4,52 @@
 [![License: MIT](https://img.shields.io/github/license/DevStackBox/DevStackBox?style=flat-square)](LICENSE)
 [![Windows 10/11](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?style=flat-square&logo=windows&logoColor=white)](https://github.com/DevStackBox/DevStackBox/releases)
 
-Local PHP development for Windows - Apache, MySQL, PHP, and phpMyAdmin in one desktop app.
+**Free XAMPP alternative for Windows** - Apache, MySQL 8.4 LTS, phpMyAdmin, and PHP 8.3 in one MIT-licensed desktop app.
 
-DevStackBox is free and open source. It gives you a modern interface to start services, edit configs, manage sites, handle SSL, and run backups. One installer, fixed paths, no telemetry.
+![DevStackBox on Windows](docs/images/demo.gif)
 
-## Why DevStackBox?
+<details>
+<summary>Static screenshot</summary>
 
-- **All-in-one** - Apache, PHP, MySQL, and phpMyAdmin in a single setup
-- **Modern UI** - Desktop app built with Tauri and React
-- **Fixed layout** - Installs to `C:\devstackbox`; app data in `%LOCALAPPDATA%\devstackbox`
-- **Your machine stays yours** - No telemetry; offline-friendly for everyday development
-- **Open source** - MIT license
+![DevStackBox dashboard](docs/images/dashboard.png)
 
-## Quick start
+</details>
 
-1. Download the latest installer from [devstackbox.com/download](https://www.devstackbox.com/download) or [GitHub Releases](https://github.com/DevStackBox/DevStackBox/releases/latest).
-2. Run setup (administrator rights required).
-3. Open DevStackBox and start Apache, MySQL, and PHP when you need them.
+## Stack
 
-## Documentation
+| In the installer   | In the app (download)                        |
+| ------------------ | -------------------------------------------- |
+| PHP **8.3**        | PHP **8.1, 8.2, 8.4, 8.5** (latest: **8.5**) |
+| Apache **2.4**     | -                                            |
+| MySQL **8.4 LTS**  | -                                            |
+| phpMyAdmin **5.2** | -                                            |
 
-Full guides, troubleshooting, and contributor docs:
+XAMPP for Windows ships PHP 8.2. DevStackBox gives you 8.3 immediately and 8.5 when you need it.
 
-**[devstackbox.com/docs](https://www.devstackbox.com/docs)**
+## Download
+
+[devstackbox.com/download](https://www.devstackbox.com/download) · [GitHub Releases](https://github.com/DevStackBox/DevStackBox/releases/latest)
+
+1. Run the installer (administrator).
+2. Start Apache and MySQL from the app.
+3. Open `http://localhost/` and `http://localhost/phpmyadmin/`.
+
+## Features
+
+- One desktop UI for services, configs, SSL, backups, and projects
+- Import from XAMPP (`Settings → Import from XAMPP`)
+- No telemetry · offline-friendly after install
+
+## Docs
+
+[devstackbox.com/docs](https://www.devstackbox.com/docs)
 
 ## Contributing
 
-Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) before opening a pull request.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Links
 
 - Website: [devstackbox.com](https://www.devstackbox.com)
-- Email: [hello@devstackbox.com](mailto:hello@devstackbox.com)
 - Issues: [GitHub Issues](https://github.com/DevStackBox/DevStackBox/issues)
-- Privacy: [PRIVACY.md](PRIVACY.md) · Security: [SECURITY.md](SECURITY.md) · License: [MIT](LICENSE)
+- Security: [SECURITY.md](SECURITY.md) · Privacy: [PRIVACY.md](PRIVACY.md)

@@ -7,7 +7,9 @@ since: "0.1.8"
 
 # Upgrade DevStackBox
 
-DevStackBox upgrades preserve user data in `%LOCALAPPDATA%\DevStackBox\`. Your web projects, databases, configs, and logs live in that folder - not in the install directory - so reinstalling or updating the app does not wipe your work.
+DevStackBox upgrades preserve user data in `%LOCALAPPDATA%\devstackbox\`. Your configs, logs, and MySQL data live there - not in the install directory. Web projects stay under `C:\devstackbox\www` by default.
+
+From **v0.1.11**, the installer ships **MySQL 8.4 LTS**. There is no automatic MySQL 8.0→8.4 conversion tool. Back up databases before updating; if MySQL will not start after an update, export SQL from a backup or start with a fresh `mysql-data` folder (see [Troubleshooting](../advanced/troubleshooting)).
 
 ## Check for updates in the app
 

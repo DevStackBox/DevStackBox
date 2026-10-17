@@ -4,6 +4,20 @@ All notable changes to DevStackBox are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.11] - 2026-10-17
+
+### Changed
+
+- Bundled **MySQL 8.4.11 LTS** and **phpMyAdmin 5.2.2** (fresh Windows zip bundles; data remains in `%LOCALAPPDATA%\\devstackbox\\mysql-data`)
+- **Import from XAMPP** in Settings: copy `htdocs` into `www`
+- Website and docs: XAMPP-alternative positioning, stack version copy, SEO landing pages
+- CI uses `npm run check:ci` without local-only binary verification on GitHub runners
+
+### Added
+
+- `scripts/refresh-mysql-bundle.ps1` and `scripts/refresh-phpmyadmin-bundle.ps1` for maintainers
+- Clean install checklist doc; winget manifest template; GitHub issue/PR templates
+
 ## [0.1.10] - 2026-10-17
 
 ### Added

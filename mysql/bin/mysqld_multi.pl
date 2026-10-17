@@ -1,17 +1,18 @@
 #!/usr/bin/perl
 
-# Copyright (c) 2000, 2023, Oracle and/or its affiliates.
+# Copyright (c) 2000, 2026, Oracle and/or its affiliates.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0,
 # as published by the Free Software Foundation.
 #
-# This program is also distributed with certain software (including
+# This program is designed to work with certain software (including
 # but not limited to OpenSSL) that is licensed under separate terms,
 # as designated in a particular file or component or in included license
 # documentation.  The authors of MySQL hereby grant you an additional
 # permission to link the program and your derivative works with the
-# separately licensed software that they have included with MySQL.
+# separately licensed software that they have either included with
+# the program or referenced in the documentation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -812,8 +813,8 @@ password   = my_password
 [mysqld2]
 socket     = /tmp/mysql.sock2
 port       = 3307
-pid-file   = C:/Program Files/MySQL/MySQL Server 8.0/data2/hostname.pid2
-datadir    = C:/Program Files/MySQL/MySQL Server 8.0/data2
+pid-file   = C:/Program Files/MySQL/MySQL Server 8.4/data2/hostname.pid2
+datadir    = C:/Program Files/MySQL/MySQL Server 8.4/data2
 language   = C:/Program Files (x86)/MySQL/share/mysql/english
 user       = unix_user1
 
@@ -823,24 +824,24 @@ ledir      = /path/to/mysqld-binary/
 mysqladmin = /path/to/mysqladmin
 socket     = /tmp/mysql.sock3
 port       = 3308
-pid-file   = C:/Program Files/MySQL/MySQL Server 8.0/data3/hostname.pid3
-datadir    = C:/Program Files/MySQL/MySQL Server 8.0/data3
+pid-file   = C:/Program Files/MySQL/MySQL Server 8.4/data3/hostname.pid3
+datadir    = C:/Program Files/MySQL/MySQL Server 8.4/data3
 language   = C:/Program Files (x86)/MySQL/share/mysql/swedish
 user       = unix_user2
 
 [mysqld4]
 socket     = /tmp/mysql.sock4
 port       = 3309
-pid-file   = C:/Program Files/MySQL/MySQL Server 8.0/data4/hostname.pid4
-datadir    = C:/Program Files/MySQL/MySQL Server 8.0/data4
+pid-file   = C:/Program Files/MySQL/MySQL Server 8.4/data4/hostname.pid4
+datadir    = C:/Program Files/MySQL/MySQL Server 8.4/data4
 language   = C:/Program Files (x86)/MySQL/share/mysql/estonia
 user       = unix_user3
  
 [mysqld6]
 socket     = /tmp/mysql.sock6
 port       = 3311
-pid-file   = C:/Program Files/MySQL/MySQL Server 8.0/data6/hostname.pid6
-datadir    = C:/Program Files/MySQL/MySQL Server 8.0/data6
+pid-file   = C:/Program Files/MySQL/MySQL Server 8.4/data6/hostname.pid6
+datadir    = C:/Program Files/MySQL/MySQL Server 8.4/data6
 language   = C:/Program Files (x86)/MySQL/share/mysql/japanese
 user       = unix_user4
 EOF

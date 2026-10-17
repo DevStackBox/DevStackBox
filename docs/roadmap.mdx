@@ -43,7 +43,7 @@ Do NOT require users to download core components on first launch. Bad first-laun
 | phpMyAdmin          | Bundled       | Developers expect it, keep it bundled                  |
 | Default configs     | Bundled       | Required for first launch                              |
 | Sample `www/` page  | Bundled       | Confirms stack works immediately                       |
-| PHP 8.1 / 8.3 / 8.4 | Downloadable  | Optional future versions on demand via PHP Versions UI |
+| PHP 8.1, 8.2, 8.4, 8.5 | Downloadable  | On demand via PHP Versions UI (8.3 stays bundled) |
 | Node.js support     | Future module | Not in v1                                              |
 | Redis               | Future module | Not in v1                                              |
 | PostgreSQL          | Future module | Not in v1                                              |
@@ -52,9 +52,9 @@ Do NOT require users to download core components on first launch. Bad first-laun
 
 ---
 
-## Current state: v0.1.10
+## Current state: v0.1.11
 
-**v0.1.10** is the current stable release on GitHub. PHP **8.3** ships in the installer; **8.1**, **8.2**, **8.4**, and **8.5** are downloadable from the PHP Versions UI. See `feature-status.mdx` and `docs/archive/QA-2026-10-17-release-gate.md` for validation notes.
+**v0.1.11** bundles **MySQL 8.4 LTS** and **phpMyAdmin 5.2.2**. PHP **8.3** ships in the installer; **8.1**, **8.2**, **8.4**, and **8.5** are downloadable from the PHP Versions UI. **Settings → Import from XAMPP** copies `htdocs` into `www`.
 
 ---
 

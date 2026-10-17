@@ -6,7 +6,11 @@ icon: "HelpCircle"
 
 ## What is DevStackBox?
 
-DevStackBox is a free, open-source local PHP development stack for Windows. It bundles Apache, MySQL, PHP, and phpMyAdmin in a single desktop app with a modern UI.
+DevStackBox is a free XAMPP alternative for Windows. One installer includes Apache, MySQL 8.4 LTS, phpMyAdmin, and PHP 8.3.
+
+## Which PHP versions are included?
+
+**PHP 8.3** ships in the installer. **PHP 8.1, 8.2, 8.4, and 8.5** are available under **Services → PHP → Versions** (download, then switch). PHP 8.5 is the newest supported branch.
 
 ## Is DevStackBox free?
 
@@ -14,7 +18,11 @@ Yes. DevStackBox is MIT-licensed open source. There is no paid tier.
 
 ## Where does DevStackBox install?
 
-The application installs to `C:\devstackbox` by default (you can choose another path). User data - web projects, databases, configs, and logs - is stored in `%LOCALAPPDATA%\DevStackBox\`.
+The application installs to `C:\devstackbox` by default (you can choose another path). User data - configs, logs, and MySQL files - is stored in `%LOCALAPPDATA%\devstackbox\`. Web projects use `C:\devstackbox\www` by default.
+
+## Can I move projects from XAMPP?
+
+Yes. Use **Settings → Import from XAMPP** to copy `htdocs` into DevStackBox `www`. Export databases from XAMPP phpMyAdmin and import them in DevStackBox if needed.
 
 ## Does DevStackBox collect telemetry?
 

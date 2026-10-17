@@ -1,15 +1,16 @@
-# Copyright (c) 2017, 2023, Oracle and/or its affiliates.
+# Copyright (c) 2017, 2026, Oracle and/or its affiliates.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License, version 2.0,
 # as published by the Free Software Foundation.
 #
-# This program is also distributed with certain software (including
+# This program is designed to work with certain software (including
 # but not limited to OpenSSL) that is licensed under separate terms,
 # as designated in a particular file or component or in included license
 # documentation.  The authors of MySQL hereby grant you an additional
 # permission to link the program and your derivative works with the
-# separately licensed software that they have included with MySQL.
+# separately licensed software that they have either included with
+# the program or referenced in the documentation.
 #
 # Without limiting anything contained in the foregoing, this file,
 # which is part of C Driver for MySQL (Connector/C), is also subject to the
@@ -228,7 +229,7 @@ ER_DB_DROP_EXISTS
         kor "데이타베이스 '%-.192s'를 제거하지 못했습니다. 데이타베이스가 존재하지 않음 "
         nor "Kan ikke fjerne (drop) '%-.192s'; databasen eksisterer ikke"
         norwegian-ny "Kan ikkje fjerne (drop) '%-.192s'; databasen eksisterer ikkje"
-        pol "Nie można usun?ć bazy danych '%-.192s'; baza danych nie istnieje"
+        pol "Nie można usunąć bazy danych '%-.192s'; baza danych nie istnieje"
         por "Não pode eliminar o banco de dados '%-.192s'; este banco de dados não existe"
         rum "Nu pot sa drop baza de date '%-.192s'; baza da date este inexistenta"
         rus "Невозможно удалить базу данных '%-.192s'. Такой базы данных нет"
@@ -252,7 +253,7 @@ OBSOLETE_ER_DB_DROP_DELETE
         kor "데이타베이스 제거 에러('%-.192s'를 삭제할 수 없읍니다, 에러번호: %d - %s)"
         nor "Feil ved fjerning (drop) av databasen (kan ikke slette '%-.192s', feil %d - %s)"
         norwegian-ny "Feil ved fjerning (drop) av databasen (kan ikkje slette '%-.192s', feil %d - %s)"
-        pol "Bł?d podczas usuwania bazy danych (nie można usun?ć '%-.192s', bł?d %d - %s)"
+        pol "Błąd podczas usuwania bazy danych (nie można usunąć '%-.192s', błąd %d - %s)"
         por "Erro ao eliminar banco de dados (não pode eliminar '%-.192s' - erro no. %d - %s)"
         rum "Eroare dropuind baza de date (nu pot sa sterg '%-.192s', Eroare: %d - %s)"
         rus "Ошибка при удалении базы данных (невозможно удалить '%-.192s', ошибка: %d - %s)"
@@ -276,7 +277,7 @@ ER_DB_DROP_RMDIR
         kor "데이타베이스 제거 에러(rmdir '%-.192s'를 할 수 없읍니다, 에러번호: %d - %s)"
         nor "Feil ved sletting av database (kan ikke slette katalogen '%-.192s', feil %d - %s)"
         norwegian-ny "Feil ved sletting av database (kan ikkje slette katalogen '%-.192s', feil %d - %s)"
-        pol "Bł?d podczas usuwania bazy danych (nie można wykonać rmdir '%-.192s', bł?d %d - %s)"
+        pol "Błąd podczas usuwania bazy danych (nie można wykonać rmdir '%-.192s', błąd %d - %s)"
         por "Erro ao eliminar banco de dados (não pode remover diretório '%-.192s' - erro no. %d - %s)"
         rum "Eroare dropuind baza de date (nu pot sa rmdir '%-.192s', Eroare: %d - %s)"
         rus "Невозможно удалить базу данных (невозможно удалить каталог '%-.192s', ошибка: %d - %s)"
@@ -300,7 +301,7 @@ OBSOLETE_ER_CANT_DELETE_FILE
         kor "'%-.192s' 삭제 중 에러 (에러번호: %d - %s)"
         nor "Feil ved sletting av '%-.192s' (Feilkode: %d - %s)"
         norwegian-ny "Feil ved sletting av '%-.192s' (Feilkode: %d - %s)"
-        pol "Bł?d podczas usuwania '%-.192s' (Kod błędu: %d - %s)"
+        pol "Błąd podczas usuwania '%-.192s' (Kod błędu: %d - %s)"
         por "Erro na remoção de '%-.192s' (erro no. %d - %s)"
         rum "Eroare incercind sa delete '%-.192s' (Eroare: %d - %s)"
         rus "Ошибка при удалении '%-.192s' (ошибка: %d - %s)"
@@ -444,7 +445,7 @@ ER_FILE_NOT_FOUND
         kor "화일을 찾지 못했습니다.: '%-.200s' (에러번호: %d - %s)"
         nor "Kan ikke finne fila: '%-.200s' (Feilkode: %d - %s)"
         norwegian-ny "Kan ikkje finne fila: '%-.200s' (Feilkode: %d - %s)"
-        pol "Nie można znaleĽć pliku: '%-.200s' (Kod błędu: %d - %s)"
+        pol "Nie można znaleźć pliku: '%-.200s' (Kod błędu: %d - %s)"
         por "Não pode encontrar o arquivo '%-.200s' (erro no. %d - %s)"
         rum "Nu pot sa gasesc fisierul: '%-.200s' (Eroare: %d - %s)"
         rus "Невозможно найти файл: '%-.200s' (ошибка: %d - %s)"
@@ -588,7 +589,7 @@ OBSOLETE_ER_ERROR_ON_CLOSE
         kor "'%-.192s'닫는 중 에러 (에러번호: %d - %s)"
         nor "Feil ved lukking av '%-.192s' (Feilkode: %d - %s)"
         norwegian-ny "Feil ved lukking av '%-.192s' (Feilkode: %d - %s)"
-        pol "Bł?d podczas zamykania '%-.192s' (Kod błędu: %d - %s)"
+        pol "Błąd podczas zamykania '%-.192s' (Kod błędu: %d - %s)"
         por "Erro ao fechar '%-.192s' (erro no. %d - %s)"
         rum "Eroare inchizind '%-.192s' (errno: %d - %s)"
         rus "Ошибка при закрытии '%-.192s' (ошибка: %d - %s)"
@@ -612,7 +613,7 @@ ER_ERROR_ON_READ
         kor "'%-.200s'화일 읽기 에러 (에러번호: %d - %s)"
         nor "Feil ved lesing av '%-.200s' (Feilkode: %d - %s)"
         norwegian-ny "Feil ved lesing av '%-.200s' (Feilkode: %d - %s)"
-        pol "Bł?d podczas odczytu pliku '%-.200s' (Kod błędu: %d - %s)"
+        pol "Błąd podczas odczytu pliku '%-.200s' (Kod błędu: %d - %s)"
         por "Erro ao ler arquivo '%-.200s' (erro no. %d - %s)"
         rum "Eroare citind fisierul '%-.200s' (errno: %d - %s)"
         rus "Ошибка чтения файла '%-.200s' (ошибка: %d - %s)"
@@ -636,7 +637,7 @@ ER_ERROR_ON_RENAME
         kor "'%-.210s'를 '%-.210s'로 이름 변경중 에러 (에러번호: %d - %s)"
         nor "Feil ved omdøping av '%-.210s' til '%-.210s' (Feilkode: %d - %s)"
         norwegian-ny "Feil ved omdøyping av '%-.210s' til '%-.210s' (Feilkode: %d - %s)"
-        pol "Bł?d podczas zmieniania nazwy '%-.210s' na '%-.210s' (Kod błędu: %d - %s)"
+        pol "Błąd podczas zmieniania nazwy '%-.210s' na '%-.210s' (Kod błędu: %d - %s)"
         por "Erro ao renomear '%-.210s' para '%-.210s' (erro no. %d - %s)"
         rum "Eroare incercind sa renumesc '%-.210s' in '%-.210s' (errno: %d - %s)"
         rus "Ошибка при переименовании '%-.210s' в '%-.210s' (ошибка: %d - %s)"
@@ -660,7 +661,7 @@ ER_ERROR_ON_WRITE
         kor "'%-.200s'화일 기록 중 에러 (에러번호: %d - %s)"
         nor "Feil ved skriving av fila '%-.200s' (Feilkode: %d - %s)"
         norwegian-ny "Feil ved skriving av fila '%-.200s' (Feilkode: %d - %s)"
-        pol "Bł?d podczas zapisywania pliku '%-.200s' (Kod błędu: %d - %s)"
+        pol "Błąd podczas zapisywania pliku '%-.200s' (Kod błędu: %d - %s)"
         por "Erro ao gravar arquivo '%-.200s' (erro no. %d - %s)"
         rum "Eroare scriind fisierul '%-.200s' (errno: %d - %s)"
         rus "Ошибка записи в файл '%-.200s' (ошибка: %d - %s)"
@@ -756,7 +757,7 @@ ER_GET_ERRNO
         kor "테이블 handler에서 %d - '%-.192s' 에러가 발생 하였습니다."
         nor "Mottok feil %d - '%-.192s' fra tabell håndterer"
         norwegian-ny "Mottok feil %d - '%-.192s' fra tabell handterar"
-        pol "Otrzymano bł?d %d - '%-.192s' z obsługi tabeli"
+        pol "Otrzymano błąd %d - '%-.192s' z manipulatora tabeli"
         por "Obteve erro %d - '%-.192s' no manipulador de tabelas"
         rum "Eroarea %d - '%-.192s' obtinuta din handlerul tabelei"
         rus "Получена ошибка %d - '%-.192s' от обработчика таблиц"
@@ -780,14 +781,14 @@ ER_ILLEGAL_HA
         kor "'%-.192s'의 테이블 handler는 이러한 옵션을 제공하지 않읍니다."
         nor "Tabell håndtereren for '%-.192s' har ikke denne muligheten"
         norwegian-ny "Tabell håndteraren for '%-.192s' har ikkje denne moglegheita"
-        pol "Obsługa tabeli '%-.192s' nie posiada tej opcji"
+        pol "Manipulator tabeli '%-.192s' nie posiada tej opcji"
         por "Manipulador de tabela para '%-.192s' não tem esta opção"
         rum "Handlerul tabelei pentru '%-.192s' nu are aceasta optiune"
         rus "Обработчик таблицы '%-.192s' не поддерживает эту возможность"
         serbian "Handler tabela za '%-.192s' nema ovu opciju"
         slo "Obsluha tabuľky '%-.192s' nemá tento parameter"
         spa "El manejador de la tabla de '%-.192s' no tiene esta opcion"
-	swe "Tabellhanteraren for tabell '%-.192s' stödjer ej detta"
+        swe "Tabellhanteraren for tabell '%-.192s' stödjer ej detta"
         ukr "Дескриптор таблиці '%-.192s' не має цієї властивості"
 ER_KEY_NOT_FOUND
         cze "Nemohu najít záznam v '%-.192s'"
@@ -804,14 +805,14 @@ ER_KEY_NOT_FOUND
         kor "'%-.192s'에서 레코드를 찾을 수 없읍니다."
         nor "Kan ikke finne posten i '%-.192s'"
         norwegian-ny "Kan ikkje finne posten i '%-.192s'"
-        pol "Nie można znaleĽć rekordu w '%-.192s'"
+        pol "Nie można znaleźć rekordu w '%-.192s'"
         por "Não pode encontrar registro em '%-.192s'"
         rum "Nu pot sa gasesc recordul in '%-.192s'"
         rus "Невозможно найти запись в '%-.192s'"
         serbian "Ne mogu da pronađem slog u '%-.192s'"
         slo "Nemôžem nájsť záznam v '%-.192s'"
         spa "No puedo encontrar el registro en '%-.192s'"
-	swe "Hittar inte posten '%-.192s'"
+        swe "Hittar inte posten '%-.192s'"
         ukr "Не можу записати у '%-.192s'"
 ER_NOT_FORM_FILE
         cze "Nesprávná informace v souboru '%-.200s'"
@@ -828,7 +829,7 @@ ER_NOT_FORM_FILE
         kor "화일의 부정확한 정보: '%-.200s'"
         nor "Feil informasjon i filen: '%-.200s'"
         norwegian-ny "Feil informasjon i fila: '%-.200s'"
-        pol "Niewła?ciwa informacja w pliku: '%-.200s'"
+        pol "Niewłaściwa informacja w pliku: '%-.200s'"
         por "Informação incorreta no arquivo '%-.200s'"
         rum "Informatie incorecta in fisierul: '%-.200s'"
         rus "Некорректная информация в файле '%-.200s'"
@@ -852,7 +853,7 @@ ER_NOT_KEYFILE
         kor "'%-.200s' 테이블의 부정확한 키 존재. 수정하시오!"
         nor "Tabellen '%-.200s' har feil i nøkkelfilen; forsøk å reparer den"
         norwegian-ny "Tabellen '%-.200s' har feil i nykkelfila; prøv å reparere den"
-        pol "Niewła?ciwy plik kluczy dla tabeli: '%-.200s'; spróbuj go naprawić"
+        pol "Niewłaściwy plik kluczy dla tabeli: '%-.200s'; spróbuj go naprawić"
         por "Arquivo de índice incorreto para tabela '%-.200s'; tente repará-lo"
         rum "Cheia fisierului incorecta pentru tabela: '%-.200s'; incearca s-o repari"
         rus "Некорректный индексный файл для таблицы: '%-.200s'. Попробуйте восстановить его"
@@ -948,7 +949,7 @@ ER_OUT_OF_SORTMEMORY HY001 S1001
         kor "Out of sort memory. daemon sort buffer의 크기를 증가시키세요"
         nor "Ikke mer sorteringsminne. Vurder å øke sorteringsminnet (sort buffer size) for tjenesten"
         norwegian-ny "Ikkje meir sorteringsminne. Vurder å auke sorteringsminnet (sorteringsbuffer storleik) for tenesten"
-        pol "Zbyt mało pamięci dla sortowania. Zwiększ wielko?ć bufora demona dla sortowania"
+        pol "Zbyt mało pamięci dla sortowania. Zwiększ wielkość bufora demona dla sortowania"
         por "Não há memória suficiente para ordenação. Considere aumentar o tamanho do retentor (buffer) de ordenação."
         rum "Out of memory pentru sortare. Largeste marimea buffer-ului pentru sortare in daemon (sort buffer size)"
         rus "Недостаточно памяти для сортировки. Увеличьте размер буфера сортировки на сервере"
@@ -996,7 +997,7 @@ ER_CON_COUNT_ERROR 08004
         kor "너무 많은 연결... max_connection을 증가 시키시오..."
         nor "For mange tilkoblinger (connections)"
         norwegian-ny "For mange tilkoplingar (connections)"
-        pol "Zbyt wiele poł?czeń"
+        pol "Zbyt wiele połączeń"
         por "Excesso de conexões"
         rum "Prea multe conectiuni"
         rus "Слишком много соединений"
@@ -1020,7 +1021,7 @@ ER_OUT_OF_RESOURCES
 # This message failed to convert from euc-kr, skipped
         nor "Tomt for tråd plass/minne"
         norwegian-ny "Tomt for tråd plass/minne"
-        pol "Zbyt mało miejsca/pamięci dla w?tku"
+        pol "Zbyt mało miejsca/pamięci dla wątku"
         por "Sem memória. Verifique se o mysqld ou algum outro processo está usando toda memória disponível. Se não, você pode ter que usar 'ulimit' para permitir ao mysqld usar mais memória ou você pode adicionar mais área de 'swap'"
         rum "Out of memory;  Verifica daca mysqld sau vreun alt proces foloseste toate memoria disponbila. Altfel, trebuie sa folosesi 'ulimit' ca sa permiti lui memoria disponbila. Altfel, trebuie sa folosesi 'ulimit' ca sa permiti lui mysqld sa foloseasca mai multa memorie ori adauga mai mult spatiu pentru swap (swap space)"
         rus "Недостаточно памяти; удостоверьтесь, что mysqld или какой-либо другой процесс не занимает всю доступную память. Если нет, то вы можете использовать ulimit, чтобы выделить для mysqld больше памяти, или увеличить объем файла подкачки"
@@ -1403,7 +1404,7 @@ ER_WRONG_SUM_SELECT 42000 S1009
         kor "Statement 가 sum기능을 동작중이고 칼럼도 동일한 statement입니다."
         nor "Uttrykket har summer (sum) funksjoner og kolonner i samme uttrykk"
         norwegian-ny "Uttrykket har summer (sum) funksjoner og kolonner i same uttrykk"
-        pol "Zapytanie ma funkcje sumuj?ce i kolumny w tym samym zapytaniu"
+        pol "Zapytanie ma funkcje sumujące i kolumny w tym samym zapytaniu"
         por "Cláusula contém funções de soma e colunas juntas"
         rum "Comanda are functii suma si coloane in aceeasi comanda"
         rus "Выражение содержит групповые функции и столбцы, но не включает GROUP BY. А как вы умудрились получить это сообщение об ошибке?"
@@ -1426,7 +1427,7 @@ ER_WRONG_VALUE_COUNT 21S01
         kor "칼럼의 카운트가 값의 카운트와 일치하지 않습니다."
         nor "Felt telling stemmer verdi telling"
         norwegian-ny "Kolonne telling stemmer verdi telling"
-        pol "Liczba kolumn nie odpowiada liczbie warto?ci"
+        pol "Liczba kolumn nie odpowiada liczbie wartości"
         por "Contagem de colunas não confere com a contagem de valores"
         rum "Numarul de coloane nu este acelasi cu numarul valoarei"
         rus "Количество столбцов не совпадает с количеством значений"
@@ -1510,29 +1511,29 @@ ER_DUP_KEYNAME 42000 S1009
 # When using this error code, please use ER(ER_DUP_ENTRY_WITH_KEY_NAME)
 # for the message string.  See, for example, code in handler.cc.
 ER_DUP_ENTRY 23000 S1009
-	cze "Zdvojený klíč '%-.192s' (číslo klíče %d)"
-	dan "Ens værdier '%-.192s' for indeks %d"
-	nla "Dubbele ingang '%-.192s' voor zoeksleutel %d"
-	eng "Duplicate entry '%-.192s' for key %d"
-	est "Kattuv väärtus '%-.192s' võtmele %d"
-	fre "Duplicata du champ '%-.192s' pour la clef %d"
-	ger "Doppelter Eintrag '%-.192s' für Schlüssel %d"
-	greek "Διπλή εγγραφή '%-.192s' για το κλειδί %d"
-	hun "Duplikalt bejegyzes '%-.192s' a %d kulcs szerint."
-	ita "Valore duplicato '%-.192s' per la chiave %d"
-	jpn "'%-.192s' は索引 %d で重複しています。"
-	kor "중복된 입력 값 '%-.192s': key %d"
-	nor "Like verdier '%-.192s' for nøkkel %d"
-	norwegian-ny "Like verdiar '%-.192s' for nykkel %d"
-	pol "Powtórzone wystąpienie '%-.192s' dla klucza %d"
-	por "Entrada '%-.192s' duplicada para a chave %d"
-	rum "Cimpul '%-.192s' e duplicat pentru cheia %d"
-	rus "Дублирующаяся запись '%-.192s' по ключу %d"
-	serbian "Dupliran unos '%-.192s' za ključ '%d'"
-	slo "Opakovaný kľúč '%-.192s' (číslo kľúča %d)"
-	spa "Entrada duplicada '%-.192s' para la clave %d"
-	swe "Dublett '%-.192s' för nyckel %d"
-	ukr "Дублюючий запис '%-.192s' для ключа %d"
+        cze "Zdvojený klíč '%-.192s' (číslo klíče %d)"
+        dan "Ens værdier '%-.192s' for indeks %d"
+        nla "Dubbele ingang '%-.192s' voor zoeksleutel %d"
+        eng "Duplicate entry '%-.192s' for key %d"
+        est "Kattuv väärtus '%-.192s' võtmele %d"
+        fre "Duplicata du champ '%-.192s' pour la clef %d"
+        ger "Doppelter Eintrag '%-.192s' für Schlüssel %d"
+        greek "Διπλή εγγραφή '%-.192s' για το κλειδί %d"
+        hun "Duplikalt bejegyzes '%-.192s' a %d kulcs szerint."
+        ita "Valore duplicato '%-.192s' per la chiave %d"
+        jpn "'%-.192s' は索引 %d で重複しています。"
+        kor "중복된 입력 값 '%-.192s': key %d"
+        nor "Like verdier '%-.192s' for nøkkel %d"
+        norwegian-ny "Like verdiar '%-.192s' for nykkel %d"
+        pol "Powtórzone wystąpienie '%-.192s' dla klucza %d"
+        por "Entrada '%-.192s' duplicada para a chave %d"
+        rum "Cimpul '%-.192s' e duplicat pentru cheia %d"
+        rus "Дублирующаяся запись '%-.192s' по ключу %d"
+        serbian "Dupliran unos '%-.192s' za ključ '%d'"
+        slo "Opakovaný kľúč '%-.192s' (číslo kľúča %d)"
+        spa "Entrada duplicada '%-.192s' para la clave %d"
+        swe "Dublett '%-.192s' för nyckel %d"
+        ukr "Дублюючий запис '%-.192s' для ключа %d"
 ER_WRONG_FIELD_SPEC 42000 S1009
         cze "Chybná specifikace sloupce '%-.192s'"
         dan "Forkert kolonnespecifikaton for felt '%-.192s'"
@@ -1620,7 +1621,7 @@ ER_NONUNIQ_TABLE 42000 S1009
         kor "Unique 하지 않은 테이블/alias: '%-.192s'"
         nor "Ikke unikt tabell/alias: '%-.192s'"
         norwegian-ny "Ikkje unikt tabell/alias: '%-.192s'"
-        pol "Tabela/alias nie s? unikalne: '%-.192s'"
+        pol "Tabela/alias nie są unikalne: '%-.192s'"
         por "Tabela/alias '%-.192s' não única"
         rum "Tabela/alias: '%-.192s' nu este unic"
         rus "Повторяющаяся таблица/псевдоним '%-.192s'"
@@ -1644,7 +1645,7 @@ ER_INVALID_DEFAULT 42000 S1009
         kor "'%-.192s'의 유효하지 못한 디폴트 값을 사용하셨습니다."
         nor "Ugyldig standardverdi for '%-.192s'"
         norwegian-ny "Ugyldig standardverdi for '%-.192s'"
-        pol "Niewła?ciwa warto?ć domy?lna dla '%-.192s'"
+        pol "Niewłaściwa wartość domyślna dla '%-.192s'"
         por "Valor padrão (default) inválido para '%-.192s'"
         rum "Valoarea de default este invalida pentru '%-.192s'"
         rus "Некорректное значение по умолчанию для '%-.192s'"
@@ -1692,7 +1693,7 @@ ER_TOO_MANY_KEYS 42000 S1009
         kor "너무 많은 키가 정의되어 있읍니다.. 최대 %d의 키가 가능함"
         nor "For mange nøkler spesifisert. Maks %d nøkler tillatt"
         norwegian-ny "For mange nykler spesifisert. Maks %d nyklar tillatt"
-        pol "Okre?lono zbyt wiele kluczy. Dostępnych jest maksymalnie %d kluczy"
+        pol "Określono zbyt wiele kluczy. Dostępnych jest maksymalnie %d kluczy"
         por "Especificadas chaves demais. O máximo permitido são %d chaves"
         rum "Prea multe chei. Numarul de chei maxim este %d"
         rus "Указано слишком много ключей. Разрешается указывать не более %d ключей"
@@ -1716,7 +1717,7 @@ ER_TOO_MANY_KEY_PARTS 42000 S1009
         kor "너무 많은 키 부분(parts)들이 정의되어 있읍니다.. 최대 %d 부분이 가능함"
         nor "For mange nøkkeldeler spesifisert. Maks %d deler tillatt"
         norwegian-ny "For mange nykkeldelar spesifisert. Maks %d delar tillatt"
-        pol "Okre?lono zbyt wiele czę?ci klucza. Dostępnych jest maksymalnie %d czę?ci"
+        pol "Określono zbyt wiele części klucza. Dostępnych jest maksymalnie %d części"
         por "Especificadas partes de chave demais. O máximo permitido são %d partes"
         rum "Prea multe chei. Numarul de chei maxim este %d"
         rus "Указано слишком много частей составного ключа. Разрешается указывать не более %d частей"
@@ -1740,7 +1741,7 @@ ER_TOO_LONG_KEY 42000 S1009
         kor "정의된 키가 너무 깁니다. 최대 키의 길이는 %d입니다."
         nor "Spesifisert nøkkel var for lang. Maks nøkkellengde er is %d"
         norwegian-ny "Spesifisert nykkel var for lang. Maks nykkellengde er %d"
-        pol "Zdefinowany klucz jest zbyt długi. Maksymaln? długo?ci? klucza jest %d"
+        pol "Zdefinowany klucz jest zbyt długi. Maksymalną długością klucza jest %d"
         por "Chave especificada longa demais. O comprimento de chave máximo permitido é %d"
         rum "Cheia specificata este prea lunga. Marimea maxima a unei chei este de %d"
         rus "Указан слишком длинный ключ. Максимальная длина ключа составляет %d байт"
@@ -1812,7 +1813,7 @@ ER_TOO_BIG_FIELDLENGTH 42000 S1009
         kor "칼럼 '%-.192s'의 칼럼 길이가 너무 깁니다 (최대 = %lu). 대신에 BLOB를 사용하세요."
         nor "For stor nøkkellengde for kolonne '%-.192s' (maks = %lu). Bruk BLOB istedenfor"
         norwegian-ny "For stor nykkellengde for felt '%-.192s' (maks = %lu). Bruk BLOB istadenfor"
-        pol "Zbyt duża długo?ć kolumny '%-.192s' (maks. = %lu). W zamian użyj typu BLOB"
+        pol "Zbyt duża długość kolumny '%-.192s' (maks. = %lu). W zamian użyj typu BLOB"
         por "Comprimento da coluna '%-.192s' grande demais (max = %lu); use BLOB em seu lugar"
         rum "Lungimea coloanei '%-.192s' este prea lunga (maximum = %lu). Foloseste BLOB mai bine"
         rus "Слишком большая длина столбца '%-.192s' (максимум = %lu). Используйте тип BLOB или TEXT вместо текущего"
@@ -1860,7 +1861,7 @@ ER_READY
         kor "%s: 연결 준비중입니다\nVersion: '%s'  socket: '%s'  port: %d"
         nor "%s: klar for tilkoblinger\nVersion: '%s'  socket: '%s'  port: %d"
         norwegian-ny "%s: klar for tilkoblingar\nVersion: '%s'  socket: '%s'  port: %d"
-        pol "%s: gotowe do poł?czenia\nVersion: '%s'  socket: '%s'  port: %d"
+        pol "%s: gotowe do połączenia\nVersion: '%s'  socket: '%s'  port: %d"
         por "%s: Pronto para conexões\nVersion: '%s'  socket: '%s'  port: %d"
         rum "%s: sint gata pentru conectii\nVersion: '%s'  socket: '%s'  port: %d"
         rus "%s: Готов принимать соединения.\nВерсия: '%s'  сокет: '%s'  порт: %d"
@@ -1956,7 +1957,7 @@ ER_FORCING_CLOSE 08S01
         kor "%s: thread %ld의 강제 종료 user: '%-.48s'\n"
         nor "%s: Påtvinget avslutning av tråd %ld  bruker: '%-.48s'\n"
         norwegian-ny "%s: Påtvinga avslutning av tråd %ld  brukar: '%-.48s'\n"
-        pol "%s: Wymuszenie zamknięcia w?tku %ld  użytkownik: '%-.48s'\n"
+        pol "%s: Wymuszenie zamknięcia wątku %ld  użytkownik: '%-.48s'\n"
         por "%s: Forçando finalização da 'thread' %ld - usuário '%-.48s'\n"
         rum "%s: Terminare fortata a thread-ului %ld  utilizatorului: '%-.48s'\n"
         rus "%s: Принудительно закрываем поток %ld  пользователя: '%-.48s'\n"
@@ -2028,7 +2029,7 @@ ER_WRONG_FIELD_TERMINATORS 42000 S1009
         kor "필드 구분자 인수들이 완전하지 않습니다. 메뉴얼을 찾아 보세요."
         nor "Felt skiller argumentene er ikke som forventet, se dokumentasjonen"
         norwegian-ny "Felt skiljer argumenta er ikkje som venta, sjå dokumentasjonen"
-        pol "Nie oczekiwano separatora. SprawdĽ podręcznik"
+        pol "Nie oczekiwano separatora. Sprawdź podręcznik"
         por "Argumento separador de campos não é o esperado. Cheque o manual"
         rum "Argumentul pentru separatorul de cimpuri este diferit de ce ma asteptam. Verifica manualul"
         rus "Аргумент разделителя полей - не тот, который ожидался. Обращайтесь к документации"
@@ -2052,7 +2053,7 @@ ER_BLOBS_AND_NO_TERMINATED 42000 S1009
         kor "BLOB로는 고정길이의 lowlength를 사용할 수 없습니다. 'fields terminated by'를 사용하세요."
         nor "En kan ikke bruke faste feltlengder med BLOB. Vennlisgt bruk 'fields terminated by'."
         norwegian-ny "Ein kan ikkje bruke faste feltlengder med BLOB. Vennlisgt bruk 'fields terminated by'."
-        pol "Nie można użyć stałej długo?ci wiersza z polami typu BLOB. Użyj 'fields terminated by'."
+        pol "Nie można użyć stałej długości wiersza z polami typu BLOB. Użyj 'fields terminated by'."
         por "Você não pode usar comprimento de linha fixo com BLOBs. Por favor, use campos com comprimento limitado."
         rum "Nu poti folosi lungime de cimp fix pentru BLOB-uri. Foloseste 'fields terminated by'."
         rus "Фиксированный размер записи с полями типа BLOB использовать нельзя, применяйте 'fields terminated by'"
@@ -2172,7 +2173,7 @@ ER_WRONG_SUB_KEY
         kor "부정확한 서버 파트 키. 사용된 키 파트가 스트링이 아니거나 키 파트의 길이가 너무 깁니다."
         nor "Feil delnøkkel. Den brukte delnøkkelen er ikke en streng eller den oppgitte lengde er lengre enn nøkkel lengden"
         norwegian-ny "Feil delnykkel. Den brukte delnykkelen er ikkje ein streng eller den oppgitte lengda er lengre enn nykkellengden"
-        pol "Błędna podczę?ć klucza. Użyta czę?ć klucza nie jest łańcuchem lub użyta długo?ć  jest większa niż czę?ć klucza"
+        pol "Błędna podczęść klucza. Użyta część klucza nie jest łańcuchem lub użyta długość  jest większa niż część klucza"
         por "Sub parte da chave incorreta. A parte da chave usada não é uma 'string' ou o comprimento usado é maior que parte da chave ou o manipulador de tabelas não suporta sub chaves únicas"
         rum "Componentul cheii este incorrect. Componentul folosit al cheii nu este un sir sau lungimea folosita este mai lunga decit lungimea cheii"
         rus "Некорректная часть ключа. Используемая часть ключа не является строкой, указанная длина больше, чем длина части ключа, или обработчик таблицы не поддерживает уникальные части ключа"
@@ -2196,7 +2197,7 @@ ER_CANT_REMOVE_ALL_FIELDS 42000
         kor "ALTER TABLE 명령으로는 모든 칼럼을 지울 수 없습니다. DROP TABLE 명령을 이용하세요."
         nor "En kan ikke slette alle felt med ALTER TABLE. Bruk DROP TABLE isteden."
         norwegian-ny "Ein kan ikkje slette alle felt med ALTER TABLE. Bruk DROP TABLE istadenfor."
-        pol "Nie można usun?ć wszystkich pól wykorzystuj?c ALTER TABLE. W zamian użyj DROP TABLE"
+        pol "Nie można usunąć wszystkich pól wykorzystując ALTER TABLE. W zamian użyj DROP TABLE"
         por "Você não pode deletar todas as colunas com ALTER TABLE; use DROP TABLE em seu lugar"
         rum "Nu poti sterge toate coloanele cu ALTER TABLE. Foloseste DROP TABLE in schimb"
         rus "Нельзя удалить все столбцы с помощью ALTER TABLE. Используйте  DROP TABLE"
@@ -2220,7 +2221,7 @@ ER_CANT_DROP_FIELD_OR_KEY 42000
         kor "'%-.192s'를 DROP할 수 없습니다. 칼럼이나 키가 존재하는지 채크하세요."
         nor "Kan ikke DROP '%-.192s'. Undersøk om felt/nøkkel eksisterer."
         norwegian-ny "Kan ikkje DROP '%-.192s'. Undersøk om felt/nøkkel eksisterar."
-        pol "Nie można wykonać operacji DROP '%-.192s'. SprawdĽ, czy to pole/klucz istnieje"
+        pol "Nie można wykonać operacji DROP '%-.192s'. Sprawdź, czy to pole/klucz istnieje"
         por "Não se pode fazer DROP '%-.192s'. Confira se esta coluna/chave existe"
         rum "Nu pot sa DROP '%-.192s'. Verifica daca coloana/cheia exista"
         rus "Невозможно удалить (DROP) '%-.192s'. Убедитесь что столбец/ключ действительно существует"
@@ -2275,7 +2276,7 @@ ER_NO_SUCH_THREAD
         kor "알수 없는 쓰레드 id: %lu"
         nor "Ukjent tråd id: %lu"
         norwegian-ny "Ukjent tråd id: %lu"
-        pol "Nieznany identyfikator w?tku: %lu"
+        pol "Nieznany identyfikator wątku: %lu"
         por "'Id' de 'thread' %lu desconhecido"
         rum "Id-ul: %lu thread-ului este necunoscut"
         rus "Неизвестный номер потока: %lu"
@@ -2299,7 +2300,7 @@ ER_KILL_DENIED_ERROR
         kor "쓰레드(Thread) %lu의 소유자가 아닙니다."
         nor "Du er ikke eier av tråden %lu"
         norwegian-ny "Du er ikkje eigar av tråd %lu"
-        pol "Nie jeste? wła?cicielem w?tku %lu"
+        pol "Nie jesteś właścicielem wątku %lu"
         por "Você não é proprietário da 'thread' %lu"
         rum "Nu sinteti proprietarul threadului %lu"
         rus "Вы не являетесь владельцем потока %lu"
@@ -2443,7 +2444,7 @@ ER_BLOB_CANT_HAVE_DEFAULT 42000
         kor "BLOB 칼럼 '%-.192s' 는 디폴트 값을 가질 수 없습니다."
         nor "Blob feltet '%-.192s' kan ikke ha en standard verdi"
         norwegian-ny "Blob feltet '%-.192s' kan ikkje ha ein standard verdi"
-        pol "Pole typu blob '%-.192s' nie może mieć domy?lnej warto?ci"
+        pol "Pole typu blob '%-.192s' nie może mieć domyślnej wartości"
         por "Coluna BLOB '%-.192s' não pode ter um valor padrão (default)"
         rum "Coloana BLOB '%-.192s' nu poate avea o valoare default"
         rus "Невозможно указывать значение по умолчанию для столбца BLOB '%-.192s'"
@@ -2515,7 +2516,7 @@ ER_TOO_BIG_SELECT 42000
         kor "SELECT 명령에서 너무 많은 레코드를 찾기 때문에 많은 시간이 소요됩니다. 따라서 WHERE 문을 점검하거나, 만약 SELECT가 ok되면  SET SQL_BIG_SELECTS=1 옵션을 사용하세요."
         nor "SELECT ville undersøke for mange poster og ville sannsynligvis ta veldig lang tid. Undersøk WHERE klausulen og bruk SET SQL_BIG_SELECTS=1 om SELECTen er korrekt"
         norwegian-ny "SELECT ville undersøkje for mange postar og ville sannsynligvis ta veldig lang tid. Undersøk WHERE klausulen og bruk SET SQL_BIG_SELECTS=1 om SELECTen er korrekt"
-        pol "Operacja SELECT będzie dotyczyła zbyt wielu rekordów i prawdopodobnie zajmie bardzo dużo czasu. SprawdĽ warunek WHERE i użyj SQL_OPTION BIG_SELECTS=1 je?li operacja SELECT jest poprawna"
+        pol "Operacja SELECT będzie dotyczyła zbyt wielu rekordów i prawdopodobnie zajmie bardzo dużo czasu. Sprawdź warunek WHERE i użyj SQL_OPTION BIG_SELECTS=1 jeśli operacja SELECT jest poprawna"
         por "O SELECT examinaria registros demais e provavelmente levaria muito tempo. Cheque sua cláusula WHERE e use SET SQL_BIG_SELECTS=1, se o SELECT estiver correto"
         rum "SELECT-ul ar examina prea multe cimpuri si probabil ar lua prea mult timp; verifica clauza WHERE si foloseste SET SQL_BIG_SELECTS=1 daca SELECT-ul e okay"
         rus "Для такой выборки SELECT должен будет просмотреть слишком много записей и, видимо, это займет очень много времени. Проверьте ваше указание WHERE, и, если в нем все в порядке, укажите SET SQL_BIG_SELECTS=1"
@@ -4085,7 +4086,7 @@ OBSOLETE_ER_DUMP_NOT_IMPLEMENTED
         swe "Tabellhanteraren klarar inte en binär kopiering av tabellen"
         ukr "Цей тип таблиці не підтримує бінарну передачу таблиці"
 OBSOLETE_ER_FLUSH_MASTER_BINLOG_CLOSED
-        eng "Binlog closed, cannot RESET SOURCE"
+        eng "Binlog closed, cannot RESET BINARY LOGS AND GTIDS"
         ger "Binlog geschlossen. Kann RESET MASTER nicht ausführen"
         jpn "バイナリログがクローズされています。RESET MASTER を実行できません。"
         por "Binlog fechado. Não pode fazer RESET MASTER"
@@ -5605,7 +5606,7 @@ ER_M_BIGGER_THAN_D 42000 S1009
         ger "Für FLOAT(M,D), DOUBLE(M,D) oder DECIMAL(M,D) muss M >= D sein (Feld '%-.192s')"
 ER_WRONG_LOCK_OF_SYSTEM_TABLE
         eng "You can't combine write-locking of system tables with other tables or lock types"
-	ger "Sie können Schreibsperren auf der Systemtabelle nicht mit anderen Tabellen kombinieren"
+        ger "Sie können Schreibsperren auf der Systemtabelle nicht mit anderen Tabellen kombinieren"
 ER_CONNECT_TO_FOREIGN_DATA_SOURCE
         eng "Unable to connect to foreign data source: %.64s"
         ger "Kann nicht mit Fremddatenquelle verbinden: %.64s"
@@ -5674,11 +5675,11 @@ ER_FORBID_SCHEMA_CHANGE
         eng "Changing schema from '%-.192s' to '%-.192s' is not allowed."
         ger "Wechsel des Schemas von '%-.192s' auf '%-.192s' ist nicht erlaubt"
 ER_ROW_IS_REFERENCED_2 23000
-        eng "Cannot delete or update a parent row: a foreign key constraint fails (%.192s)"
-        ger "Kann Eltern-Zeile nicht löschen oder aktualisieren: eine Fremdschlüsselbedingung schlägt fehl (%.192s)"
+        eng "Cannot delete or update a parent row: a foreign key constraint fails%.192s"
+        ger "Kann Eltern-Zeile nicht löschen oder aktualisieren: eine Fremdschlüsselbedingung schlägt fehl%.192s"
 ER_NO_REFERENCED_ROW_2 23000
-        eng "Cannot add or update a child row: a foreign key constraint fails (%.192s)"
-        ger "Kann Kind-Zeile nicht hinzufügen oder aktualisieren: eine Fremdschlüsselbedingung schlägt fehl (%.192s)"
+        eng "Cannot add or update a child row: a foreign key constraint fails%.192s"
+        ger "Kann Kind-Zeile nicht hinzufügen oder aktualisieren: eine Fremdschlüsselbedingung schlägt fehl%.192s"
 ER_SP_BAD_VAR_SHADOW 42000
         eng "Variable '%-.64s' must be quoted with `...`, or renamed"
         ger "Variable '%-.64s' muss mit `...` geschützt oder aber umbenannt werden"
@@ -5755,7 +5756,7 @@ ER_FOREIGN_SERVER_EXISTS
   ger "Der entfernte Server %s, den Sie versuchen zu erzeugen, existiert schon."
 ER_FOREIGN_SERVER_DOESNT_EXIST
         eng "The foreign server name you are trying to reference does not exist. Data source error:  %-.64s"
-	ger "Die externe Verbindung, auf die Sie zugreifen wollen, existiert nicht. Datenquellenfehlermeldung:  %-.64s"
+        ger "Die externe Verbindung, auf die Sie zugreifen wollen, existiert nicht. Datenquellenfehlermeldung:  %-.64s"
 ER_ILLEGAL_HA_CREATE_OPTION
         eng "Table storage engine '%-.64s' does not support the create option '%.64s'"
         ger "Speicher-Engine '%-.64s' der Tabelle unterstützt die Option '%.64s' nicht"
@@ -6920,7 +6921,7 @@ ER_FK_INCORRECT_OPTION
         eng "Failed to add the foreign key constraint on table '%s'. Incorrect options in FOREIGN KEY constraint '%s'"
 
 ER_FK_DUP_NAME
-	eng "Duplicate foreign key constraint name '%s'"
+        eng "Duplicate foreign key constraint name '%s'"
 
 ER_PASSWORD_FORMAT
   eng "The password hash doesn't have the expected format."
@@ -7742,7 +7743,7 @@ ER_USER_COLUMN_OLD_LENGTH
   eng "It seems that your db schema is old. The %s column is 77 characters long and should be 93 characters long. Please perform the MySQL upgrade procedure."
 
 ER_CANT_RESET_SOURCE
-  eng "RESET SOURCE is not allowed because %-.384s."
+  eng "RESET BINARY LOGS AND GTIDS is not allowed because %-.384s."
 
 ER_GROUP_REPLICATION_MAX_GROUP_SIZE
   eng "The START GROUP_REPLICATION command failed since the group already has 9 members."
@@ -8372,7 +8373,7 @@ ER_CANNOT_ALTER_SRID_DUE_TO_INDEX
 ER_WARN_BINLOG_PARTIAL_UPDATES_DISABLED
   eng "When %.192s, the option binlog_row_value_options=%.192s will be ignored and updates will be written in full format to binary log."
 
-ER_WARN_BINLOG_V1_ROW_EVENTS_DISABLED
+OBSOLETE_ER_WARN_BINLOG_V1_ROW_EVENTS_DISABLED
   eng "When %.192s, the option log_bin_use_v1_row_events=1 will be ignored and row events will be written in new format to binary log."
 
 ER_WARN_BINLOG_PARTIAL_UPDATES_SUGGESTS_PARTIAL_IMAGES
@@ -8484,7 +8485,7 @@ ER_SCHEMA_DIR_UNKNOWN
 ER_ONLY_IMPLEMENTED_FOR_SRID_0_AND_4326 22S00
   eng "Function %.192s is only defined for SRID 0 and SRID 4326."
 
-ER_BINLOG_EXPIRE_LOG_DAYS_AND_SECS_USED_TOGETHER
+OBSOLETE_ER_BINLOG_EXPIRE_LOG_DAYS_AND_SECS_USED_TOGETHER
   eng "The option expire_logs_days and binlog_expire_logs_seconds cannot be used together. Please use binlog_expire_logs_seconds to set the expire time (expire_logs_days is deprecated)"
 
 #
@@ -8960,7 +8961,7 @@ ER_DEPENDENT_BY_FUNCTIONAL_INDEX
   eng "Column '%s' has a functional index dependency and cannot be dropped or renamed."
 
 ER_PLUGIN_NOT_EARLY
-  eng "Plugin '%s' is not to be used as an "early" plugin. Don't add it to --early-plugin-load, keyring migration etc."
+  eng "Plugin '%s' is not to be used as an \"early\" plugin. Don't add it to --early-plugin-load, keyring migration etc."
   bgn "Приставката '%s' не може да се използва като ранна приставка. Не я добавайте в --early-plugin-load и т.н."
 
 ER_INNODB_REDO_LOG_ARCHIVE_START_SUBDIR_PATH
@@ -9370,7 +9371,7 @@ ER_HOSTNAME_TOO_LONG
   eng "Hostname cannot be longer than %d characters."
 
 # When using this error message, use the ER_WARN_DEPRECATED_SYNTAX_NO_REPLACEMENT error code.
-ER_WARN_CLIENT_DEPRECATED_PARTITION_PREFIX_KEY
+OBSOLETE_ER_WARN_CLIENT_DEPRECATED_PARTITION_PREFIX_KEY
   eng "Column '%.64s.%.64s.%.64s' having prefix key part '%.64s(%u)' is ignored by the partitioning function. Use of prefixed columns in the PARTITION BY KEY() clause is deprecated and will be removed in a future release."
 
 ER_GROUP_REPLICATION_USER_EMPTY_MSG
@@ -9383,10 +9384,10 @@ ER_GROUP_REPLICATION_PASSWORD_LENGTH
   eng "The START GROUP_REPLICATION command failed since the password provided for the recovery channel exceeds the maximum length of 32 characters."
 
 ER_SUBQUERY_TRANSFORM_REJECTED
-  eng "Statement requires a transform of a subquery to a non-SET operation (like IN2EXISTS, or subquery-to-LATERAL-derived-table). This is not allowed with optimizer switch 'subquery_to_derived' on".
+  eng "Statement requires a transform of a subquery to a non-SET operation (like IN2EXISTS, or subquery-to-LATERAL-derived-table). This is not allowed with optimizer switch 'subquery_to_derived' on."
 
 ER_DA_GRP_RPL_RECOVERY_ENDPOINT_FORMAT
-  eng "Invalid input value for recovery socket endpoints '%s'. Please, provide a valid, comma separated, list of endpoints (IP:port)".
+  eng "Invalid input value for recovery socket endpoints '%s'. Please, provide a valid, comma separated, list of endpoints (IP:port)."
 
 ER_DA_GRP_RPL_RECOVERY_ENDPOINT_INVALID
   eng "The server is not listening on endpoint '%s'. Only endpoints that the server is listening on are valid recovery endpoints."
@@ -9401,7 +9402,7 @@ ER_FOREIGN_KEY_WITH_ATOMIC_CREATE_SELECT
   eng "Foreign key creation is not allowed with CREATE TABLE as SELECT and CREATE TABLE with START TRANSACTION statement."
 
 ER_NOT_ALLOWED_WITH_START_TRANSACTION
-  eng "START TRANSACTION clause cannot be used %.128s".
+  eng "START TRANSACTION clause cannot be used %.128s"
 
 ER_INVALID_JSON_ATTRIBUTE
   eng "Invalid json attribute, error: \"%s\" at pos %u: '%s'"
@@ -9518,7 +9519,7 @@ ER_SQL_REPLICA_SKIP_COUNTER_USED_WITH_GTID_MODE_ON
 ER_USING_ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS_AS_LOCAL_OR_UUID
   eng "Using ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS creates limitations on the replication topology - you cannot fail over between downstream and upstream servers. Only use this option if it is not possible to enable GTIDs on the source, for instance, because of lack of permissions. If possible, use the procedure for enabling GTID transactions online instead, as described in the documentation."
 
-ER_CANT_SET_ANONYMOUS_TO_GTID_AND_WAIT_UNTIL_SQL_THD_AFTER_GTIDS
+OBSOLETE_ER_SET_GTID_TO_ANON_AND_WAIT_UNTIL_SQL_THD_AFTER_GTIDS
   eng "WAIT_UNTIL_SQL_THREAD_AFTER_GTIDS cannot be used on a channel configured with ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = LOCAL|<UUID>"
 
 ER_CANT_SET_SQL_AFTER_OR_BEFORE_GTIDS_WITH_ANONYMOUS_TO_GTID
@@ -9621,7 +9622,7 @@ ER_WARN_AUDIT_LOG_FORMAT_UNIX_TIMESTAMP_ONLY_WHEN_JSON
   eng "audit_log_format_unix_timestamp is applicable only when audit_log_format = JSON."
 
 ER_INVALID_MFA_PLUGIN_SPECIFIED
-  eng "Invalid plugin \"%s\" specified as %d factor during \"%s\"."D
+  eng "Invalid plugin \"%s\" specified as %d factor during \"%s\"."
 
 ER_IDENTIFIED_BY_UNSUPPORTED
   eng "IDENTIFIED BY clause during \"%s\" not supported for plugin \"%s\"."
@@ -9630,7 +9631,7 @@ ER_INVALID_PLUGIN_FOR_REGISTRATION
   eng "This operation is not supported for plugin \"%s\"."
 
 ER_PLUGIN_REQUIRES_REGISTRATION
-  eng "Authentication plugin requires registration. Please refer ALTER USER syntax or set --fido-register-factor command line option to do registration."
+  eng "Authentication plugin requires registration. Please refer ALTER USER syntax or set --register-factor command line option to do registration."
 
 ER_MFA_METHOD_EXISTS
   eng "%d factor authentication method exists. Please do ALTER USER... DROP %d factor before doing this operation OR do ALTER USER... MODIFY %d factor... to modify existing %d factor authentication method."
@@ -9803,7 +9804,7 @@ ER_DROP_PK_COLUMN_TO_DROP_GIPK
 ER_CREATE_SELECT_WITH_GIPK_DISALLOWED_IN_SBR
   eng "Generating an invisible primary key for a table created using CREATE TABLE ... SELECT ... is disallowed when binlog_format=STATEMENT. It cannot be guaranteed that the SELECT retrieves rows in the same order on source and replica. Therefore, it cannot be guaranteed that the value generated for the generated implicit primary key column will be the same on source and replica for all rows. Use binlog_format=ROW or MIXED to execute this statement."
 
-ER_DA_EXPIRE_LOGS_DAYS_IGNORED
+OBSOLETE_ER_DA_EXPIRE_LOGS_DAYS_IGNORED
   eng "The option expire_logs_days cannot be used together with option binlog_expire_logs_seconds. To set one, first unset the other by setting it to 0."
 
 ER_CTE_RECURSIVE_NOT_UNION
@@ -9813,7 +9814,7 @@ ER_COMMAND_BACKEND_FAILED_TO_FETCH_SECURITY_CTX
   eng "Error when trying to fetch information from security context object, when trying to connect the server."
 
 ER_COMMAND_SERVICE_BACKEND_FAILED
-  eng "Error in command service backend interface, because of : "%s""
+  eng "Error in command service backend interface, because of : \"%s\""
 
 ER_CLIENT_FILE_PRIVILEGE_FOR_REPLICATION_CHECKS
   eng "The PRIVILEGE_CHECKS_USER for channel '%.192s' would need FILE privilege to execute a LOAD DATA INFILE statement replicated in statement format. Consider using binlog_format=ROW on source. If the replicated events are trusted, recover from the failure by temporarily granting FILE to the PRIVILEGE_CHECKS_USER."
@@ -9864,7 +9865,7 @@ ER_INDEX_OTHER_THAN_PK
   eng "Table '%-.192s' has indexes other than primary key."
 
 ER_LOAD_BULK_DATA_UNSORTED
-  eng "[IN PRIMARY KEY ORDER] specified but data not sorted: LOAD BULK DATA into table '%-.192s' failed: %s"
+  eng "[IN PRIMARY KEY ORDER] specified but data not sorted: '%-.64s'"
 
 ER_BULK_EXECUTOR_ERROR
   eng "Bulk executor error: %s"
@@ -9878,11 +9879,13 @@ ER_BULK_READER_LIBCURL_ERROR
 ER_BULK_READER_SERVER_ERROR
   eng "Bulk reader got error response from server: %ld"
 
+
+
 ER_BULK_READER_COMMUNICATION_ERROR
   eng "Bulk reader got error in communication with source server, check the error log for additional details."
 
 ER_BULK_LOAD_DATA_FAILED
-  eng "Bulk loader failed, mysql_load->load returned an error, check the error log for additional details."
+  eng "Bulk loader failed in Innodb storage engine, check the error log for additional details."
 
 ER_BULK_LOADER_COLUMN_TOO_BIG_FOR_LEFTOVER_BUFFER
   eng "CSV column too big for leftover buffer."
@@ -9912,7 +9915,7 @@ ER_BULK_PARSER_UNEXPECTED_CHAR_AFTER_ENDING_ENCLOSED_BY
   eng "Unexpected characters after ending ENCLOSED BY character found at row %ld in file '%s'."
 
 ER_BULK_PARSER_UNEXPECTED_CHAR_AFTER_NULL_ESCAPE
-  eng "Unexpected characters after NULL escape (\N) found at row %ld in file '%s'."
+  eng "Unexpected characters after NULL escape (\\N) found at row %ld in file '%s'."
 
 ER_BULK_PARSER_UNEXPECTED_CHAR_AFTER_COLUMN_TERMINATOR
   eng "Unexpected characters after column terminator found at row %ld in file '%s'."
@@ -9965,19 +9968,477 @@ ER_VALIDATE_PASSWORD_INSUFFICIENT_CHANGED_CHARACTERS
 ER_WARN_DEPRECATED_WITH_NOTE
   eng "'%s' is deprecated and will be removed in a future release. %s"
 
+ER_CANT_RUN_COMMAND_SERVICES_RECURSIVELY
+  eng "Running recursive calls to SQL execution service is not supported"
+
+ER_WARN_AUDIT_LOG_FILTER_RECOVERY_LOGGING_DISABLED
+  eng "The 'audit_log_filter_recovery_mode' variable is set to LOG_NOTHING_IF_INVALID_FILTER_DETECTED, meaning audit events will not be logged if the filter is invalid. Consider changing this variable to LOG_ALL_IF_INVALID_FILTER_DETECTED to ensure that all events are logged, even when the filter is invalid."
+
 #
 #  End of 8.0 error messages (server-to-client).
-#  Do NOT add messages intended for the error log above!
 #
+#  Please put messages for 8.1+ in the section beginning with
+#  start-error-number 6000
+#
+
+
+################################################################################
+# Error numbers 4500 to 4999 are reserved for Router. Please do not use
+# them for other error messages.
+################################################################################
+
+reserved-error-section 4500 4999
+
 
 ################################################################################
 # Error numbers 5000 to 5999 are reserved for X Plugin. Please do not use
 # them for other error messages.
 ################################################################################
 
-
 reserved-error-section 5000 5999
 
+
+################################################################################
+# Error numbers starting at 6000: server-to-client messages 8.1+
+################################################################################
+
+# Do NOT add messages intended for the error log here;
+# they have their own section below.
+#
+# Do NOT add messages to clients for mysqld 8.0.x here;
+# they have their own section above.
+#
+# See the FAQ at the end of the file for more information.
+
+start-error-number 6000
+
+ER_LANGUAGE_COMPONENT
+  eng "%s"
+
+ER_LANGUAGE_COMPONENT_NOT_AVAILABLE
+  eng "Language component: Not available."
+
+ER_LANGUAGE_COMPONENT_UNSUPPORTED_LANGUAGE
+  eng "Language component: Unsupported language '%s'"
+
+ER_LANGUAGE_COMPONENT_CANNOT_UNINSTALL
+  eng "Language component: Cannot uninstall due to connected sessions. Please disconnect all sessions and try again."
+
+ER_SP_NO_ALTER_LANGUAGE
+  eng "Altering the language of an existing routine is not possible."
+
+ER_EXPLAIN_INTO_ANALYZE_NOT_SUPPORTED 0A000
+  eng "EXPLAIN ANALYZE does not support the INTO clause."
+
+ER_EXPLAIN_INTO_IMPLICIT_FORMAT_NOT_SUPPORTED 0A000
+  eng "EXPLAIN INTO does not support implicit FORMAT."
+
+ER_EXPLAIN_INTO_FORMAT_NOT_SUPPORTED 0A000
+  eng "EXPLAIN INTO does not support FORMAT=%s."
+
+ER_NULL_CANT_BE_PERSISTED_FOR_READONLY
+  eng "Trying to persist a NULL into a variable '%-.192s' that's settable only on command line is not supported"
+
+ER_EXPLAIN_INTO_FOR_CONNECTION_NOT_SUPPORTED 0A000
+  eng "EXPLAIN FOR CONNECTION does not support the INTO clause."
+
+ER_INNODB_IMPORT_WRONG_DROPPED_ENUM_LENGTH
+  eng "Enum element name length %lu, is invalid for column %s"
+
+ER_INNODB_IMPORT_WRONG_NUMBER_OF_INDEXES_ZERO
+  eng "Number of indexes in meta-data file is 0"
+
+ER_INNODB_IMPORT_WRONG_NUMBER_OF_INDEXES_TOO_HIGH
+  eng "Number of indexes in meta-data file is too high: %llu"
+
+ER_INNODB_IMPORT_DROP_COL_METADATA_MISMATCH
+  eng "DD metadata for INSTANT DROP column %s in target table doesn't match with CFG."
+
+ER_INNODB_IMPORT_ENUM_NULL_TERMINATOR_MISSING
+  eng "Enum/Set element name missing null terminator for column '%s'"
+
+ER_SIMULATED_INJECTION_ERROR
+  eng "%s %s %zu."
+
+ER_WARN_DEPRECATED_DYNAMIC_PRIV_IN_GRANT
+  eng "The privilege '%s' is deprecated."
+
+ER_BULK_MULTI_READER_OPEN_FILE_FAILED
+  eng "Bulk Multi Reader: Failed to open file"
+
+ER_BULK_MULTI_READER_READ_FILE_FAILED
+  eng "Bulk Multi Reader: Failed to read file"
+
+ER_BULK_MERGE_INVALID_CHUNK
+  eng "Bulk Merge Loader: Invalid Chunk"
+
+ER_BULK_MERGE_NOT_ALL_CHUNKS_CONSUMED
+  eng "Bulk Merge Loader: Not all chunks consumed"
+
+ER_BULK_WRITER_LIBCURL_INIT_FAILED
+  eng "Bulk writer failed to initialize libcurl"
+
+ER_BULK_WRITER_LIBCURL_ERROR
+  eng "Bulk writer got libcurl error: %s"
+
+ER_BULK_SORTING_LOADER_WRITE
+  eng "Bulk Sorting Loader: Failed to write data to temporary file"
+
+ER_BULK_SORTING_LOADER_WAIT
+  eng "Bulk Sorting Loader: Interrupted while waiting"
+
+ER_BULK_READER_OPEN_FILE_FAILED
+  eng "Bulk Reader: Failed to access file %s"
+
+ER_BULK_LOAD_TABLE_HAS_INSTANT_COLS
+  eng "Bulk Loader: Table '%-.192s' has instantly added/dropped columns. Please TRUNCATE TABLE and retry."
+
+ER_BULK_LOAD_RESOURCE
+  eng "Bulk Loader: Not enough memory available. Memory needed for loading %s data: %s for %u threads, %s with minimal configuration. Total configured memory is %s, Available memory is %s."
+
+ER_BULK_LOAD_SECONDARY_ENGINE
+  eng "LOAD DATA with BULK Algorithm is not supported on a table with secondary engine."
+
+ER_BULK_READER_ERROR
+  eng "Bulk reader error: %s"
+
+ER_BULK_READER_FILE_DOESNT_EXIST
+  eng "File not found, check whether it exists: %s"
+
+ER_BULK_READER_COULDNT_RESOLVE_HOST
+  eng "Couldn't resolve host: %s"
+
+ER_START_REPLICA_CHANNEL_INVALID_CONFIGURATION
+  eng "Cannot start replication channel '%s' because %s."
+
+ER_CANNOT_EXECUTE_IN_PRIMARY
+   eng "'%s' is not supported"
+
+ER_TOO_MANY_GROUP_BY_MODIFIER_BRANCHES
+   eng "'%s' is supported with maximum %d elements in the GROUP BY list"
+
+# When using this error message, use the ER_WARN_DEPRECATED_SYNTAX_NO_REPLACEMENT error code.
+ER_WARN_DEPRECATED_ENGINE_SYNTAX_NO_REPLACEMENT
+  eng "'%s' for '%s' storage engine is deprecated and will be removed in a future release."
+
+ER_QUALIFY_WITHOUT_WINDOW_FUNCTION
+  eng "QUALIFY clause cannot be used without a window function."
+
+ER_SUPPORTED_ONLY_WITH_HYPERGRAPH
+  eng "'%s' can be used only if the hypergraph optimizer is enabled."
+
+ER_SPECIFIC_ACCESS_DENIED
+  eng "Access denied; you need %-.256s privilege(s) for this operation"
+
+ER_CANT_SET_GTID_NEXT_TO_AUTOMATIC_TAGGED_WHEN_GTID_MODE_IS_OFF
+  eng "@@SESSION.GTID_NEXT cannot be set to AUTOMATIC:<TAG> when @@GLOBAL.GTID_MODE = OFF or OFF_PERMISSIVE"
+
+ER_GTID_NEXT_TAG_GTID_MODE_OFF
+  eng "@@SESSION.GTID_NEXT cannot be set to UUID:TAG:NUMBER when @@GLOBAL.GTID_MODE = OFF."
+
+ER_LH_COL_NOT_NULLABLE
+  eng "Column %d of %s : Column contains null but it is not nullable."
+
+ER_LH_WARN_COL_MISSING_NOT_NULLABLE
+  eng "Column %d of %s : Column is missing, but it is not nullable and no explicit default value is provided."
+
+ER_LH_COL_IS_EMPTY
+  eng "Column %d of %s : Column is empty."
+
+ER_LH_COL_IS_EMPTY_WARN
+  eng "Column %d of %s : Column is empty, setting default value."
+
+ER_LH_BAD_VALUE
+  eng "Column %d of %s : Invalid %s value."
+
+ER_LH_DECIMAL_UNKNOWN_ERR
+  eng "Column %d of %s : Unknown error while parsing decimal."
+
+ER_LH_DECIMAL_OOM_ERR
+  eng "Column %d of %s : Out of memory loading decimal."
+
+ER_LH_WARN_DECIMAL_ROUNDING
+  eng "Column %d of %s : Fraction exceeds schema, rounding value."
+
+ER_LH_DECIMAL_PRECISION_EXCEEDS_SCHEMA
+  eng "Column %d of %s : decimal precision exceeds schema."
+
+ER_LH_EXCEEDS_MIN
+  eng "Column %d of %s : %s exceeds min."
+
+ER_LH_EXCEEDS_MAX
+  eng "Column %d of %s : %s exceeds max."
+
+ER_LH_WARN_EXCEEDS_MIN_TRUNCATING
+  eng "Column %d of %s : %s exceeds min, setting to min value possible."
+
+ER_LH_WARN_EXCEEDS_MAX_TRUNCATING
+  eng "Column %d of %s : %s exceeds max, setting to max value possible."
+
+ER_LH_REAL_IS_NAN
+  eng "Column %d of %s : Real value is NaN."
+
+ER_LH_OUT_OF_RANGE
+  eng "Column %d of %s : %s value is out of range."
+
+ER_LH_DATETIME_FORMAT
+  eng "Column %d of %s : Error while applying %s format."
+
+ER_LH_WARN_TRUNCATED
+  eng "Column %d of %s : %s value was truncated."
+
+ER_LH_CANNOT_CONVERT_STRING
+  eng "Column %d of %s : Cannot convert string %s."
+
+ER_LH_RESOURCE_PRINCIPAL_ERR
+  eng "Resource principal error."
+
+ER_LH_AWS_AUTH_ERR
+  eng "AWS authentication error."
+
+ER_LH_CSV_PARSING_ERR
+  eng "%s:%lu: Parsing error found. %s."
+
+ER_LH_COLUMN_MISMATCH_ERR
+  eng "%s: Mismatch in the number of columns. Expected %u, found %u."
+
+ER_LH_COLUMN_MAX_ERR
+  eng "%s: More than %u column(s) found."
+
+ER_LH_CHARSET_UNSUPPORTED
+  eng "Column %d in %s: Charset is not supported."
+
+ER_LH_PARQUET_DECIMAL_CONVERSION_ERR
+  eng "Column %d in %s: Decimal conversion error."
+
+ER_LH_STRING_TOO_LONG
+  eng "Column %d in %s: String is too long."
+
+ER_LH_RESOURCE_PRINCIPAL_BUCKET_ERR
+  eng "Resource Principal endpoint is not configured. Cannot access following buckets: %s."
+
+ER_LH_NO_FILES_FOUND
+  eng "No files found corresponding to the following data locations: %s."
+
+ER_LH_EMPTY_FILE
+  eng "File %s is empty."
+
+ER_LH_DUPLICATE_FILE
+  eng "File %s was not processed (duplicate)."
+
+ER_LH_AVRO_SCHEMA_DEPTH_EXCEEDS_MAX
+  eng "File %s: Avro schema depth exceeds max allowed depth."
+
+ER_LH_AVRO_HEADER_MISMATCH
+  eng "File %s: Header does not match other files."
+
+ER_LH_AVRO_ENUM_CANNOT_CONVERT_CHARSET
+  eng "File %s: Enum symbol can't convert to column charset."
+
+ER_LH_AVRO_ENUM_MISMATCH
+  eng "File %s: Enum symbols are not the same, or are not in the same order."
+
+ER_LH_AVRO_TYPE_CANNOT_CONVERT
+  eng "Column %d in %s: Avro value of physical type %.*s logical type %.*s cannot be converted to mysql type %s."
+
+ER_LH_AVRO_FILE_ENDS_UNEXPECTEDLY
+  eng "File %.*s: Ends unexpectedly."
+
+ER_LH_AVRO_FILE_DATA_CORRUPT
+  eng "File %.*s: File data might be corrupt."
+
+ER_LH_AVRO_INVALID_UNION
+  eng "Column %d in %s: Invalid union encountered. Unions are only supported to represent nullable columns. One of the two types of the union must be null."
+
+ER_LH_AVRO_INVALID_BLOCK_SIZE
+  eng "File %.*s: Invalid avro block size."
+
+ER_LH_AVRO_INVALID_BLOCK_RECORD_COUNT
+  eng "File %.*s: Invalid Avro block record count."
+
+ER_LH_FORMAT_HEADER_NO_MAGIC_BYTES
+  eng "File %.*s: Cannot locate %s specific metadata. Either the file is corrupted or this is not an %s file."
+
+ER_LH_AVRO_HEADER_METADATA_ERR
+  eng "File %.*s: Could not process Avro header metadata. The metadata is corrupted or invalid."
+
+ER_LH_AVRO_HEADER_NO_SCHEMA
+  eng "File %.*s: No schema in Avro header metadata."
+
+ER_LH_AVRO_NO_CODEC_IN_HEADER
+  eng "File %.*s: No codec in Avro header metadata."
+
+ER_LH_AVRO_INVALID_NAME_IN_SCHEMA
+  eng "File %.*s: Invalid name in Avro schema."
+
+ER_LH_AVRO_DECODING_ERR
+  eng "File %.*s: Error decoding Avro %.*s. %s"
+
+ER_LH_PARQUET_NON_UTF8_FILE_ENC
+  eng "Column %d in %s: String with non-utf8 file encoding."
+
+ER_LH_PARQUET_SCHEMA_MISMATCH
+  eng "Difference in schema among Parquet files."
+
+ER_LH_PARQUET_ROW_GROUP_SIZE_EXCEEDS_MAX
+  eng "File %s: Size of row group %ld is larger than maximum allowed size (%d)."
+
+ER_LH_PARQUET_CANNOT_LOCATE_OFFSET
+  eng "File %s: Cannot locate offset of row group %ld in metadata."
+
+ER_LH_PARQUET_TYPE_CANNOT_CONVERT
+  eng "Column %d in parquet table cannot be converted to mysql format."
+
+ER_LH_PARQUET_CANNOT_LOCATE_SCHEMA
+  eng "Cannot locate schema in %s."
+
+ER_LH_INFER_SCHEMA_MISMATCH
+  eng "Found files with mismatched schemas."
+
+ER_LH_OOM
+  eng "Insufficient memory."
+
+ER_LH_WARN_INFER_SKIPPED_LINES
+  eng "Skipped %lu line(s) due to mismatched num of cols."
+
+ER_LH_WARN_INFER_SKIPPED_FILES
+  eng "Skipped %lu file(s) due to mismatched num of cols."
+
+ER_LH_INFER_FILE_HAS_NO_DATA
+  eng "File %s is skipped because it has no valid data. File is either empty or all rows are skipped."
+
+ER_LH_INFER_NO_DATA
+  eng "No valid data found for processing."
+
+ER_LH_INFER_NO_FILES
+  eng "No valid files found for processing."
+
+ER_LH_WARN_INFER_USE_DEFAULT_COL_NAMES
+  eng "Used default column names for column index(s) %s as they are %s."
+
+ER_LH_PARQUET_CANNOT_READ_HEADER
+  eng "File %s: Unable to read Parquet header."
+
+ER_LH_INFER_WARN_GOT_EXCEPTION
+  eng "Got an exception while trying to process file task."
+
+ER_LH_AVRO_CANNOT_PARSE_HEADER
+  eng "File %.*s: Could not parse avro header. Probably corrupted avro file."
+
+ER_LH_PARQUET_CANT_OPEN_FILE
+  eng "Parquet reader cannot open %s. %s"
+
+ER_LH_TOO_LARGE_VALUE_ERR
+   eng "File %.*s: %s"
+
+ER_LH_TOO_LARGE_ROW_ERR
+   eng "File %.*s: %s"
+
+ER_TABLESAMPLE_PERCENTAGE 2202H
+  eng "Tablesample percentage should range between 0 and 100."
+
+ER_TABLESAMPLE_ONLY_ON_BASE_TABLES
+  eng "Tablesample can be applied only on base tables."
+
+OBSOLETE_ER_PARAMETER_INDEX_OUT_OF_RANGE
+  eng "Parameter index %llu is out of range"
+
+ER_RESULT_SIZE_LIMIT_EXCEEDED
+  eng "Result size limit exceeded."
+
+ER_LANGUAGE_COMPONENT_INTERNAL
+  eng "Language component: Internal error."
+
+ER_LANGUAGE_COMPONENT_CONCURRENCY_LIMIT
+  eng "Language component: Concurrency limit (%s) has been reached."
+
+ER_LANGUAGE_COMPONENT_RUNTIME
+  eng "%s> %s"
+
+ER_LANGUAGE_COMPONENT_TIMEZONE
+  eng "%s> Time zone %s is not supported."
+
+ER_LANGUAGE_COMPONENT_KEYWORD
+  eng "%s> The identifier '%s' is a reserved word."
+
+ER_LANGUAGE_COMPONENT_SET_SYSTEM_VARIABLE
+  eng "Language component: System variable '%s' cannot be configured when component is active."
+
+ER_LANGUAGE_COMPONENT_UNSUPPORTED_TYPE
+  eng "%s> %s"
+
+ER_LANGUAGE_COMPONENT_CONVERSION
+  eng "%s> %s"
+
+ER_WARN_SP_STATEMENT_PARTIALLY_EXECUTED
+  eng "Stored program statement is partially completed. Result set might not contain all the rows."
+
+ER_STMT_EXECUTION_NOT_ALLOWED_WITHIN_SP_OR_TRG_OR_UDF
+  eng "Executing SQL statement using %s Statement Handle Interface is not allowed within stored function, trigger or loadable function (UDF)."
+
+ER_LH_JSON_PARSING
+  eng "Column %d of %s : %s"
+
+ER_ENGINE_CANNOT_BE_DEFAULT
+  eng "Engine %s cannot be set as default_storage_engine."
+
+ER_PARTITION_PREFIX_KEY_NOT_SUPPORTED
+  eng "Column '%.64s.%.64s.%.64s' having prefix key part '%.64s(%u)' in the PARTITION BY KEY() clause is not supported."
+
+ER_WARN_DEPRECATED_NON_STANDARD_KEY
+  eng "Foreign key '%.64s' refers to non-unique key or partial key. This is deprecated and will be removed in a future release."
+
+ER_FK_NO_UNIQUE_INDEX_PARENT
+  eng "Failed to add the foreign key constraint. Missing unique key for constraint '%s' in the referenced table '%s'"
+
+ER_ACCESS_DENIED_NO_PROXY_GRANT
+  eng "Access denied for user '%-.48s'@'%-.64s', missing proxy privilege."
+
+ER_ACCESS_DENIED_NO_PROXY
+  eng "Access denied for user '%-.48s'@'%-.64s', proxied user doesn't exist."
+
+ER_LH_USER_DATA_ACCESS_FAILED
+  eng "Unable to access the following data locations: %s"
+
+ER_BULK_READER_ZSTD_ERROR
+  eng "ZSTD decompression failed: %s"
+
+ER_BULK_PARSER_ERROR
+  eng "%s"
+
+ER_LH_INVALID_JSON_FILE_FORMAT_SCHEMA
+  eng "Invalid json file format schema: %s"
+
+ER_LH_INFER_JSON_INVALID_SCHEMA
+  eng "Inferred invalid schema. A single column with JSON type is the only valid schema for JSON file format."
+
+ER_LH_JSON_FILE_FORMAT_WARN_INFER_SCHEMA
+  eng "Altered the inferred schema to a single JSON column."
+
+ER_NON_SCALAR_USED_AS_KEY
+  eng "Non-scalar (e.g., vector) column '%.64s' cannot be used as key."
+
+ER_INCOMPATIBLE_TYPE_AGG
+  eng "Columns aggregated with incompatible types: '%.64s', '%.64s'."
+
+ER_DATA_INCOMPATIBLE_WITH_VECTOR
+  eng "Value of type '%.16s, size: %zu' cannot be converted to 'vector' type."
+
+ER_EXCEEDS_VECTOR_MAX_DIMENSIONS
+  eng "Data size (%zu Bytes, %u dimensions) exceeds VECTOR max (%zu Bytes, %u dimensions) for column: '%.64s'"
+
+ER_TO_VECTOR_CONVERSION
+  eng "Data cannot be converted to a valid vector: '%.*s'"
+
+ER_EXTERNAL_UNSUPPORTED_INDEX_ALGORITHM
+  eng "This storage engine ignores the %s index algorithm."
+
+ER_TP_CANNOT_DISABLE_MTL_WITH_DL
+  eng "The variable thread_pool_max_transactions_limit cannot be set to 0 when thread_pool_dedicated_listernes is ON."
+
+#
+#  End of 8.1+ error messages (server-to-client).
+#  Do NOT add messages intended for the error log above!
 
 ################################################################################
 # DO NOT add messages for the error-log to this file;

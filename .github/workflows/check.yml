@@ -13,7 +13,7 @@ jobs:
         with:
           components: clippy
       - run: npm ci
-      - run: npm run check
+      - run: npm run check:ci
       - run: npm run build
       - run: cargo test --manifest-path src-tauri/Cargo.toml --lib
       - run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings

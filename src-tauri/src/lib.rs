@@ -17,6 +17,7 @@ use crate::commands::config::{
 };
 use crate::commands::fullbackup::{create_full_backup, delete_full_backup, list_full_backups, open_backups_folder, restore_full_backup};
 use crate::commands::logs::{get_service_logs, log_crash_event};
+use crate::commands::migration::{detect_xampp_installations, import_from_xampp};
 use crate::commands::mysql::{
     backup_mysql_database, backup_mysql_database_named, create_mysql_database, create_mysql_user,
     drop_mysql_database, drop_mysql_user,
@@ -130,7 +131,9 @@ pub fn run() {
             list_full_backups,
             restore_full_backup,
             delete_full_backup,
-            open_backups_folder
+            open_backups_folder,
+            detect_xampp_installations,
+            import_from_xampp
         ])
         .setup(|app| {
             println!("DevStackBox setup complete, initializing...");

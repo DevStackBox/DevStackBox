@@ -77,6 +77,10 @@ export const TAURI_COMMANDS = {
     resize: "resize_terminal",
     kill: "kill_terminal_session",
   },
+  migration: {
+    detectXampp: "detect_xampp_installations",
+    importFromXampp: "import_from_xampp",
+  },
   security: {
     analyze: "analyze_security",
   },

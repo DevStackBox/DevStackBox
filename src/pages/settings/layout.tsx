@@ -19,6 +19,11 @@ export function SettingsLayout() {
       label: t("navigation.backup", "Backup & Restore"),
       icon: HardDriveDownload,
     },
+    {
+      to: ROUTES.settingsXampp.path,
+      label: t("navigation.xamppImport", "Import from XAMPP"),
+      icon: HardDriveDownload,
+    },
   ];
 
   return (

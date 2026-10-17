@@ -62,6 +62,7 @@ import { DatabasesBackupsPage } from "./pages/databases/backups";
 import { SettingsLayout } from "./pages/settings/layout";
 import { SettingsPage as SettingsIndexPage } from "./pages/settings";
 import { BackupPage as SettingsBackupPage } from "./pages/settings/backup";
+import { SettingsXamppImportPage } from "./pages/settings/xampp-import";
 import { Toaster } from "@/components/ui/toaster";
 import type { ServiceName } from "@/types/services";
 import { ROUTES } from "@/lib/routes";
@@ -300,6 +301,7 @@ function AppShell() {
             <Route path="/settings" element={<SettingsLayout />}>
               <Route index element={<SettingsIndexPage />} />
               <Route path="backup" element={<SettingsBackupPage />} />
+              <Route path="xampp-import" element={<SettingsXamppImportPage />} />
             </Route>
 
             <Route path="/about" element={<AboutPage />} />

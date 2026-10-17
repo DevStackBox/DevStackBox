@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>devstackbox</id>
+    <version>0.1.11</version>
+    <title>DevStackBox</title>
+    <authors>Nomad Programmer</authors>
+    <projectUrl>https://www.devstackbox.com</projectUrl>
+    <licenseUrl>https://github.com/DevStackBox/DevStackBox/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Free XAMPP alternative for Windows - PHP 8.3, MySQL 8.4 LTS, Apache, phpMyAdmin.</description>
+    <tags>php xampp laravel mysql apache devstackbox</tags>
+  </metadata>
+</package>
