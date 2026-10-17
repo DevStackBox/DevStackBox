@@ -294,6 +294,8 @@ Update this file every time a feature changes status. Do not maintain feature st
 
 | Version         | Key Changes                                                                                                               |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| v0.1.10         | Stable release: MySQL/DB UX, service status, terminal ConPTY fixes; NSIS detail log; PHP 8.3 bundled, 8.1–8.5 on-demand   |
+| v0.1.9          | Audit remediation batch; installer detail log fix; diagnostics, projects MVP, channel-aware updater                         |
 | v0.1.8          | Branding and logo refresh; signed NSIS installer; in-place upgrade with `www` preservation; MDX docs site                 |
 | v0.1.7          | PHP 8.4 CGI compatibility (session.sid_*, error_reporting, html_errors); configVersion 7 vhost fix; NSIS-only releases   |
 | v0.1.6          | MSI fixed, CSS restored, GitHub Actions fixed, both installers working                                                    |
@@ -301,6 +303,6 @@ Update this file every time a feature changes status. Do not maintain feature st
 | v0.1.0 - v0.1.4 | Early alpha, architecture setup                                                                                           |
 
 
-## Local release candidate verification (17 October 2026)
+## Release verification (v0.1.10)
 
-The 0.1.10-rc.1 source has additional Windows verification recorded in `docs/archive/AUDIT-2026-10-16-completion-plan.md`. Local checks currently cover the packaged Apache/PHP/MySQL paths, web/PHP responses, a disposable SQL CRUD cycle, theme rendering, configuration loading, and virtual-host creation. A PHP runtime path check exposed and fixed an escaped MySQL datadir comparison. A clean install and final upgrade/uninstall cycle are still in progress; this status does not certify a production release. The installer built in this environment is locally signed for Tauri updates when the configured key is available, but no Windows Authenticode certificate is configured.
+**v0.1.10** is published on [GitHub Releases](https://github.com/DevStackBox/DevStackBox/releases/tag/v0.1.10) with signed NSIS installer and `latest.json` for in-app updates. Windows QA notes: `docs/archive/QA-2026-10-17-release-gate.md`. Installer uses Tauri minisign (not Windows Authenticode).
