@@ -18,7 +18,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `scripts/refresh-mysql-bundle.ps1` and `scripts/refresh-phpmyadmin-bundle.ps1` for maintainers
 - Clean install checklist doc; winget manifest template; GitHub issue/PR templates
 
-**Installer SHA-256:** `3BBA3B4AEB6FA727B99EDFFFC2882D2D7A416D8E30D23E6D74A2FA4A6761BEBF`
+### Fixed
+
+- phpMyAdmin login with empty MySQL `root` password (restored `config.inc.php` with `AllowNoPassword`; app seeds missing config on startup)
+
+**Installer SHA-256:** `FAC8BDD8EBC08D362F37EC540931ABF455F12958DC7E13AA9F5939D9568FC415`
 
 ## [0.1.10] - 2026-10-17
 
