@@ -4,7 +4,7 @@ All notable changes to DevStackBox are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [0.1.12] - Unreleased
+## [0.1.12] - 2026-10-18
 
 ### Added
 
@@ -25,6 +25,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - PHP selection applies to website requests. The terminal still uses global PHP.
 - Framework installers, project database linking, Git/SSH, and project-aware terminals remain future work. AI integration is deferred.
 - Internal test builds numbered 0.1.13-0.1.15 were not public releases. These changes form public version 0.1.12.
+
+**Installer SHA-256:** `B3B6E690307CDE172D4114A161ADB9E07C7929E0E4689AE49495BFEE93BCF8F9`
 
 ## [0.1.11] - 2026-10-17
 
