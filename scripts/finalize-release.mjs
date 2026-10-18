@@ -7,16 +7,11 @@
  *   node scripts/finalize-release.mjs --from-github v0.1.12 [--write-changelog]
  *
  * Env:
- *   RELEASE_INSTALLER_PATH — override NSIS path (default: bundle/nsis/DevStackBox_{version}_x64-setup.exe)
+ *   RELEASE_INSTALLER_PATH - override NSIS path (default: bundle/nsis/DevStackBox_{version}_x64-setup.exe)
  */
 
 import { createHash } from "node:crypto";
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
@@ -27,8 +22,7 @@ const tauriConf = JSON.parse(
 );
 const version = tauriConf.version;
 const changelogPath = join(root, "CHANGELOG.md");
-const SHA_LINE =
-  /^\*\*Installer SHA-256:\*\* `[0-9A-Fa-f]{64}`\s*$/m;
+const SHA_LINE = /^\*\*Installer SHA-256:\*\* `[0-9A-Fa-f]{64}`\s*$/m;
 
 function defaultInstallerPath() {
   return join(
