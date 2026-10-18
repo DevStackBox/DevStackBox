@@ -8,7 +8,7 @@
 
 ![Project details with HTTP 200 and trusted local HTTPS](docs/images/project-details-preview.jpg)
 
-Internal preview build v0.1.15; these features are prepared for public v0.1.12.
+Screenshot captured from internal build v0.1.15. The features shown are included in the public v0.1.12 release.
 
 ## Stack
 
