@@ -4,6 +4,28 @@ All notable changes to DevStackBox are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.12] - Unreleased
+
+### Added
+
+- Project details with hostname, folder, document root, aliases, health checks, and HTTPS controls.
+- Per-project website PHP: choose a downloaded runtime or inherit the global default. HTTP and HTTPS use the same selection.
+- Trusted local HTTPS with bundled mkcert, localhost and individual project certificates, repair and live verification.
+- Connect existing folders outside www; suggest public/ for supported project layouts.
+
+### Fixed
+
+- Release metadata selects the exact versioned installer/signature pair and uses UTC timestamps.
+- Manual upgrades stop owned services and check for locked binaries before replacing files; preserve project folders and stop safely when recovery is needed.
+- Projects use one row per site. PHP choices show installed runtimes only.
+- Website failures and TLS trust are reported separately; prevent startup HTTPS renewal from silently overwriting orphan site configuration.
+
+### Scope
+
+- PHP selection applies to website requests. The terminal still uses global PHP.
+- Framework installers, project database linking, Git/SSH, and project-aware terminals remain future work. AI integration is deferred.
+- Internal test builds numbered 0.1.13-0.1.15 were not public releases. These changes form public version 0.1.12.
+
 ## [0.1.11] - 2026-10-17
 
 ### Changed

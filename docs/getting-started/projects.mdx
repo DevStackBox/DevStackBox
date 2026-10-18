@@ -1,0 +1,43 @@
+---
+title: "Projects, PHP & HTTPS"
+description: "Connect local folders, choose PHP per website, and manage trusted HTTPS."
+icon: "Folder"
+---
+
+# One place for each project
+
+These capabilities are prepared for **v0.1.12**. Download availability follows the published GitHub release.
+
+## Connect an existing website
+
+1. Open **Projects → Add project / site** and select a local folder, including folders outside `www`.
+2. Choose a unique `.test` hostname and optional aliases.
+3. Review the document root. Laravel applications should serve `public/`, not the repository root.
+4. Enable HTTPS if wanted, save, and start Apache. Windows may request permission to update its hosts file.
+5. Open **Manage project** to edit settings, check the site response, or open its folder.
+
+Connecting does not copy files or install dependencies. Disconnecting keeps your files. Projects and Virtual Hosts share the same saved site records.
+
+## Select PHP for a project
+
+Download PHP in **Services → PHP → Versions** first. In **Projects → Manage project → PHP & tools**, choose an installed runtime and apply. Select **Use global default** to follow the stack default again.
+
+A pinned runtime handles that site's HTTP and HTTPS independently of other projects. Missing or invalid runtimes cannot be selected. The terminal still uses global PHP; project-aware terminal sessions are future work.
+
+Pinned runtimes use a separate generated php.ini per version. Custom global php.ini settings are not copied automatically. Per-version extension editing is not yet available in the UI.
+
+## Trusted local HTTPS
+
+Open **Services → Apache → HTTPS / SSL** to set up or repair localhost HTTPS. Review and approve the Windows trust prompt yourself to trust the local certificate authority. HTTPS can also be managed from project details.
+
+DevStackBox bundles mkcert and issues certificates locally. Private CA keys are not distributed. Localhost covers `localhost`, `127.0.0.1`, and `::1`; each project certificate covers its hostname and aliases. `.test` is the app's naming policy, not a mkcert limitation.
+
+A trusted result requires a live check. Browser policies can differ; a green browser icon is not guaranteed. Do not bypass certificate warnings: check hostname, trust status, and Apache configuration.
+
+## Trusted HTTPS but a 404 page?
+
+TLS trust and website health are separate. Check the document root, index.php/index.html, framework dependencies, rewrite rules, and application routes. An empty folder is not a working website. Use the project health check to distinguish routing problems from certificate problems.
+
+## Planned, not bundled
+
+Project database linking, project-aware terminals, Git/SSH, and Laravel/WordPress installation are future work. Frameworks will download from upstream on demand, not ship in the installer. AI integration is deferred.

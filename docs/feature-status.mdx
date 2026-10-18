@@ -6,7 +6,7 @@ icon: "ListChecks"
 # DevStackBox - Feature Status
 
 **THE single source of truth for what is built, what is in progress, and what is planned.**  
-This page records shipped, partial, and planned capabilities. Check the release notes for changes in a particular version.
+This page includes capabilities prepared for v0.1.12; check the published release before downloading. Check the release notes for changes in a particular version.
 
 **Last Updated:** 17 October 2026  
 **Current version:** v0.1.10
@@ -251,7 +251,7 @@ This page records shipped, partial, and planned capabilities. Check the release 
 | ------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Bug reporting via GitHub Issues | DONE   | `bug-report-dialog.tsx` opens a pre-filled GitHub issue with environment metadata                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | Security config analyzer        | DONE   | `security.tsx` page + `analyze_security` Rust command. Checks PHP ini, Apache conf, MySQL (anonymous users, remote root, empty root password, test DB). Findings grouped by severity (error/warning/info) with expandable details and recommendations.                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| HTTPS / SSL for local sites     | DONE   | Local Root CA architecture. `get_ssl_status`, `generate_ssl_cert`, `enable_ssl`, `disable_ssl` Tauri commands. `generate_ssl_cert` creates a 4096-bit `DevStackBox Local CA` (20-year, `config/ssl/ca.crt`) then signs a 2048-bit localhost cert (`config/ssl/localhost.crt`) with SAN for `localhost`, `127.0.0.1`, `::1`. User imports `ca.crt` into Windows trusted roots once - all future per-host certs are trusted automatically. `enable_ssl` writes `ssl.conf` with `mod_ssl` + `mod_socache_shmcb` and port-443 VirtualHost; Include appended to httpd.conf. `disable_ssl` removes the Include (cert files kept). Frontend shows CA status row and displays `ca_path` in trust instructions. |
+| HTTPS / SSL for local sites | DONE | v0.1.12: mkcert local CA, localhost and per-project certificates, repair and live trust checks. Windows trust approval required. |
 
 ---
 
@@ -265,7 +265,8 @@ This page records shipped, partial, and planned capabilities. Check the release 
 | Windows hosts file management              | DONE    | `get_hosts_entries` reads DevStackBox marker block; `update_hosts_entry` writes/removes `127.0.0.1 domain` via elevated PowerShell (UAC prompt)                               |
 | Show active vhosts on dashboard            | DONE    | Dashboard card lists all configured vhosts with enabled/disabled badge and a Manage link to the vhosts page                                                                   |
 | localhost always works with user vhosts    | DONE    | configVersion 7 template places localhost VirtualHost first with phpMyAdmin Alias inside, preventing name-based vhost mode from breaking `localhost/phpmyadmin`                |
-| HTTPS per virtual host                     | PLANNED | Extend SSL feature to sign per-vhost certs                                                                                                                                    |
+| HTTPS per virtual host | DONE | v0.1.12: certificates cover each enabled site and aliases. |
+| Project details and per-project website PHP | DONE | v0.1.12: installed runtimes only; independent HTTP/HTTPS selection. Terminal still uses global PHP. |
 
 ---
 

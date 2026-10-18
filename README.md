@@ -6,7 +6,9 @@
 
 **Free XAMPP alternative for Windows** - Apache, MySQL 8.4 LTS, phpMyAdmin, and PHP 8.3 in one MIT-licensed desktop app.
 
-![DevStackBox Services with MySQL 8.4.11](docs/images/services-current.png)
+![Project details with HTTP 200 and trusted local HTTPS](docs/images/project-details-preview.jpg)
+
+Internal preview build v0.1.15; these features are prepared for public v0.1.12.
 
 ## Stack
 
@@ -37,24 +39,11 @@ XAMPP for Windows ships PHP 8.2. DevStackBox gives you 8.3 immediately and 8.5 w
 
 [devstackbox.com/docs](https://www.devstackbox.com/docs)
 
-## Project workspace roadmap
+## Project workspaces in v0.1.12
 
-See the [full project roadmap](PROJECT-ROADMAP.md) for project details,
-per-project PHP, matching terminals/tools, database connections and Git/SSH.
-Implementation has started; these capabilities are not all shipped.
-AI/MCP integration is deferred and excluded from current work.
+Connect existing folders, manage `.test` hosts and trusted HTTPS, and select an installed PHP version per website. Download extra runtimes in PHP Versions first. The terminal currently uses global PHP.
 
-- Keep PHP downloads and extension management in the existing PHP options.
-  Projects will select an installed version or inherit the default; pinned
-  projects will use that PHP for their website, terminal and managed tasks.
-- WordPress and Laravel will download from upstream on demand when requested.
-  Their applications and dependencies will not be bundled in the installer.
-- Start with saved-site/configuration consistency and health checks, then prove
-  independent PHP versions for two projects before building the full details UI.
-
-Current HTTPS behavior and test limits are documented in
-[Local HTTPS](docs/LOCAL-HTTPS.md) and the
-[0.1.12 validation report](HTTPS-RELEASE-VALIDATION.md).
+See the [project guide](docs/getting-started/projects.mdx), [project roadmap](PROJECT-ROADMAP.md), and [release validation](docs/RELEASE-VALIDATION.md). Framework installers, database linking and Git/SSH are future work. Frameworks will download on demand; AI integration is deferred.
 
 ## Contributing
 

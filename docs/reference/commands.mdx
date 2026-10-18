@@ -144,23 +144,34 @@ const result = await safeInvoke<ReturnType>(
 
 ### SSL Commands
 
-| Command Name        | Source File       | Parameters | Returns    | Notes                                    |
-| ------------------- | ----------------- | ---------- | ---------- | ---------------------------------------- |
-| `get_ssl_status`    | `commands/ssl.rs` | none       | `SslStatus`|                                          |
-| `generate_ssl_cert` | `commands/ssl.rs` | none       | `String`   | Generates self-signed cert for localhost |
-| `enable_ssl`        | `commands/ssl.rs` | none       | `String`   | Updates httpd.conf to load ssl_module    |
-| `disable_ssl`       | `commands/ssl.rs` | none       | `String`   |                                          |
+| Command | Source | Parameters | Result | Notes |
+| --- | --- | --- | --- | --- |
+| `get_ssl_status` | `commands/ssl.rs` | none | `SslStatus` | Local trust and HTTPS status |
+| `generate_ssl_cert` | `commands/ssl.rs` | none | `String` | Provision with mkcert |
+| `enable_ssl` | `commands/ssl.rs` | `port: Option<u16>` | `String` | Provision and enable local HTTPS |
+| `trust_ssl_ca` | `commands/ssl.rs` | none | `String` | Request local CA trust; Windows approval may be needed |
+| `disable_ssl` | `commands/ssl.rs` | none | `String` | Disable HTTPS |
 
-### Virtual Host Commands
+### Virtual Host and Project Commands
 
-| Command Name        | Source File            | Parameters                                              | Returns        | Notes                     |
-| ------------------- | ---------------------- | ------------------------------------------------------- | -------------- | ------------------------- |
-| `list_vhosts`       | `commands/vhosts.rs`   | none                                                    | `VhostEntry[]` |                           |
-| `add_vhost`         | `commands/vhosts.rs`   | `domain: String`, `root: String`, `php_version: String` | `String`       | Also writes vhosts.conf   |
-| `remove_vhost`      | `commands/vhosts.rs`   | `domain: String`                                        | `String`       |                           |
-| `toggle_vhost`      | `commands/vhosts.rs`   | `domain: String`, `enabled: bool`                       | `String`       |                           |
-| `get_hosts_entries` | `commands/vhosts.rs`   | none                                                    | `HostEntry[]`  | Reads Windows hosts file  |
-| `update_hosts_entry`| `commands/vhosts.rs`   | `domain: String`, `action: String`                      | `String`       | Requires elevation (UAC)  |
+Parameters below use Rust names; Tauri callers use camelCase. Failed commands return an error string.
+
+| Command | Source | Parameters | Result |
+| --- | --- | --- | --- |
+| `list_vhosts` | `commands/vhosts.rs` | none | `VhostEntry[]` |
+| `add_vhost` | `commands/vhosts.rs` | `domain`, `doc_root`; optional `https`, `aliases`, `project_root`, `previous_domain` | unit |
+| `set_project_php_version` | `commands/vhosts.rs` | `project_id`, optional `version` (null inherits default) | unit |
+| `remove_vhost` | `commands/vhosts.rs` | `domain` | unit; keeps website files |
+| `toggle_vhost` | `commands/vhosts.rs` | `domain`, `enabled` | unit |
+| `get_hosts_entries` | `commands/vhosts.rs` | none | `String[]` |
+| `update_hosts_entry` | `commands/vhosts.rs` | `domain`, `action` | `String`; may require elevation |
+| `get_project_diagnostics` | `commands/projects.rs` | `project_id` | `ProjectDiagnostics` |
+| `get_site_configuration_warnings` | `commands/projects.rs` | none | `String[]` |
+| `suggest_document_root` | `commands/projects.rs` | `path` | `String` |
+| `choose_project_folder` | `commands/projects.rs` | none | optional `String` |
+| `create_project_folder` | `commands/projects.rs` | `name` | `String` |
+
+See [Projects, PHP & HTTPS](../getting-started/projects) for the user workflow and current limitations.
 
 ### Full Backup Commands
 

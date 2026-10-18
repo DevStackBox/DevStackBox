@@ -35,3 +35,11 @@ Open a [GitHub Issue](https://github.com/DevStackBox/DevStackBox/issues) or star
 ## How do I report a security issue?
 
 Email **hello@devstackbox.com**. Do not open public issues for vulnerabilities. See [Security](/security).
+
+## Can each project use a different PHP version?
+
+Yes, in v0.1.12. Download the runtime in PHP Versions, then select it in project details. Only installed runtimes are offered. This affects website requests; the terminal still uses global PHP. See [Projects, PHP & HTTPS](getting-started/projects).
+
+## Can a trusted HTTPS site return 404?
+
+Yes. A certificate verifies the connection, not application routes or files. Check the document root and entry file in project details.

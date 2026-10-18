@@ -30,7 +30,7 @@ As of v0.1.8+, this is the normal upgrade path when **Auto-check updates** is en
 2. When a newer version is available, confirm the update dialog and allow UAC when prompted.
 3. After install, the app relaunches; your data under `%LOCALAPPDATA%\DevStackBox\` is preserved.
 
-Back up projects and export databases before updating. Stop Apache and MySQL before starting the update to avoid file-lock errors (see [Roadmap](../roadmap) Phase 4.3 for automatic pre-update shutdown).
+Back up projects and export databases before updating. The v0.1.12 installer stops processes owned by the selected installation and checks replaceable binaries for locks before copying. If a file stays locked, setup aborts; close the reported process and retry.
 
 ## Manual upgrade (fallback)
 
@@ -57,7 +57,7 @@ Binaries under the install directory (Apache, PHP, MySQL, phpMyAdmin) are replac
 
 ## What is coming next
 
-Signed download-and-install via the Tauri updater is **shipped** today. Phase 4.3 still adds safer automation: stop services before update, config backup, and `configVersion` migration. See [Installer & updates](../reference/installer) and [Release process](../development/release-process).
+Signed download-and-install via the Tauri updater is **shipped** today. Version 0.1.12 adds automatic service shutdown and lock checks before manual upgrades. Final clean-machine and cross-account qualification remains part of release testing. See [Installer & updates](../reference/installer) and [Release process](../development/release-process).
 
 ## If something goes wrong
 

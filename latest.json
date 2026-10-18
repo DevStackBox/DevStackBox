@@ -1,11 +1,11 @@
 {
-  "version": "0.1.10",
-  "notes": "DevStackBox v0.1.10 - stability, MySQL/DB UX, terminal and installer improvements; PHP 8.3 bundled, 8.1/8.2/8.4/8.5 on-demand download.",
-  "pub_date": "2026-10-17T11:30:06Z",
+  "version": "0.1.12",
+  "notes": "DevStackBox v0.1.12: project details, per-project website PHP, trusted local HTTPS, and safer manual upgrades.",
+  "pub_date": "2026-10-18T11:57:47Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRMTM4U1RGRFJNV2o1eHlFdWdSOUZyWmQ0K1QzTklQdE9xL3RRWGN3S3JXZWphUjJibzJrWnRxd1NjeUxZRmtlTjRMejNHVk9vNTRLWllGSitSOE91UVFzcW9pZlVETEFBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMjE2Nzk2CWZpbGU6RGV2U3RhY2tCb3hfMC4xLjEwX3g2NC1zZXR1cC5leGUKVGdQUk9aNHJsd1ZUa1lsRmorUVJJaXZ0SkVEQXRiMUV4YjcwaFVnYU9sWVNqbmgzK0YrbGxYamU2RGc5Tmc5OE5jSTNaNEVoUHdpTmI5YXRvTlIrRHc9PQo=",
-      "url": "https://github.com/DevStackBox/DevStackBox/releases/download/v0.1.10/DevStackBox_0.1.10_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRMTM4U1RGRFJNV2dBVW5LRGJiVDdhWmtQNDVhOSttMTVnd29TRENlL3plbFAyZks4Q0VoaWp2eFR5bVV1SFhReFNoUWNndE5mNmNlMEtOeVlTTHZ1d3ptVHhGNUZpWFFFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMzI0NjUyCWZpbGU6RGV2U3RhY2tCb3hfMC4xLjEyX3g2NC1zZXR1cC5leGUKSWl5TkFvTTFLVlJsVjV2VTRHZmRMMmNiMDZDVU1Kckd2K2ZFYnMreFpRdW45ZWZWeVZ2Y3M3ZC9SdmxaWWxsOEgxTWMxTEhIMVV1ZE5HNk12WDBGQUE9PQo=",
+      "url": "https://github.com/DevStackBox/DevStackBox/releases/download/v0.1.12/DevStackBox_0.1.12_x64-setup.exe"
     }
   }
 }

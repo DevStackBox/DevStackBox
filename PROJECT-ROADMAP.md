@@ -7,9 +7,9 @@ changes from shipped and verified features.
 
 ### Implementation progress
 
-- 0.1.15 adds one project per row and installed-only, per-project website PHP
+- Public v0.1.12 (validated in internal build 0.1.15) adds one project per row and installed-only, per-project website PHP
   selection, including simultaneous HTTP/HTTPS validation with PHP 8.3 and 8.5.
-  See `PROJECT-PHP-VALIDATION.md` for evidence and remaining terminal/configuration
+  See `docs/RELEASE-VALIDATION.md` for evidence and remaining terminal/configuration
   UI scope. Runtime selection does not change the global PHP default.
 
 - Added stable project IDs, retained through hostname edits and persisted on the
@@ -71,7 +71,7 @@ The a.test investigation found an empty document root and inconsistent saved
 versus generated site state. Diagnose and fix persistence/reconciliation before
 expanding the workspace. Do not infer the cause of that mismatch without a
 reproducible test. Existing HTTPS release qualification remains tracked in
-`HTTPS-RELEASE-VALIDATION.md`.
+`docs/RELEASE-VALIDATION.md`.
 
 ## 3. Navigation and project details
 

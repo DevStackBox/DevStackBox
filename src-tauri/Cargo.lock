@@ -770,7 +770,7 @@ dependencies = [
 
 [[package]]
 name = "devstackbox"
-version = "0.1.15"
+version = "0.1.12"
 dependencies = [
  "futures-util",
  "portable-pty",
