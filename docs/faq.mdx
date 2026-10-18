@@ -43,3 +43,11 @@ Yes, in v0.1.12. Download the runtime in PHP Versions, then select it in project
 ## Can a trusted HTTPS site return 404?
 
 Yes. A certificate verifies the connection, not application routes or files. Check the document root and entry file in project details.
+
+## Why does Windows SmartScreen warn about the installer?
+
+DevStackBox is not signed with a Windows Authenticode publisher certificate. SmartScreen may label the installer as from an **unknown publisher**. That is expected for open-source projects without a commercial code-signing cert.
+
+The in-app updater uses a separate **minisign** signature on release assets. That proves update packages came from the project; it does **not** replace Windows publisher trust for the first install.
+
+**What to do:** Download only from the [official GitHub release](https://github.com/DevStackBox/DevStackBox/releases/latest). Compare the installer SHA-256 with the hash on the [download page](https://www.devstackbox.com/download) (from GitHub) or in `CHANGELOG.md`. If SmartScreen still blocks you, choose **More info** → **Run anyway** after you trust the hash and source.

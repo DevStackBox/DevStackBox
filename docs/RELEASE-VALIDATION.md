@@ -15,7 +15,7 @@ Do not announce the candidate as publicly available until uploaded and final ins
 - Version: 0.1.12 (built 18 October 2026).
 - File: `src-tauri/target/release/bundle/nsis/DevStackBox_0.1.12_x64-setup.exe`
 - Size: 187052439 bytes.
-- SHA-256: `b3b6e690307cde172d4114a161adb9e07c7929e0e4689ae49495bfee93bcf8f9`.
+- SHA-256: see [GitHub release v0.1.12](https://github.com/DevStackBox/DevStackBox/releases/tag/v0.1.12) asset digest (`E3F2F4CA76254F14DA52A02A17BC2B6FE9222C1861084CF0CE6172C849F292E3` as of publish).
 - Updater artifact signature and signed comment independently verified against the configured public key.
 - Matching `release/latest.json` generated; root `latest.json` synchronized as staged release metadata. Publish only alongside the matching artifact; do not deploy this feed ahead of the release.
 - Windows Authenticode status: NotSigned. Updater signing is not Windows publisher signing.

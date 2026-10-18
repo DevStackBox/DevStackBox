@@ -17,6 +17,7 @@
     "prepare-binaries-optimized": "node scripts/verify-release.mjs",
     "build:optimized": "npm run build:release",
     "build:release": "node scripts/build-release.mjs",
+    "finalize-release": "node scripts/finalize-release.mjs --write-changelog",
     "release": "node scripts/verify-release.mjs",
     "check": "npm test && tsc --noEmit && node scripts/validate-docs.mjs && node scripts/verify-release.mjs",
     "check:ci": "npm test && tsc --noEmit && node scripts/validate-docs.mjs"

@@ -58,7 +58,22 @@ npm run build:release
 
 ---
 
-## 3. `latest.json` (required for auto-update)
+## 3. Finalize metadata (SHA + release notes)
+
+After the NSIS build finishes, **do not type the SHA by hand**. Generate notes and update `CHANGELOG.md` from the **exact** installer file you will upload:
+
+```powershell
+npm run finalize-release
+# or after upload, sync SHA from GitHub:
+node scripts/finalize-release.mjs --from-github vX.Y.Z --write-changelog
+node scripts/finalize-release.mjs --verify-github vX.Y.Z
+```
+
+This writes `release/notes-vX.Y.Z.md` and replaces the `**Installer SHA-256:**` line under the matching CHANGELOG section.
+
+---
+
+## 4. `latest.json` (required for auto-update)
 
 ```powershell
 .\scripts\make-latest-json.ps1 -Notes "DevStackBox vX.Y.Z - summary for users"
@@ -67,20 +82,18 @@ Copy-Item release\latest.json latest.json
 
 ---
 
-## 4. Publish GitHub Release
+## 5. Publish GitHub Release
 
 Upload: `.exe`, `.exe.sig`, and **`latest.json`** (exact name). Do not mark pre-release.
 
-**Release notes:** paste the matching section from `CHANGELOG.md` (Added / Changed / Fixed + installer SHA-256), not a one-line summary:
-
-```powershell
-gh release edit vX.Y.Z --notes-file release\notes-vX.Y.Z.md
-```
-
-Or when creating:
+**Release notes:** use the generated file (never duplicate SHA in a separate doc):
 
 ```powershell
 gh release create vX.Y.Z ... --notes-file release\notes-vX.Y.Z.md
+# or:
+gh release edit vX.Y.Z --notes-file release\notes-vX.Y.Z.md
 ```
+
+Run `node scripts/finalize-release.mjs --verify-github vX.Y.Z` before marking the release done.
 
 See [Release process](./release-process) Step 7–8.

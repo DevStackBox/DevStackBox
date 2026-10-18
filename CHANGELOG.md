@@ -26,7 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Framework installers, project database linking, Git/SSH, and project-aware terminals remain future work. AI integration is deferred.
 - Internal test builds numbered 0.1.13-0.1.15 were not public releases. These changes form public version 0.1.12.
 
-**Installer SHA-256:** `B3B6E690307CDE172D4114A161ADB9E07C7929E0E4689AE49495BFEE93BCF8F9`
+**Installer SHA-256:** `E3F2F4CA76254F14DA52A02A17BC2B6FE9222C1861084CF0CE6172C849F292E3`
 
 ## [0.1.11] - 2026-10-17
 
