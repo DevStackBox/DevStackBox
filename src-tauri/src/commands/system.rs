@@ -513,8 +513,12 @@ pub async fn get_phpmyadmin_url() -> Result<String, String> {
     use crate::commands::ssl::get_ssl_status;
     use crate::utils::config_ports::apache_listen_port;
 
-    let ssl_enabled = get_ssl_status().await.map(|s| s.enabled).unwrap_or(false);
-    let port = if ssl_enabled { 443 } else { apache_listen_port() };
+    let status = get_ssl_status().await?;
+    if status.enabled && !status.sites.first().is_some_and(|s| s.verified) {
+        return Err("Local HTTPS needs attention. Open Services / Apache / HTTPS and repair or start Apache.".into());
+    }
+    let ssl_enabled = status.enabled;
+    let port = if ssl_enabled { crate::commands::ssl::https_port() } else { apache_listen_port() };
     let scheme = if ssl_enabled { "https" } else { "http" };
     let url = if (port == 80 && !ssl_enabled) || (port == 443 && ssl_enabled) {
         format!("{scheme}://localhost/phpmyadmin/")

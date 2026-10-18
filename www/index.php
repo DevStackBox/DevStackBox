@@ -1,5 +1,9 @@
 <?php
 // DevStackBox - PHP Development Environment
+$https = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+$port = (int) ($_SERVER['SERVER_PORT'] ?? ($https ? 443 : 80));
+$address = ($https ? 'https' : 'http') . '://localhost' .
+    (($https && $port === 443) || (!$https && $port === 80) ? '' : ':' . $port) . '/';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -52,15 +56,15 @@
             <h3>Quick Start:</h3>
             <ul>
                 <li>Place your PHP files in the <code>www/</code> directory</li>
-                <li>Access them via <a href="http://localhost/">http://localhost/</a></li>
-                <li>MySQL is available on port 3306</li>
+                <li>Access them via <a href="/">operating localhost site</a>, or connect a .test hostname in Projects.</li>
+                <li>Check the app for MySQL's running state and port.</li>
                 <li>Use phpMyAdmin for database management</li>
             </ul>
         </div>
 
         <div style="margin-top: 30px; color: #666; border-top: 1px solid #eee; padding-top: 20px;">
             <small>DevStackBox - Portable PHP Development Environment<br>
-            Access this page at: <a href="http://localhost">http://localhost</a></small>
+            Current address: <a href="/"><?php echo htmlspecialchars($address, ENT_QUOTES, 'UTF-8'); ?></a></small>
         </div>
     </div>
 </body>

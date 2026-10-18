@@ -16,7 +16,7 @@ use crate::utils::process::{
     is_our_process_running, kill_pid,
 };
 
-pub const APACHE_CONFIG_VERSION: u32 = 8;
+pub const APACHE_CONFIG_VERSION: u32 = 9;
 
 /// Ensure httpd.conf exists and is migrated to the current template version.
 pub async fn ensure_apache_config() -> Result<(), String> {
@@ -32,7 +32,14 @@ pub async fn ensure_apache_config() -> Result<(), String> {
             "Detected outdated Apache config. Migrating to configVersion {}...",
             APACHE_CONFIG_VERSION
         );
+        let backup = config_path.with_extension("pre-v9.conf");
+        if !backup.exists() { std::fs::copy(&config_path, backup).map_err(|e| e.to_string())?; }
+        let port = apache_listen_port();
         create_default_apache_config().await?;
+        if port != 80 {
+            let generated = std::fs::read_to_string(&config_path).map_err(|e| e.to_string())?;
+            std::fs::write(&config_path, generated.replace(":80", &format!(":{port}"))).map_err(|e| e.to_string())?;
+        }
     }
     harden_directory_listing(&config_path)
 }
@@ -198,7 +205,11 @@ pub async fn start_apache() -> Result<bool, String> {
     // the migration above, or the file was lost), regenerate it automatically
     // so HTTPS comes back without the user having to click "Enable SSL" again.
     if !ssl_conf_path.exists() {
-        crate::commands::ssl::repair_ssl_conf();
+        if crate::commands::ssl::https_enabled() {
+            let entries = crate::commands::vhosts::load_vhosts()?;
+            let config = crate::commands::ssl::render_ssl(&entries)?;
+            std::fs::write(&ssl_conf_path, config).map_err(|e| e.to_string())?;
+        }
     }
 
     // Ensure php.ini has session.save_path and extension_dir set correctly
@@ -212,38 +223,8 @@ pub async fn start_apache() -> Result<bool, String> {
     // Phase 5.2 - fail fast if the configured listen port is taken.
     ensure_port_available(listen_port, "Apache")?;
 
-    // Run config syntax test first so we get a clear error message.
-    // NOTE: on some Apache Lounge Win64 builds mod_ssl causes httpd -t to
-    // crash with an access violation (0xC0000005) even though Apache starts
-    // fine in normal mode.  We therefore only treat the test as a hard
-    // failure when it produces actual error text.  A crash with no output is
-    // silently skipped - the real startup below will catch genuine problems.
-    match create_hidden_command(&apache_path.to_string_lossy())
-        .arg("-f")
-        .arg(&config_path)
-        .arg("-t")
-        .current_dir(&base_path)
-        .output()
-    {
-        Ok(output) => {
-            if !output.status.success() {
-                let stderr = String::from_utf8_lossy(&output.stderr);
-                let stdout = String::from_utf8_lossy(&output.stdout);
-                let error_text = format!("{}{}", stderr, stdout);
-                // Only abort if there is actual diagnostic text.  A blank
-                // result means httpd -t itself crashed (e.g. mod_ssl AV on
-                // Windows); in that case proceed and let Apache self-report.
-                if !error_text.trim().is_empty() {
-                    return Err(format!(
-                        "Apache configuration test failed: {}",
-                        error_text.trim()
-                    ));
-                }
-                println!("httpd -t exited non-zero with no output (likely mod_ssl AV) - proceeding with start");
-            }
-        }
-        Err(e) => return Err(format!("Failed to test Apache configuration: {}", e)),
-    }
+    let output = create_hidden_command(&apache_path.to_string_lossy()).arg("-f").arg(&config_path).arg("-t").current_dir(&base_path).output().map_err(|e| e.to_string())?;
+    if !output.status.success() { return Err(format!("Apache configuration validation failed ({}): {}", output.status, String::from_utf8_lossy(&output.stderr))); }
 
     let mut child = match create_hidden_command(&apache_path.to_string_lossy())
         .arg("-f")
@@ -379,21 +360,18 @@ pub async fn create_default_apache_config() -> Result<(), String> {
     };
 
     // PHP-CGI path: php/current/ junction in dev layout, php/ directly in flat NSIS layout.
-    let php_cgi_dir = if install_path.join("php").join("current").exists() {
-        install_path.join("php").join("current")
-    } else {
-        install_path.join("php")
-    };
+    let php_cgi_dir = crate::utils::paths::active_php_dir();
     let php_cgi_dir_str = php_cgi_dir.display().to_string().replace('\\', "/");
 
     let config_content = format!(
-        r#"# configVersion: 8
+        r#"# configVersion: 9
 # Apache Configuration for DevStackBox
 # Managed by DevStackBox. Edits to this file are preserved across upgrades
 # unless the configVersion is bumped, which triggers a migration.
 ServerRoot "{apache_root_str}"
 PidFile "{logs_root_str}/httpd.pid"
-Listen 80
+Listen 127.0.0.1:80
+Listen [::1]:80
 
 # Essential modules
 LoadModule dir_module {mp}mod_dir.so

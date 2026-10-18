@@ -54,6 +54,13 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
+            crate::commands::projects::choose_project_folder,
+            crate::commands::projects::open_project_folder,
+            crate::commands::projects::create_project_folder,
+            crate::commands::projects::suggest_document_root,
+            crate::commands::projects::get_project_diagnostics,
+            crate::commands::vhosts::set_project_php_version,
+            crate::commands::projects::get_site_configuration_warnings,
             check_binaries,
             debug_paths,
             debug_installation,
@@ -144,6 +151,23 @@ pub fn run() {
             ensure_user_data_dirs();
             let _ = ensure_phpmyadmin_config_inc();
 
+            // Installer runs this in the interactive user's context. First launch is a
+            // fallback for a deferred installer handoff or a newly signed-in user.
+            if crate::utils::paths::get_installation_path().join("https-autosetup").exists()
+                && !crate::commands::ssl::https_enabled()
+            {
+                tauri::async_runtime::spawn(async {
+                    if let Err(error) = crate::commands::ssl::provision().await {
+                        let _ = std::fs::write(crate::utils::paths::user_config_dir().join("https-setup-error.txt"), error);
+                    }
+                });
+            } else if crate::commands::ssl::https_enabled() {
+                tauri::async_runtime::spawn(async {
+                    if let Err(error) = crate::commands::ssl::renew_existing().await {
+                        let _ = std::fs::write(crate::utils::paths::user_config_dir().join("https-setup-error.txt"), error);
+                    }
+                });
+            }
             crate::tray::setup_tray(app)?;
             Ok(())
         })

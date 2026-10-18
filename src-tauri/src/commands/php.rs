@@ -54,6 +54,43 @@ fn php_branch_exe(version: &str) -> PathBuf {
     php_branch_dir(version).join("php.exe")
 }
 
+pub(crate) fn project_runtime(version: &str) -> Result<(PathBuf, PathBuf), String> {
+    if !PHP_BRANCHES.contains(&version) {
+        return Err("Choose a supported installed PHP version.".into());
+    }
+    let directory = php_branch_dir(version);
+    if !directory.join("php.exe").is_file() || !directory.join("php-cgi.exe").is_file() {
+        return Err(format!("PHP {version} is not installed completely. Install it from PHP Versions first."));
+    }
+    Ok((directory, user_config_dir().join("php-runtimes").join(version).join("php.ini")))
+}
+
+pub(crate) fn prepare_project_runtime(version: &str) -> Result<(), String> {
+    let (directory, ini) = project_runtime(version)?;
+    let output = create_hidden_command(&directory.join("php.exe").to_string_lossy())
+        .args(["-n", "-r", "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;"])
+        .output().map_err(|e| e.to_string())?;
+    if !output.status.success() || String::from_utf8_lossy(&output.stdout).trim() != version {
+        return Err(format!("The installed PHP {version} runtime failed validation. Reinstall it from PHP Versions."));
+    }
+    if ini.is_file() { return Ok(()); }
+    let template = [directory.join("php.ini"), directory.join("php.ini-production")]
+        .into_iter().find(|p| p.is_file()).ok_or("Installed PHP configuration template is missing")?;
+    let content = fs::read_to_string(template).map_err(|e| e.to_string())?;
+    let settings = content.lines().filter(|line| {
+        let key = line.split('=').next().unwrap_or("").trim();
+        !["extension_dir", "session.save_path", "error_log"].iter().any(|name| key.eq_ignore_ascii_case(name))
+    }).collect::<Vec<_>>().join("\n");
+    let sessions = user_sessions_dir();
+    fs::create_dir_all(&sessions).map_err(|e| e.to_string())?;
+    let header = format!("; DevStackBox pinned PHP {version}\nextension_dir=\"{}\"\nsession.save_path=\"{}\"\nerror_log=\"{}\"\n",
+        to_apache_path(&directory.join("ext")), to_apache_path(&sessions),
+        to_apache_path(&crate::utils::paths::user_logs_dir().join(format!("php-{version}-error.log"))));
+    fs::create_dir_all(ini.parent().unwrap()).map_err(|e| e.to_string())?;
+    fs::write(ini, format!("{header}{}", enable_essential_extensions(settings, &directory.join("ext"))))
+        .map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 pub async fn get_php_status() -> Result<ServiceInfo, String> {
     let version = get_current_php_version().await;

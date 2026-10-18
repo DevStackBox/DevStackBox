@@ -258,6 +258,9 @@ export function getBreadcrumbTrail(path: string): RouteMeta[] {
 
 /** Best-effort match: exact, then longest known prefix. */
 function matchRouteByPath(path: string): RouteMeta | undefined {
+  if (/^\/projects\/[^/]+$/.test(path)) {
+    return { ...ROUTES.projects, path, parent: "/projects", labelKey: "navigation.projectDetails", defaultLabel: "Project details" };
+  }
   const direct = getRouteByPath(path);
   if (direct) return direct;
   // Strip trailing segments until a known route matches.

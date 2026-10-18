@@ -11,6 +11,7 @@ import { safeInvoke, isTauri, getMockBinariesStatus } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
 import { Menu } from "lucide-react";
 import { ProjectsPage } from "./pages/projects";
+import { ProjectDetailsPage } from "./pages/project-details";
 import { RootPasswordPrompt } from "./components/root-password-prompt";
 import { useTranslation } from "react-i18next";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -324,6 +325,7 @@ function AppShell() {
               element={<Navigate to={ROUTES.settingsBackup.path} replace />}
             />
             <Route path={ROUTES.projects.path} element={<ProjectsPage />} />
+            <Route path="/projects/:projectId" element={<ProjectDetailsPage />} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

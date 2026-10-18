@@ -1,3 +1,4 @@
+!define DSB_UPGRADE_STOP_SCRIPT "${__FILEDIR__}\stop-upgrade-services.ps1"
 ; DevStackBox NSIS hooks - install/uninstall logging and cleanup
 
 ; ---------------------------------------------------------------------------
@@ -104,7 +105,7 @@
 !macro DsbForceKillImageUnderInstDir imageName
   Push $0
   SetDetailsPrint none
-  nsExec::Exec 'powershell -NoProfile -NonInteractive -Command "Get-CimInstance Win32_Process | Where-Object { $$_.Name -eq ''${imageName}'' -and $$_.ExecutablePath -and ($$_.ExecutablePath -like ''$INSTDIR\*'') } | ForEach-Object { Stop-Process -Id $$_.ProcessId -Force -ErrorAction SilentlyContinue }; exit 0"'
+  nsExec::Exec `powershell -NoProfile -NonInteractive -Command "Get-CimInstance Win32_Process | Where-Object { $$_.Name -eq '${imageName}' -and $$_.ExecutablePath -and ($$_.ExecutablePath -like '$INSTDIR\*') } | ForEach-Object { Stop-Process -Id $$_.ProcessId -Force -ErrorAction SilentlyContinue }; exit 0"`
   Pop $0
   !insertmacro SetLogRestore
   Pop $0
@@ -206,7 +207,7 @@ Function DsbProcessRunningUnderInstDir
   Push $R2
   StrCpy $R2 "$INSTDIR"
   SetDetailsPrint none
-  nsExec::Exec 'powershell -NoProfile -NonInteractive -Command "if (Get-CimInstance Win32_Process | Where-Object { $$_.Name -eq ''$R0.exe'' -and $$_.ExecutablePath -and ($$_.ExecutablePath -like ''$R2\*'') }) { exit 0 } else { exit 1 }"'
+  nsExec::Exec `powershell -NoProfile -NonInteractive -Command "if (Get-CimInstance Win32_Process | Where-Object { $$_.Name -eq '$R0.exe' -and $$_.ExecutablePath -and ($$_.ExecutablePath -like '$R2\*') }) { exit 0 } else { exit 1 }"`
   Pop $R1
   !insertmacro SetLogRestore
   StrCmp $R1 "0" running notrunning
@@ -276,81 +277,16 @@ Function DsbStopNamedService
 FunctionEnd
 
 Function DsbStopServicesBeforeUpgrade
-  ; Run when upgrading, or whenever DevStackBox httpd/mysqld is still running under INSTDIR
-  ; (covers same-version reinstall and missed UpdateMode from registry quirks).
-  Push $R5
-  StrCpy $R5 0
-  ${If} $UpdateMode = 1
-    StrCpy $R5 1
-  ${Else}
-    Push "httpd"
-    Call DsbProcessRunningUnderInstDir
-    Pop $R0
-    ${If} $R0 = 0
-      StrCpy $R5 1
-    ${EndIf}
-    Push "mysqld"
-    Call DsbProcessRunningUnderInstDir
-    Pop $R0
-    ${If} $R0 = 0
-      StrCpy $R5 1
-    ${EndIf}
+  InitPluginsDir
+  File /oname=$PLUGINSDIR\stop-upgrade-services.ps1 "${DSB_UPGRADE_STOP_SCRIPT}"
+  DetailPrint "Checking running services and file locks..."
+  nsExec::ExecToLog '"$SYSDIR\WindowsPowerShell\v1.0\powershell.exe" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$PLUGINSDIR\stop-upgrade-services.ps1" -InstallDir "$INSTDIR"'
+  Pop $R0
+  ${If} $R0 != 0
+    DetailPrint "Upgrade aborted: services or locked files could not be cleared. No application files replaced."
+    SetErrorLevel 1
+    Abort
   ${EndIf}
-
-  ${If} $R5 = 1
-    DetailPrint "Stopping services before upgrade..."
-    ; Resolve user config via env - never SetShellVarContext current here
-    ; (that flips SHCTX to HKCU and breaks perMachine registry writes).
-    ReadEnvStr $R7 "LOCALAPPDATA"
-    StrCpy $R7 "$R7\devstackbox\config"
-    !insertmacro ResolveHttpdPath $R8
-    !insertmacro ResolveMysqlAdminPath $R9
-
-    StrCpy $R0 "httpd"
-    StrCpy $R1 "Apache"
-    StrCpy $R2 '"$R8" -f "$R7\httpd.conf" -k stop'
-    Call DsbStopNamedService
-
-    StrCpy $R0 "mysqld"
-    StrCpy $R1 "MySQL"
-    StrCpy $R2 '"$INSTDIR\devstackbox-maintenance.exe" --stop-services'
-    Call DsbStopNamedService
-
-    DetailPrint "Ensuring no service processes remain..."
-    Call DsbForceStopInstDirProcesses
-    Sleep 1000
-
-    Push "httpd"
-    Call DsbProcessRunningUnderInstDir
-    Pop $R0
-    StrCmp $R0 1 mysql_check_after_force
-      DetailPrint "httpd still running after force stop - retrying..."
-      Call DsbForceStopInstDirProcesses
-      Sleep 1500
-      Push "httpd"
-      Call DsbProcessRunningUnderInstDir
-      Pop $R0
-      StrCmp $R0 1 mysql_check_after_force
-        DetailPrint "ERROR: Apache (httpd) could not be stopped. Close it and retry."
-        Abort
-    mysql_check_after_force:
-    Push "mysqld"
-    Call DsbProcessRunningUnderInstDir
-    Pop $R0
-    StrCmp $R0 1 services_force_done
-      DetailPrint "mysqld still running after force stop - retrying..."
-      Call DsbForceStopInstDirProcesses
-      Sleep 1500
-      Push "mysqld"
-      Call DsbProcessRunningUnderInstDir
-      Pop $R0
-      StrCmp $R0 1 services_force_done
-        DetailPrint "ERROR: MySQL (mysqld) could not be stopped. Close it and retry."
-        Abort
-    services_force_done:
-    DetailPrint "Services stopped."
-  ${EndIf}
-  Pop $R5
 FunctionEnd
 
 !macro StopServicesBeforeUpgrade
@@ -361,22 +297,35 @@ FunctionEnd
   ${If} ${FileExists} "$INSTDIR\www\*.*"
     DetailPrint "Preserving existing websites..."
     ${If} ${FileExists} "$INSTDIR\_www_preserve"
-      ClearErrors
-      RmDir /r /REBOOTOK "$INSTDIR\_www_preserve"
-      IfErrors 0 +2
-        DetailPrint "Warning: could not remove stale _www_preserve folder."
+      DetailPrint "Upgrade stopped: _www_preserve contains a previous website backup. Restore or move it before retrying."
+      SetErrorLevel 1
+      Abort
     ${EndIf}
     ClearErrors
     Rename "$INSTDIR\www" "$INSTDIR\_www_preserve"
-    IfErrors 0 +2
-      DetailPrint "Warning: could not preserve www folder (files may be in use)."
+    ${If} ${Errors}
+      DetailPrint "Upgrade stopped: could not preserve www. Close programs using the website folder and retry."
+      SetErrorLevel 1
+      Abort
+    ${EndIf}
   ${EndIf}
 !macroend
 
 !macro RestoreWwwAfterInstall
   ${If} ${FileExists} "$INSTDIR\_www_preserve"
-    RmDir /r /REBOOTOK "$INSTDIR\www"
+    ClearErrors
+    RmDir /r "$INSTDIR\www"
+    ${If} ${Errors}
+      DetailPrint "Could not clear bundled www files. Existing websites remain in _www_preserve."
+      SetErrorLevel 1
+      Abort
+    ${EndIf}
     Rename "$INSTDIR\_www_preserve" "$INSTDIR\www"
+    ${If} ${Errors}
+      DetailPrint "Could not restore www. Existing websites remain in _www_preserve."
+      SetErrorLevel 1
+      Abort
+    ${EndIf}
     DetailPrint "Websites preserved."
   ${EndIf}
 !macroend
@@ -392,7 +341,7 @@ Function un.DsbProcessRunningUnderInstDir
   Push $R2
   StrCpy $R2 "$INSTDIR"
   SetDetailsPrint none
-  nsExec::Exec 'powershell -NoProfile -NonInteractive -Command "if (Get-CimInstance Win32_Process | Where-Object { $$_.Name -eq ''$R0.exe'' -and $$_.ExecutablePath -and ($$_.ExecutablePath -like ''$R2\*'') }) { exit 0 } else { exit 1 }"'
+  nsExec::Exec `powershell -NoProfile -NonInteractive -Command "if (Get-CimInstance Win32_Process | Where-Object { $$_.Name -eq '$R0.exe' -and $$_.ExecutablePath -and ($$_.ExecutablePath -like '$R2\*') }) { exit 0 } else { exit 1 }"`
   Pop $R1
   !insertmacro SetLogRestore
   StrCmp $R1 "0" running notrunning
@@ -590,6 +539,8 @@ FunctionEnd
     !insertmacro RemoveInstallComponent "cache" "cache"
     !insertmacro RemoveInstallComponent "runtime" "runtime"
     !insertmacro RemoveInstallComponent "bin" "bin"
+    !insertmacro RemoveInstallComponent "tools\mkcert" "mkcert"
+    Delete "$INSTDIR\https-autosetup"
     Delete "$INSTDIR\${MAINBINARYNAME}.exe"
     Delete "$INSTDIR\uninstall.exe"
     !insertmacro RestoreWwwAfterDelete
@@ -800,13 +751,7 @@ FunctionEnd
   ${If} $UpdateMode = 1
     DetailPrint "Existing installation detected."
   ${EndIf}
-  ; Path-scoped kill of main binary (backup if CheckIfAppIsRunning left a zombie)
-  !insertmacro DsbForceKillImageUnderInstDir "${MAINBINARYNAME}.exe"
-  Sleep 300
   !insertmacro StopServicesBeforeUpgrade
-  ; Final safety net immediately before www preserve / file copy
-  !insertmacro ForceStopInstDirProcesses
-  Sleep 500
   !insertmacro ProtectWwwBeforeInstall
   ${If} $UpdateMode = 1
     DetailPrint "Upgrading to ${VERSION}..."
@@ -833,5 +778,16 @@ FunctionEnd
     ${EndIf}
   ${EndIf}
   DetailPrint "PHP configuration completed."
+  ${If} $EnableLocalHttps = 1
+    FileOpen $R0 "$INSTDIR\https-autosetup" w
+    FileWrite $R0 "Trusted local HTTPS requested during installation."
+    FileClose $R0
+    DetailPrint "Preparing local HTTPS for the desktop user. Check Apache > HTTPS in the app for the verified result."
+    nsis_tauri_utils::RunAsUser "$INSTDIR\${MAINBINARYNAME}.exe" "--setup-local-https"
+  ${Else}
+    Delete "$INSTDIR\https-autosetup"
+    DetailPrint "Automatic local HTTPS setup was not selected."
+  ${EndIf}
+
   !insertmacro LogPhaseEnd
 !macroend

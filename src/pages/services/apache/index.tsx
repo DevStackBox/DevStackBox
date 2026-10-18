@@ -1,4 +1,5 @@
 import { openLocalSite } from "@/lib/phpmyadmin";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import {
@@ -35,7 +36,17 @@ interface ServiceStatusInfo {
 export function ApacheOverviewPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { services, loading, initialLoading, refresh, toggleService } = useServiceStatus();
+  const [linkError, setLinkError] = useState("");
+  const openSite = async (path = "/") => {
+    setLinkError("");
+    try {
+      await openLocalSite(path);
+    } catch (error) {
+      setLinkError(String(error));
+    }
+  };
+  const { services, loading, initialLoading, refresh, toggleService } =
+    useServiceStatus();
   const status: ServiceStatusInfo = services.apache;
   const busy = initialLoading || loading !== null;
   const handleToggle = () => toggleService("apache");
@@ -49,6 +60,14 @@ export function ApacheOverviewPage() {
       transition={{ duration: 0.2 }}
       className="space-y-4"
     >
+      {linkError && (
+        <p
+          role="alert"
+          className="rounded-lg border border-destructive p-3 text-sm break-words"
+        >
+          {linkError}
+        </p>
+      )}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -128,11 +147,11 @@ export function ApacheOverviewPage() {
               variant="outline"
               size="sm"
               className="w-full"
-              onClick={() => openLocalSite()}
+              onClick={() => void openSite()}
               disabled={!running}
             >
               <ExternalLink className="mr-2 h-4 w-4" />
-              http://localhost
+              {t("apache.openSite", "Open Local Site")}
             </Button>
           </CardContent>
         </Card>
@@ -155,7 +174,7 @@ export function ApacheOverviewPage() {
               variant="outline"
               size="sm"
               className="w-full"
-              onClick={() => openLocalSite("/phpmyadmin/")}
+              onClick={() => void openSite("/phpmyadmin/")}
               disabled={!running}
             >
               <ExternalLink className="mr-2 h-4 w-4" />

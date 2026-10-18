@@ -122,3 +122,6 @@ www/index.html
 
 public/logo-white.svg
 src-tauri/tauri.local-test.conf.json
+
+# Local app review screenshots (may contain local paths)
+/review-artifacts/

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
@@ -23,3 +24,7 @@ const mysqld = path.join(root, "mysql/bin/mysqld.exe");
 const mysqlVersion = execFileSync(mysqld, ["--version"], { encoding: "utf8" });
 if (!/Ver 8\.4\./.test(mysqlVersion)) throw new Error(`Expected bundled MySQL 8.4.x, got: ${mysqlVersion.trim()}`);
 console.log(`Release inputs verified: ${pkg.version}`);
+
+const mkcert = fs.readFileSync(path.join(root, "tools/mkcert/mkcert.exe"));
+if (createHash("sha256").update(mkcert).digest("hex") !== "d2660b50a9ed59eada480750561c96abc2ed4c9a38c6a24d93e30e0977631398") throw new Error("mkcert v1.4.4 Windows x64 checksum mismatch");
+if (!fs.existsSync(path.join(root, "tools/mkcert/LICENSE"))) throw new Error("mkcert license missing");

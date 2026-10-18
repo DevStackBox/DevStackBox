@@ -37,6 +37,25 @@ XAMPP for Windows ships PHP 8.2. DevStackBox gives you 8.3 immediately and 8.5 w
 
 [devstackbox.com/docs](https://www.devstackbox.com/docs)
 
+## Project workspace roadmap
+
+See the [full project roadmap](PROJECT-ROADMAP.md) for project details,
+per-project PHP, matching terminals/tools, database connections and Git/SSH.
+Implementation has started; these capabilities are not all shipped.
+AI/MCP integration is deferred and excluded from current work.
+
+- Keep PHP downloads and extension management in the existing PHP options.
+  Projects will select an installed version or inherit the default; pinned
+  projects will use that PHP for their website, terminal and managed tasks.
+- WordPress and Laravel will download from upstream on demand when requested.
+  Their applications and dependencies will not be bundled in the installer.
+- Start with saved-site/configuration consistency and health checks, then prove
+  independent PHP versions for two projects before building the full details UI.
+
+Current HTTPS behavior and test limits are documented in
+[Local HTTPS](docs/LOCAL-HTTPS.md) and the
+[0.1.12 validation report](HTTPS-RELEASE-VALIDATION.md).
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).

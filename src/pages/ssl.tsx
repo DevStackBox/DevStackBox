@@ -1,309 +1,244 @@
-import { useState, useEffect } from "react";
-import { safeInvoke } from "@/lib/tauri";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
-import {
-  Lock,
-  LockOpen,
-  RefreshCw,
-  ShieldCheck,
-  FileBadge,
-  CheckCircle2,
-  XCircle,
-  AlertTriangle,
-} from "lucide-react";
+import { RefreshCw, ShieldCheck, TriangleAlert } from "lucide-react";
+import { safeInvoke, openExternalUrl, isTauri } from "@/lib/tauri";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { TAURI_COMMANDS } from "@/lib/commands";
-
-interface SslStatus {
-  ca_exists: boolean;
-  ca_trusted: boolean;
-  ca_path: string;
-  cert_exists: boolean;
-  enabled: boolean;
-  cert_expiry: string | null;
-  cert_path: string;
-  key_path: string;
-}
-
-function StatusRow({
-  ok,
-  label,
-  detail,
-}: {
-  ok: boolean;
-  label: string;
-  detail?: string;
-}) {
-  const Icon = ok ? CheckCircle2 : XCircle;
-  return (
-    <div className="flex items-center gap-3 py-2">
-      <Icon
-        className={`w-4 h-4 shrink-0 ${ok ? "text-primary" : "text-muted-foreground"}`}
-      />
-      <span className="text-sm font-medium">{label}</span>
-      {detail && (
-        <span className="text-sm text-muted-foreground ml-auto">{detail}</span>
-      )}
-    </div>
-  );
-}
-
+import type { HttpsStatus } from "@/types/vhosts";
 export function SslPage() {
-  const { t } = useTranslation();
-  const [status, setStatus] = useState<SslStatus | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [actionMsg, setActionMsg] = useState<{
-    type: "ok" | "err";
-    text: string;
-  } | null>(null);
-
-  const fetchStatus = async () => {
+  const { i18n } = useTranslation();
+  const text = (en: string, hi: string) =>
+    i18n.language.startsWith("hi") ? hi : en;
+  const [status, setStatus] = useState<HttpsStatus | null>(null);
+  const [port, setPort] = useState(443);
+  const [busy, setBusy] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [error, setError] = useState("");
+  const load = useCallback(async () => {
+    setChecking(true);
+    setStatus(null);
     try {
-      const s = await safeInvoke<SslStatus>(TAURI_COMMANDS.ssl.getStatus);
-      setStatus(s);
-    } catch {
-      // status unavailable - stays null
-    }
-  };
-
-  useEffect(() => {
-    fetchStatus();
-  }, []);
-
-  const run = async (fn: () => Promise<string | null>) => {
-    setLoading(true);
-    setActionMsg(null);
-    try {
-      const msg = await fn();
-      if (msg) {
-        setActionMsg({ type: "ok", text: msg });
-      }
-      await fetchStatus();
-    } catch (err) {
-      setActionMsg({ type: "err", text: String(err) });
+      const next = await safeInvoke<HttpsStatus>("get_ssl_status");
+      setStatus(next);
+      setPort(next?.port ?? 443);
+    } catch (e) {
+      setError(String(e));
     } finally {
-      setLoading(false);
+      setChecking(false);
     }
-  };
-
-  const handleGenerate = () =>
-    run(() => safeInvoke<string>(TAURI_COMMANDS.ssl.generateCert));
-
-  const handleEnable = () =>
-    run(() => safeInvoke<string>(TAURI_COMMANDS.ssl.enable));
-
-  const handleDisable = () =>
-    run(() => safeInvoke<string>(TAURI_COMMANDS.ssl.disable));
-
+  }, []);
+  useEffect(() => {
+    void load();
+  }, [load]);
+  async function action(command: string, args?: Record<string, unknown>) {
+    setBusy(true);
+    setError("");
+    setStatus(null);
+    try {
+      await safeInvoke(command, args);
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      await load();
+      setBusy(false);
+    }
+  }
+  const ready =
+    !!status?.sites.filter((s) => s.enabled && s.https).length &&
+    status.sites.filter((s) => s.enabled && s.https).every((s) => s.verified);
   return (
-    <div className="space-y-6">
-      <div className="flex justify-end">
+    <div className="space-y-5">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold">
+            {text("Local HTTPS", "स्थानीय HTTPS")}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {text(
+              "Windows trust, site certificates, and live connections checked together.",
+              "Windows ट्रस्ट, प्रमाणपत्र और लाइव कनेक्शन की एक साथ जाँच।",
+            )}
+          </p>
+        </div>
         <Button
           variant="outline"
-          size="sm"
-          onClick={fetchStatus}
-          disabled={loading}
+          disabled={busy || checking}
+          onClick={() => void load()}
         >
-          <RefreshCw
-            className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`}
-          />
-          {t("ssl.refresh", "Refresh")}
+          <RefreshCw className="mr-2 h-4 w-4" />
+          {text("Check again", "फिर जाँचें")}
         </Button>
       </div>
-
-      <div className="flex items-center justify-between rounded border p-3 text-sm">
-        <span>{status?.ca_trusted ? "Local certificate is trusted by Windows" : "Trust the local certificate to use HTTPS without browser warnings"}</span>
-        <Button size="sm" variant="outline" disabled={loading || !status?.ca_exists || status.ca_trusted} onClick={() => {
-          if (window.confirm("Trust the DevStackBox local certificate authority for your Windows account? Only certificates issued by your local DevStackBox CA will be trusted.")) void run(() => safeInvoke<string>(TAURI_COMMANDS.ssl.trustCa));
-        }}>Trust local certificate</Button>
-      </div>
-      {/* Action feedback */}
-      {actionMsg && (
-        <motion.div
-          initial={{ opacity: 0, y: -6 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`rounded-lg border px-4 py-3 text-sm flex items-start gap-2 ${
-            actionMsg.type === "ok"
-              ? "border-primary/30 bg-primary/10 text-primary dark:text-primary"
-              : "border-destructive/30 bg-destructive/10 text-destructive"
-          }`}
+      <section className="rounded-xl border bg-card p-5 space-y-4">
+        <div className="flex gap-3">
+          {ready ? (
+            <ShieldCheck className="h-6 w-6 text-emerald-600" />
+          ) : (
+            <TriangleAlert className="h-6 w-6 text-amber-600" />
+          )}
+          <div>
+            <h3 className="font-semibold" role="status">
+              {busy
+                ? text("Setting up HTTPS…", "HTTPS सेटअप जारी…")
+                : checking
+                  ? text("Checking…", "जाँच जारी…")
+                  : ready
+                    ? text(
+                        "Trusted HTTPS is working",
+                        "विश्वसनीय HTTPS काम कर रहा है",
+                      )
+                    : text("HTTPS needs attention", "HTTPS पर ध्यान दें")}
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {text(
+                "Certificates are unique to this Windows account and computer. A configured certificate is not marked ready until the live HTTPS check succeeds.",
+                "प्रमाणपत्र इस Windows खाते और कंप्यूटर के लिए हैं। लाइव जाँच सफल होने पर ही तैयार दिखेगा।",
+              )}
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            disabled={busy || checking || !isTauri()}
+            onClick={() => {
+              if (
+                status?.ca_trusted ||
+                window.confirm(
+                  text(
+                    "Set up a private local certificate authority and trust it for this Windows account? It can issue certificates trusted by your browsers. Keep its private key on this computer.",
+                    "इस Windows खाते के लिए स्थानीय प्रमाणपत्र प्राधिकरण बनाकर विश्वसनीय करें? उसकी निजी कुंजी इसी कंप्यूटर पर रखें।",
+                  ),
+                )
+              )
+                void action("enable_ssl", { port });
+            }}
+          >
+            {text("Set up / repair HTTPS", "HTTPS सेटअप / सुधार")}
+          </Button>
+          <Button
+            variant="outline"
+            disabled={busy || !isTauri()}
+            onClick={() => void action("start_apache")}
+          >
+            {text("Start Apache", "Apache शुरू करें")}
+          </Button>
+        </div>
+        {status && (
+          <p className="text-sm">
+            {text("Windows trust:", "Windows ट्रस्ट:")}{" "}
+            {status.ca_trusted
+              ? text("Installed for this account", "इस खाते के लिए स्थापित")
+              : text("Missing", "अनुपलब्ध")}{" "}
+            ·{" "}
+            {text("Apache HTTPS configuration:", "Apache HTTPS कॉन्फ़िगरेशन:")}{" "}
+            {status.enabled
+              ? text("Enabled", "चालू")
+              : text("Not enabled", "बंद")}
+          </p>
+        )}
+      </section>
+      {error && (
+        <p
+          role="alert"
+          className="rounded-lg border border-destructive p-3 text-sm break-words"
         >
-          {actionMsg.type === "ok" ? (
-            <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
-          ) : (
-            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-          )}
-          <pre className="whitespace-pre-wrap font-sans">{actionMsg.text}</pre>
-        </motion.div>
+          {error}
+        </p>
       )}
-
-      {/* Status card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <ShieldCheck className="w-4 h-4" />
-            {t("ssl.currentStatus", "Current Status")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-1">
-          {status ? (
-            <>
-              <StatusRow
-                ok={status.ca_exists}
-                label={t("ssl.caGenerated", "Local Root CA generated (DevStackBox Local CA)")}
-              />
-              <Separator />
-              <StatusRow
-                ok={status.cert_exists}
-                label={t("ssl.certSigned", "localhost certificate signed by CA")}
-                detail={
-                  status.cert_expiry
-                    ? `${t("ssl.expires", "Expires")}: ${status.cert_expiry}`
-                    : undefined
+      {status?.setup_error && (
+        <p role="alert" className="rounded-lg border p-3 text-sm break-words">
+          {text("Last automatic setup:", "पिछला स्वचालित सेटअप:")}{" "}
+          {status.setup_error}
+        </p>
+      )}
+      <div className="space-y-3">
+        {status?.sites.map((site) => (
+          <section key={site.domain} className="rounded-xl border bg-card p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="font-medium">{site.domain}</h3>
+                <p
+                  className={`mt-1 text-sm break-words ${site.verified ? "text-emerald-700 dark:text-emerald-400" : "text-muted-foreground"}`}
+                >
+                  {site.message}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                disabled={!site.verified}
+                onClick={() =>
+                  void openExternalUrl(site.url).catch((e) =>
+                    setError(String(e)),
+                  )
                 }
-              />
-              <Separator />
-              <StatusRow
-                ok={status.enabled}
-                label={t("ssl.sslEnabled", "SSL enabled in Apache config")}
-              />
-              {status.ca_exists && (
-                <>
-                  <Separator />
-                  <div className="pt-1 space-y-1">
-                    <p className="text-xs text-muted-foreground font-mono break-all">
-                      CA: {status.ca_path}
-                    </p>
-                    {status.cert_exists && (
-                      <p className="text-xs text-muted-foreground font-mono break-all">
-                        Cert: {status.cert_path}
-                      </p>
-                    )}
-                  </div>
-                </>
-              )}
-            </>
-          ) : (
-            <p className="text-sm text-muted-foreground">{t("ssl.loadingStatus", "Loading status...")}</p>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Actions */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="flex flex-col">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <FileBadge className="w-4 h-4" />
-              {t("ssl.generateTitle", "Generate CA + Certificate")}
-            </CardTitle>
-            <CardDescription className="text-xs">
-              {t("ssl.generateDesc", "Creates a Local Root CA (DevStackBox Local CA) then signs a 10-year localhost certificate with it. Re-run to regenerate the localhost cert without touching the CA.")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="mt-auto pt-2">
-            <Button
-              className="w-full"
-              variant="outline"
-              disabled={loading}
-              onClick={handleGenerate}
-            >
-              {loading ? (
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <FileBadge className="w-4 h-4 mr-2" />
-              )}
-              {t("ssl.generate", "Generate")}
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="flex flex-col">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Lock className="w-4 h-4" />
-              {t("ssl.enableTitle", "Enable SSL")}
-            </CardTitle>
-            <CardDescription className="text-xs">
-              {t("ssl.enableDesc", "Adds mod_ssl and an HTTPS VirtualHost (port 443) to Apache config. Generates a certificate if one does not exist yet.")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="mt-auto pt-2">
-            <Button
-              className="w-full"
-              disabled={loading || status?.enabled === true}
-              onClick={handleEnable}
-            >
-              {loading ? (
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Lock className="w-4 h-4 mr-2" />
-              )}
-              {t("ssl.enable", "Enable")}
-              {status?.enabled && (
-                <Badge variant="secondary" className="ml-2 text-xs">
-                  {t("ssl.active", "Active")}
-                </Badge>
-              )}
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="flex flex-col">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <LockOpen className="w-4 h-4" />
-              {t("ssl.disableTitle", "Disable SSL")}
-            </CardTitle>
-            <CardDescription className="text-xs">
-              {t("ssl.disableDesc", "Removes the SSL Include from httpd.conf. Certificate files are kept so SSL can be re-enabled without regenerating.")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="mt-auto pt-2">
-            <Button
-              className="w-full"
-              variant="outline"
-              disabled={loading || status?.enabled === false}
-              onClick={handleDisable}
-            >
-              {loading ? (
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <LockOpen className="w-4 h-4 mr-2" />
-              )}
-              {t("ssl.disable", "Disable")}
-            </Button>
-          </CardContent>
-        </Card>
+              >
+                {text("Open HTTPS site", "HTTPS साइट खोलें")}
+              </Button>
+            </div>
+            <details className="mt-3 text-xs text-muted-foreground">
+              <summary className="cursor-pointer">
+                {text("Certificate details", "प्रमाणपत्र विवरण")}
+              </summary>
+              <p className="mt-2">
+                {text("Expires:", "समाप्ति:")}{" "}
+                {site.expiry ?? text("No certificate", "प्रमाणपत्र नहीं")}
+              </p>
+              <p>
+                {text(
+                  "Live verification checks Windows trust, hostname, the served certificate and the correct virtual host.",
+                  "लाइव जाँच Windows ट्रस्ट, नाम, प्रस्तुत प्रमाणपत्र और सही होस्ट जाँचती है।",
+                )}
+              </p>
+            </details>
+          </section>
+        ))}
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">{t("ssl.trustTitle", "Trust the local certificate")}</CardTitle>
-          <CardDescription className="text-xs">
-            {status?.ca_trusted
-              ? "HTTPS certificates issued by DevStackBox are trusted for your Windows account."
-              : "Trust the DevStackBox local CA once to remove browser certificate warnings for your local sites."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Button variant="outline" disabled={loading || !status?.ca_exists || status.ca_trusted} onClick={() => {
-            if (window.confirm("Trust the DevStackBox local certificate authority for your Windows account? Only certificates issued by your local DevStackBox CA will be trusted.")) void run(() => safeInvoke<string>(TAURI_COMMANDS.ssl.trustCa));
-          }}>{status?.ca_trusted ? "Trusted for this Windows account" : "Trust local certificate"}</Button>
-          {status?.ca_path && <p className="text-xs font-mono text-muted-foreground break-all border rounded px-2 py-1 bg-muted/40">{status.ca_path}</p>}
-          {!status?.ca_exists && <p className="text-xs text-muted-foreground">Generate the certificate before trusting the local CA.</p>}
-        </CardContent>
-      </Card>
+      <details className="rounded-xl border p-4">
+        <summary className="cursor-pointer text-sm font-medium">
+          {text("Advanced", "उन्नत")}
+        </summary>
+        <label className="mt-3 flex items-center gap-3 text-sm">
+          {text("HTTPS port", "HTTPS पोर्ट")}
+          <input
+            aria-label="HTTPS port"
+            className="w-24 rounded border bg-background p-2"
+            type="number"
+            min="1"
+            max="65535"
+            value={port}
+            onChange={(e) => setPort(Number(e.target.value))}
+          />
+          <span>
+            {text(
+              "Apply with Set up / repair HTTPS",
+              "सेटअप / सुधार से लागू करें",
+            )}
+          </span>
+        </label>
+        <p className="my-3 text-sm text-muted-foreground">
+          {text(
+            "Disabling HTTPS affects localhost and all HTTPS sites. Certificates and project files are kept. Browser policy may require a restart after trust setup; no security checks are bypassed.",
+            "HTTPS बंद करने से सभी साइट प्रभावित होंगी। प्रमाणपत्र और फ़ाइलें सुरक्षित रहेंगी। ट्रस्ट सेटअप के बाद ब्राउज़र पुनः शुरू करना पड़ सकता है।",
+          )}
+        </p>
+        <Button
+          variant="outline"
+          disabled={busy || !status?.enabled}
+          onClick={() => {
+            if (
+              window.confirm(
+                text(
+                  "Disable HTTPS for localhost and every project?",
+                  "localhost और सभी प्रोजेक्ट के लिए HTTPS बंद करें?",
+                ),
+              )
+            )
+              void action("disable_ssl");
+          }}
+        >
+          {text("Disable HTTPS", "HTTPS बंद करें")}
+        </Button>
+      </details>
     </div>
   );
 }
+export default SslPage;

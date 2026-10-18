@@ -470,12 +470,6 @@ Function PageLeaveReinstall
       Abort
     ${EndIf}
   reinst_done:
-  ; Early stop on upgrade so Apache/MySQL exit while the user is on the directory page.
-  ${If} $UpdateMode = 1
-    StrCpy $INSTDIR "C:\devstackbox"
-    !insertmacro DsbDebugLog "PageLeaveReinstall: early StopServicesBeforeUpgrade"
-    !insertmacro StopServicesBeforeUpgrade
-  ${EndIf}
   !insertmacro DsbDebugLog "PageLeaveReinstall leaving"
 FunctionEnd
 
@@ -502,6 +496,27 @@ Var AppStartMenuFolder
 !if "${DEBUG_STAGE}" != "5"
 !insertmacro MUI_PAGE_STARTMENU Application $AppStartMenuFolder
 !endif
+
+; Local HTTPS is provisioned in the original interactive user's context.
+Var EnableLocalHttps
+Var LocalHttpsCheckbox
+Page custom LocalHttpsPage LocalHttpsLeave
+Function LocalHttpsPage
+  ${IfThen} $PassiveMode = 1 ${|} Abort ${|}
+  nsDialogs::Create 1018
+  Pop $0
+  ${NSD_CreateLabel} 0 0 100% 48u "DevStackBox can prepare trusted HTTPS for localhost automatically. A private certificate authority is created for your Windows account. Its certificates are trusted by your browsers on this computer."
+  Pop $0
+  ${NSD_CreateCheckbox} 0 58u 100% 20u "Set up trusted local HTTPS (recommended)"
+  Pop $LocalHttpsCheckbox
+  ${NSD_SetState} $LocalHttpsCheckbox $EnableLocalHttps
+  ${NSD_CreateLabel} 0 90u 100% 45u "Setup runs as your desktop user after files are installed. Windows may request certificate trust permission. The app reports verification or any repair needed under Apache > HTTPS."
+  Pop $0
+  nsDialogs::Show
+FunctionEnd
+Function LocalHttpsLeave
+  ${NSD_GetState} $LocalHttpsCheckbox $EnableLocalHttps
+FunctionEnd
 
 ; 7. Installation page
 !insertmacro MUI_PAGE_INSTFILES
@@ -735,6 +750,7 @@ FunctionEnd
 !endif
 
 Function .onInit
+  StrCpy $EnableLocalHttps 1
   !ifdef DEBUG_UPGRADE
     ; Inline bootstrap - no helpers, no System::Call - proves .onInit ran
     ClearErrors
@@ -902,12 +918,9 @@ Section Install
   !insertmacro CheckIfAppIsRunning "${MAINBINARYNAME}.exe" "${PRODUCTNAME}"
   DetailPrint "Application is not running."
 
-  ; Use the new maintenance command even when upgrading an older application.
-  File /oname=devstackbox-maintenance.exe "${MAINBINARYSRCPATH}"
   !ifmacrodef NSIS_HOOK_PREINSTALL
     !insertmacro NSIS_HOOK_PREINSTALL
   !endif
-  Delete "$INSTDIR\devstackbox-maintenance.exe"
 
   !insertmacro LogPhase 2 7 "Installing application files"
 

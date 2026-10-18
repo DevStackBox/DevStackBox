@@ -85,6 +85,8 @@ fn collect_files(dir: &Path, prefix: &str, out: &mut Vec<(String, PathBuf)>) -> 
           if meta.file_attributes() & 0x400 != 0 { return Err(format!("Linked folder/file requires a separate backup: {}", path.display())); }
         }
         let zip_name = format!("{prefix}/{}", entry.file_name().to_string_lossy());
+        // Private local CAs are machine/account credentials, not portable project data.
+        if zip_name == "config/ssl" || zip_name == "config/https" { continue; }
         if meta.is_dir() { collect_files(&path, &zip_name, out)?; }
         else if meta.is_file() { out.push((zip_name, path)); }
     }
@@ -345,6 +347,7 @@ pub async fn restore_full_backup(
             .by_index(i)
             .map_err(|e| format!("Zip read error: {}", e))?;
         let zip_name = entry.name().to_string();
+        if zip_name.starts_with("config/https/") || zip_name.starts_with("config/ssl/") { continue; }
 
         if zip_name == "manifest.json" {
             continue;
