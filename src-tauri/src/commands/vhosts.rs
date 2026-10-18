@@ -498,7 +498,7 @@ pub async fn add_vhost(
     let enabled = previous_domain
         .as_ref()
         .and_then(|previous| old.iter().find(|s| &s.domain == previous))
-        .map_or(true, |site| site.enabled);
+        .is_none_or(|site| site.enabled);
     let id = previous_domain
         .as_ref()
         .and_then(|previous| old.iter().find(|s| &s.domain == previous))

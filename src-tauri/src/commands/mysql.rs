@@ -420,7 +420,7 @@ pub async fn list_mysql_databases_detailed() -> Result<Vec<crate::types::Databas
             }
         })
         .collect();
-    result.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    result.sort_by_key(|a| a.name.to_lowercase());
     Ok(result)
 }
 

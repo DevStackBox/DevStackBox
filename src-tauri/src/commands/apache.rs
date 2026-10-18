@@ -204,12 +204,10 @@ pub async fn start_apache() -> Result<bool, String> {
     // If ssl.conf is absent but certs already exist (e.g. it was deleted by
     // the migration above, or the file was lost), regenerate it automatically
     // so HTTPS comes back without the user having to click "Enable SSL" again.
-    if !ssl_conf_path.exists() {
-        if crate::commands::ssl::https_enabled() {
-            let entries = crate::commands::vhosts::load_vhosts()?;
-            let config = crate::commands::ssl::render_ssl(&entries)?;
-            std::fs::write(&ssl_conf_path, config).map_err(|e| e.to_string())?;
-        }
+    if !ssl_conf_path.exists() && crate::commands::ssl::https_enabled() {
+        let entries = crate::commands::vhosts::load_vhosts()?;
+        let config = crate::commands::ssl::render_ssl(&entries)?;
+        std::fs::write(&ssl_conf_path, config).map_err(|e| e.to_string())?;
     }
 
     // Ensure php.ini has session.save_path and extension_dir set correctly

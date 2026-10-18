@@ -257,7 +257,7 @@ pub async fn list_full_backups() -> Result<Vec<BackupInfo>, String> {
     }
 
     // Newest first
-    list.sort_by(|a, b| b.created_at_secs.cmp(&a.created_at_secs));
+    list.sort_by_key(|b| std::cmp::Reverse(b.created_at_secs));
     Ok(list)
 }
 

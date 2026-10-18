@@ -75,7 +75,12 @@ pub fn ensure_ca(trust: bool) -> Result<(), String> {
         .output()
         .map_err(|e| e.to_string())?;
     let who = String::from_utf8_lossy(&who.stdout);
-    let sid = who.trim().split(',').last().unwrap_or("").trim_matches('"');
+    let sid = who
+        .trim()
+        .split(',')
+        .next_back()
+        .unwrap_or("")
+        .trim_matches('"');
     if !sid.starts_with("S-1-") {
         return Err("Cannot determine the certificate owner's Windows identity.".into());
     }

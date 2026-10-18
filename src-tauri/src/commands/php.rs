@@ -595,11 +595,10 @@ async fn download_to_memory(app: &AppHandle, version: &str, url: &str) -> Result
         if downloaded > 256 * 1024 * 1024 { return Err("PHP download exceeds the size limit".into()); }
         buf.extend_from_slice(&bytes);
 
-        let percent = if total > 0 {
-            ((downloaded * 100) / total) as u32
-        } else {
-            0
-        };
+        let percent = downloaded
+            .saturating_mul(100)
+            .checked_div(total)
+            .unwrap_or(0) as u32;
         if percent != last_percent {
             last_percent = percent;
             emit_progress(
@@ -964,10 +963,9 @@ fn parse_ext_line(line: &str) -> Option<(&'static str, String, bool)> {
     };
     let (kind, after_kw) = if let Some(after) = rest.strip_prefix("zend_extension") {
         ("zend_extension", after)
-    } else if let Some(after) = rest.strip_prefix("extension") {
-        ("extension", after)
     } else {
-        return None;
+        let after = rest.strip_prefix("extension")?;
+        ("extension", after)
     };
     let after_eq = after_kw.trim_start().strip_prefix('=')?;
     let value = extract_ext_value(after_eq);
