@@ -1,6 +1,17 @@
-# v0.1.12 release validation
+# Release validation history
 
-Public release pending. Reports below preserve internal build evidence; 0.1.13–0.1.15 were internal versions, not public releases. Requalify the final public artifact before publishing.
+v0.1.12 was published on 18 October 2026. Reports below preserve historical candidate evidence; the internal build numbers 0.1.13–0.1.15 predate that public release and are distinct from the subsequent public v0.1.13 patch.
+
+## v0.1.13 qualification — 19 October 2026
+
+- 27 frontend tests and 32 Rust library tests passed; TypeScript, documentation validation, release input verification and strict Clippy passed.
+- The compiled app refused an orphan-host HTTPS update without changing saved/generated configurations or creating a CA.
+- Upgrade-stop helper and compiled NSIS harness passed: only owned processes stopped; locked binaries blocked replacement; existing website backups and locked website folders were preserved; retries succeeded after unlocking. These used disposable fixtures, not the installed application.
+- Website: 4 tests, ESLint, production build and the 39-page HTTP smoke passed. Website CI now excludes its nested app-source checkout from website linting.
+- An independent Node verifier checks both the installer Minisign signature and its trusted comment against the configured updater public key.
+- Windows Authenticode signing is pending. This release remains subject to Windows publisher/reputation warnings.
+- Not repeated for this patch: clean-machine installer/UI qualification, manual upgrade and installed auto-update. The earlier isolated Apache reproduction was blocked by automatic approval review. Existing Laravel HTTP 500 and stale Apache logs are not claimed fixed.
+- Historical reports below apply to their named artifacts, not automatically to v0.1.13.
 
 ## Public candidate preparation - 18 October 2026
 

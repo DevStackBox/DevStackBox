@@ -9,7 +9,7 @@ icon: "Rocket"
 
 **Quick copy-paste runbook (PowerShell commands):** [Release runbook](./release-runbook)
 
-**Current stable release:** v0.1.10
+**Release version:** v0.1.13
 
 ---
 
@@ -17,7 +17,7 @@ icon: "Rocket"
 
 | Type  | When                                | Example           |
 | ----- | ----------------------------------- | ----------------- |
-| Patch | Bug fix only, no new features       | `0.1.8` → `0.1.9` |
+| Patch | Bug fix only, no new features       | `0.1.12` → `0.1.13` |
 | Minor | New working feature added           | `0.1.8` → `0.2.0` |
 | Major | Breaking changes or large milestone | `0.x.x` → `1.0.0` |
 
@@ -45,7 +45,7 @@ Change version in ALL THREE files at the same time:
 
 ```json
 {
-  "version": "0.1.9"
+  "version": "0.1.13"
 }
 ```
 
@@ -53,14 +53,14 @@ Change version in ALL THREE files at the same time:
 
 ```toml
 [package]
-version = "0.1.9"
+version = "0.1.13"
 ```
 
 ### `src-tauri/tauri.conf.json`
 
 ```json
 {
-  "version": "0.1.9"
+  "version": "0.1.13"
 }
 ```
 
@@ -79,7 +79,7 @@ grep '"version"' src-tauri/tauri.conf.json
 Add an entry at the top:
 
 ```markdown
-## [0.1.9] - 2026-MM-DD
+## [0.1.13] - 2026-MM-DD
 
 ### Fixed
 
@@ -98,7 +98,7 @@ Keep the format consistent. Do not delete old entries.
 
 ---
 
-## Step 4 - Build Release (Windows signed NSIS)
+## Step 4 - Build Release (Windows updater-signed NSIS)
 
 **Canonical command** - use this every time (full runbook: [Release runbook](./release-runbook)):
 
@@ -196,7 +196,7 @@ Run this checklist on the **NSIS installer** (not dev mode) on a clean Windows 1
 ## Step 6 - Generate SHA-256 Hash (optional)
 
 ```powershell
-Get-FileHash "src-tauri\target\release\bundle\nsis\DevStackBox_0.1.9_x64-setup.exe" -Algorithm SHA256
+Get-FileHash "src-tauri\target\release\bundle\nsis\DevStackBox_0.1.13_x64-setup.exe" -Algorithm SHA256
 ```
 
 Include the hash in the GitHub Release description if you want transparency for users.
@@ -208,17 +208,17 @@ Include the hash in the GitHub Release description if you want transparency for 
 1. Create a git tag:
 
    ```bash
-   git tag v0.1.9
-   git push origin v0.1.9
+   git tag v0.1.13
+   git push origin v0.1.13
    ```
 
 2. Go to [GitHub Releases](https://github.com/DevStackBox/DevStackBox/releases/new)
 
 3. Fill in:
-   - **Tag:** `v0.1.9`
-   - **Title:** `v0.1.9`
+   - **Tag:** `v0.1.13`
+   - **Title:** `v0.1.13`
    - **Description:** Copy from CHANGELOG.md
-   - **Attach files:** `DevStackBox_0.1.9_x64-setup.exe`, `DevStackBox_0.1.9_x64-setup.exe.sig`, and **`latest.json`** (filename must be exactly `latest.json`)
+   - **Attach files:** `DevStackBox_0.1.13_x64-setup.exe`, `DevStackBox_0.1.13_x64-setup.exe.sig`, and **`latest.json`** (filename must be exactly `latest.json`)
    - Do **not** mark the release as a pre-release (otherwise GitHub `releases/latest` will not point here)
 
 4. Click Publish Release.
@@ -226,11 +226,11 @@ Include the hash in the GitHub Release description if you want transparency for 
 Alternatively, from a signed build directory:
 
 ```powershell
-gh release create v0.1.9 `
-  "src-tauri\target\release\bundle\nsis\DevStackBox_0.1.9_x64-setup.exe" `
-  "src-tauri\target\release\bundle\nsis\DevStackBox_0.1.9_x64-setup.exe.sig" `
+gh release create v0.1.13 `
+  "src-tauri\target\release\bundle\nsis\DevStackBox_0.1.13_x64-setup.exe" `
+  "src-tauri\target\release\bundle\nsis\DevStackBox_0.1.13_x64-setup.exe.sig" `
   "latest.json" `
-  --title "DevStackBox v0.1.9" `
+  --title "DevStackBox v0.1.13" `
   --notes "Copy from CHANGELOG.md"
 ```
 
@@ -267,7 +267,7 @@ After publishing, test **About → Check for updates** from an older install.
 | Problem                             | Fix                                                          |
 | ----------------------------------- | ------------------------------------------------------------ |
 | Build fails with "version mismatch" | One of the three version files is different                  |
-| Antivirus blocks installer          | Publish SHA-256 hash - users can verify and allow            |
+| Antivirus blocks installer          | Investigate the detection; a checksum does not establish safety or bypass Windows policy            |
 | GitHub Actions build fails          | Check for emoji in .yml files - see advanced/troubleshooting |
 | Auto-update fails                   | Check `latest.json` signature matches `.sig`; URL matches `.exe` filename |
 | `releases/latest` wrong version     | Ensure release is not marked pre-release; `latest.json` uploaded |

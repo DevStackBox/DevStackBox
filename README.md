@@ -39,11 +39,15 @@ XAMPP for Windows ships PHP 8.2. DevStackBox gives you 8.3 immediately and 8.5 w
 
 [devstackbox.com/docs](https://www.devstackbox.com/docs)
 
-## Project workspaces in v0.1.12
+## Project workspaces
 
 Connect existing folders, manage `.test` hosts and trusted HTTPS, and select an installed PHP version per website. Download extra runtimes in PHP Versions first. The terminal currently uses global PHP.
 
 See the [project guide](docs/getting-started/projects.mdx), [project roadmap](PROJECT-ROADMAP.md), and [release validation](docs/RELEASE-VALIDATION.md). Framework installers, database linking and Git/SSH are future work. Frameworks will download on demand; AI integration is deferred.
+
+## v0.1.13 diagnostics and configuration safety
+
+Read Apache and the selected PHP runtime error log from project details. Site changes preserve recovery copies and stop before overwriting unrelated hosts missing from saved records. See [release notes](CHANGELOG.md) for scope and limitations.
 
 ## Contributing
 

@@ -4,6 +4,28 @@ All notable changes to DevStackBox are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.13] - 2026-10-19
+
+### Added
+
+- Read Apache and PHP error logs directly from project details, with independent errors if either log cannot be read.
+- Preserve pre-change virtual-host configuration copies in the configuration backups directory for manual recovery.
+
+### Fixed
+
+- Project diagnostics read the version-specific PHP error log for a pinned runtime instead of always reading the global PHP log.
+- Stop site changes when generated virtual hosts are missing from saved records, while allowing deliberate removal, renaming and reconnection.
+- Abort changes when recovery snapshots cannot be read; unreadable files are no longer treated as absent during rollback.
+- Stage site configuration writes before replacement to avoid exposing truncated files to readers.
+- Serialize configuration editor writes and full-backup restoration with site updates.
+
+### Notes
+
+- The displayed PHP selection is a saved setting, not a measurement of the running website. Logs are shared across sites using the same service/runtime; empty or old logs do not prove website health.
+- Configuration backups do not provide a crash-atomic transaction across all files. Existing configuration mismatches are not automatically repaired.
+- This release does not install or repair Laravel dependencies and does not claim to fix every HTTP 500 response.
+- Windows Authenticode signing is pending. The installer may still display SmartScreen warnings. The separate Tauri updater signature verifies in-app updates.
+
 ## [0.1.12] - 2026-10-18
 
 ### Added

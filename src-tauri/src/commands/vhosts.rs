@@ -159,16 +159,55 @@ pub fn render_site(site: &VhostEntry, tls: bool) -> Result<String, String> {
     // Pinned runtimes use a version-specific ini, never the global current junction.
     Ok(conf)
 }
-pub(crate) fn snapshot(paths: &[PathBuf]) -> Vec<(PathBuf, Option<Vec<u8>>)> {
-    paths
-        .iter()
-        .map(|p| (p.clone(), fs::read(p).ok()))
-        .collect()
+type FileSnapshot = (PathBuf, Option<Vec<u8>>);
+
+pub(crate) fn snapshot(paths: &[PathBuf]) -> Result<Vec<FileSnapshot>, String> {
+    paths.iter().map(|path| {
+        match fs::read(path) {
+            Ok(bytes) => Ok((path.clone(), Some(bytes))),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok((path.clone(), None)),
+            Err(error) => Err(format!("Cannot back up {}. No site changes were applied: {error}", path.display())),
+        }
+    }).collect()
 }
+
+/// Replace one file without exposing a truncated JSON/config to concurrent readers.
+/// This is not a multi-file crash transaction; preserved snapshots support review.
+fn write_config_file(path: &Path, bytes: &[u8]) -> Result<(), String> {
+    use std::io::Write;
+    let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)
+        .map_err(|e| e.to_string())?.as_nanos();
+    let staged = path.with_extension(format!("{}.{}.pending", std::process::id(), stamp));
+    let mut file = fs::OpenOptions::new().write(true).create_new(true).open(&staged)
+        .map_err(|e| format!("Cannot stage {}: {e}", path.display()))?;
+    let result = (|| {
+        file.write_all(bytes).map_err(|e| e.to_string())?;
+        file.sync_all().map_err(|e| e.to_string())?;
+        drop(file);
+        fs::rename(&staged, path).map_err(|e| format!("Cannot replace {}: {e}", path.display()))
+    })();
+    if result.is_err() { let _ = fs::remove_file(&staged); }
+    result
+}
+
+fn preserve_site_snapshot(saved: &[(PathBuf, Option<Vec<u8>>)]) -> Result<(), String> {
+    let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)
+        .map_err(|e| e.to_string())?.as_nanos();
+    let directory = user_config_backups_dir().join(format!("sites-{stamp}"));
+    fs::create_dir(&directory).map_err(|e| format!("Cannot preserve site recovery snapshot: {e}"))?;
+    for (path, bytes) in saved {
+        if let Some(bytes) = bytes {
+            let name = path.file_name().ok_or("Invalid site snapshot filename")?;
+            write_config_file(&directory.join(name), bytes)?;
+        }
+    }
+    Ok(())
+}
+
 pub(crate) fn restore(files: &[(PathBuf, Option<Vec<u8>>)]) -> Result<(), String> {
     for (p, data) in files {
         if let Some(data) = data {
-            fs::write(p, data).map_err(|e| e.to_string())?;
+            write_config_file(p, data)?;
         } else if p.exists() {
             fs::remove_file(p).map_err(|e| e.to_string())?;
         }
@@ -181,7 +220,8 @@ pub async fn apply_configuration(entries: &[VhostEntry]) -> Result<(), String> {
         config.join("vhosts.conf"),
         config.join("ssl.conf"),
         config.join("vhosts.json"),
-    ]);
+    ])?;
+    preserve_site_snapshot(&saved)?;
     let running = crate::utils::process::is_our_process_running(
         "httpd.exe",
         &get_apache_exe(&get_installation_path()),
@@ -194,8 +234,8 @@ pub async fn apply_configuration(entries: &[VhostEntry]) -> Result<(), String> {
             http.push_str(&render_site(site, false)?);
         }
         ssl::write_health("localhost")?;
-        fs::write(config.join("vhosts.conf"), http).map_err(|e| e.to_string())?;
-        fs::write(config.join("ssl.conf"), ssl::render_ssl(entries)?).map_err(|e| e.to_string())?;
+        write_config_file(&config.join("vhosts.conf"), http.as_bytes())?;
+        write_config_file(&config.join("ssl.conf"), ssl::render_ssl(entries)?.as_bytes())?;
         let out =
             create_hidden_command(&get_apache_exe(&get_installation_path()).to_string_lossy())
                 .arg("-f")
@@ -227,11 +267,10 @@ pub async fn apply_configuration(entries: &[VhostEntry]) -> Result<(), String> {
                 }
             }
         }
-        fs::write(
-            config.join("vhosts.json"),
-            serde_json::to_vec_pretty(entries).map_err(|e| e.to_string())?,
-        )
-        .map_err(|e| e.to_string())?;
+        write_config_file(
+            &config.join("vhosts.json"),
+            &serde_json::to_vec_pretty(entries).map_err(|e| e.to_string())?,
+        )?;
         Ok(())
     }
     .await;
@@ -389,7 +428,58 @@ pub async fn update_hosts_entry(domain: String, action: String) -> Result<String
 pub async fn list_vhosts() -> Result<Vec<VhostEntry>, String> {
     load_vhosts()
 }
+fn known_sites_for_change(old: &[VhostEntry], entries: &[VhostEntry]) -> Vec<VhostEntry> {
+    old.iter().chain(entries.iter()).cloned().map(|mut site| {
+        site.enabled = true;
+        site
+    }).collect()
+}
+
+#[cfg(test)]
+mod preservation_tests {
+    use super::*;
+    #[test]
+    fn snapshots_fail_closed_and_atomic_writes_preserve_existing_files_on_failure() {
+        let root = std::env::temp_dir().join(format!("dsb-snapshot-{}", std::process::id()));
+        fs::create_dir_all(&root).unwrap();
+        let site = root.join("vhosts.json");
+        fs::write(&site, b"old").unwrap();
+        assert!(snapshot(&[site.clone(), root.clone()]).is_err());
+        assert_eq!(fs::read(&site).unwrap(), b"old");
+        assert!(snapshot(&[root.join("missing")]).unwrap()[0].1.is_none());
+        write_config_file(&site, b"new").unwrap();
+        assert_eq!(fs::read(&site).unwrap(), b"new");
+        assert!(write_config_file(&root, b"cannot replace directory").is_err());
+        assert_eq!(fs::read(&site).unwrap(), b"new");
+        fs::remove_file(site).unwrap();
+        fs::remove_dir(root).unwrap();
+    }
+
+    #[test]
+    fn edits_allow_known_removal_and_reconnect_but_reject_other_orphans() {
+        let mut old = VhostEntry::localhost();
+        old.domain = "old.test".into();
+        old.enabled = false;
+        let mut new = VhostEntry::localhost();
+        new.domain = "reconnected.test".into();
+        let known = known_sites_for_change(&[old], &[new]);
+        assert!(ssl::reject_unrecorded_sites("ServerName old.test", &known).is_ok());
+        assert!(ssl::reject_unrecorded_sites("ServerName reconnected.test", &known).is_ok());
+        assert!(ssl::reject_unrecorded_sites("ServerName forgotten.test", &known).is_err());
+    }
+}
+
 async fn commit_sites(old: &[VhostEntry], entries: &[VhostEntry]) -> Result<(), String> {
+    // Preserve orphaned generated hosts before any migration, hosts-file update or restart.
+    // Old records permit intentional removal/rename; incoming records permit reconnection.
+    let known = known_sites_for_change(old, entries);
+    for name in ["vhosts.conf", "ssl.conf"] {
+        match fs::read_to_string(user_config_dir().join(name)) {
+            Ok(content) => ssl::reject_unrecorded_sites(&content, &known)?,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {},
+            Err(error) => return Err(format!("Cannot inspect {name} before changing sites: {error}")),
+        }
+    }
     super::apache::ensure_apache_config().await?;
     let old_names: std::collections::BTreeSet<_> = old
         .iter()
@@ -412,7 +502,7 @@ async fn commit_sites(old: &[VhostEntry], entries: &[VhostEntry]) -> Result<(), 
             ]
         })
         .collect();
-    let saved = snapshot(&files);
+    let saved = snapshot(&files)?;
     let was_running = crate::utils::process::is_our_process_running(
         "httpd.exe",
         &get_apache_exe(&get_installation_path()),

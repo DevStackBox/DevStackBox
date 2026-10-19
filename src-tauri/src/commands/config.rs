@@ -53,6 +53,8 @@ pub async fn read_config(service: String) -> Result<String, String> {
 
 #[tauri::command]
 pub async fn update_config(service: String, content: String) -> Result<String, String> {
+    let _site_guard = super::ssl::SITE_LOCK.lock().await;
+    let _process_lock = super::ssl::lock_configuration()?;
     ensure_service_config(&service).await?;
     let config_file = config_file_for(&service)?;
 

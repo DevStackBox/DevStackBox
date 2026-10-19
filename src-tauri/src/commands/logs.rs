@@ -3,16 +3,22 @@
 use crate::utils::paths::user_logs_dir;
 use std::io::{Read, Seek, SeekFrom, Write};
 
+fn log_filename(service: &str, php_version: Option<&str>) -> Result<String, String> {
+    match (service, php_version) {
+        ("php", Some(version)) if matches!(version, "8.1" | "8.2" | "8.3" | "8.4" | "8.5") => Ok(format!("php-{version}-error.log")),
+        (_, Some(_)) => Err("PHP log version must be a supported branch and used with PHP logs".into()),
+        ("php", None) => Ok("php_error.log".into()),
+        ("apache" | "httpd", None) => Ok("error.log".into()),
+        ("mysql", None) => Ok("mysql.log".into()),
+        _ => Err(format!("Unknown service: {service}")),
+    }
+}
+
 #[tauri::command]
-pub async fn get_service_logs(service: String) -> Result<String, String> {
+pub async fn get_service_logs(service: String, php_version: Option<String>) -> Result<String, String> {
     let logs_dir = user_logs_dir();
 
-    let log_file = match service.as_str() {
-        "mysql" => logs_dir.join("mysql.log"),
-        "apache" | "httpd" => logs_dir.join("error.log"),
-        "php" => logs_dir.join("php_error.log"),
-        _ => return Err(format!("Unknown service: {}", service)),
-    };
+    let log_file = logs_dir.join(log_filename(&service, php_version.as_deref())?);
 
     if !log_file.exists() {
         return Ok(format!("No {} log file has been written yet.", service));
@@ -71,4 +77,16 @@ pub async fn log_crash_event(service: String, timestamp: String) -> Result<(), S
         .map_err(|e| format!("Failed to write crash.log: {}", e))?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::log_filename;
+    #[test]
+    fn routes_pinned_logs_without_accepting_paths() {
+        assert_eq!(log_filename("php", Some("8.3")).unwrap(), "php-8.3-error.log");
+        assert_eq!(log_filename("php", None).unwrap(), "php_error.log");
+        assert!(log_filename("php", Some("../../secret")).is_err());
+        assert!(log_filename("apache", Some("8.3")).is_err());
+    }
 }

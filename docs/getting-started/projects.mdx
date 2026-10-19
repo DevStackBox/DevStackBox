@@ -38,6 +38,14 @@ A trusted result requires a live check. Browser policies can differ; a green bro
 
 TLS trust and website health are separate. Check the document root, index.php/index.html, framework dependencies, rewrite rules, and application routes. An empty folder is not a working website. Use the project health check to distinguish routing problems from certificate problems.
 
+## Diagnose website errors (v0.1.13)
+
+Open **Manage project → Server logs** to read Apache errors and the PHP error log for the saved runtime selection. Each log reports read failures independently. Logs are shared across projects using the same service or PHP runtime; check timestamps and paths before attributing an entry to this site. Empty or old logs do not prove that the website is healthy, and custom log destinations may differ.
+
+The PHP selector shows the saved configuration, not a live measurement of website PHP. A trusted HTTPS connection can still return HTTP 404 or 500.
+
+If a site change reports generated hosts missing from saved records, inspect the existing configuration before proceeding. Reconnect the intended site rather than deleting unrelated hosts. Pre-change site configuration copies are retained under the user configuration backups directory for manual recovery; they are not a complete project/database backup.
+
 ## Planned, not bundled
 
 Project database linking, project-aware terminals, Git/SSH, and Laravel/WordPress installation are future work. Frameworks will download from upstream on demand, not ship in the installer. AI integration is deferred.

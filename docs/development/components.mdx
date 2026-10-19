@@ -177,23 +177,13 @@ interface ConfigEditorProps {
 
 ---
 
-### PHPVersionSelector
+### PHP Versions and project PHP selection
 
-**File:** `src/components/php-version-selector.tsx`  
-**Purpose:** Modal to view installed PHP versions and switch/download versions.  
-**Props:**
+**Files:** `src/pages/services/php/versions.tsx`, `src/pages/project-details.tsx`
 
-```ts
-interface PHPVersionSelectorProps {
-  isOpen: boolean;
-  onClose: () => void;
-  currentVersion: string;
-  onVersionChange: (version: string) => void;
-}
-```
+The PHP Versions page downloads supported runtimes through the backend and switches the global default. Project details offers only installed runtimes and saves a website-specific selection. Downloads are real; browser-only previews cannot install runtimes. The terminal still uses the global default.
 
-**Status:** Currently a frontend-managed selector with simulated downloads and local version switching state.  
-**Extension rule:** Keep version-card layout centralized here. Do not create separate selectors elsewhere.
+Keep runtime installation on the PHP Versions page. Project details selects an existing runtime and reads its version-specific PHP error log.
 
 ---
 
@@ -370,7 +360,7 @@ export interface PHPVersion {
 | `getMockServiceStatus()`  | `lib/tauri.ts`   | Returns fake status for browser-mode dev                   |
 | `getMockBinariesStatus()` | `lib/tauri.ts`   | Returns fake binary status for browser-mode dev            |
 | `cn(...classes)`          | `lib/utils.ts`   | Merges Tailwind class names (from shadcn)                  |
-| `APP_VERSION`             | `lib/version.ts` | Current version string ("0.1.8")                           |
+| `APP_VERSION`             | `lib/version.ts` | Current version string from package.json                           |
 
 ---
 

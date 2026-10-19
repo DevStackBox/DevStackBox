@@ -57,6 +57,25 @@ async function render() {
 }
 
 describe("project details", () => {
+  it("reads the pinned PHP log and keeps Apache results when PHP log reading fails", async () => {
+    mocks.invoke.mockImplementation(async (command: string, args?: Record<string, unknown>) => {
+      if (command === "list_vhosts") return [{ ...site, php_version: "8.3" }];
+      if (command === "get_php_versions") return [{ version: "8.3", installed: true, is_active: true }];
+      if (command === "get_project_diagnostics") return health;
+      if (command === "get_service_logs") {
+        if (args?.service === "apache") return "Apache test error";
+        throw new Error("Cannot read PHP log");
+      }
+    });
+    const view = await render();
+    const button = Array.from(view.host.querySelectorAll("button")).find(b => b.textContent === "Read / refresh server logs")!;
+    await act(async () => button.click());
+    expect(mocks.invoke).toHaveBeenCalledWith("get_service_logs", { service: "php", phpVersion: "8.3" });
+    expect(view.host.querySelector("pre")?.textContent).toContain("Apache test error");
+    expect(view.host.querySelector("pre")?.textContent).toContain("Cannot read PHP log");
+    await view.dispose();
+  });
+
   it("offers only installed PHP versions and saves a project choice without switching the global runtime", async () => {
     let selected: string | null = null;
     mocks.invoke.mockImplementation(

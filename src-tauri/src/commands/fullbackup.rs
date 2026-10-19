@@ -268,6 +268,8 @@ pub async fn restore_full_backup(
     app: tauri::AppHandle,
     path: String,
 ) -> Result<String, String> {
+    let _site_guard = super::ssl::SITE_LOCK.lock().await;
+    let _process_lock = super::ssl::lock_configuration()?;
     let zip_path = validate_backup_path(&path)?;
     if !zip_path.exists() {
         return Err("Backup file not found".to_string());

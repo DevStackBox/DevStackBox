@@ -6,12 +6,16 @@ icon: "ListChecks"
 # DevStackBox - Feature Status
 
 **THE single source of truth for what is built, what is in progress, and what is planned.**  
-Reflects the published **v0.1.12** release. Check the release notes for changes in a particular version.
+Reflects the **v0.1.13** release. Check the release notes for changes in a particular version.
 
-**Last Updated:** 18 October 2026  
-**Current version:** v0.1.12
+**Last Updated:** 19 October 2026
+**Current version:** v0.1.13
 
 ---
+
+## v0.1.13 diagnostics
+
+Project details can read Apache and runtime-specific PHP errors. Configuration changes preserve recovery snapshots and reject unrecorded generated hosts before site edits. Logs are shared, and the saved PHP setting is not live runtime verification.
 
 ## Roadmap Phase Status
 
@@ -295,6 +299,8 @@ Reflects the published **v0.1.12** release. Check the release notes for changes 
 
 | Version         | Key Changes                                                                                                               |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| v0.1.13         | Project Apache/PHP logs, configuration recovery copies, safer site changes and serialized configuration writes |
+| v0.1.12         | Project details, per-site PHP, trusted local HTTPS and safer manual upgrades |
 | v0.1.11         | MySQL 8.4 LTS + phpMyAdmin 5.2.2; Import from XAMPP; website XAMPP positioning; CI `check:ci`                           |
 | v0.1.10         | Stable release: MySQL/DB UX, service status, terminal ConPTY fixes; NSIS detail log; PHP 8.3 bundled, 8.1–8.5 on-demand   |
 | v0.1.9          | Audit remediation batch; installer detail log fix; diagnostics, projects MVP, channel-aware updater                         |
@@ -305,6 +311,6 @@ Reflects the published **v0.1.12** release. Check the release notes for changes 
 | v0.1.0 - v0.1.4 | Early alpha, architecture setup                                                                                           |
 
 
-## Release verification (v0.1.11)
+## Release verification (v0.1.13)
 
 Ship with `npm run build:release` (runs `verify-release.mjs`, including MySQL **8.4.x** check). Installer uses Tauri minisign (not Windows Authenticode). Clean install checklist: `docs/getting-started/clean-install-checklist.md`.

@@ -1,17 +1,19 @@
 ---
 title: "Release Runbook"
-description: "Windows signed NSIS build and GitHub publish commands."
+description: "Windows updater-signed NSIS build and GitHub publish commands."
 icon: "Terminal"
 ---
 # DevStackBox release runbook (Windows)
 
-Single reference for **signed NSIS builds** and **GitHub publish** so every release follows the same steps.
+Single reference for **updater-signed NSIS builds** and **GitHub publish** so every release follows the same steps.
 
 **Full checklist:** [Release process](./release-process)
 
 **Private signing key:** `%USERPROFILE%\.tauri\devstackbox.key` - never commit.
 
 ---
+
+The Tauri signature authenticates updates; it is not Windows Authenticode signing. Authenticode signing is pending for v0.1.13.
 
 ## 1. Preflight
 
@@ -64,6 +66,7 @@ After the NSIS build finishes, **do not type the SHA by hand**. Generate notes a
 
 ```powershell
 npm run finalize-release
+node scripts/verify-updater-artifact.mjs
 # or after upload, sync SHA from GitHub:
 node scripts/finalize-release.mjs --from-github vX.Y.Z --write-changelog
 node scripts/finalize-release.mjs --verify-github vX.Y.Z

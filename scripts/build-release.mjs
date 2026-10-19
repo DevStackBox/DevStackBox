@@ -36,3 +36,4 @@ function run(command, args) {
 
 run(process.execPath, [resolve(root, "scripts/verify-release.mjs")]);
 run(process.execPath, [tauriCli, "build", "--ci"]);
+run(process.execPath, [resolve(root, "scripts/verify-updater-artifact.mjs")]);

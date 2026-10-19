@@ -351,7 +351,7 @@ pub async fn provision() -> Result<String, String> {
 pub async fn renew_existing() -> Result<String, String> {
     provision_inner(false, None).await
 }
-fn reject_unrecorded_sites(configuration: &str, entries: &[VhostEntry]) -> Result<(), String> {
+pub(super) fn reject_unrecorded_sites(configuration: &str, entries: &[VhostEntry]) -> Result<(), String> {
     for line in configuration.lines() {
         let mut words = line.split_whitespace();
         if !words.next().is_some_and(|word| word.eq_ignore_ascii_case("ServerName")) {
@@ -362,7 +362,7 @@ fn reject_unrecorded_sites(configuration: &str, entries: &[VhostEntry]) -> Resul
             if !name.eq_ignore_ascii_case("localhost")
                 && !entries.iter().any(|site| site.enabled && site.domain.eq_ignore_ascii_case(name))
             {
-                return Err(format!("Apache contains {name}, but it has no active saved project record. HTTPS setup stopped to preserve the existing configuration. Review Projects and reconnect the existing folder before retrying."));
+                return Err(format!("Apache contains {name}, but it has no active saved project record. The change was stopped to preserve the existing configuration. Review Projects and reconnect the existing folder before retrying."));
             }
         }
     }
@@ -395,7 +395,7 @@ async fn provision_inner(install_trust: bool, port: Option<u16>) -> Result<Strin
             tls_dir().join(format!("{}.names.json", site_id(&site.domain))),
         ]);
     }
-    let saved = super::vhosts::snapshot(&paths);
+    let saved = super::vhosts::snapshot(&paths)?;
     let was_running = crate::utils::process::is_our_process_running(
         "httpd.exe",
         &get_apache_exe(&get_installation_path()),

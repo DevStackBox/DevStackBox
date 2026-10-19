@@ -20,12 +20,15 @@ export function ProjectDetailsPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [projectLogs, setProjectLogs] = useState<string | null>(null);
+  const [logsLoading, setLogsLoading] = useState(false);
   const [phpVersions, setPhpVersions] = useState<PhpVersion[]>([]);
   const [phpVersion, setPhpVersion] = useState("");
   const load = useCallback(
     async (resetDraft = true) => {
       setLoading(true);
       setDiagnostics(null);
+      setProjectLogs(null);
       setError("");
       try {
         const sites = await safeInvoke<VhostEntry[]>("list_vhosts");
@@ -222,6 +225,26 @@ export function ProjectDetailsPage() {
               </Link>
             </section>
           )}
+          <section className="space-y-3 rounded-xl border bg-card p-5">
+            <h2 className="font-semibold">Server logs</h2>
+            <p className="text-sm text-muted-foreground">
+              Apache logs are shared across sites. PHP logs are shared by sites using the same runtime.
+              {site.php_version ? ` This project uses the PHP ${site.php_version} log.` : " This project uses the global PHP log."}
+              {" "}Old or empty logs do not prove that the website is healthy. Reproduce the error and refresh; custom logging settings may write elsewhere.
+            </p>
+            <Button variant="outline" disabled={blocked || logsLoading} onClick={async () => {
+              setLogsLoading(true);
+              try {
+                const results = await Promise.allSettled([
+                  safeInvoke<string>("get_service_logs", { service: "apache" }),
+                  safeInvoke<string>("get_service_logs", { service: "php", phpVersion: site.php_version || null }),
+                ]);
+                setProjectLogs(results.map((result, i) => `${i === 0 ? "Apache" : "PHP"}\n${result.status === "fulfilled" ? result.value || "No logs available." : String(result.reason)}`).join("\n\n"));
+              } finally { setLogsLoading(false); }
+            }}>{logsLoading ? "Reading logs…" : "Read / refresh server logs"}</Button>
+            {projectLogs !== null && <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-md bg-muted p-3 text-xs" aria-label="Project server logs">{projectLogs}</pre>}
+            <Link to="/services/apache/logs" className="block text-sm underline underline-offset-4">Open Apache logs</Link>
+          </section>
           {draft && (
             <form
               onSubmit={save}
@@ -350,7 +373,7 @@ export function ProjectDetailsPage() {
                 ? `PHP ${site.php_version}`
                 : `Global default${phpVersions.find((v) => v.is_active) ? ` (PHP ${phpVersions.find((v) => v.is_active)!.version})` : ""}`}
               . Select an installed PHP version for this project's HTTP and
-              HTTPS requests.
+              HTTPS requests. This is the saved setting, not a measurement of the PHP runtime serving a live request.
             </p>
             {site.php_version &&
               !phpVersions.some((v) => v.version === site.php_version) && (

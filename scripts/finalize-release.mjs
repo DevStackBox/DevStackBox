@@ -86,7 +86,7 @@ function sectionToReleaseNotes(section, tag, sha) {
   let md = `DevStackBox **${tag}**.\n\n`;
   md += cleaned;
   md += `\n\n**Installer SHA-256:** \`${sha}\``;
-  md += `\n\nIn-app auto-update from **${prevTag}** uses the signed installer and \`latest.json\` on this release.`;
+  md += `\n\nIn-app auto-update from **${prevTag}** uses the updater-signed installer and \`latest.json\` on this release.`;
   return md.trim() + "\n";
 }
 

@@ -331,3 +331,30 @@ and versioned installers per accepted phase; do not publish automatically.
 - [Git for Windows, including Portable Git](https://git-scm.com/downloads/win)
 - [MCP security guidance](https://github.com/modelcontextprotocol/modelcontextprotocol/blob/main/docs/specification/draft/basic/authorization/security-considerations.mdx)
   - recheck the stable specification at implementation time.
+
+## Diagnostics follow-up — 19 October 2026 (v0.1.13)
+
+- Project details reads Apache errors and the PHP log matching the saved pinned runtime; global-default projects use the global PHP log. These logs are shared, not isolated per project.
+- Log-reading failures remain visible. Empty or old logs do not establish website health, and custom log destinations may differ.
+- PHP selection is explicitly a saved setting, not a verified measurement of live website PHP.
+- Before site edits mutate files or restart services, reject generated hosts absent from both old and incoming site records. Permit deliberate removal/rename and reconnection; never silently erase unrelated orphan hosts.
+- Still unresolved: the cause of the observed saved/generated configuration divergence and stale Apache log. No automatic recovery or repair of the installed configuration was attempted.
+- Laravel files, dependencies, and environment remain untouched. These changes target v0.1.13 and are not in the v0.1.12 installer.
+- Site snapshots now fail on unreadable files instead of treating them as absent. Site config writes use staged replacements, with persistent pre-change recovery copies in the configuration backups directory. This is not a crash-atomic transaction across all files.
+- Configuration editor writes and full-backup restoration share the site-operation lock to prevent those operations racing with site updates.
+- Validation: 27 frontend tests, 32 Rust tests, TypeScript and documentation checks passed. Live isolated Apache reproduction was blocked by automatic approval review; the installed HTTP 500 is not claimed fixed.
+
+## Microsoft Store readiness — proposed, not submitted
+
+Use the existing EXE installer route first, subject to certification. MSIX would require a separate compatibility effort around writable runtimes, installation paths and privileged hostname operations.
+
+1. Register and verify the publisher in Partner Center and reserve the app name.
+2. Inventory Authenticode signatures for the installer and all bundled PE binaries (including third-party EXEs/DLLs); satisfy Microsoft's signing requirements. Tauri updater signatures are separate.
+3. Build a fully offline Store installer. The current WebView2 `downloadBootstrapper` setting needs an offline alternative.
+4. Verify silent installation, upgrade, uninstall and exit codes on clean Windows machines. The current installer automatically invokes local HTTPS setup when selected; the Store silent path must defer interactive certificate trust setup until the user explicitly enables it in the app.
+5. Publish an immutable, versioned HTTPS installer URL; supply its silent-install parameters, listing, screenshots, support/privacy information and reviewer instructions in Partner Center.
+6. Submit for certification, then test installation through the Store. Do not replace the published v0.1.12 binary; use a new release version for new fixes.
+
+Store publication does not sign the separate GitHub EXE automatically. It also does not remove the need for user consent for privileged changes or local certificate trust.
+
+References: [EXE/MSI requirements](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msi/app-package-requirements), [MSIX compatibility](https://learn.microsoft.com/en-us/windows/msix/desktop/desktop-to-uwp-prepare), [publisher registration](https://learn.microsoft.com/en-us/windows/apps/publish/get-started).
