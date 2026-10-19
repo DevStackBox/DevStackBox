@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Abort changes when recovery snapshots cannot be read; unreadable files are no longer treated as absent during rollback.
 - Stage site configuration writes before replacement to avoid exposing truncated files to readers.
 - Serialize configuration editor writes and full-backup restoration with site updates.
+- Exclude the runtime operation lock from configuration backups and ignore it in older archives, allowing recovery backups while restoration owns the lock.
 
 ### Notes
 

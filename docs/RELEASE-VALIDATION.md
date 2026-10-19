@@ -4,7 +4,7 @@ v0.1.12 was published on 18 October 2026. Reports below preserve historical cand
 
 ## v0.1.13 qualification — 19 October 2026
 
-- 27 frontend tests and 32 Rust library tests passed; TypeScript, documentation validation, release input verification and strict Clippy passed.
+- 27 frontend tests and 33 Rust library tests passed; TypeScript, documentation validation, release input verification and strict Clippy passed.
 - The compiled app refused an orphan-host HTTPS update without changing saved/generated configurations or creating a CA.
 - Upgrade-stop helper and compiled NSIS harness passed: only owned processes stopped; locked binaries blocked replacement; existing website backups and locked website folders were preserved; retries succeeded after unlocking. These used disposable fixtures, not the installed application.
 - Website: 4 tests, ESLint, production build and the 39-page HTTP smoke passed. Website CI now excludes its nested app-source checkout from website linting.

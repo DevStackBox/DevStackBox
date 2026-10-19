@@ -79,18 +79,25 @@ fn collect_files(dir: &Path, prefix: &str, out: &mut Vec<(String, PathBuf)>) -> 
     for entry in entries {
         let entry = entry.map_err(|e| e.to_string())?;
         let path = entry.path();
+        let zip_name = format!("{prefix}/{}", entry.file_name().to_string_lossy());
+        // The restore transaction owns this file exclusively. It is runtime state,
+        // not recoverable configuration, and must be skipped before opening it.
+        if is_operation_lock(&zip_name) { continue; }
         let meta = std::fs::symlink_metadata(&path).map_err(|e| e.to_string())?;
         #[cfg(windows)]
         { use std::os::windows::fs::MetadataExt;
           if meta.file_attributes() & 0x400 != 0 { return Err(format!("Linked folder/file requires a separate backup: {}", path.display())); }
         }
-        let zip_name = format!("{prefix}/{}", entry.file_name().to_string_lossy());
         // Private local CAs are machine/account credentials, not portable project data.
         if zip_name == "config/ssl" || zip_name == "config/https" { continue; }
         if meta.is_dir() { collect_files(&path, &zip_name, out)?; }
         else if meta.is_file() { out.push((zip_name, path)); }
     }
     Ok(())
+}
+
+fn is_operation_lock(name: &str) -> bool {
+    name.replace('\\', "/").eq_ignore_ascii_case("config/https-operation.lock")
 }
 
 fn write_files(zip: &mut zip::ZipWriter<std::fs::File>, files: &[(String, PathBuf)], options: SimpleFileOptions) -> Result<(), String> {
@@ -349,6 +356,7 @@ pub async fn restore_full_backup(
             .by_index(i)
             .map_err(|e| format!("Zip read error: {}", e))?;
         let zip_name = entry.name().to_string();
+        if is_operation_lock(&zip_name) { continue; }
         if zip_name.starts_with("config/https/") || zip_name.starts_with("config/ssl/") { continue; }
 
         if zip_name == "manifest.json" {
@@ -432,4 +440,38 @@ fn ensure_safe_destination(base: &Path, relative: &Path) -> Result<(), String> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod operation_lock_tests {
+    use super::*;
+
+    #[test]
+    fn recovery_backup_excludes_exclusively_held_operation_lock() {
+        let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos();
+        let root = std::env::temp_dir().join(format!("dsb-backup-lock-{stamp}"));
+        std::fs::create_dir(&root).unwrap();
+        let lock_path = root.join("https-operation.lock");
+        let mut options = std::fs::OpenOptions::new();
+        options.write(true).create_new(true);
+        #[cfg(windows)]
+        {
+            use std::os::windows::fs::OpenOptionsExt;
+            options.share_mode(0);
+        }
+        let lock = options.open(&lock_path).unwrap();
+        let config = root.join("vhosts.json");
+        std::fs::write(&config, b"[]").unwrap();
+        let mut files = Vec::new();
+        collect_files(&root, "config", &mut files).unwrap();
+        assert_eq!(files, vec![("config/vhosts.json".into(), config.clone())]);
+        // Older archives may contain this lock; restoration must skip it too.
+        assert!(is_operation_lock("config/https-operation.lock"));
+        assert!(is_operation_lock("CONFIG\\HTTPS-OPERATION.LOCK"));
+        assert!(!is_operation_lock("www/https-operation.lock"));
+        drop(lock);
+        std::fs::remove_file(lock_path).unwrap();
+        std::fs::remove_file(config).unwrap();
+        std::fs::remove_dir(root).unwrap();
+    }
 }

@@ -342,7 +342,7 @@ and versioned installers per accepted phase; do not publish automatically.
 - Laravel files, dependencies, and environment remain untouched. These changes target v0.1.13 and are not in the v0.1.12 installer.
 - Site snapshots now fail on unreadable files instead of treating them as absent. Site config writes use staged replacements, with persistent pre-change recovery copies in the configuration backups directory. This is not a crash-atomic transaction across all files.
 - Configuration editor writes and full-backup restoration share the site-operation lock to prevent those operations racing with site updates.
-- Validation: 27 frontend tests, 32 Rust tests, TypeScript and documentation checks passed. Live isolated Apache reproduction was blocked by automatic approval review; the installed HTTP 500 is not claimed fixed.
+- Validation: 27 frontend tests, 33 Rust tests, TypeScript and documentation checks passed. Live isolated Apache reproduction was blocked by automatic approval review; the installed HTTP 500 is not claimed fixed.
 
 ## Microsoft Store readiness — proposed, not submitted
 
