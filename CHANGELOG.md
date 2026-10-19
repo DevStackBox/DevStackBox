@@ -27,6 +27,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - This release does not install or repair Laravel dependencies and does not claim to fix every HTTP 500 response.
 - Windows Authenticode signing is pending. The installer may still display SmartScreen warnings. The separate Tauri updater signature verifies in-app updates.
 
+**Installer SHA-256:** `C278038B57A0F4C7CDDAF7D38709E5DB03F3A05686EFF4D16BF2BCCBF17E1875`
+
 ## [0.1.12] - 2026-10-18
 
 ### Added

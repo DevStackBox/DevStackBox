@@ -1,11 +1,11 @@
 {
-  "version": "0.1.12",
-  "notes": "DevStackBox v0.1.12: project details, per-project website PHP, trusted local HTTPS, and safer manual upgrades.",
-  "pub_date": "2026-10-18T11:57:47Z",
+  "version": "0.1.13",
+  "notes": "DevStackBox v0.1.13: project Apache/PHP logs, safer configuration updates, recovery snapshots and backup-lock fixes. Windows publisher signing is pending.",
+  "pub_date": "2026-10-19T11:40:10Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRMTM4U1RGRFJNV2dBVW5LRGJiVDdhWmtQNDVhOSttMTVnd29TRENlL3plbFAyZks4Q0VoaWp2eFR5bVV1SFhReFNoUWNndE5mNmNlMEtOeVlTTHZ1d3ptVHhGNUZpWFFFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyMzI0NjUyCWZpbGU6RGV2U3RhY2tCb3hfMC4xLjEyX3g2NC1zZXR1cC5leGUKSWl5TkFvTTFLVlJsVjV2VTRHZmRMMmNiMDZDVU1Kckd2K2ZFYnMreFpRdW45ZWZWeVZ2Y3M3ZC9SdmxaWWxsOEgxTWMxTEhIMVV1ZE5HNk12WDBGQUE9PQo=",
-      "url": "https://github.com/DevStackBox/DevStackBox/releases/download/v0.1.12/DevStackBox_0.1.12_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRMTM4U1RGRFJNV2xPa1ludW9YVnJhamZ4aGc3dUY5a3lRSFY3VUQwWDZRV0YwbFRWVGQrSWRBNk1WWUJPR3o3L1ZjcldURzNpMllacVVKdEIzSTBRSmxrZDBuTnVPNUE4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNDA5OTc4CWZpbGU6RGV2U3RhY2tCb3hfMC4xLjEzX3g2NC1zZXR1cC5leGUKNTJYVVRBdW1Vd3JxTEJhdjNZcVB1Y1gyRm1qVmJNUE5ZOXNNOHNRTlFpYnNIWGFkbU1KNDAyU0xxVDkyMGRCZStPeHBHeXY4ajhrQWhLeFF6enZiQmc9PQo=",
+      "url": "https://github.com/DevStackBox/DevStackBox/releases/download/v0.1.13/DevStackBox_0.1.13_x64-setup.exe"
     }
   }
 }

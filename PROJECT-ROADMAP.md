@@ -344,9 +344,9 @@ and versioned installers per accepted phase; do not publish automatically.
 - Configuration editor writes and full-backup restoration share the site-operation lock to prevent those operations racing with site updates.
 - Validation: 27 frontend tests, 33 Rust tests, TypeScript and documentation checks passed. Live isolated Apache reproduction was blocked by automatic approval review; the installed HTTP 500 is not claimed fixed.
 
-## Microsoft Store readiness — proposed, not submitted
+## Microsoft Store readiness — deferred, not submitted
 
-Use the existing EXE installer route first, subject to certification. MSIX would require a separate compatibility effort around writable runtimes, installation paths and privileged hostname operations.
+Current distribution remains GitHub; the user has deferred Store work and is arranging Certum code signing. No Authenticode certificate has been activated for v0.1.13. If Store publication is revisited, consider the existing EXE installer route first, subject to certification. MSIX would require a separate compatibility effort around writable runtimes, installation paths and privileged hostname operations.
 
 1. Register and verify the publisher in Partner Center and reserve the app name.
 2. Inventory Authenticode signatures for the installer and all bundled PE binaries (including third-party EXEs/DLLs); satisfy Microsoft's signing requirements. Tauri updater signatures are separate.

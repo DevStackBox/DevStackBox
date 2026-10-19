@@ -4,6 +4,9 @@ v0.1.12 was published on 18 October 2026. Reports below preserve historical cand
 
 ## v0.1.13 qualification — 19 October 2026
 
+- Final installer: `DevStackBox_0.1.13_x64-setup.exe`, 187160175 bytes. SHA-256: `C278038B57A0F4C7CDDAF7D38709E5DB03F3A05686EFF4D16BF2BCCBF17E1875`. Both updater signatures verified.
+- GitHub Windows verification passed for code revision `2eb59ac`; release metadata is finalized separately.
+
 - 27 frontend tests and 33 Rust library tests passed; TypeScript, documentation validation, release input verification and strict Clippy passed.
 - The compiled app refused an orphan-host HTTPS update without changing saved/generated configurations or creating a CA.
 - Upgrade-stop helper and compiled NSIS harness passed: only owned processes stopped; locked binaries blocked replacement; existing website backups and locked website folders were preserved; retries succeeded after unlocking. These used disposable fixtures, not the installed application.
