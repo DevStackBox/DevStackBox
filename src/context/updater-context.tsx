@@ -81,7 +81,7 @@ export interface UpdaterContextValue {
   downloadPhase: UpdaterDownloadPhase | null;
   /** 1-based retry attempt while auto-retrying transient failures */
   downloadRetryAttempt: number;
-  /** No Progress events for a while — user may retry manually */
+  /** No Progress events for a while - user may retry manually */
   downloadStalled: boolean;
   /** True when download + install is complete and app is ready to relaunch */
   readyToInstall: boolean;
@@ -126,9 +126,8 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
   const [downloading, setDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadIndeterminate, setDownloadIndeterminate] = useState(false);
-  const [downloadPhase, setDownloadPhase] = useState<UpdaterDownloadPhase | null>(
-    null,
-  );
+  const [downloadPhase, setDownloadPhase] =
+    useState<UpdaterDownloadPhase | null>(null);
   const [downloadRetryAttempt, setDownloadRetryAttempt] = useState(0);
   const [downloadStalled, setDownloadStalled] = useState(false);
   const [readyToInstall, setReadyToInstall] = useState(false);
@@ -224,37 +223,39 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
 
   const runPluginDownload = useCallback(
     async (info: UpdateInfo) => {
-      await info.downloadAndInstall((event: { event: string; data?: Record<string, unknown> }) => {
-        switch (event.event) {
-          case "Started":
-            downloadedRef.current = 0;
-            contentLengthRef.current =
-              typeof event.data?.contentLength === "number"
-                ? event.data.contentLength
-                : 0;
-            setDownloadPhase("downloading");
-            applyProgressFromBytes();
-            break;
+      await info.downloadAndInstall(
+        (event: { event: string; data?: Record<string, unknown> }) => {
+          switch (event.event) {
+            case "Started":
+              downloadedRef.current = 0;
+              contentLengthRef.current =
+                typeof event.data?.contentLength === "number"
+                  ? event.data.contentLength
+                  : 0;
+              setDownloadPhase("downloading");
+              applyProgressFromBytes();
+              break;
 
-          case "Progress": {
-            const chunk = event.data?.chunkLength;
-            if (typeof chunk === "number") {
-              downloadedRef.current += chunk;
+            case "Progress": {
+              const chunk = event.data?.chunkLength;
+              if (typeof chunk === "number") {
+                downloadedRef.current += chunk;
+              }
+              applyProgressFromBytes();
+              break;
             }
-            applyProgressFromBytes();
-            break;
-          }
 
-          case "Finished":
-            setDownloadProgress(100);
-            setDownloadIndeterminate(false);
-            setDownloadPhase("installing");
-            setReadyToInstall(true);
-            lastProgressAtRef.current = Date.now();
-            setDownloadStalled(false);
-            break;
-        }
-      });
+            case "Finished":
+              setDownloadProgress(100);
+              setDownloadIndeterminate(false);
+              setDownloadPhase("installing");
+              setReadyToInstall(true);
+              lastProgressAtRef.current = Date.now();
+              setDownloadStalled(false);
+              break;
+          }
+        },
+      );
     },
     [applyProgressFromBytes],
   );

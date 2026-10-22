@@ -2,7 +2,7 @@
 
 v0.1.12 was published on 18 October 2026. Reports below preserve historical candidate evidence; the internal build numbers 0.1.13–0.1.15 predate that public release and are distinct from the subsequent public v0.1.13 patch.
 
-## v0.1.13 qualification — 19 October 2026
+## v0.1.13 qualification - 19 October 2026
 
 - Final installer: `DevStackBox_0.1.13_x64-setup.exe`, 187160175 bytes. SHA-256: `C278038B57A0F4C7CDDAF7D38709E5DB03F3A05686EFF4D16BF2BCCBF17E1875`. Both updater signatures verified.
 - GitHub Windows verification passed for code revision `2eb59ac`; release metadata is finalized separately.

@@ -337,6 +337,11 @@ pub async fn restore_full_backup(
         emit(&app, "restoring_mysql", 20, "Restoring MySQL databases...");
         let sql_path = full_backups_dir().join(format!("restore-{stamp}.sql.partial"));
         let import = (|| -> Result<(), String> {
+            let _mysql_lock = super::mysql_import::MYSQL_DATA_LOCK
+                .try_lock()
+                .map_err(|_| {
+                    "Another database import or maintenance operation is in progress.".to_string()
+                })?;
             let mut entry = archive.by_name("mysql/all-databases.sql").map_err(|e| e.to_string())?;
             let mut sql = std::fs::File::create(&sql_path).map_err(|e| e.to_string())?;
             std::io::copy(&mut entry, &mut sql).map_err(|e| e.to_string())?;

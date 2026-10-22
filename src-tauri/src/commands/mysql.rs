@@ -311,18 +311,7 @@ pub async fn backup_mysql_database() -> Result<String, String> {
 
     let backup_file = backups_dir.join(format!("mysql_backup_{}.sql", timestamp));
 
-    let output = mysqldump_command()?
-        .arg("--all-databases")
-        .output()
-        .map_err(|e| format!("Failed to execute mysqldump: {}", e))?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("mysqldump failed: {}", stderr.trim()));
-    }
-
-    std::fs::write(&backup_file, output.stdout)
-        .map_err(|e| format!("Failed to write backup file: {}", e))?;
+    stream_mysqldump_to_file(&["--all-databases"], &backup_file)?;
 
     Ok(format!("MySQL backup created: {}", backup_file.display()))
 }
@@ -447,60 +436,71 @@ pub async fn backup_mysql_database_named(database: String) -> Result<String, Str
 
     let backup_file = backups_dir.join(format!("{}_{}.sql", database, timestamp));
 
-    let output = mysqldump_command()?
-        .args(["--databases", &database])
-        .output()
-        .map_err(|e| format!("Failed to execute mysqldump: {}", e))?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("mysqldump failed: {}", stderr.trim()));
-    }
-
-    std::fs::write(&backup_file, output.stdout)
-        .map_err(|e| format!("Failed to write backup file: {}", e))?;
+    stream_mysqldump_to_file(&["--databases", &database], &backup_file)?;
 
     Ok(format!("Backup created: {}", backup_file.display()))
 }
 
-/// Restore a `.sql` dump into the MySQL server. The frontend should read the
-/// file with FileReader and pass the SQL text directly so we don't need the
-/// dialog plugin.
-#[tauri::command]
-pub async fn restore_mysql_database(sql: String) -> Result<String, String> {
-    if sql.trim().is_empty() {
-        return Err("SQL content is empty".to_string());
-    }
-
-    prepare_mysql_client()?;
-
-    use std::io::Write;
+fn stream_mysqldump_to_file(args: &[&str], backup_file: &std::path::Path) -> Result<(), String> {
+    use std::io::{Read, Write};
     use std::process::Stdio;
 
-    let mut child = mysql_command()?
-        .stdin(Stdio::piped())
+    let mut child = mysqldump_command()?
+        .args(args)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .map_err(|e| format!("Failed to spawn mysql client: {}", e))?;
+        .map_err(|e| format!("Failed to execute mysqldump: {}", e))?;
 
-    if let Some(stdin) = child.stdin.as_mut() {
-        stdin
-            .write_all(sql.as_bytes())
-            .map_err(|e| format!("Failed to pipe SQL to mysql: {}", e))?;
+    let mut stderr = child.stderr.take().ok_or("mysqldump stderr unavailable")?;
+    let stderr_tail: std::sync::Arc<std::sync::Mutex<Vec<u8>>> =
+        std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+    let tail_reader = stderr_tail.clone();
+    let err_thread = std::thread::spawn(move || {
+        let mut chunk = [0_u8; 4096];
+        loop {
+            match stderr.read(&mut chunk) {
+                Ok(0) => break,
+                Ok(n) => {
+                    if let Ok(mut tail) = tail_reader.lock() {
+                        tail.extend_from_slice(&chunk[..n]);
+                        if tail.len() > 8192 {
+                            let keep = 8192;
+                            let drop = tail.len() - keep;
+                            tail.drain(0..drop);
+                        }
+                    }
+                }
+                Err(_) => break,
+            }
+        }
+    });
+
+    let mut stdout = child
+        .stdout
+        .take()
+        .ok_or("mysqldump stdout unavailable")?;
+    let mut file = std::fs::File::create(backup_file)
+        .map_err(|e| format!("Failed to create backup file: {}", e))?;
+    std::io::copy(&mut stdout, &mut file)
+        .map_err(|e| format!("Failed to write backup file: {}", e))?;
+    file.flush().ok();
+
+    let status = child
+        .wait()
+        .map_err(|e| format!("Failed to wait for mysqldump: {}", e))?;
+    let _ = err_thread.join();
+    if !status.success() {
+        let _ = std::fs::remove_file(backup_file);
+        let msg = stderr_tail
+            .lock()
+            .ok()
+            .map(|v| String::from_utf8_lossy(&v).trim().to_string())
+            .filter(|s| !s.is_empty())
+            .unwrap_or_else(|| "mysqldump exited with an error".into());
+        return Err(format!("mysqldump failed: {msg}"));
     }
-
-    let output = child
-        .wait_with_output()
-        .map_err(|e| format!("Failed to wait for mysql client: {}", e))?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("mysql restore failed: {}", stderr.trim()));
-    }
-
-    let bytes = sql.len();
-    Ok(format!("Restored {} bytes of SQL", bytes))
+    Ok(())
 }
 
 // ── MySQL user management ────────────────────────────────────────────────────
@@ -603,7 +603,7 @@ pub async fn set_mysql_user_password(
     Ok(format!("Password updated for '{}'", username.trim()))
 }
 
-fn validate_database_name(name: &str) -> Result<String, String> {
+pub(crate) fn validate_database_name(name: &str) -> Result<String, String> {
     let name = name.trim();
     if name.is_empty() {
         return Err("Database name is required".to_string());
@@ -632,6 +632,9 @@ pub async fn create_mysql_database(name: String) -> Result<String, String> {
 
 #[tauri::command]
 pub async fn drop_mysql_database(name: String) -> Result<String, String> {
+    let _lock = super::mysql_import::MYSQL_DATA_LOCK
+        .try_lock()
+        .map_err(|_| "Another database import or maintenance operation is in progress.")?;
     let name = validate_database_name(&name)?;
     prepare_mysql_client()?;
     let escaped = name.replace('`', "``");

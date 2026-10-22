@@ -4,7 +4,7 @@ export type UpdaterDownloadPhase = "preparing" | "downloading" | "installing";
 export interface DownloadProgressState {
   /** 0–100 when determinate; ignored when indeterminate */
   percent: number;
-  /** True when total size is unknown — do not show a fake percentage */
+  /** True when total size is unknown - do not show a fake percentage */
   indeterminate: boolean;
   phase: UpdaterDownloadPhase;
 }

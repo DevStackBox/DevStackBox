@@ -22,7 +22,11 @@ use crate::commands::mysql::{
     backup_mysql_database, backup_mysql_database_named, create_mysql_database, create_mysql_user,
     drop_mysql_database, drop_mysql_user,
     get_mysql_status, list_mysql_databases, list_mysql_databases_detailed, list_mysql_users,
-    restore_mysql_database, set_mysql_user_password, start_mysql, stop_mysql, toggle_mysql,
+    set_mysql_user_password, start_mysql, stop_mysql, toggle_mysql,
+};
+use crate::commands::mysql_import::{
+    apply_php_recommended_import_limits, get_sql_restore_file_info, pick_sql_restore_file,
+    restore_mysql_from_file,
 };
 use crate::commands::php::{
     download_php_version, get_php_status, get_php_versions, list_php_extensions,
@@ -41,7 +45,7 @@ use crate::commands::terminal::{kill_terminal_session, resize_terminal, send_ter
 use crate::commands::tray::{hide_to_tray, quit_app, refresh_tray_menu, set_tray_tooltip, show_main_window};
 use crate::utils::app_settings::read_app_settings;
 use crate::utils::paths::ensure_user_data_dirs;
-use crate::utils::phpmyadmin_config::ensure_phpmyadmin_config_inc;
+use crate::utils::phpmyadmin_config::{ensure_phpmyadmin_config_inc, patch_phpmyadmin_config};
 use std::sync::Arc;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -88,7 +92,10 @@ pub fn run() {
             backup_mysql_database_named,
             list_mysql_databases,
             list_mysql_databases_detailed,
-            restore_mysql_database,
+            pick_sql_restore_file,
+            get_sql_restore_file_info,
+            restore_mysql_from_file,
+            apply_php_recommended_import_limits,
             list_mysql_users,
             create_mysql_user,
             create_mysql_database,
@@ -150,6 +157,7 @@ pub fn run() {
             // before any service can try to read/write configs or data.
             ensure_user_data_dirs();
             let _ = ensure_phpmyadmin_config_inc();
+            let _ = patch_phpmyadmin_config();
 
             // Installer runs this in the interactive user's context. First launch is a
             // fallback for a deferred installer handoff or a newly signed-in user.

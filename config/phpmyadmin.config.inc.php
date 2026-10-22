@@ -28,7 +28,7 @@ $cfg['ServerDefault'] = 1;
 // Performance settings
 $cfg['MaxRows'] = 100;
 $cfg['MemoryLimit'] = '512M';
-$cfg['ExecTimeLimit'] = 300;
+$cfg['ExecTimeLimit'] = 600;
 
 // UI settings
 $cfg['ShowPhpInfo'] = true;

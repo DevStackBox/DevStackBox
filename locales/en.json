@@ -17,7 +17,8 @@
     "available": "Available",
     "planned": "Planned",
     "inProgress": "In Progress",
-    "comingSoon": "Coming Soon"
+    "comingSoon": "Coming Soon",
+    "tryAgain": "Try again"
   },
   "navigation": {
     "dashboard": "Dashboard",
@@ -218,7 +219,8 @@
     "restartAll": "Restart All",
     "creating": "Creating...",
     "deleting": "Dropping...",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "backup": "Backup"
   },
   "settings": {
     "appearance": "Appearance",
@@ -263,12 +265,16 @@
   },
   "about": {
     "version": "Version",
+    "tagline": "Local PHP development environment for Windows.",
     "builtWith": "Built with Tauri, React, and Rust",
     "author": "Author",
     "github": "GitHub",
+    "website": "Website",
+    "download": "Download",
     "documentation": "Documentation",
     "systemInfo": "System Information",
     "systemInfoDesc": "Detected runtime, host, and bundled binary versions.",
+    "runtime": "Runtime",
     "notInstalled": "Not installed",
     "noneDetected": "None detected",
     "loadError": "Unable to load system information.",
@@ -340,7 +346,34 @@
     "backup": "Backup",
     "backingUp": "Backing up...",
     "openInPhpMyAdmin": "Open in phpMyAdmin",
-    "copyName": "Copy database name"
+    "copyName": "Copy database name",
+    "actions": "Backup and restore",
+    "actionsDescV016": "Full server backup uses mysqldump --all-databases. Restore streams any .sql file from disk through the MySQL client (recommended for large dumps). phpMyAdmin supports smaller uploads up to your configured PHP limit.",
+    "backupAll": "Backup all databases",
+    "restoreSql": "Restore from .sql",
+    "restoreSqlTitle": "Restore from .sql file",
+    "restorePartialWarning": "Import may partially apply before failing; there is no automatic rollback. For very large dumps, use this dialog instead of phpMyAdmin.",
+    "chooseSqlFile": "Choose .sql file…",
+    "restoreModeFollow": "Restore using database names in the file (recommended for DevStackBox backups and mysqldump --databases)",
+    "restoreModeInitial": "Use a selected database when the file does not specify one (does not override USE or CREATE DATABASE inside the file)",
+    "restoreCreateNew": "Create / use a new database name",
+    "newDbPlaceholder": "my_database",
+    "selectDatabase": "Select existing database",
+    "createIfNotExists": "Create database if it does not exist",
+    "restoring": "Restoring…",
+    "restoreConfirm": "Start import",
+    "restoreCompleted": "Restore completed",
+    "restoreFailed": "Restore failed",
+    "restoreNeedDatabase": "Choose or enter a database name.",
+    "applyPhpImportLimits": "Apply recommended PHP import limits",
+    "applyPhpImportLimitsDesc": "Sets upload 512M, post 544M, and 600s execution time in global php.ini for phpMyAdmin. Restart Apache afterward.",
+    "applyPhpImportLimitsDone": "PHP import limits updated",
+    "restoreHintCreateDatabase": "This file appears to contain CREATE DATABASE statements. Use “Restore using database names in the file”.",
+    "emptyBackupsList": "No databases to back up yet.",
+    "backups": {
+      "title": "Per-database backups",
+      "description": "Quickly export individual MySQL databases. For full-stack backups including configs and logs, use Settings > Backup & Restore."
+    }
   },
   "security": {
     "title": "Security Analyzer",
@@ -459,27 +492,5 @@
   },
   "sidebar": {
     "builtBy": "Built by Nomad Programmer"
-  },
-  "about": {
-    "version": "Version",
-    "tagline": "Local PHP development environment for Windows.",
-    "author": "Author",
-    "github": "GitHub",
-    "website": "Website",
-    "download": "Download",
-    "documentation": "Documentation",
-    "systemInfo": "System Information",
-    "systemInfoDesc": "Detected runtime, host, and bundled binary versions.",
-    "runtime": "Runtime",
-    "appVersion": "App version",
-    "os": "OS",
-    "osVersion": "OS version",
-    "apache": "Apache",
-    "mysql": "MySQL",
-    "phpVersions": "PHP versions",
-    "notInstalled": "Not installed",
-    "noneDetected": "None detected",
-    "loadError": "Unable to load system information.",
-    "builtWith": "Local PHP development environment for Windows."
   }
 }

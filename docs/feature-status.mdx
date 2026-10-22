@@ -166,7 +166,8 @@ Project details can read Apache and runtime-specific PHP errors. Configuration c
 | Database search             | DONE   | Sticky search input on the Databases page filters rows by name                                                                  |
 | Database row context menu   | DONE   | Right-click row -> Backup, Open in phpMyAdmin (deep link to ?db=NAME), Copy DB name                                             |
 | Database-specific backup    | DONE   | `backup_mysql_database_named` per-database backup wired into Databases page                                                     |
-| Database restore            | DONE   | `restore_mysql_database` accepts SQL piped from a `.sql` file picked in the UI                                                  |
+| Database restore            | DONE   | `restore_mysql_from_file` streams a `.sql` file from disk into the MySQL client (`follow_dump` or `initial_database` modes); large dumps avoid phpMyAdmin upload limits |
+| PHP / phpMyAdmin import limits | DONE | Legacy 64M defaults migrate once to 512M upload / 544M post; optional `apply_php_recommended_import_limits`; phpMyAdmin UploadDir/SaveDir/TempDir under user data |
 
 ---
 

@@ -461,8 +461,17 @@ pub fn patch_php_ini() {
     if first_run { new_content = enable_essential_extensions(new_content, &ext_dir); }
 
     let _ = std::fs::write(&php_ini, new_content);
+    if let Ok(content) = std::fs::read_to_string(&php_ini) {
+        let tmp = crate::utils::paths::to_apache_path(&crate::utils::paths::user_tmp_dir());
+        if let Some(migrated) =
+            crate::utils::php_ini_import::maybe_migrate_php_import_limits(&content, &tmp)
+        {
+            let _ = std::fs::write(&php_ini, migrated);
+        }
+    }
     println!("php.ini patched at user config dir: session.save_path={} extension_dir={}", sessions_str, ext_dir_str);
 }
+
 
 #[tauri::command]
 pub async fn get_php_versions() -> Result<Vec<PHPVersionInfo>, String> {

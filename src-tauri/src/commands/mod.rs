@@ -8,6 +8,7 @@ pub mod fullbackup;
 pub mod logs;
 pub mod migration;
 pub mod mysql;
+pub mod mysql_import;
 pub mod php;
 pub mod security;
 pub mod ssl;

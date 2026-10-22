@@ -75,7 +75,10 @@ const result = await safeInvoke<ReturnType>(
 | `backup_mysql_database_named`   | `commands/mysql.rs`  | `database: String`                                      | `String` (path)            |                     |
 | `list_mysql_databases`          | `commands/mysql.rs`  | none                                                    | `String[]`                 |                     |
 | `list_mysql_databases_detailed` | `commands/mysql.rs`  | none                                                    | `DatabaseInfo[]`           | name + table count + size |
-| `restore_mysql_database`        | `commands/mysql.rs`  | `backup_path: String`                                   | `String`                   |                     |
+| `pick_sql_restore_file`         | `commands/mysql_import.rs` | none                                                | `String \| null`           | Native file picker for `.sql` |
+| `get_sql_restore_file_info`     | `commands/mysql_import.rs` | `path: String`                                      | `SqlRestoreFileInfo`       | Size + sniff hint for restore mode |
+| `restore_mysql_from_file`       | `commands/mysql_import.rs` | `file_path`, `restore_mode`, `initial_database?`, `create_database` | `String` | Streams file to `mysql` stdin |
+| `apply_php_recommended_import_limits` | `commands/mysql_import.rs` | none                                          | `String`                   | Sets recommended php.ini import limits |
 | `list_mysql_users`              | `commands/mysql.rs`  | none                                                    | `MySqlUser[]`              |                     |
 | `create_mysql_user`             | `commands/mysql.rs`  | `username: String`, `password: String`, `host: String`  | `String`                   |                     |
 | `drop_mysql_user`               | `commands/mysql.rs`  | `username: String`, `host: String`                      | `String`                   |                     |
@@ -260,7 +263,10 @@ tauri::generate_handler![
     backup_mysql_database_named,
     list_mysql_databases,
     list_mysql_databases_detailed,
-    restore_mysql_database,
+    pick_sql_restore_file,
+    get_sql_restore_file_info,
+    restore_mysql_from_file,
+    apply_php_recommended_import_limits,
     list_mysql_users,
     create_mysql_user,
     drop_mysql_user,

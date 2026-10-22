@@ -1,6 +1,7 @@
 import { MySQLRequired } from "@/components/mysql-required";
+import { RestoreSqlDialog } from "@/components/restore-sql-dialog";
 import { useDatabaseCache } from "@/context/database-cache-context";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { RefreshCw, Download, HardDriveDownload, Upload } from "lucide-react";
@@ -25,9 +26,31 @@ function DatabasesBackupsContent() {
   const { toast } = useToast();
   const { databases, loading, error, refresh: load } = useDatabaseCache();
   const [busy, setBusy] = useState<string | null>(null);
+  const [restoreOpen, setRestoreOpen] = useState(false);
+  const [applyingPhpLimits, setApplyingPhpLimits] = useState(false);
   useEffect(() => { void load(); }, [load]);
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const applyPhpImportLimits = async () => {
+    setApplyingPhpLimits(true);
+    try {
+      const result = await safeInvoke<string>(
+        TAURI_COMMANDS.services.applyPhpRecommendedImportLimits,
+      );
+      toast({
+        variant: "success",
+        title: t("databases.applyPhpImportLimitsDone", "PHP import limits updated"),
+        description: result,
+      });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: t("common.error", "Error"),
+        description: String(err),
+      });
+    } finally {
+      setApplyingPhpLimits(false);
+    }
+  };
 
   const backupAll = async () => {
     setBusy("__all__");
@@ -48,36 +71,6 @@ function DatabasesBackupsContent() {
       });
     } finally {
       setBusy(null);
-    }
-  };
-
-  const onPickFile = () => fileInputRef.current?.click();
-
-  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setBusy("__restore__");
-    try {
-      const sql = await file.text();
-      const result = await safeInvoke<string>(
-        TAURI_COMMANDS.services.restoreMysqlDatabase,
-        { sql },
-      );
-      toast({
-        variant: "success",
-        title: t("databases.restoreCompleted", "Restore completed"),
-        description: result ?? file.name,
-      });
-      await load();
-    } catch (err) {
-      toast({
-        variant: "destructive",
-        title: t("databases.restoreFailed", "Restore failed"),
-        description: `${err}`,
-      });
-    } finally {
-      setBusy(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -104,7 +97,7 @@ function DatabasesBackupsContent() {
     }
   };
 
-  if (error) return <div role="alert" className="rounded-md border p-6 space-y-3"><p>{error}</p><Button disabled={loading} onClick={() => void load()}>Try again</Button></div>;
+  if (error) return <div role="alert" className="rounded-md border p-6 space-y-3"><p>{error}</p><Button disabled={loading} onClick={() => void load()}>{t("common.tryAgain", "Try again")}</Button></div>;
 
   return (
     <motion.div
@@ -117,8 +110,8 @@ function DatabasesBackupsContent() {
           <CardTitle>{t("databases.actions", "Backup and restore")}</CardTitle>
           <CardDescription>
             {t(
-              "databases.actionsDesc",
-              "Full server backup uses mysqldump --all-databases. Restore reads any .sql file and pipes it to the mysql client.",
+              "databases.actionsDescV016",
+              "Full server backup uses mysqldump --all-databases. Restore streams any .sql file from disk through the MySQL client (recommended for large dumps). phpMyAdmin supports smaller uploads up to your configured PHP limit.",
             )}
           </CardDescription>
         </CardHeader>
@@ -131,23 +124,36 @@ function DatabasesBackupsContent() {
           </Button>
           <Button
             variant="outline"
-            onClick={onPickFile}
+            onClick={() => setRestoreOpen(true)}
             disabled={busy !== null}
           >
             <Upload className="mr-2 h-4 w-4" />
-            {busy === "__restore__"
-              ? t("databases.restoring", "Restoring...")
-              : t("databases.restoreSql", "Restore from .sql")}
+            {t("databases.restoreSql", "Restore from .sql")}
           </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".sql,text/plain"
-            className="hidden"
-            onChange={onFileChange}
-          />
+          <Button
+            variant="ghost"
+            onClick={() => void applyPhpImportLimits()}
+            disabled={busy !== null || applyingPhpLimits}
+            title={t(
+              "databases.applyPhpImportLimitsDesc",
+              "Sets upload 512M, post 544M, and 600s execution time in global php.ini for phpMyAdmin. Restart Apache afterward.",
+            )}
+          >
+            {applyingPhpLimits
+              ? t("common.loading", "Loading…")
+              : t(
+                  "databases.applyPhpImportLimits",
+                  "Apply recommended PHP import limits",
+                )}
+          </Button>
         </CardContent>
       </Card>
+
+      <RestoreSqlDialog
+        open={restoreOpen}
+        onOpenChange={setRestoreOpen}
+        onFinished={() => void load()}
+      />
 
       <Card>
         <CardHeader>
@@ -180,7 +186,7 @@ function DatabasesBackupsContent() {
         <CardContent>
           {databases.length === 0 ? (
             <div className="rounded-md border bg-muted/30 px-3 py-6 text-center text-sm text-muted-foreground">
-              {t("databases.empty", "No databases found.")}
+              {t("databases.emptyBackupsList", "No databases to back up yet.")}
             </div>
           ) : (
             <div className="divide-y rounded-md border">
@@ -192,7 +198,9 @@ function DatabasesBackupsContent() {
                   <div>
                     <div className="font-mono text-sm">{db.name}</div>
                     <div className="text-xs text-muted-foreground">
-                      {db.tableCount} tables
+                      {t("databases.tablesCount", "{{count}} tables", {
+                        count: db.tableCount,
+                      })}
                     </div>
                   </div>
                   <Button

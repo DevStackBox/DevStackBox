@@ -4,6 +4,22 @@ All notable changes to DevStackBox are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.16] - 2026-10-22
+
+### Added
+
+- **Restore from .sql** streams the file from disk into the MySQL client (no full-file load in the UI or Rust string APIs). Modes: follow dump database names, or target a database when the file does not select one-with honest partial-failure messaging and an operation lock.
+- One-time migration of legacy PHP import limits (64M) to recommended values (512M upload, 544M post, 600s timeouts); custom limits are preserved. Optional **Apply recommended PHP import limits** on Databases → Backups.
+- phpMyAdmin writable UploadDir/SaveDir/TempDir under user data; ExecTimeLimit 600 when still at bundled default.
+
+### Changed
+
+- Per-database and full-server mysqldump backups stream stdout to disk instead of buffering in memory.
+
+### Removed
+
+- `restore_mysql_database` (in-memory SQL string restore).
+
 ## [0.1.15] - 2026-10-22
 
 ### Fixed

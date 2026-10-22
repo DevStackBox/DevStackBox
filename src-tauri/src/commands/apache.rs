@@ -216,6 +216,7 @@ pub async fn start_apache() -> Result<bool, String> {
     // Ensure php.ini has session.save_path and extension_dir set correctly
     // so phpMyAdmin and PHP apps work without manual php.ini editing.
     patch_php_ini();
+    let _ = crate::utils::phpmyadmin_config::patch_phpmyadmin_config();
 
     // Seed the www dir with default files if it is still empty.
     seed_www_dir();
