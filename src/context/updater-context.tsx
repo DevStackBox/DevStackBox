@@ -270,7 +270,7 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
     setReadyToInstall(false);
     downloadedRef.current = 0;
     contentLengthRef.current = 0;
-    setDownloadIndeterminate(false);
+    setDownloadIndeterminate(true);
     setDownloadProgress(0);
     setDownloadPhase("preparing");
     lastProgressAtRef.current = Date.now();

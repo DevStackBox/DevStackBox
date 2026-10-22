@@ -24,10 +24,27 @@ import { Progress } from "@/components/ui/progress";
 import { useUpdater } from "@/context/updater-context";
 import { APP_VERSION } from "@/lib/version";
 import { cn } from "@/lib/utils";
+import {
+  formatUpdateReleaseNotes,
+  isUpdaterProgressIndeterminate,
+  primaryButtonLabelKey,
+  shouldShowDownloadPercent,
+  type UpdaterPrimaryButtonLabelKey,
+} from "@/lib/updater-ui";
 
 interface AutoUpdaterProps {
   mode?: "button" | "indicator";
 }
+
+const PRIMARY_LABEL_DEFAULTS: Record<UpdaterPrimaryButtonLabelKey, string> = {
+  "updater.restartAndUpdate": "Restart & Update",
+  "updater.retryUpdate": "Retry update",
+  "updater.updateNow": "Download & Install",
+  "updater.preparingShort": "Preparing…",
+  "updater.downloadingShort": "Downloading…",
+  "updater.installingShort": "Installing…",
+  "updater.pleaseWait": "Please wait…",
+};
 
 function useDownloadStatusLabel(): string {
   const { t } = useTranslation();
@@ -65,6 +82,28 @@ function useDownloadStatusLabel(): string {
   return `${t("updater.downloading", "Downloading")} ${downloadProgress}%`;
 }
 
+function usePrimaryButtonLabel(): string {
+  const { t } = useTranslation();
+  const {
+    downloading,
+    downloadIndeterminate,
+    downloadPhase,
+    downloadRetryAttempt,
+    readyToInstall,
+    checkError,
+  } = useUpdater();
+
+  const key = primaryButtonLabelKey({
+    downloading,
+    readyToInstall,
+    checkError,
+    phase: downloadPhase,
+    indeterminate: downloadIndeterminate,
+    downloadRetryAttempt,
+  });
+  return t(key, PRIMARY_LABEL_DEFAULTS[key]);
+}
+
 export function AutoUpdater({ mode = "button" }: AutoUpdaterProps) {
   const { t } = useTranslation();
   const {
@@ -78,7 +117,7 @@ export function AutoUpdater({ mode = "button" }: AutoUpdaterProps) {
     openUpdateDialog,
   } = useUpdater();
 
-  const statusLabel = useDownloadStatusLabel();
+  const primaryButtonLabel = usePrimaryButtonLabel();
 
   if (mode === "indicator") {
     if (!updateAvailable) return null;
@@ -124,7 +163,7 @@ export function AutoUpdater({ mode = "button" }: AutoUpdaterProps) {
     ButtonIcon = RotateCcw;
     buttonVariant = "default";
   } else if (downloading) {
-    buttonLabel = statusLabel;
+    buttonLabel = primaryButtonLabel;
     ButtonIcon = Download;
     buttonVariant = "secondary";
   } else if (checkError && updateAvailable) {
@@ -186,6 +225,7 @@ function UpdateDialog() {
   } = useUpdater();
 
   const statusLabel = useDownloadStatusLabel();
+  const primaryButtonLabel = usePrimaryButtonLabel();
 
   const handleLater = () => {
     dismissUpdate();
@@ -196,16 +236,27 @@ function UpdateDialog() {
   };
 
   const showProgress = downloading;
-  const progressValue = downloadIndeterminate ? undefined : downloadProgress;
+  const progressIndeterminate = isUpdaterProgressIndeterminate(
+    downloadPhase,
+    downloadIndeterminate,
+  );
+  const showPercent = shouldShowDownloadPercent(
+    downloadPhase,
+    downloadIndeterminate,
+    downloading,
+  );
+  const progressValue = progressIndeterminate ? undefined : downloadProgress;
 
   return (
     <Dialog open={showDialog} onOpenChange={setShowDialog}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="overflow-hidden max-w-[min(28rem,calc(100vw-2rem))] sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Download className="h-5 w-5" />
-            DevStackBox v{updateInfo?.version}{" "}
-            {t("updater.available", "available")}
+          <DialogTitle className="flex items-center gap-2 min-w-0">
+            <Download className="h-5 w-5 shrink-0" />
+            <span className="truncate">
+              DevStackBox v{updateInfo?.version}{" "}
+              {t("updater.available", "available")}
+            </span>
           </DialogTitle>
           <DialogDescription>
             <span className="flex items-center gap-2 mt-1 flex-wrap">
@@ -220,44 +271,44 @@ function UpdateDialog() {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="min-w-0 w-full space-y-4">
           {updateInfo?.body && (
-            <div className="max-h-32 overflow-y-auto rounded-md border p-3 text-sm bg-muted/50">
+            <div className="w-full min-w-0 max-w-full max-h-40 overflow-y-auto overflow-x-hidden overscroll-contain rounded-md border p-3 text-sm bg-muted/50">
               <h4 className="font-medium mb-2">
                 {t("updater.whatsNew", "What's new:")}
               </h4>
-              <pre className="whitespace-pre-wrap text-muted-foreground">
-                {updateInfo.body}
-              </pre>
+              <div className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-muted-foreground">
+                {formatUpdateReleaseNotes(updateInfo.body)}
+              </div>
             </div>
           )}
 
           {showProgress && (
             <motion.div
-              className="space-y-2"
+              className="space-y-2 min-w-0"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex min-w-0 items-center gap-2">
                 <Progress
                   value={progressValue}
                   className={cn(
-                    "flex-1",
-                    downloadIndeterminate &&
+                    "min-w-0 flex-1",
+                    progressIndeterminate &&
                       "[&>div]:animate-pulse [&>div]:w-1/3 [&>div]:translate-x-0",
                   )}
                 />
-                {!downloadIndeterminate && (
-                  <span className="text-sm font-mono min-w-[3rem]">
+                {showPercent && (
+                  <span className="shrink-0 text-sm font-mono min-w-[3rem] text-right">
                     {downloadProgress}%
                   </span>
                 )}
               </div>
-              <p className="text-sm text-center text-muted-foreground">
+              <p className="text-sm text-center text-muted-foreground break-words [overflow-wrap:anywhere] px-1">
                 {statusLabel}
               </p>
               {downloadStalled && downloadPhase === "downloading" && (
-                <p className="text-sm text-center text-amber-600 dark:text-amber-500">
+                <p className="text-sm text-center text-amber-600 dark:text-amber-500 break-words [overflow-wrap:anywhere] px-1">
                   {t(
                     "updater.downloadStalled",
                     "Download is taking longer than expected. You can wait or use Retry after it fails.",
@@ -269,7 +320,7 @@ function UpdateDialog() {
 
           {checkError && (
             <motion.p
-              className="text-sm text-destructive"
+              className="text-sm text-destructive break-words [overflow-wrap:anywhere]"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             >
@@ -277,7 +328,7 @@ function UpdateDialog() {
             </motion.p>
           )}
 
-          <div className="flex gap-2 justify-end">
+          <div className="flex min-w-0 flex-wrap justify-end gap-2">
             {!readyToInstall && (
               <Button
                 variant="outline"
@@ -290,30 +341,24 @@ function UpdateDialog() {
             <Button
               onClick={handlePrimaryAction}
               disabled={downloading && !readyToInstall && !checkError}
-              className="min-w-[140px]"
+              className="max-w-full shrink"
             >
               {downloading && !readyToInstall && !checkError ? (
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="mr-2"
+                  className="mr-2 shrink-0"
                 >
                   <Download className="h-4 w-4" />
                 </motion.div>
               ) : readyToInstall ? (
-                <RotateCcw className="h-4 w-4 mr-2" />
+                <RotateCcw className="h-4 w-4 mr-2 shrink-0" />
               ) : checkError ? (
-                <RefreshCw className="h-4 w-4 mr-2" />
+                <RefreshCw className="h-4 w-4 mr-2 shrink-0" />
               ) : (
-                <Download className="h-4 w-4 mr-2" />
+                <Download className="h-4 w-4 mr-2 shrink-0" />
               )}
-              {readyToInstall
-                ? t("updater.restartAndUpdate", "Restart & Update")
-                : downloading && !checkError
-                  ? statusLabel
-                  : checkError
-                    ? t("updater.retryUpdate", "Retry update")
-                    : t("updater.updateNow", "Download & Install")}
+              <span className="truncate">{primaryButtonLabel}</span>
             </Button>
           </div>
         </div>
