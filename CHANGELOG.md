@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - In-app updater progress no longer sticks at 50%: total download size is taken from the Tauri **Started** event instead of **Progress** events.
 - Update dialog shows preparing, indeterminate download (unknown size), installing, auto-retry on transient network errors, and a manual **Retry update** action after failure.
 
+**Installer SHA-256:** `1F899F796C06F3142E3BA118AD851ADA8EDEC8626E5BB888BDE3AABFBECD0C75`
+
 ## [0.1.14] - 2026-10-22
 
 ### Security
