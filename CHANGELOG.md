@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `restore_mysql_database` (in-memory SQL string restore).
 
+**Installer SHA-256:** `0D4F76EF10881E38F1DE28B3FA1023AEE550631099D03E7763375BF2D29A2BC6`
+
 ## [0.1.15] - 2026-10-22
 
 ### Fixed

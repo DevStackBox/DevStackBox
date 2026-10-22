@@ -1,11 +1,11 @@
 {
-  "version": "0.1.15",
-  "notes": "### Fixed\r\n\r\n- In-app updater progress no longer sticks at 50%: total download size is taken from the Tauri **Started** event instead of **Progress** events.\r\n- Update dialog shows preparing, indeterminate download (unknown size), installing, auto-retry on transient network errors, and a manual **Retry update** action after failure.",
-  "pub_date": "2026-10-22T08:08:31.668Z",
+  "version": "0.1.16",
+  "notes": "### Added\r\n\r\n- **Restore from .sql** streams the file from disk into the MySQL client (no full-file load in the UI or Rust string APIs). Modes: follow dump database names, or target a database when the file does not select one-with honest partial-failure messaging and an operation lock.\r\n- One-time migration of legacy PHP import limits (64M) to recommended values (512M upload, 544M post, 600s timeouts); custom limits are preserved. Optional **Apply recommended PHP import limits** on Databases → Backups.\r\n- phpMyAdmin writable UploadDir/SaveDir/TempDir under user data; ExecTimeLimit 600 when still at bundled default.\r\n\r\n### Changed\r\n\r\n- Per-database and full-server mysqldump backups stream stdout to disk instead of buffering in memory.\r\n\r\n### Removed\r\n\r\n- `restore_mysql_database` (in-memory SQL string restore).",
+  "pub_date": "2026-10-22T11:12:57.095Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRMTM4U1RGRFJNV254TGhqSGlHbElZTWd5WEU3R0pjWHhsN1pMZnp5SUJpTXNwT0FzUnV2MVZRN0M2eFdYNkdDVk82dWd5V1R2WmxIOEJkdGRDamFObGx6a3FRVktZMFFjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNjU2NDk4CWZpbGU6RGV2U3RhY2tCb3hfMC4xLjE1X3g2NC1zZXR1cC5leGUKWE4zTlNON1ZOWnY1RjlGQ2xkK0t1d1pnZ3dkN0hMQ3RmS2VWa3Iya3p3ZEpqV2o2NmxqZjc1U1dQSDZaamMwWEJWNzRtRUN6MjRJWHd6TFBsNDRDQXc9PQo=",
-      "url": "https://github.com/DevStackBox/DevStackBox/releases/download/v0.1.15/DevStackBox_0.1.15_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRMTM4U1RGRFJNV3Nyb3k2RUxGQ09NY0JGdnBORDJRZk9INEdka0hYQS85eHVFNndWK0l4T2orYUQzMUlocXRUTzh0aHdHbWZDR1MwMERnNmdSeHgvbjh2VlVXRjdCNVFrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNjY3NTM5CWZpbGU6RGV2U3RhY2tCb3hfMC4xLjE2X3g2NC1zZXR1cC5leGUKY1orYnlKZHVDZmljOVpyMjJLVDZ2T3JmZlN0NEdhcGVLbTZERmZwV01SSHRMZ01Bc2JNNFM0TFVOQ3ozT0wvbUdKZHpLL3ZyUUZaazlEdGFrdHBvQnc9PQo=",
+      "url": "https://github.com/DevStackBox/DevStackBox/releases/download/v0.1.16/DevStackBox_0.1.16_x64-setup.exe"
     }
   }
 }
