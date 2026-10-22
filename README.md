@@ -8,13 +8,13 @@
 
 ![Project details with HTTP 200 and trusted local HTTPS](docs/images/project-details-preview.jpg)
 
-Screenshot captured from internal build v0.1.15. The features shown are included in the public v0.1.12 release.
+Project details from an earlier development build. See the changelog for v0.1.14 changes.
 
 ## Stack
 
 | In the installer   | In the app (download)                        |
 | ------------------ | -------------------------------------------- |
-| PHP **8.3**        | PHP **8.1, 8.2, 8.4, 8.5** (latest: **8.5**) |
+| PHP **8.3.36**     | PHP **8.2.35, 8.4.27, 8.5.12** or newer patches |
 | Apache **2.4**     | -                                            |
 | MySQL **8.4 LTS**  | -                                            |
 | phpMyAdmin **5.2** | -                                            |
@@ -45,7 +45,13 @@ Connect existing folders, manage `.test` hosts and trusted HTTPS, and select an 
 
 See the [project guide](docs/getting-started/projects.mdx), [project roadmap](PROJECT-ROADMAP.md), and [release validation](docs/RELEASE-VALIDATION.md). Framework installers, database linking and Git/SSH are future work. Frameworks will download on demand; AI integration is deferred.
 
-## v0.1.13 diagnostics and configuration safety
+## v0.1.14 PHP security update
+
+Bundles PHP 8.3.36 for CVE-2026-109618 and CVE-2026-109619. PHP Version Manager shows both branch and full patch versions and updates existing branches with verified downloads. PHP 8.1 has been removed from supported choices. Stop Apache and PHP terminals before updating each installed branch, including those pinned to projects. Apache startup rejects outdated web runtimes until they are updated.
+
+Version 0.1.14 is prepared in this source tree; download links resolve to the latest published GitHub release. Generate the final installer and updater metadata using the release runbook before publication.
+
+## Diagnostics and configuration safety
 
 Read Apache and the selected PHP runtime error log from project details. Site changes preserve recovery copies and stop before overwriting unrelated hosts missing from saved records. See [release notes](CHANGELOG.md) for scope and limitations.
 

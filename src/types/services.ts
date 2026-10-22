@@ -53,6 +53,12 @@ export interface ServiceInfo extends ServiceStatus {
 
 export interface PHPVersionInfo {
   version: string;
+  installed_version?: string | null;
+  latest_version?: string | null;
+  update_available?: boolean;
+  security_update_required?: boolean;
+  end_of_life?: boolean;
+  release_error?: string | null;
   status: "installed" | "available" | "downloading";
   path: string;
   is_active: boolean;

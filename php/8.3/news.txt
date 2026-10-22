@@ -1,5 +1,83 @@
 PHP                                                                        NEWS
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+22 Oct 2026, PHP 8.3.36
+
+- Core:
+  . Fixed GHSA-w8hw-w9fx-j79w, GHSA-6wmf-4rv5-p3rp (Avoid state corruption via
+    bailout). (CVE-2026-109618, CVE-2026-109619) (Arnaud, ilutov, Jakub Zelenka,
+    ndossche, Nicolas Grekas)
+
+24 Sep 2026, PHP 8.3.35
+
+- Filter:
+  . Fixed GHSA-ch8v-r6jh-4vvr (FILTER_SANITIZE_ENCODED does not encode 0xFF).
+    (Ilia Alshanetsky)
+
+- FPM:
+  . Fixed GHSA-62xp-839h-2637 (IPv6 ACL bypass in FastCGI listen.allowed_clients
+    due to partial address comparison). (CVE-2026-91768) (Alexandre Daubois)
+
+- MySQLnd:
+  . Fixed GHSA-r6x9-5r99-36j7 (Various packet overreads in mysqlnd wire
+    protocol). (CVE-2025-1218) (Jakub Zelenka, Nora Dossche)
+
+- OpenSSL:
+  . Fixed GHSA-vvx9-73fr-5jjx (TLS hostname verification falls back to CN after
+    SAN mismatch). (CVE-2026-91769) (Jakub Zelenka)
+  . Fixed GHSA-xr7j-rvgx-xq5p (Heap buffer overflow in
+    php_openssl_matches_wildcard_name() on crafted server certificate wildcard
+    CN). (CVE-2026-91767) (Jakub Zelenka)
+
+- Phar:
+  . Fixed GHSA-j3wh-g957-2m85 (Integer overflow in phar_tar_number() allowing
+    TAR archive entry injection). (CVE-2026-6103) (Jakub Zelenka)
+
+- SOAP:
+  . Fixed GHSA-rgrp-mwpx-f6rm (Unbounded recursion in server-side
+    cleanup_xml_node()). (CVE-2026-91765) (Alexandre Daubois)
+  . Fixed GHSA-cj93-vc83-wgqv (Integer overflow to buffer overflow in SOAP HTTP
+    parsing). (CVE-2025-14181) (Nora Dossche, Jakub Zelenka)
+
+- Standard:
+  . Fixed GHSA-88hq-2827-7pg6 (Out-of-bounds read in convert.* stream filters
+    when line-break-chars contains NUL). (CVE-2026-92842) (geeknik)
+  . Fixed GHSA-fpwc-w8rq-cr92 (Cross-origin credential leak in HTTP stream
+    wrapper redirects). (CVE-2026-91766) (Alexandre Daubois, Jakub Zelenka)
+  . Fixed GHSA-7875-c8px-7q5f (Out-of-bounds read in the HTTP stream wrapper
+    when following a redirect with an empty Location header). (CVE-2026-93682)
+    (Ilia Alshanetsky, Jordi Kroon)
+
+- Windows:
+  . Fixed GHSA-9f67-6fw4-hpfp (Reserved device names are not rejected before
+    file and stream I/O). (CVE-2026-17545) (Shivam Mathur, Jakub Zelenka)
+
+
+30 Jul 2026, PHP 8.3.33
+
+- Date:
+  . Fixed leak on double DatePeriod::__construct() call. (ilutov)
+
+- GD:
+  . Upgrade libgd. (CVE-2026-9672) (Pierre Joye)
+
+- PGSQL:
+  . Fixed GHSA-7qpv-r5mr-78m4 (SQL injection via E'...' backslash breakout).
+    (CVE-2026-17543) (ilutov)
+
+- Phar:
+  . Fixed GHSA-vc5h-9ppw-p5f3 (Crash via recursive symlinks). (CVE-2026-7260)
+    (Jakub Zelenka)
+
+02 Jul 2026, PHP 8.3.32
+
+- Streams:
+  . Fixed bug GH-21468 (Segfault in file_get_contents w/ a https URL
+    and a proxy set). (CVE-2026-12184) (ndossche)
+
+- OpenSSL:
+  . Fixed bug GH-22187 (Memory corruption (zend_mm_heap corrupted) in
+    openssl_encrypt with AES-WRAP-PAD). (CVE-2026-14355) (David Carlier)
+
 07 May 2026, PHP 8.3.31
 
 - Curl:

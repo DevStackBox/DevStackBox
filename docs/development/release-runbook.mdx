@@ -13,7 +13,7 @@ Single reference for **updater-signed NSIS builds** and **GitHub publish** so ev
 
 ---
 
-The Tauri signature authenticates updates; it is not Windows Authenticode signing. Authenticode signing is pending for v0.1.13.
+The Tauri signature authenticates updates; it is not Windows Authenticode signing. Authenticode signing is pending for v0.1.14.
 
 ## 1. Preflight
 
@@ -72,7 +72,7 @@ node scripts/finalize-release.mjs --from-github vX.Y.Z --write-changelog
 node scripts/finalize-release.mjs --verify-github vX.Y.Z
 ```
 
-This writes `release/notes-vX.Y.Z.md` and replaces the `**Installer SHA-256:**` line under the matching CHANGELOG section.
+For v0.1.14, this verifies the exact installer signature, writes `release/notes-v0.1.14.md`, updates the changelog checksum, regenerates both `latest.json` files, and updates WinGet and Chocolatey version metadata. Before finalization, existing signed manifests remain associated with the previous release; do not manually relabel an old checksum or signature.
 
 ---
 

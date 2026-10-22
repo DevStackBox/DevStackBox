@@ -9,7 +9,7 @@ icon: "Rocket"
 
 **Quick copy-paste runbook (PowerShell commands):** [Release runbook](./release-runbook)
 
-**Release version:** v0.1.13
+**Release version:** v0.1.14
 
 ---
 
@@ -17,7 +17,7 @@ icon: "Rocket"
 
 | Type  | When                                | Example           |
 | ----- | ----------------------------------- | ----------------- |
-| Patch | Bug fix only, no new features       | `0.1.12` → `0.1.13` |
+| Patch | Bug fix only, no new features       | `0.1.13` → `0.1.14` |
 | Minor | New working feature added           | `0.1.8` → `0.2.0` |
 | Major | Breaking changes or large milestone | `0.x.x` → `1.0.0` |
 
@@ -45,7 +45,7 @@ Change version in ALL THREE files at the same time:
 
 ```json
 {
-  "version": "0.1.13"
+  "version": "0.1.14"
 }
 ```
 
@@ -53,14 +53,14 @@ Change version in ALL THREE files at the same time:
 
 ```toml
 [package]
-version = "0.1.13"
+version = "0.1.14"
 ```
 
 ### `src-tauri/tauri.conf.json`
 
 ```json
 {
-  "version": "0.1.13"
+  "version": "0.1.14"
 }
 ```
 
@@ -76,22 +76,22 @@ grep '"version"' src-tauri/tauri.conf.json
 
 ## Step 3 - Update CHANGELOG.md
 
-Add an entry at the top:
+The v0.1.14 entry in `CHANGELOG.md` records the PHP security fixes, patch upgrades, full version display, and removal of PHP 8.1. Keep historical entries unchanged.
 
 ```markdown
-## [0.1.13] - 2026-MM-DD
+## [0.1.14] - 2026-10-22
 
 ### Fixed
 
-- Description of bug fix
+- Bundle PHP 8.3.36 and support verified patch upgrades for installed PHP branches.
 
 ### Added
 
-- Description of new feature
+- Display full installed and downloadable PHP patch versions alongside branch names.
 
 ### Changed
 
-- Description of change
+- Remove end-of-life PHP 8.1 from supported choices; require patched web runtimes before Apache starts.
 ```
 
 Keep the format consistent. Do not delete old entries.
@@ -196,7 +196,7 @@ Run this checklist on the **NSIS installer** (not dev mode) on a clean Windows 1
 ## Step 6 - Generate SHA-256 Hash (optional)
 
 ```powershell
-Get-FileHash "src-tauri\target\release\bundle\nsis\DevStackBox_0.1.13_x64-setup.exe" -Algorithm SHA256
+Get-FileHash "src-tauri\target\release\bundle\nsis\DevStackBox_0.1.14_x64-setup.exe" -Algorithm SHA256
 ```
 
 Include the hash in the GitHub Release description if you want transparency for users.
@@ -208,17 +208,17 @@ Include the hash in the GitHub Release description if you want transparency for 
 1. Create a git tag:
 
    ```bash
-   git tag v0.1.13
-   git push origin v0.1.13
+   git tag v0.1.14
+   git push origin v0.1.14
    ```
 
 2. Go to [GitHub Releases](https://github.com/DevStackBox/DevStackBox/releases/new)
 
 3. Fill in:
-   - **Tag:** `v0.1.13`
-   - **Title:** `v0.1.13`
+   - **Tag:** `v0.1.14`
+   - **Title:** `v0.1.14`
    - **Description:** Copy from CHANGELOG.md
-   - **Attach files:** `DevStackBox_0.1.13_x64-setup.exe`, `DevStackBox_0.1.13_x64-setup.exe.sig`, and **`latest.json`** (filename must be exactly `latest.json`)
+   - **Attach files:** `DevStackBox_0.1.14_x64-setup.exe`, `DevStackBox_0.1.14_x64-setup.exe.sig`, and **`latest.json`** (filename must be exactly `latest.json`)
    - Do **not** mark the release as a pre-release (otherwise GitHub `releases/latest` will not point here)
 
 4. Click Publish Release.
@@ -226,11 +226,11 @@ Include the hash in the GitHub Release description if you want transparency for 
 Alternatively, from a signed build directory:
 
 ```powershell
-gh release create v0.1.13 `
-  "src-tauri\target\release\bundle\nsis\DevStackBox_0.1.13_x64-setup.exe" `
-  "src-tauri\target\release\bundle\nsis\DevStackBox_0.1.13_x64-setup.exe.sig" `
+gh release create v0.1.14 `
+  "src-tauri\target\release\bundle\nsis\DevStackBox_0.1.14_x64-setup.exe" `
+  "src-tauri\target\release\bundle\nsis\DevStackBox_0.1.14_x64-setup.exe.sig" `
   "latest.json" `
-  --title "DevStackBox v0.1.13" `
+  --title "DevStackBox v0.1.14" `
   --notes "Copy from CHANGELOG.md"
 ```
 

@@ -6,14 +6,18 @@ icon: "ListChecks"
 # DevStackBox - Feature Status
 
 **THE single source of truth for what is built, what is in progress, and what is planned.**  
-Reflects the **v0.1.13** release. Check the release notes for changes in a particular version.
+Reflects the **v0.1.14** source changes; publication follows final installer validation. Check the release notes for changes in a particular version.
 
-**Last Updated:** 19 October 2026
-**Current version:** v0.1.13
+**Last Updated:** 22 October 2026
+**Current version:** v0.1.14
 
 ---
 
-## v0.1.13 diagnostics
+## v0.1.14 PHP security
+
+Patched PHP 8.3.36 is bundled. The version manager shows exact patch versions, updates installed branches, and offers PHP 8.2 through 8.5. PHP 8.1 has been removed. Apache startup checks active and project-pinned runtime security baselines.
+
+## Diagnostics
 
 Project details can read Apache and runtime-specific PHP errors. Configuration changes preserve recovery snapshots and reject unrecorded generated hosts before site edits. Logs are shared, and the saved PHP setting is not live runtime verification.
 
@@ -311,6 +315,6 @@ Project details can read Apache and runtime-specific PHP errors. Configuration c
 | v0.1.0 - v0.1.4 | Early alpha, architecture setup                                                                                           |
 
 
-## Release verification (v0.1.13)
+## Release verification (v0.1.14)
 
 Ship with `npm run build:release` (runs `verify-release.mjs`, including MySQL **8.4.x** check). Installer uses Tauri minisign (not Windows Authenticode). Clean install checklist: `docs/getting-started/clean-install-checklist.md`.

@@ -344,17 +344,167 @@ and versioned installers per accepted phase; do not publish automatically.
 - Configuration editor writes and full-backup restoration share the site-operation lock to prevent those operations racing with site updates.
 - Validation: 27 frontend tests, 33 Rust tests, TypeScript and documentation checks passed. Live isolated Apache reproduction was blocked by automatic approval review; the installed HTTP 500 is not claimed fixed.
 
-## Microsoft Store readiness — deferred, not submitted
+## Microsoft Store / MSIX audit and implementation plan - 19 October 2026
 
-Current distribution remains GitHub; the user has deferred Store work and is arranging Certum code signing. No Authenticode certificate has been activated for v0.1.13. If Store publication is revisited, consider the existing EXE installer route first, subject to certification. MSIX would require a separate compatibility effort around writable runtimes, installation paths and privileged hostname operations.
+Status: source and documentation audit complete; implementation and packaged runtime
+validation have NOT started. The user has chosen to stop using Certum and investigate
+Microsoft Store MSIX distribution. Public v0.1.13 remains the existing GitHub release.
+This section supersedes the earlier deferred EXE/MSI Store proposal. AI integration
+remains deferred. No installed application, projects, certificates, Windows settings,
+Partner Center records or published release assets were changed during this audit.
 
-1. Register and verify the publisher in Partner Center and reserve the app name.
-2. Inventory Authenticode signatures for the installer and all bundled PE binaries (including third-party EXEs/DLLs); satisfy Microsoft's signing requirements. Tauri updater signatures are separate.
-3. Build a fully offline Store installer. The current WebView2 `downloadBootstrapper` setting needs an offline alternative.
-4. Verify silent installation, upgrade, uninstall and exit codes on clean Windows machines. The current installer automatically invokes local HTTPS setup when selected; the Store silent path must defer interactive certificate trust setup until the user explicitly enables it in the app.
-5. Publish an immutable, versioned HTTPS installer URL; supply its silent-install parameters, listing, screenshots, support/privacy information and reviewer instructions in Partner Center.
-6. Submit for certification, then test installation through the Store. Do not replace the published v0.1.12 binary; use a new release version for new fixes.
+### Decision and limits
 
-Store publication does not sign the separate GitHub EXE automatically. It also does not remove the need for user consent for privileged changes or local certificate trust.
+Use a full-trust packaged desktop application (medium integrity), not an AppContainer
+rewrite. Microsoft documents Tauri-to-MSIX packaging; the Store signs the accepted
+MSIX package. This does not sign the separate GitHub EXE, individual downloaded PHP
+runtimes, or arbitrary project executables. Local test packages require development
+trust or an appropriate development registration; ordinary Store customers do not
+need to install our development certificate.
 
-References: [EXE/MSI requirements](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msi/app-package-requirements), [MSIX compatibility](https://learn.microsoft.com/en-us/windows/msix/desktop/desktop-to-uwp-prepare), [publisher registration](https://learn.microsoft.com/en-us/windows/apps/publish/get-started).
+The code is NOT ready to wrap unchanged. Package installation files are read-only,
+package locations change between versions, NSIS hooks will not run, and elevation
+is a separate certification issue. Full trust is not administrator permission.
+Microsoft's current capability guidance allows an advance request for allowElevation
+under strict criteria; do not assume approval or try to bypass it using an external
+script, helper download, scheduled task, or service.
+
+The current Partner Center screenshots show an EXE/MSI product (URL plus silent
+switches), not an MSIX upload. Leave that package entry empty. Keep its name reservation
+until the technical proof passes. Then verify with Partner Center support whether
+conversion/name transfer is supported; otherwise create an MSIX or PWA **app** draft
+and coordinate reservation release/reclaim. Do not delete or release names automatically.
+Copy the prepared listing content; use the new product's exact package identity and
+publisher values, not the Tauri identifier or a guessed certificate subject.
+
+### Evidence and feature impact
+
+| Area | Source evidence | Required change / proof |
+| --- | --- | --- |
+| Package layout | `src-tauri/tauri.conf.json` targets NSIS only; bundles Apache, MySQL, PHP 8.3, phpMyAdmin, www and mkcert | Stage the real application binary and all required resources with preserved subdirectories. Add MSIX manifest, identity, assets, architecture and dependencies. SDK MakeAppx is installed; winapp was not found on PATH. No existing MSIX manifest was found. |
+| Writable PHP | `utils/paths.rs::active_php_dir`; `commands/php.rs::php_root`, download staging and `switch_php_version` use installation/php and a cmd mklink junction | Add a runtime catalog merging immutable bundled PHP with user-downloaded branches. Store explicit active runtime selection in user settings; remove the installation junction requirement. Centralize resolution for web, CLI, status, diagnostics, ini/extensions, backups and future project terminals. |
+| Project files | `utils/paths.rs::user_www_dir` creates installation/www; `commands/system.rs` writes phpinfo there; Apache seeds starter pages | Put new projects in a visible user-owned workspace outside package storage. Connect existing folders in place. Package www becomes read-only seed content, copied only for explicit new setup without overwriting files. |
+| AppData and retention | `get_user_data_root` uses LOCALAPPDATA/devstackbox and silently ignores directory creation errors; fallback is installation/data | Do not assume the current apparent AppData path is physically shared with unpackaged editors or survives uninstall. Use explicit per-channel application state and a user-selected persistent workspace for databases/backups/project data. Fail visibly on inaccessible paths; prohibit write fallback into the package. Test physical visibility and uninstall behavior. |
+| Versioned package paths | Apache ServerRoot/modules, MySQL basedir, PHP extension_dir and vhosts contain absolute installation paths; config migration currently checks schema versions | Store a separate layout/package fingerprint. On update, stage/rebase generated path directives and validate before activation even when schema versions are unchanged. Preserve user directives, project IDs, ports, credentials and runtime pins. Do not rewrite unrelated text or reuse stale package paths. |
+| phpMyAdmin | `utils/phpmyadmin_config.rs` writes missing bundled config.inc.php; `config/phpmyadmin.config.inc.php` contains relative upload/save/tmp directories | Ship a read-only loader/config entry and resolve mutable configuration, secret, sessions, upload/save/tmp locations through explicit writable paths. Verify actual active bundle configuration and custom database ports before changing it; first-run repair must not write inside the package. |
+| Virtual hosts | `commands/vhosts.rs::change_hosts` elevates current executable through PowerShell RunAs; `main.rs` handles --hosts-operation | Automatic custom .test names cannot ship unchanged in the standard-user Store design. Prototype project.localhost resolution in supported browsers/Windows clients; retain localhost with distinct project ports as a fallback candidate. Do not claim either candidate works until tested with PHP apps and redirects. Existing .test projects need an explicit migration or approved elevation path. |
+| Local HTTPS | `commands/ssl.rs` hashes mkcert, uses per-user CAROOT, calls mkcert -install; trust check uses certutil -user | Current-user HTTPS is worth retaining. Upstream mkcert uses CertOpenSystemStoreW(ROOT), which Microsoft documents as current-user only. Prove a separately created test CA in an isolated Windows profile; browser trust must be visible outside package virtualization. Consent remains explicit. Do not bundle a CA/private key or silently import an existing CA. |
+| Consent and cleanup | `lib.rs` checks installation/https-autosetup; NSIS hooks create it and launch --setup-local-https | Replace installer markers with an in-app setup choice. Provide scoped Remove local HTTPS trust and explain what persists after uninstall. Do not rely on an uninstall hook to revoke an OS root; revoke only our exact CA on explicit request, never unrelated certificates. |
+| Processes and lifecycle | Apache/MySQL spawn directly; current lib/tray exit calls app.exit; NSIS handles upgrade stop, preservation and uninstall | Keep ordinary processes, not NT services. Add per-instance ownership, shared-workspace lock, graceful MySQL shutdown, Apache/PHP/terminal cleanup, crash recovery and package-update handling. Prove app close, tray quit, logout, forced termination and Store update behavior. Job objects may help; prototype carefully to avoid abrupt database termination on normal exit. |
+| Process discovery and shells | `utils/process.rs` shells to PowerShell CIM and taskkill; terminal.rs uses ConPTY/cmd/PowerShell; php.rs invokes mklink | Prefer Windows process APIs for required lifecycle/discovery and direct runtime selection. Retain the terminal as a desktop feature subject to packaged testing; do not confuse full trust with S-mode compatibility. Document unsupported/restricted-device behavior; do not claim maximum-device support. |
+| Application updates | `commands/app_update.rs`, updater plugin and `src/context/updater-context.tsx` poll GitHub and can install an NSIS update | Store mode must block GitHub application installation in backend/plugin permissions as well as UI. Show Managed by Microsoft Store and a Store link. Keep release information separately if desired. Optional PHP downloads remain a separately disclosed runtime feature. |
+| Startup | `commands/system.rs` writes HKCU Run with current_exe absolute path | Use packaged StartupTask with user control and correct manifest declaration. Test persistence after package version changes and Windows-disabled startup state. |
+| WebView2 and native dependencies | Existing NSIS config uses downloadBootstrapper; package contains native Apache/MySQL/PHP dependencies | MSIX does not execute the NSIS prerequisite flow. Prove Evergreen availability/dependency handling or bundle a supported Fixed Version WebView2 runtime and maintain its security updates. Inventory CRT/native DLL dependencies on a clean machine; do not assume the development PC proves completeness. |
+| Restore/migration | fullbackup.rs uses user data paths, config/site locks and excludes CA keys; current NSIS and Store can overlap | Import with preview and a recovery backup; do not share mutable state or simultaneously open a MySQL datadir. Preserve originals. Detect existing NSIS processes/ports, require graceful stop, map old runtime paths, and validate restored generated configuration. Prefer logical database export/import for cross-layout/version migration. |
+| Website/listing | Live /privacy still describes PHP downloads as future functionality and denies background network activity; updater context has automatic checks | Reconcile privacy, network destinations, updater behavior and screenshots against each channel's actual behavior. Explain any hostname differences clearly. Listing must describe implemented Store features only. |
+
+### Proposed storage and runtime contract
+
+- Package resources: immutable app, Apache/MySQL executables and modules, PHP 8.3
+  seed, phpMyAdmin code, mkcert and templates. Resolve from package resources at
+  runtime; never persist a package-version directory as a durable runtime ID.
+- Application state: per-channel package state for settings and disposable cache.
+  Resolve with supported APIs rather than assuming an environment variable is physical.
+- Persistent workspace: user-selected ordinary folder, with a proposed default under
+  the user's home directory such as DevStackBox. Keep projects, database storage and
+  user-exported backups outside the package; test access with Explorer/editors and
+  after uninstall. Store runtime downloads in a protected user-writable runtime area;
+  choose exact location after identity/virtualization proof. Do not request broad
+  virtualization exceptions merely to preserve the current folder layout.
+- Runtime selection: one resolver returning exact executable, immutable identity,
+  writable ini and extension path, used by CGI, CLI and diagnostics. Existing pins
+  continue to select only installed, validated branches. Reject missing runtimes;
+  never borrow another installation's PHP or fall back through system PATH.
+- Keep upstream HTTPS/SHA-256 validation, staging and cancellation for PHP downloads.
+  Disclose these as optional developer runtimes; assess Store policies against the
+  submitted feature description. Store signing does not magically sign downloads.
+- Retain configs/logs/databases through upgrade; define uninstall retention explicitly.
+  Persist no credentials or local CA keys in public packaging artifacts. Preserve the
+  existing private-CA backup exclusion. Do not share a CA with the development package.
+
+### Implementation order and acceptance gates
+
+1. **Feasibility proof first (no production migration).** Use an isolated Windows
+   profile/VM, a separate development identity, separate data/workspace and ports.
+   Build/stage a minimal full-trust Tauri MSIX with bundled PHP/Apache/MySQL.
+   Verify launch as standard user, WebView2, native dependencies, external project
+   access, PHP CGI, actual data paths and shutdown. Test project.localhost and
+   localhost:port candidates, then opt-in current-user HTTPS with a test CA.
+   Record browser and Windows-client DNS/trust behavior, not just curl --resolve.
+   No production certificate import, hosts-file edit or existing app replacement.
+   **Exit:** evidence confirms a viable core workflow; otherwise stop and report the
+   exact blocker before a broad refactor. A locally working package is not certification.
+2. **Storage/resolution refactor.** Implement explicit bundled/state/workspace roots,
+   a runtime catalog and settings-backed global selection. Remove package writes,
+   update project/runtime diagnostics, phpMyAdmin writable paths, starter files and
+   permission errors. Scope channel behavior so the existing NSIS release is stable.
+   **Exit:** read-only package tests plus simultaneous installed PHP CGI checks pass;
+   HTTP and HTTPS requests demonstrate actual per-project PHP versions.
+3. **Lifecycle and package update safety.** Implement instance/workspace locks,
+   graceful shutdown, owned-child handling and generated-path rebasing. Include
+   interrupted update/config recovery. **Exit:** package A-to-B update while services
+   run preserves data and pins; no live config points to package A afterward.
+4. **Hostname/HTTPS product decision.** Adopt only the standard-user naming strategy
+   proven in step 1, with clear UX and migration preview. If .test automation is
+   indispensable, prepare a Microsoft allowElevation justification for the user to
+   review/send; do not assume consent or approval. No hidden helper workaround.
+   **Exit:** supported hostname resolution, alias handling, browser HTTPS trust,
+   refusal/revocation and expired-cert recovery work as documented.
+5. **Store integrations.** Disable GitHub installer updates at all invocation layers,
+   add Store update messaging and StartupTask, finish manifest/assets, prerequisites,
+   license notices and CI packaging. Keep x64 only until other architectures are built
+   and tested. Package versions use a valid four-part monotonic version and match
+   Store constraints; do not assign/release a new public version just for this audit.
+6. **Existing-user migration.** Separate import flow with backup and source-path
+   preview; keep external projects in place. Copy verified runtime settings, map roots,
+   import databases safely with services stopped and leave the old install recoverable.
+   Define handling of an already-installed CA/hosts entries without deleting them.
+   **Exit:** old NSIS-to-Store migration, rollback and conflicting-process tests pass.
+7. **Certification preparation.** Resolve the Partner Center MSIX identity/name,
+   recheck policies, finish listing/privacy/support and real screenshots, run package
+   validation/WACK and the matrix below. Submit only after the user reviews the
+   concrete candidate and reviewer instructions. No Store submission in this audit.
+
+### Required test matrix before submission
+
+- Supported Windows 10 and Windows 11 versions; standard user and admin account
+  running unelevated; clean PC without development tools and with missing WebView2/CRT.
+- Install, first launch, repair, package A-to-B update, uninstall/reinstall; no stale
+  runtime paths, orphan processes, unexpected prompts or user-file loss.
+- Spaces/non-ASCII paths, custom/external project directories, unavailable drive,
+  read-only folders, offline/cancelled/interrupted PHP download and disk-full failure.
+- Bundled PHP plus a downloaded branch concurrently through HTTP and HTTPS; global
+  switch, pinned project, extensions, phpMyAdmin, terminal/CLI effective version.
+- Website returns expected HTTP status separately from certificate trust; localhost,
+  proposed project hostnames/aliases and custom ports in Edge/Chrome plus other
+  supported browsers/CLI clients. Firefox trust must be tested separately.
+- Existing XAMPP/NSIS processes and occupied ports; two app instances/channels must
+  never open one database directory concurrently or stop unrelated processes.
+- Database durability across graceful close, crash, forced package shutdown/update,
+  migration and restore; full backup excludes CA keys and operation locks.
+- HTTPS setup accepted/declined, per-user isolation, revocation and CA-key ACLs;
+  confirm browser-visible trust and deliberate cleanup after package uninstall.
+- Store-managed update path cannot invoke GitHub NSIS installation; StartupTask
+  respects Windows controls; light/dark, keyboard focus and minimum window size.
+
+### Scope of this audit and sources
+
+This is static source inspection plus current primary-documentation research. No MSIX
+was built/installed and no packaged behavior or certification approval is established.
+No application tests were run because application code did not change. Validate the
+proof separately rather than describing the checklist as passed. Windows SDK 10.0.26100
+MakeAppx exists locally; signing/testing tools and environment still need qualification.
+The policy page retrieved is version 7.20, published 15 September 2026 and effective
+22 October 2026 (after this audit); recheck the effective policy at submission time.
+
+- [Microsoft Tauri MSIX guide and Store signing](https://learn.microsoft.com/en-us/windows/apps/dev-tools/winapp-cli/guides/tauri)
+- [MSIX preparation constraints](https://learn.microsoft.com/en-us/windows/msix/desktop/desktop-to-uwp-prepare)
+- [Desktop package runtime and filesystem behavior](https://learn.microsoft.com/en-us/windows/msix/desktop/desktop-to-uwp-behind-the-scenes)
+- [Restricted capabilities; allowElevation requires advance justification](https://learn.microsoft.com/en-us/windows/apps/package-and-deploy/app-capability-declarations)
+- [AppData virtualization, visibility and uninstall](https://learn.microsoft.com/en-us/windows/msix/desktop/flexible-virtualization)
+- [Current-user certificate store API](https://learn.microsoft.com/en-us/windows/win32/api/wincrypt/nf-wincrypt-certopensystemstorew)
+- [mkcert Windows trust implementation v1.4.4](https://github.com/FiloSottile/mkcert/blob/v1.4.4/truststore_windows.go)
+- [Packaged StartupTask](https://learn.microsoft.com/en-us/uwp/api/windows.applicationmodel.startuptask)
+- [WebView2 distribution](https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/distribution)
+- [MSIX product/name reservation](https://learn.microsoft.com/en-us/windows/apps/publish/publish-your-app/msix/reserve-your-apps-name)
+- [Store policies; confirm effective version when submitting](https://learn.microsoft.com/en-us/windows/apps/publish/store-policies)

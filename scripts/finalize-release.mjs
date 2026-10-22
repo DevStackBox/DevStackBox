@@ -180,8 +180,32 @@ function main() {
   console.log(`SHA-256: ${sha}`);
 
   if (args.writeChangelog && !args.notesOnly) {
+    const installer = process.env.RELEASE_INSTALLER_PATH?.trim() || defaultInstallerPath();
+    const verification = spawnSync(process.execPath, [join(root, "scripts/verify-updater-artifact.mjs"), installer], { cwd: root, stdio: "inherit", windowsHide: true });
+    if (verification.status !== 0) throw new Error("Release metadata requires a valid signature for the exact installer.");
     updateChangelogSha(sha);
     console.log(`Updated CHANGELOG.md [${version}] SHA line`);
+    // Packaging metadata must refer to these exact installer bytes, never an old hash.
+    const wingetPath = join(root, "packaging/winget/DevStackBox.DevStackBox.yaml");
+    const installerName = `DevStackBox_${version}_x64-setup.exe`;
+    let winget = readFileSync(wingetPath, "utf8")
+      .replace(/^PackageVersion:.*$/m, `PackageVersion: ${version}`)
+      .replace(/^    InstallerUrl:.*$/m, `    InstallerUrl: https://github.com/DevStackBox/DevStackBox/releases/download/v${version}/${installerName}`)
+      .replace(/^    InstallerSha256:.*$/m, `    InstallerSha256: ${sha}`);
+    writeFileSync(wingetPath, winget);
+    const nuspecPath = join(root, "packaging/chocolatey/devstackbox.nuspec");
+    writeFileSync(nuspecPath, readFileSync(nuspecPath, "utf8").replace(/<version>[^<]+<\/version>/, `<version>${version}</version>`));
+    const manifest = {
+      version, notes: stripShaFromSection(section).trim(), pub_date: new Date().toISOString(),
+      platforms: { "windows-x86_64": {
+        signature: readFileSync(`${process.env.RELEASE_INSTALLER_PATH?.trim() || defaultInstallerPath()}.sig`, "utf8").trim(),
+        url: `https://github.com/DevStackBox/DevStackBox/releases/download/v${version}/${installerName}`,
+      } },
+    };
+    for (const destination of [join(root, "latest.json"), join(root, "release/latest.json")]) {
+      writeFileSync(destination, JSON.stringify(manifest, null, 2) + "\n");
+    }
+    console.log("Updated package manifests and latest.json from the final installer/signature.");
   }
 }
 

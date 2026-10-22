@@ -11,6 +11,12 @@ pub struct ServiceInfo {
 #[derive(serde::Serialize)]
 pub struct PHPVersionInfo {
     pub version: String,
+    pub installed_version: Option<String>,
+    pub latest_version: Option<String>,
+    pub update_available: bool,
+    pub security_update_required: bool,
+    pub end_of_life: bool,
+    pub release_error: Option<String>,
     pub status: String, // "installed", "available", "downloading"
     pub path: String,
     pub is_active: bool,

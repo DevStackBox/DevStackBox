@@ -21,6 +21,9 @@ for (const rel of ["phpmyadmin/index.php", "phpmyadmin/config.inc.php", "docs/im
 const pmaConfig = fs.readFileSync(path.join(root, "phpmyadmin/config.inc.php"), "utf8");
 if (!/AllowNoPassword'\]\s*=\s*true/.test(pmaConfig)) throw new Error("phpmyadmin/config.inc.php must set AllowNoPassword = true for local empty root login");
 const mysqld = path.join(root, "mysql/bin/mysqld.exe");
+const phpVersion = execFileSync(path.join(root, "php/8.3/php.exe"), ["-n", "-r", "echo PHP_VERSION;"], { encoding: "utf8", windowsHide: true }).trim();
+if (!/^8\.3\.\d+$/.test(phpVersion) || Number(phpVersion.split(".")[2]) < 36) throw new Error(`Bundled PHP must be 8.3.36 or newer on the 8.3 branch; got ${phpVersion}`);
+console.log(`Bundled PHP security baseline verified: ${phpVersion}`);
 const mysqlVersion = execFileSync(mysqld, ["--version"], { encoding: "utf8" });
 if (!/Ver 8\.4\./.test(mysqlVersion)) throw new Error(`Expected bundled MySQL 8.4.x, got: ${mysqlVersion.trim()}`);
 console.log(`Release inputs verified: ${pkg.version}`);

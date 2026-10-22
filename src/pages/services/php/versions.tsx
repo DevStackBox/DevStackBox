@@ -59,10 +59,6 @@ const BRANCH_NOTES: Record<
       "Random extension",
     ],
   },
-  "8.1": {
-    description: "PHP 8.1 runtime",
-    features: ["Enums", "Fibers", "Readonly properties"],
-  },
 };
 
 interface DownloadProgressPayload {
@@ -95,7 +91,7 @@ export function PhpVersionsPage() {
       if (!isTauri()) {
         // Browser mode fallback - show static list with 8.3 as active.
         setVersions(
-          ["8.5", "8.4", "8.3", "8.2", "8.1"].map((v) => ({
+          ["8.5", "8.4", "8.3", "8.2"].map((v) => ({
             version: v,
             status: v === BUNDLED_DEFAULT_VERSION ? "installed" : "available",
             path: "",
@@ -111,7 +107,7 @@ export function PhpVersionsPage() {
       );
       if (result) {
         // Show newest first.
-        const sorted = [...result].sort((a, b) =>
+        const sorted = result.filter(v => v.version !== "8.1").sort((a, b) =>
           b.version.localeCompare(a.version),
         );
         setVersions(sorted);
@@ -186,11 +182,15 @@ export function PhpVersionsPage() {
         version,
       });
       if (ok) {
+        setProgress((prev) => ({ ...prev, [version]: { ...prev[version], stage: "complete", percent: 100 } }));
+        window.dispatchEvent(new CustomEvent("devstackbox:php-version-changed", {
+          detail: { version: versions.find(v => v.is_active)?.version ?? BUNDLED_DEFAULT_VERSION },
+        }));
         toast({
           title: t("php.downloaded", "PHP {{version}} installed", { version }),
           description: t(
             "php.downloadedHint",
-            "You can now activate this version.",
+            "PHP is ready. Start Apache again if you stopped it for this update.",
           ),
         });
         loadVersions();
@@ -252,6 +252,8 @@ export function PhpVersionsPage() {
   // Derive current active version from backend state.
   const currentVersion =
     versions.find((v) => v.is_active)?.version ?? BUNDLED_DEFAULT_VERSION;
+  const currentFullVersion = versions.find((v) => v.is_active)?.installed_version;
+  const operationInProgress = Object.values(progress).some(isDownloadingStage);
 
   const renderStatusBadge = (v: PHPVersionInfo) => {
     const p = progress[v.version];
@@ -277,6 +279,7 @@ export function PhpVersionsPage() {
         </Badge>
       );
     }
+    if (v.end_of_life) return null;
     return <Badge variant="outline">{t("php.available", "Available")}</Badge>;
   };
 
@@ -290,6 +293,20 @@ export function PhpVersionsPage() {
         </Button>
       );
     }
+    if (v.end_of_life) {
+      return <Button disabled size="sm" variant="outline">{t("php.unsupported", "Unsupported")}</Button>;
+    }
+    if (v.update_available) {
+      return (
+        <Button size="sm" disabled={operationInProgress} onClick={() => handleDownload(v.version)}>
+          <Download className="w-3.5 h-3.5 mr-1.5" />
+          {t("php.updateTo", "Update to {{version}}", { version: v.latest_version })}
+        </Button>
+      );
+    }
+    if (v.security_update_required) {
+      return <Button disabled size="sm" variant="outline">{t("php.updateRequired", "Update required")}</Button>;
+    }
     if (v.is_active) {
       return (
         <Button disabled size="sm" variant="secondary">
@@ -300,7 +317,7 @@ export function PhpVersionsPage() {
     }
     if (v.installed) {
       return (
-        <Button size="sm" onClick={() => handleActivate(v.version)}>
+        <Button size="sm" disabled={operationInProgress} onClick={() => handleActivate(v.version)}>
           <Check className="w-3.5 h-3.5 mr-1.5" />
           {t("php.activate", "Activate")}
         </Button>
@@ -310,10 +327,11 @@ export function PhpVersionsPage() {
       <Button
         variant="outline"
         size="sm"
+        disabled={operationInProgress || !v.latest_version}
         onClick={() => handleDownload(v.version)}
       >
         <Download className="w-3.5 h-3.5 mr-1.5" />
-        {t("php.download", "Download")}
+        {v.latest_version ? t("php.downloadVersion", "Download {{version}}", { version: v.latest_version }) : t("php.releaseUnavailable", "Release unavailable")}
       </Button>
     );
   };
@@ -333,6 +351,7 @@ export function PhpVersionsPage() {
                 <Badge variant="outline" className="font-mono">
                   {currentVersion}
                 </Badge>
+                {currentFullVersion && <span className="text-sm font-normal text-muted-foreground">{currentFullVersion}</span>}
               </CardTitle>
               <CardDescription>
                 {t(
@@ -355,18 +374,15 @@ export function PhpVersionsPage() {
           </div>
         </CardHeader>
         <CardContent>
+          <p className="mb-3 text-sm text-muted-foreground">
+            {t("php.securityUpdateHint", "Keep every installed PHP branch updated, including versions pinned to projects. Stop Apache and close PHP terminals before updating; start Apache again afterward.")}
+          </p>
           <div className="flex flex-col gap-1">
             {versions.map((v, index) => {
               const notes = BRANCH_NOTES[v.version];
               const p = progress[v.version];
               const isDownloading = isDownloadingStage(p);
-              // Derive active state: trust backend flag first; fall back to
-              // comparing against derived currentVersion so fresh installs
-              // still correctly mark the running version as active.
-              const vResolved = {
-                ...v,
-                is_active: v.is_active || v.version === currentVersion,
-              };
+              const vResolved = v;
               return (
                 <motion.div
                   key={v.version}
@@ -385,6 +401,13 @@ export function PhpVersionsPage() {
                       <span className="font-semibold text-sm">
                         PHP {v.version}
                       </span>
+                      {(v.installed_version || (!v.installed && v.latest_version)) && (
+                        <Badge variant="outline" className="font-mono text-xs">
+                          {v.installed_version ?? v.latest_version}
+                        </Badge>
+                      )}
+                      {v.end_of_life && <Badge variant="destructive">{t("php.endOfLife", "End of life")}</Badge>}
+                      {v.security_update_required && !v.end_of_life && <Badge variant="destructive">{t("php.securityUpdate", "Security update required")}</Badge>}
                       {v.version === BUNDLED_DEFAULT_VERSION && (
                         <Badge variant="outline" className="text-xs h-4 px-1">
                           {t("php.bundled", "Bundled")}
@@ -397,6 +420,9 @@ export function PhpVersionsPage() {
                         {notes.description}
                       </p>
                     )}
+                    {v.installed && !v.installed_version && <p className="text-xs text-destructive mt-1">{t("php.versionUnknown", "Installed patch version could not be read.")}</p>}
+                    {v.end_of_life && <p className="text-xs text-destructive mt-1">{t("php.endOfLifeHint", "PHP 8.1 no longer receives upstream security releases. Move projects to a supported branch; downloads and activation are disabled.")}</p>}
+                    {v.release_error && <p className="text-xs text-muted-foreground mt-1">{t("php.releaseCheckFailed", "Could not check for a patched release. Refresh to retry.")}</p>}
                     {isDownloading && (
                       <div className="mt-1.5 space-y-0.5">
                         <Progress value={p?.percent ?? 0} className="h-1.5" />

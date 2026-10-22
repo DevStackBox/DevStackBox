@@ -4,6 +4,28 @@ All notable changes to DevStackBox are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.14] - 2026-10-22
+
+### Security
+
+- Bundle PHP 8.3.36, fixing CVE-2026-109618 and CVE-2026-109619. Upgrade immediately; see the [PHP advisory](https://www.php.net/archive/2026.php#2026-10-21-5).
+- Require patched upstream downloads: PHP 8.2.35, 8.3.36, 8.4.27 or 8.5.12 and newer patches on the same branch. Verify SHA-256 and the extracted runtime version before installation.
+- Remove PHP 8.1 from the version manager and supported choices. Existing files are retained; migrate projects to a supported branch.
+- Refuse Apache startup when the global runtime or an enabled project's pinned runtime needs a security update, with instructions to update it first.
+
+### Fixed
+
+- Show branch names and full installed/downloadable PHP versions separately in PHP Version Manager, matching the dashboard's branch and patch distinction.
+- Offer patch updates for already-installed branches, including the active runtime. Preserve php.ini, stage replacements, and restore the previous runtime if publishing the replacement fails.
+- Require DevStackBox Apache and affected PHP processes to be stopped for runtime updates; prevent Apache startup during the replacement.
+- Keep installed patch versions and security warnings visible when release checks fail. Reject release builds with an outdated bundled PHP runtime.
+
+### Upgrade notes
+
+- The installer updates bundled PHP 8.3. Other installed branches must be updated separately in PHP Version Manager, including branches pinned to projects. Stop Apache and close PHP terminals before updating, then start Apache again.
+- PHP 8.1 is no longer supported upstream. Exceptional source backports do not make old Windows binaries patched.
+- Third-party extension DLLs are not copied into a new runtime. Install compatible extension builds if needed. User configuration outside the runtime is retained.
+
 ## [0.1.13] - 2026-10-19
 
 ### Added

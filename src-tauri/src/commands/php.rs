@@ -16,12 +16,41 @@ use crate::utils::process::create_hidden_command;
 
 // Branches we surface in the UI. The bundled default is 8.3; the others are
 // downloadable on demand (Roadmap Phase 3.1).
-const PHP_BRANCHES: &[&str] = &["8.1", "8.2", "8.3", "8.4", "8.5"];
+const PHP_BRANCHES: &[&str] = &["8.2", "8.3", "8.4", "8.5"];
 
 // The version that ships bundled with the installer.  When the installer
 // flattens PHP straight into php/ (php/php.exe instead of php/8.3/php.exe),
 // that flat copy is treated as this version.
 const BUNDLED_PHP_VERSION: &str = "8.3";
+pub(crate) static PHP_RUNTIME_LOCK: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
+// Minimum upstream fixes for CVE-2026-109618 and CVE-2026-109619.
+fn security_minimum(branch: &str) -> Option<&'static str> {
+    match branch {
+        "8.2" => Some("8.2.35"), "8.3" => Some("8.3.36"),
+        "8.4" => Some("8.4.27"), "8.5" => Some("8.5.12"), _ => None,
+    }
+}
+
+fn version_tuple(version: &str) -> Option<(u32, u32, u32)> {
+    let parts: Vec<_> = version.split('.').collect();
+    if parts.len() != 3 { return None; }
+    Some((parts[0].parse().ok()?, parts[1].parse().ok()?, parts[2].parse().ok()?))
+}
+
+fn meets_security_minimum(branch: &str, version: &str) -> bool {
+    match (security_minimum(branch).and_then(version_tuple), version_tuple(version)) {
+        (Some(min), Some(actual)) => actual.0 == min.0 && actual.1 == min.1 && actual >= min,
+        _ => false,
+    }
+}
+
+fn read_runtime_version(exe: &Path) -> Option<String> {
+    let output = create_hidden_command(&exe.to_string_lossy())
+        .args(["-n", "-r", "echo PHP_VERSION;"]).output().ok()?;
+    let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    (output.status.success() && version_tuple(&version).is_some()).then_some(version)
+}
 
 fn php_root() -> PathBuf {
     get_installation_path().join("php")
@@ -62,6 +91,9 @@ pub(crate) fn project_runtime(version: &str) -> Result<(PathBuf, PathBuf), Strin
     if !directory.join("php.exe").is_file() || !directory.join("php-cgi.exe").is_file() {
         return Err(format!("PHP {version} is not installed completely. Install it from PHP Versions first."));
     }
+    if !read_runtime_version(&directory.join("php.exe")).is_some_and(|v| meets_security_minimum(version, &v)) {
+        return Err(format!("PHP {version} needs a supported security update. Update it in PHP Versions before assigning it to a project."));
+    }
     Ok((directory, user_config_dir().join("php-runtimes").join(version).join("php.ini")))
 }
 
@@ -91,6 +123,22 @@ pub(crate) fn prepare_project_runtime(version: &str) -> Result<(), String> {
         .map_err(|e| e.to_string())
 }
 
+pub(crate) fn validate_web_runtimes() -> Result<(), String> {
+    let current = php_root().join("current").join("php.exe");
+    let exe = if current.exists() { current } else { php_branch_exe(BUNDLED_PHP_VERSION) };
+    let version = read_runtime_version(&exe).ok_or("Cannot read the active PHP version. Repair or update PHP in PHP Versions.")?;
+    let (major, minor, _) = version_tuple(&version).ok_or("Invalid active PHP version")?;
+    if !meets_security_minimum(&format!("{major}.{minor}"), &version) {
+        return Err(format!("PHP {version} requires a security update before Apache can start. Open Services > PHP > Versions and update or activate a patched supported branch."));
+    }
+    for site in super::vhosts::load_vhosts()?.into_iter().filter(|site| site.enabled) {
+        if let Some(branch) = site.php_version.as_deref() {
+            project_runtime(branch).map_err(|e| format!("Project {}: {e}", site.domain))?;
+        }
+    }
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn get_php_status() -> Result<ServiceInfo, String> {
     let version = get_current_php_version().await;
@@ -117,32 +165,7 @@ async fn get_current_php_version() -> Option<String> {
         default_exe
     };
 
-    match create_hidden_command(&exe.to_string_lossy()).arg("--version").output() {
-        Ok(output) => {
-            // `php --version` can emit "PHP Startup: ..." warning lines to
-            // stdout before the actual banner. We must look specifically for a
-            // line that starts with "PHP " followed by a digit (the real
-            // banner: e.g. "PHP 8.2.12 (cli) (built: ...)").
-            let combined = format!(
-                "{}\n{}",
-                String::from_utf8_lossy(&output.stdout),
-                String::from_utf8_lossy(&output.stderr)
-            );
-            for line in combined.lines() {
-                let trimmed = line.trim_start();
-                if let Some(rest) = trimmed.strip_prefix("PHP ") {
-                    if rest.chars().next().is_some_and(|c| c.is_ascii_digit()) {
-                        if let Some(end) = rest.find(' ') {
-                            return Some(rest[..end].to_string());
-                        }
-                        return Some(rest.to_string());
-                    }
-                }
-            }
-            None
-        }
-        Err(_) => None,
-    }
+    read_runtime_version(&exe)
 }
 
 async fn check_active_php_version(version: &str) -> bool {
@@ -444,10 +467,21 @@ pub fn patch_php_ini() {
 #[tauri::command]
 pub async fn get_php_versions() -> Result<Vec<PHPVersionInfo>, String> {
     let mut versions = Vec::new();
+    // One bounded request for all branches. Offline still shows measured installations.
+    let releases = fetch_php_releases().await;
 
     for version in PHP_BRANCHES {
         let exe = php_branch_exe(version);
         let installed = exe.exists();
+        let installed_version = if installed { read_runtime_version(&exe) } else { None };
+        let release = releases.as_ref().ok().and_then(|json| pick_zip_url(version, json));
+        let latest_version = release.as_ref().map(|r| r.0.clone());
+        let update_available = installed && latest_version.as_deref().is_some_and(|latest| {
+            match installed_version.as_deref().and_then(version_tuple) {
+                Some(current) => version_tuple(latest).is_some_and(|next| next > current),
+                None => true,
+            }
+        });
 
         let active = if installed {
             check_active_php_version(version).await
@@ -457,6 +491,14 @@ pub async fn get_php_versions() -> Result<Vec<PHPVersionInfo>, String> {
 
         versions.push(PHPVersionInfo {
             version: (*version).to_string(),
+            security_update_required: installed && !installed_version.as_deref().is_some_and(|v| meets_security_minimum(version, v)),
+            installed_version,
+            latest_version,
+            update_available,
+            end_of_life: security_minimum(version).is_none(),
+            release_error: if security_minimum(version).is_none() { None } else {
+                releases.as_ref().err().cloned().or_else(|| release.is_none().then(|| "No patched Windows build is currently listed. Refresh to retry.".to_string()))
+            },
             status: if installed { "installed".to_string() } else { "available".to_string() },
             path: exe.display().to_string(),
             is_active: active,
@@ -473,10 +515,16 @@ pub async fn get_php_versions() -> Result<Vec<PHPVersionInfo>, String> {
 
 #[tauri::command]
 pub async fn switch_php_version(version: String) -> Result<bool, String> {
+    let _guard = super::ssl::SITE_LOCK.lock().await;
+    let _process_lock = super::ssl::lock_configuration()?;
+    let _runtime_guard = PHP_RUNTIME_LOCK.try_lock().map_err(|_| "A PHP runtime operation is in progress.")?;
     if !PHP_BRANCHES.contains(&version.as_str()) { return Err("Unsupported PHP version".into()); }
     let exe = php_branch_exe(&version);
     if !exe.exists() {
         return Err(format!("PHP {} is not installed", version));
+    }
+    if !read_runtime_version(&exe).is_some_and(|v| meets_security_minimum(&version, &v)) {
+        return Err("Update this PHP runtime to a supported security release before activating it.".into());
     }
 
     let current_link = php_root().join("current");
@@ -537,6 +585,7 @@ fn pick_zip_url(branch: &str, releases_json: &serde_json::Value) -> Option<(Stri
     // "ts-vs16-x64" key (or "ts-vs17-x64" for newer branches such as 8.4).
     let branch_obj = releases_json.get(branch)?;
     let full_version = branch_obj.get("version")?.as_str()?.to_string();
+    if !meets_security_minimum(branch, &full_version) { return None; }
     let ts = branch_obj
         .get("ts-vs17-x64")
         .or_else(|| branch_obj.get("ts-vs16-x64"))?;
@@ -550,8 +599,15 @@ fn pick_zip_url(branch: &str, releases_json: &serde_json::Value) -> Option<(Stri
 }
 
 async fn resolve_php_zip_url(branch: &str) -> Result<(String, String, String), String> {
+    let json = fetch_php_releases().await?;
+    pick_zip_url(branch, &json)
+        .ok_or_else(|| format!("No patched Windows x64 TS build listed for PHP {}", branch))
+}
+
+async fn fetch_php_releases() -> Result<serde_json::Value, String> {
     let client = reqwest::Client::builder()
         .user_agent("DevStackBox")
+        .timeout(std::time::Duration::from_secs(15))
         .build()
         .map_err(|e| format!("Failed to build HTTP client: {}", e))?;
     let resp = client
@@ -566,8 +622,7 @@ async fn resolve_php_zip_url(branch: &str) -> Result<(String, String, String), S
         .json()
         .await
         .map_err(|e| format!("Failed to parse releases.json: {}", e))?;
-    pick_zip_url(branch, &json)
-        .ok_or_else(|| format!("No Windows VS16 x64 TS build listed for PHP {}", branch))
+    Ok(json)
 }
 
 async fn download_to_memory(app: &AppHandle, version: &str, url: &str) -> Result<Vec<u8>, String> {
@@ -671,21 +726,14 @@ fn write_default_php_ini(branch_dir: &Path) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn download_php_version(app: AppHandle, version: String) -> Result<bool, String> {
+    let _guard = super::ssl::SITE_LOCK.try_lock().map_err(|_| "Another runtime or site operation is in progress. Try again when it finishes.")?;
+    let _process_lock = super::ssl::lock_configuration()?;
+    let _runtime_guard = PHP_RUNTIME_LOCK.try_lock().map_err(|_| "A PHP runtime operation is in progress.")?;
     if !PHP_BRANCHES.contains(&version.as_str()) { return Err("Unsupported PHP version".into()); }
+    if security_minimum(&version).is_none() { return Err("PHP 8.1 is end-of-life. Choose PHP 8.2 or newer.".into()); }
     let target_dir = php_branch_dir(&version);
-    if target_dir.join("php.exe").exists() {
-        emit_progress(
-            &app,
-            PhpDownloadProgress {
-                version: version.clone(),
-                stage: "complete".to_string(),
-                percent: 100,
-                downloaded: 0,
-                total: 0,
-                message: Some("Already installed".to_string()),
-            },
-        );
-        return Ok(true);
+    if target_dir == php_root() {
+        return Err("This legacy flat PHP installation must be upgraded with the latest DevStackBox installer first.".into());
     }
 
     emit_progress(
@@ -717,6 +765,14 @@ pub async fn download_php_version(app: AppHandle, version: String) -> Result<boo
             return Err(e);
         }
     };
+
+    if read_runtime_version(&target_dir.join("php.exe")).and_then(|v| version_tuple(&v))
+        .is_some_and(|current| version_tuple(&full_version).is_some_and(|latest| current >= latest)) {
+        emit_progress(&app, PhpDownloadProgress { version, stage: "complete".into(), percent: 100,
+            downloaded: 0, total: 0, message: Some("Already up to date".into()) });
+        return Ok(true);
+    }
+    ensure_runtime_idle(&target_dir).await?;
 
     let zip_bytes = match download_to_memory(&app, &version, &url).await {
         Ok(b) => b,
@@ -779,6 +835,10 @@ pub async fn download_php_version(app: AppHandle, version: String) -> Result<boo
             message: Some("Writing default php.ini...".to_string()),
         },
     );
+    // Preserve user settings; DLLs come from the verified release, never an older build.
+    if target_dir.join("php.ini").is_file() {
+        fs::copy(target_dir.join("php.ini"), staging_dir.join("php.ini")).map_err(|e| e.to_string())?;
+    }
     if let Err(e) = write_default_php_ini(staging_dir) {
         emit_progress(
             &app,
@@ -811,19 +871,14 @@ pub async fn download_php_version(app: AppHandle, version: String) -> Result<boo
         return Err(msg);
     }
 
-    let validation = create_hidden_command(&exe.to_string_lossy()).args(["-n", "-v"]).output().map_err(|e| e.to_string())?;
-    if !validation.status.success() { return Err("Downloaded PHP failed its runtime check".into()); }
-    let previous = if target_dir.exists() {
-        let previous = php_root().join(format!(".incomplete-{}-{}", version, std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_nanos()));
-        fs::rename(&target_dir, &previous).map_err(|e| e.to_string())?;
-        Some(previous)
-    } else { None };
-    if let Err(error) = fs::rename(staging_dir, &target_dir) {
-        if let Some(previous) = previous { let _ = fs::rename(previous, &target_dir); }
-        return Err(format!("Could not publish PHP installation: {error}"));
+    if read_runtime_version(&exe).as_deref() != Some(full_version.as_str())
+        || !staging_dir.join("php-cgi.exe").is_file() {
+        return Err("Downloaded PHP failed its version/completeness check".into());
     }
+    ensure_runtime_idle(&target_dir).await?;
+    let previous = php_root().join(format!(".previous-{}-{}", version, std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_nanos()));
+    publish_runtime(staging_dir, &target_dir, &previous)?;
     drop(staging);
-    if let Some(previous) = previous { let _ = fs::remove_dir_all(previous); }
 
     emit_progress(
         &app,
@@ -838,6 +893,33 @@ pub async fn download_php_version(app: AppHandle, version: String) -> Result<boo
     );
 
     Ok(true)
+}
+
+fn publish_runtime(staging: &Path, target: &Path, backup: &Path) -> Result<(), String> {
+    if backup.exists() { return Err("PHP backup path already exists; installation cancelled.".into()); }
+    let had_previous = target.exists();
+    if had_previous { fs::rename(target, backup).map_err(|e| e.to_string())?; }
+    if let Err(error) = fs::rename(staging, target) {
+        if had_previous {
+            fs::rename(backup, target).map_err(|restore| format!("Publish failed: {error}; recovery failed: {restore}. Restore {} to {}.", backup.display(), target.display()))?;
+        }
+        return Err(format!("Could not publish PHP installation: {error}"));
+    }
+    if had_previous { let _ = fs::remove_dir_all(backup); }
+    Ok(())
+}
+
+async fn ensure_runtime_idle(directory: &Path) -> Result<(), String> {
+    // A pinned project may use this branch even when it is not globally active.
+    if super::apache::get_apache_status().await?.running {
+        return Err("Stop DevStackBox Apache before updating PHP, then start it again after the update.".into());
+    }
+    for name in ["php.exe", "php-cgi.exe"] {
+        if !crate::utils::process::find_our_processes(name, &directory.join(name)).is_empty() {
+            return Err("Close terminals and PHP processes using this runtime before updating it.".into());
+        }
+    }
+    Ok(())
 }
 
 #[tauri::command]
@@ -1102,16 +1184,47 @@ pub async fn toggle_php_extension(
 
 #[cfg(test)]
 mod download_tests {
-    use super::{parse_ext_line, pick_zip_url};
+    use super::{parse_ext_line, pick_zip_url, meets_security_minimum, version_tuple};
+    #[test]
+    fn failed_runtime_publish_restores_previous_files() {
+        let root = std::env::temp_dir().join(format!("dsb-php-publish-{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+        let target = root.join("8.3");
+        let backup = root.join("backup");
+        std::fs::create_dir_all(&target).unwrap();
+        std::fs::write(target.join("php.ini"), "custom=setting").unwrap();
+        assert!(super::publish_runtime(&root.join("missing-stage"), &target, &backup).is_err());
+        assert_eq!(std::fs::read_to_string(target.join("php.ini")).unwrap(), "custom=setting");
+        assert!(!backup.exists());
+        std::fs::remove_dir_all(root).unwrap();
+    }
+    #[test]
+    fn security_baselines_reject_old_wrong_branch_and_prerelease_versions() {
+        assert_eq!(super::PHP_BRANCHES, &["8.2", "8.3", "8.4", "8.5"]);
+        for (branch, fixed, old) in [("8.2", "8.2.35", "8.2.34"), ("8.3", "8.3.36", "8.3.35"), ("8.4", "8.4.27", "8.4.26"), ("8.5", "8.5.12", "8.5.11")] {
+            assert!(meets_security_minimum(branch, fixed));
+            assert!(!meets_security_minimum(branch, old));
+            assert!(!meets_security_minimum(branch, "8.6.0"));
+        }
+        assert!(!meets_security_minimum("8.1", "8.1.34"));
+        assert!(!meets_security_minimum("8.5", "8.5.12RC1"));
+        assert!(version_tuple("8.5.12") > version_tuple("8.5.9"));
+        assert_eq!(version_tuple("8.5"), None);
+    }
     #[test]
     fn release_requires_trusted_filename_and_checksum() {
-        let mut release = serde_json::json!({"8.4": {"version": "8.4.1", "ts-vs17-x64": {"zip": {"path": "php-test.zip", "sha256": "a".repeat(64)}}}});
+        let mut release = serde_json::json!({"8.4": {"version": "8.4.27", "ts-vs17-x64": {"zip": {"path": "php-test.zip", "sha256": "a".repeat(64)}}}});
         assert!(pick_zip_url("8.4", &release).is_some());
         release["8.4"]["ts-vs17-x64"]["zip"]["path"] = "../other.zip".into();
         assert!(pick_zip_url("8.4", &release).is_none());
         release["8.4"]["ts-vs17-x64"]["zip"]["path"] = "php-test.zip".into();
         release["8.4"]["ts-vs17-x64"]["zip"]["sha256"] = "".into();
         assert!(pick_zip_url("8.4", &release).is_none());
+    }
+
+    #[test]
+    fn stale_feed_cannot_install_a_vulnerable_runtime() {
+        let release = serde_json::json!({"8.3": {"version": "8.3.35", "ts-vs16-x64": {"zip": {"path": "php-old.zip", "sha256": "a".repeat(64)}}}});
+        assert!(pick_zip_url("8.3", &release).is_none());
     }
 
     #[test]

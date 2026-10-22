@@ -1,9 +1,9 @@
 This snapshot was automatically generated on
-Tue, 05 May 2026 17:42:44 +0000
+Tue, 20 Oct 2026 04:21:37 +0000
 
-Version: 8.3.31
+Version: 8.3.36
 Branch: HEAD
-Build: C:\Users\runneradmin\AppData\Local\Temp\php-34750f74-e9c4-42fc-9d14-8ced2e6a9cf6\config\vs16\x64\obj\Release_TS
+Build: D:\a\_temp\temporary-runner-nuxrsfva\_work\_temp\private-php-source\obj\Release_TS
 
 Built-in Extensions
 ===========================
@@ -51,7 +51,6 @@ Module: php_curl.dll
 	libssh2.dll
 	nghttp2.dll
 	brotlidec.dll
-	libzstd.dll
 
 Module: libssl-3-x64.dll
 ===========================

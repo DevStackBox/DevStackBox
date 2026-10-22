@@ -43,7 +43,7 @@ Do NOT require users to download core components on first launch. Bad first-laun
 | phpMyAdmin          | Bundled       | Developers expect it, keep it bundled                  |
 | Default configs     | Bundled       | Required for first launch                              |
 | Sample `www/` page  | Bundled       | Confirms stack works immediately                       |
-| PHP 8.1, 8.2, 8.4, 8.5 | Downloadable  | On demand via PHP Versions UI (8.3 stays bundled) |
+| PHP 8.2, 8.4, 8.5 | Downloadable  | On demand via PHP Versions UI (8.3 stays bundled) |
 | Node.js support     | Future module | Not in v1                                              |
 | Redis               | Future module | Not in v1                                              |
 | PostgreSQL          | Future module | Not in v1                                              |
@@ -52,13 +52,13 @@ Do NOT require users to download core components on first launch. Bad first-laun
 
 ---
 
-## Current state: v0.1.13
+## Current state: v0.1.14
 
-**v0.1.13** adds project error-log access and safeguards for configuration updates. **v0.1.12** introduced **project workspaces** (connect folders outside `www`), **per-project website PHP** (installed runtimes only), and **trusted local HTTPS** with bundled mkcert. The stack still ships **MySQL 8.4 LTS**, **phpMyAdmin 5.2.2**, and **PHP 8.3** in the installer, with **8.1**, **8.2**, **8.4**, and **8.5** on demand. **Settings → Import from XAMPP** copies `htdocs` into `www`.
+**v0.1.14** bundles patched PHP 8.3.36, adds PHP patch upgrades and full-version labels, and removes end-of-life PHP 8.1 from supported choices. **v0.1.13** adds project error-log access and safeguards for configuration updates. **v0.1.12** introduced **project workspaces** (connect folders outside `www`), **per-project website PHP** (installed runtimes only), and **trusted local HTTPS** with bundled mkcert. The stack still ships **MySQL 8.4 LTS**, **phpMyAdmin 5.2.2**, and **PHP 8.3** in the installer, with **8.2**, **8.4**, and **8.5** on demand. **Settings → Import from XAMPP** copies `htdocs` into `www`.
 
 ---
 
-## Next (after v0.1.13)
+## Next (after v0.1.14)
 
 Planned in this order for upcoming releases:
 
@@ -177,7 +177,7 @@ src-tauri/src/
 
 ### 3.1 Additional PHP Version Downloader [DONE]
 
-**Note:** Base PHP 8.3 is bundled today. This feature adds support for downloading additional PHP versions (8.1, 8.2, 8.4, etc.) on demand. It does not replace the bundled PHP unless the product decision changes later.
+**Note:** Base PHP 8.3 is bundled today. This feature adds support for downloading additional PHP versions (8.2, 8.4, etc.) on demand. It does not replace the bundled PHP unless the product decision changes later.
 
 - [x] Download PHP zip from `windows.php.net` using `reqwest` (rustls, streaming) in the Rust backend
 - [x] Resolve version-to-zip via `https://windows.php.net/downloads/releases/releases.json` and pick the latest `ts.zip` for the requested branch
@@ -358,7 +358,7 @@ These are explicitly out of scope for the current product:
 - Mobile development tools
 **The following are deferred to future optional modules (not in v1 core installer, but planned or possible later):**
 
-- **Nginx** - see **Next (after v0.1.13)**; Apache remains the bundled default
+- **Nginx** - see **Next (after v0.1.14)**; Apache remains the bundled default
 - Redis (future optional module)
 - PostgreSQL (future optional module)
 - Node.js runtime manager (future optional module)

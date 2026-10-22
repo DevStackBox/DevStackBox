@@ -19,4 +19,4 @@ Images here sync to the website at build time (`public/docs-images/` on [DevStac
 - Theme: light UI preferred for marketing
 - Avoid visible personal paths, passwords, or machine names
 
-Replace placeholder assets on the website with real captures from the running app when ready.
+Use real application captures. Label screenshots from earlier releases so their displayed runtime versions are not mistaken for current bundled versions.

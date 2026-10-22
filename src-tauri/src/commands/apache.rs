@@ -155,6 +155,8 @@ pub async fn get_apache_status() -> Result<ServiceInfo, String> {
 
 #[tauri::command]
 pub async fn start_apache() -> Result<bool, String> {
+    let _runtime_guard = super::php::PHP_RUNTIME_LOCK.try_lock()
+        .map_err(|_| "Wait for the PHP update or version switch to finish before starting Apache.")?;
     let base_path = get_installation_path();
 
     let apache_path = get_apache_exe(&base_path);
@@ -168,6 +170,7 @@ pub async fn start_apache() -> Result<bool, String> {
     if is_our_process_running("httpd.exe", &apache_path) {
         return Ok(true);
     }
+    super::php::validate_web_runtimes()?;
 
     #[cfg(target_arch = "x86_64")]
     {
