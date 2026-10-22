@@ -26,6 +26,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - PHP 8.1 is no longer supported upstream. Exceptional source backports do not make old Windows binaries patched.
 - Third-party extension DLLs are not copied into a new runtime. Install compatible extension builds if needed. User configuration outside the runtime is retained.
 
+**Installer SHA-256:** `141BE50A133E7C0BDA19D281E447BA604DCBBF91B010B91B895C02AC55B7EADE`
+
 ## [0.1.13] - 2026-10-19
 
 ### Added
