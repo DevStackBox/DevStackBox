@@ -4,6 +4,13 @@ All notable changes to DevStackBox are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.15] - 2026-10-22
+
+### Fixed
+
+- In-app updater progress no longer sticks at 50%: total download size is taken from the Tauri **Started** event instead of **Progress** events.
+- Update dialog shows preparing, indeterminate download (unknown size), installing, auto-retry on transient network errors, and a manual **Retry update** action after failure.
+
 ## [0.1.14] - 2026-10-22
 
 ### Security

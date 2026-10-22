@@ -105,6 +105,8 @@ export function AboutPage() {
     checking,
     downloading,
     downloadProgress,
+    downloadIndeterminate,
+    downloadPhase,
     readyToInstall,
     updateAvailable,
     updateInfo,
@@ -218,7 +220,11 @@ export function AboutPage() {
             </span>
             {downloading && (
               <span className="text-muted-foreground">
-                ({downloadProgress}%)
+                {downloadPhase === "preparing"
+                  ? `(${t("updater.preparing", "Preparing...")})`
+                  : downloadIndeterminate
+                    ? `(${t("updater.downloadingIndeterminate", "Downloading...")})`
+                    : `(${downloadProgress}%)`}
               </span>
             )}
           </div>

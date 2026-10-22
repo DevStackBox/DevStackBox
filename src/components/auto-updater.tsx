@@ -3,13 +3,7 @@
  *
  * Renders either:
  *  - mode="indicator"  Header badge (VS Code-style).
- *    Renders nothing until an update is found.
- *    Shows a small Download icon + pulsing amber dot on update available.
- *    Click opens the update dialog.
- *
  *  - mode="button"  About page button.
- *    Always visible. Label and color reflect the full update lifecycle:
- *    Check Updates → Checking… → Update Available → Downloading 42% → Restart & Update
  *
  * All state comes from UpdaterContext - this component owns NO update logic.
  */
@@ -29,9 +23,46 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useUpdater } from "@/context/updater-context";
 import { APP_VERSION } from "@/lib/version";
+import { cn } from "@/lib/utils";
 
 interface AutoUpdaterProps {
   mode?: "button" | "indicator";
+}
+
+function useDownloadStatusLabel(): string {
+  const { t } = useTranslation();
+  const {
+    downloading,
+    downloadProgress,
+    downloadIndeterminate,
+    downloadPhase,
+    downloadRetryAttempt,
+    readyToInstall,
+  } = useUpdater();
+
+  if (!downloading) return "";
+  if (readyToInstall) {
+    return t("updater.installAndRestart", "Installing and restarting...");
+  }
+  if (downloadPhase === "preparing") {
+    return t(
+      "updater.preparing",
+      "Preparing update (backup and stopping services)...",
+    );
+  }
+  if (downloadPhase === "installing") {
+    return t("updater.installing", "Installing update...");
+  }
+  if (downloadRetryAttempt > 1) {
+    return t("updater.retryingDownload", "Retrying download ({{attempt}}/{{max}})...", {
+      attempt: downloadRetryAttempt,
+      max: 3,
+    });
+  }
+  if (downloadIndeterminate) {
+    return t("updater.downloadingIndeterminate", "Downloading...");
+  }
+  return `${t("updater.downloading", "Downloading")} ${downloadProgress}%`;
 }
 
 export function AutoUpdater({ mode = "button" }: AutoUpdaterProps) {
@@ -41,18 +72,15 @@ export function AutoUpdater({ mode = "button" }: AutoUpdaterProps) {
     updateInfo,
     checking,
     downloading,
-    downloadProgress,
     readyToInstall,
+    checkError,
     checkForUpdates,
     openUpdateDialog,
   } = useUpdater();
 
-  // ------------------------------------------------------------------
-  // Header indicator (mode="indicator")
-  // ------------------------------------------------------------------
+  const statusLabel = useDownloadStatusLabel();
 
   if (mode === "indicator") {
-    // Render nothing when no update is known
     if (!updateAvailable) return null;
 
     const tooltip = updateInfo?.version
@@ -69,32 +97,24 @@ export function AutoUpdater({ mode = "button" }: AutoUpdaterProps) {
           className="relative text-primary hover:text-primary"
         >
           <Download className="h-4 w-4" />
-          {/* Pulsing amber dot badge */}
           <span className="absolute top-1 right-1 flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
           </span>
         </Button>
-
-        {/* Shared dialog - rendered here so it works from the header too */}
         <UpdateDialog />
       </>
     );
   }
 
-  // ------------------------------------------------------------------
-  // About page button (mode="button")
-  // ------------------------------------------------------------------
-
   const handleButtonClick = () => {
-    if (readyToInstall || updateAvailable || downloading) {
+    if (readyToInstall || updateAvailable || downloading || checkError) {
       openUpdateDialog();
     } else {
       void checkForUpdates(true);
     }
   };
 
-  // Derive button label + icon + variant from state
   let buttonLabel: string;
   let ButtonIcon: React.ElementType;
   let buttonVariant: "outline" | "default" | "secondary" = "outline";
@@ -104,9 +124,13 @@ export function AutoUpdater({ mode = "button" }: AutoUpdaterProps) {
     ButtonIcon = RotateCcw;
     buttonVariant = "default";
   } else if (downloading) {
-    buttonLabel = `${t("updater.downloading", "Downloading")} ${downloadProgress}%`;
+    buttonLabel = statusLabel;
     ButtonIcon = Download;
     buttonVariant = "secondary";
+  } else if (checkError && updateAvailable) {
+    buttonLabel = t("updater.retryUpdate", "Retry update");
+    ButtonIcon = RefreshCw;
+    buttonVariant = "default";
   } else if (updateAvailable) {
     buttonLabel = t("updater.updateAvailable", "Update Available");
     ButtonIcon = Download;
@@ -139,15 +163,10 @@ export function AutoUpdater({ mode = "button" }: AutoUpdaterProps) {
         />
         {buttonLabel}
       </Button>
-
       <UpdateDialog />
     </>
   );
 }
-
-// ------------------------------------------------------------------
-// Shared update dialog - used by both modes
-// ------------------------------------------------------------------
 
 function UpdateDialog() {
   const { t } = useTranslation();
@@ -155,6 +174,9 @@ function UpdateDialog() {
     updateInfo,
     downloading,
     downloadProgress,
+    downloadIndeterminate,
+    downloadPhase,
+    downloadStalled,
     readyToInstall,
     checkError,
     downloadAndInstall,
@@ -163,9 +185,18 @@ function UpdateDialog() {
     setShowDialog,
   } = useUpdater();
 
+  const statusLabel = useDownloadStatusLabel();
+
   const handleLater = () => {
-    dismissUpdate(); // persists devstackbox.dismissedUpdate = version
+    dismissUpdate();
   };
+
+  const handlePrimaryAction = () => {
+    void downloadAndInstall();
+  };
+
+  const showProgress = downloading;
+  const progressValue = downloadIndeterminate ? undefined : downloadProgress;
 
   return (
     <Dialog open={showDialog} onOpenChange={setShowDialog}>
@@ -177,7 +208,6 @@ function UpdateDialog() {
             {t("updater.available", "available")}
           </DialogTitle>
           <DialogDescription>
-            {/* Current → New version line */}
             <span className="flex items-center gap-2 mt-1 flex-wrap">
               <Badge variant="secondary">
                 {t("updater.current", "Current")}: v{APP_VERSION}
@@ -191,7 +221,6 @@ function UpdateDialog() {
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Release notes */}
           {updateInfo?.body && (
             <div className="max-h-32 overflow-y-auto rounded-md border p-3 text-sm bg-muted/50">
               <h4 className="font-medium mb-2">
@@ -203,28 +232,41 @@ function UpdateDialog() {
             </div>
           )}
 
-          {/* Download progress */}
-          {downloading && (
+          {showProgress && (
             <motion.div
               className="space-y-2"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
             >
               <div className="flex items-center gap-2">
-                <Progress value={downloadProgress} className="flex-1" />
-                <span className="text-sm font-mono min-w-[3rem]">
-                  {downloadProgress}%
-                </span>
+                <Progress
+                  value={progressValue}
+                  className={cn(
+                    "flex-1",
+                    downloadIndeterminate &&
+                      "[&>div]:animate-pulse [&>div]:w-1/3 [&>div]:translate-x-0",
+                  )}
+                />
+                {!downloadIndeterminate && (
+                  <span className="text-sm font-mono min-w-[3rem]">
+                    {downloadProgress}%
+                  </span>
+                )}
               </div>
               <p className="text-sm text-center text-muted-foreground">
-                {readyToInstall
-                  ? t("updater.installAndRestart", "Installing and restarting...")
-                  : t("updater.downloading", "Downloading...")}
+                {statusLabel}
               </p>
+              {downloadStalled && downloadPhase === "downloading" && (
+                <p className="text-sm text-center text-amber-600 dark:text-amber-500">
+                  {t(
+                    "updater.downloadStalled",
+                    "Download is taking longer than expected. You can wait or use Retry after it fails.",
+                  )}
+                </p>
+              )}
             </motion.div>
           )}
 
-          {/* Error */}
           {checkError && (
             <motion.p
               className="text-sm text-destructive"
@@ -235,7 +277,6 @@ function UpdateDialog() {
             </motion.p>
           )}
 
-          {/* Action buttons */}
           <div className="flex gap-2 justify-end">
             {!readyToInstall && (
               <Button
@@ -247,11 +288,11 @@ function UpdateDialog() {
               </Button>
             )}
             <Button
-              onClick={() => void downloadAndInstall()}
-              disabled={downloading && !readyToInstall}
+              onClick={handlePrimaryAction}
+              disabled={downloading && !readyToInstall && !checkError}
               className="min-w-[140px]"
             >
-              {downloading && !readyToInstall ? (
+              {downloading && !readyToInstall && !checkError ? (
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
@@ -261,14 +302,18 @@ function UpdateDialog() {
                 </motion.div>
               ) : readyToInstall ? (
                 <RotateCcw className="h-4 w-4 mr-2" />
+              ) : checkError ? (
+                <RefreshCw className="h-4 w-4 mr-2" />
               ) : (
                 <Download className="h-4 w-4 mr-2" />
               )}
               {readyToInstall
                 ? t("updater.restartAndUpdate", "Restart & Update")
-                : downloading
-                  ? `${t("updater.downloading", "Downloading")} ${downloadProgress}%`
-                  : t("updater.updateNow", "Download & Install")}
+                : downloading && !checkError
+                  ? statusLabel
+                  : checkError
+                    ? t("updater.retryUpdate", "Retry update")
+                    : t("updater.updateNow", "Download & Install")}
             </Button>
           </div>
         </div>

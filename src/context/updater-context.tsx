@@ -32,6 +32,14 @@ import { isTauri, safeInvoke } from "@/lib/tauri";
 import { useToast } from "@/hooks/use-toast";
 import { getUpdateChannel, syncAppSettingsToBackend } from "@/lib/app-settings";
 import { TAURI_COMMANDS } from "@/lib/commands";
+import {
+  computeDownloadProgress,
+  isTransientUpdaterError,
+  sleep,
+  UPDATER_DOWNLOAD_MAX_RETRIES,
+  UPDATER_DOWNLOAD_RETRY_DELAYS_MS,
+  type UpdaterDownloadPhase,
+} from "@/lib/updater-progress";
 import { useTranslation } from "react-i18next";
 
 // ---------------------------------------------------------------------------
@@ -65,8 +73,16 @@ export interface UpdaterContextValue {
   checking: boolean;
   /** True while downloadAndInstall() is in progress */
   downloading: boolean;
-  /** 0–100 download progress */
+  /** 0–100 download progress when determinate */
   downloadProgress: number;
+  /** When true, progress bar is indeterminate (unknown Content-Length) */
+  downloadIndeterminate: boolean;
+  /** preparing = backup/stop; downloading / installing = plugin events */
+  downloadPhase: UpdaterDownloadPhase | null;
+  /** 1-based retry attempt while auto-retrying transient failures */
+  downloadRetryAttempt: number;
+  /** No Progress events for a while — user may retry manually */
+  downloadStalled: boolean;
   /** True when download + install is complete and app is ready to relaunch */
   readyToInstall: boolean;
   /** Timestamp of the last completed check (success or failure) */
@@ -86,6 +102,8 @@ export interface UpdaterContextValue {
   /** Internal setter - consumers should use openUpdateDialog / dismissUpdate */
   setShowDialog: (open: boolean) => void;
 }
+
+const STALL_MS = 90_000;
 
 // ---------------------------------------------------------------------------
 // Context
@@ -107,13 +125,32 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
   const [checking, setChecking] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
+  const [downloadIndeterminate, setDownloadIndeterminate] = useState(false);
+  const [downloadPhase, setDownloadPhase] = useState<UpdaterDownloadPhase | null>(
+    null,
+  );
+  const [downloadRetryAttempt, setDownloadRetryAttempt] = useState(0);
+  const [downloadStalled, setDownloadStalled] = useState(false);
   const [readyToInstall, setReadyToInstall] = useState(false);
   const [lastCheckedAt, setLastCheckedAt] = useState<Date | null>(null);
   const [checkError, setCheckError] = useState<string | null>(null);
   const [showDialog, setShowDialog] = useState(false);
 
-  // Accumulate downloaded bytes across Progress events
   const downloadedRef = useRef(0);
+  const contentLengthRef = useRef(0);
+  const lastProgressAtRef = useRef<number | null>(null);
+
+  const applyProgressFromBytes = useCallback(() => {
+    const state = computeDownloadProgress(
+      downloadedRef.current,
+      contentLengthRef.current,
+    );
+    setDownloadIndeterminate(state.indeterminate);
+    setDownloadProgress(state.percent);
+    setDownloadPhase(state.phase);
+    lastProgressAtRef.current = Date.now();
+    setDownloadStalled(false);
+  }, []);
 
   // ---------------------------------------------------------------------------
   // checkForUpdates
@@ -124,11 +161,11 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
       if (!isTauri()) return;
 
       setChecking(true);
-      setCheckError(null); // clear any previous error before each attempt
+      setCheckError(null);
 
       try {
         await syncAppSettingsToBackend();
-        void getUpdateChannel(); // channel read from storage → synced to Rust
+        void getUpdateChannel();
 
         const meta = await safeInvoke<UpdateCheckMetadata | null>(
           TAURI_COMMANDS.system.checkAppUpdate,
@@ -164,10 +201,11 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
           setUpdateInfo(null);
           setUpdateAvailable(false);
           setReadyToInstall(false);
-          if (showNotification) toast({
-            title: t("updater.upToDate"),
-            description: `v${APP_VERSION} ${t("updater.latestVersion")}`,
-          });
+          if (showNotification)
+            toast({
+              title: t("updater.upToDate"),
+              description: `v${APP_VERSION} ${t("updater.latestVersion")}`,
+            });
         }
       } catch (err) {
         console.error("[UpdaterContext] checkForUpdates failed:", err);
@@ -180,74 +218,126 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
     [t, toast],
   );
 
-  // ---------------------------------------------------------------------------
-  // openUpdateDialog
-  // ---------------------------------------------------------------------------
-
   const openUpdateDialog = useCallback(() => {
     setShowDialog(true);
   }, []);
 
-  // ---------------------------------------------------------------------------
-  // downloadAndInstall
-  // ---------------------------------------------------------------------------
+  const runPluginDownload = useCallback(
+    async (info: UpdateInfo) => {
+      await info.downloadAndInstall((event: { event: string; data?: Record<string, unknown> }) => {
+        switch (event.event) {
+          case "Started":
+            downloadedRef.current = 0;
+            contentLengthRef.current =
+              typeof event.data?.contentLength === "number"
+                ? event.data.contentLength
+                : 0;
+            setDownloadPhase("downloading");
+            applyProgressFromBytes();
+            break;
+
+          case "Progress": {
+            const chunk = event.data?.chunkLength;
+            if (typeof chunk === "number") {
+              downloadedRef.current += chunk;
+            }
+            applyProgressFromBytes();
+            break;
+          }
+
+          case "Finished":
+            setDownloadProgress(100);
+            setDownloadIndeterminate(false);
+            setDownloadPhase("installing");
+            setReadyToInstall(true);
+            lastProgressAtRef.current = Date.now();
+            setDownloadStalled(false);
+            break;
+        }
+      });
+    },
+    [applyProgressFromBytes],
+  );
 
   const downloadAndInstall = useCallback(async () => {
     if (!updateInfo || !isTauri()) return;
 
     setDownloading(true);
     setCheckError(null);
+    setDownloadStalled(false);
+    setDownloadRetryAttempt(0);
+    setReadyToInstall(false);
     downloadedRef.current = 0;
+    contentLengthRef.current = 0;
+    setDownloadIndeterminate(false);
+    setDownloadProgress(0);
+    setDownloadPhase("preparing");
+    lastProgressAtRef.current = Date.now();
 
     try {
       const { relaunch } = await import("@tauri-apps/plugin-process");
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await safeInvoke(TAURI_COMMANDS.backup.createFull, { timestamp: new Date().toISOString() });
-      if (!(await runBulk("stop"))) throw new Error("Services could not be stopped. Try the update again after stopping them.");
-      await updateInfo.downloadAndInstall((event: any) => {
-        switch (event.event) {
-          case "Started":
-            downloadedRef.current = 0;
-            setDownloadProgress(0);
-            break;
-
-          case "Progress": {
-            downloadedRef.current += event.data.chunkLength as number;
-            const total = event.data.contentLength as number;
-            const progress =
-              total > 0
-                ? Math.min(
-                    99,
-                    Math.round((downloadedRef.current / total) * 100),
-                  )
-                : downloadedRef.current > 0
-                  ? 50
-                  : 0;
-            setDownloadProgress(progress);
-            break;
-          }
-
-          case "Finished":
-            // Set explicitly - do NOT infer from downloadProgress === 100
-            setDownloadProgress(100);
-            setReadyToInstall(true);
-            break;
-        }
+      await safeInvoke(TAURI_COMMANDS.backup.createFull, {
+        timestamp: new Date().toISOString(),
       });
+      if (!(await runBulk("stop"))) {
+        throw new Error(
+          "Services could not be stopped. Try the update again after stopping them.",
+        );
+      }
 
-      await relaunch();
+      setDownloadPhase("downloading");
+      lastProgressAtRef.current = Date.now();
+
+      let lastError: unknown;
+      for (let attempt = 0; attempt < UPDATER_DOWNLOAD_MAX_RETRIES; attempt++) {
+        if (attempt > 0) {
+          setDownloadRetryAttempt(attempt + 1);
+          const delay =
+            UPDATER_DOWNLOAD_RETRY_DELAYS_MS[attempt - 1] ??
+            UPDATER_DOWNLOAD_RETRY_DELAYS_MS[
+              UPDATER_DOWNLOAD_RETRY_DELAYS_MS.length - 1
+            ];
+          await sleep(delay);
+          downloadedRef.current = 0;
+          contentLengthRef.current = 0;
+          setDownloadProgress(0);
+          setDownloadIndeterminate(false);
+          setReadyToInstall(false);
+          setDownloadPhase("downloading");
+        }
+
+        try {
+          await runPluginDownload(updateInfo);
+          await relaunch();
+          return;
+        } catch (err) {
+          lastError = err;
+          console.error(
+            `[UpdaterContext] download attempt ${attempt + 1} failed:`,
+            err,
+          );
+          const canRetry =
+            attempt < UPDATER_DOWNLOAD_MAX_RETRIES - 1 &&
+            isTransientUpdaterError(err);
+          if (!canRetry) break;
+        }
+      }
+
+      throw lastError;
     } catch (err) {
       console.error("[UpdaterContext] downloadAndInstall failed:", err);
-      setCheckError(t("updater.downloadFailed", "Failed to download update"));
+      const message =
+        err instanceof Error && err.message.includes("Services could not")
+          ? err.message
+          : t("updater.downloadFailed", "Failed to download update");
+      setCheckError(message);
       setDownloading(false);
       setReadyToInstall(false);
+      setDownloadPhase(null);
+      setDownloadRetryAttempt(0);
     }
-  }, [updateInfo, t, runBulk]);
-
-  // ---------------------------------------------------------------------------
-  // dismissUpdate
-  // ---------------------------------------------------------------------------
+  }, [updateInfo, t, runBulk, runPluginDownload]);
 
   const dismissUpdate = useCallback(() => {
     if (updateInfo?.version) {
@@ -256,21 +346,31 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
     setShowDialog(false);
   }, [updateInfo]);
 
-  // ---------------------------------------------------------------------------
-  // Startup check + 6-hour polling
-  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (!downloading || downloadPhase !== "downloading") {
+      setDownloadStalled(false);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const last = lastProgressAtRef.current;
+      if (last != null && Date.now() - last >= STALL_MS) {
+        setDownloadStalled(true);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [downloading, downloadPhase]);
 
   useEffect(() => {
     const autoCheck =
       localStorage.getItem("devstackbox.settings.autoCheckUpdates") !== "false";
     if (!autoCheck) return;
 
-    // Silent startup check - delayed 2 s to let the app fully load
     const startupTimer = setTimeout(() => {
       void checkForUpdates(false);
     }, 2000);
 
-    // Re-check every 6 hours while the app is open
     const pollingInterval = setInterval(
       () => void checkForUpdates(false),
       6 * 60 * 60 * 1000,
@@ -282,10 +382,6 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
     };
   }, [checkForUpdates]);
 
-  // ---------------------------------------------------------------------------
-  // Render
-  // ---------------------------------------------------------------------------
-
   return (
     <UpdaterContext.Provider
       value={{
@@ -294,6 +390,10 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
         checking,
         downloading,
         downloadProgress,
+        downloadIndeterminate,
+        downloadPhase,
+        downloadRetryAttempt,
+        downloadStalled,
         readyToInstall,
         lastCheckedAt,
         checkError,
@@ -309,10 +409,6 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
     </UpdaterContext.Provider>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Hook
-// ---------------------------------------------------------------------------
 
 export function useUpdater(): UpdaterContextValue {
   const ctx = useContext(UpdaterContext);
