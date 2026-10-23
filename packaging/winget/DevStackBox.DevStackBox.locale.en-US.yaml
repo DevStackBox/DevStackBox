@@ -1,0 +1,17 @@
+# Submit alongside DevStackBox.DevStackBox.yaml under
+# manifests/d/DevStackBox/DevStackBox/<version>/ on microsoft/winget-pkgs
+PackageIdentifier: DevStackBox.DevStackBox
+PackageVersion: 0.1.17
+PackageLocale: en-US
+Publisher: Nomad Programmer
+PackageName: DevStackBox
+License: MIT
+ShortDescription: Free XAMPP alternative for Windows with PHP 8.3 and MySQL 8.4 LTS
+Description: DevStackBox bundles Apache, MySQL 8.4 LTS, phpMyAdmin, and PHP 8.3 for local PHP development on Windows.
+Moniker: devstackbox
+Tags:
+  - php
+  - xampp
+  - laravel
+  - mysql
+  - apache
