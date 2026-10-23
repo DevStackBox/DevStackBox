@@ -52,13 +52,13 @@ Do NOT require users to download core components on first launch. Bad first-laun
 
 ---
 
-## Current source state: v0.1.17
+## Current release: v0.1.17
 
-**v0.1.17** adds the Apache ancestor `.htaccess` baseline with an additive migration, log paths and document-root diagnostics. Installer and real-site validation remain release gates. **v0.1.16** streams large `.sql` restores from disk, migrates PHP/phpMyAdmin import limits safely, and streams mysqldump backups without loading dumps into RAM. **v0.1.15** fixes in-app updater download progress. **v0.1.14** bundles patched PHP 8.3.36, adds PHP patch upgrades and full-version labels, and removes end-of-life PHP 8.1 from supported choices. **v0.1.13** adds project error-log access and safeguards for configuration updates. **v0.1.12** introduced **project workspaces** (connect folders outside `www`), **per-project website PHP** (installed runtimes only), and **trusted local HTTPS** with bundled mkcert. The stack still ships **MySQL 8.4 LTS**, **phpMyAdmin 5.2.2**, and **PHP 8.3** in the installer, with **8.2**, **8.4**, and **8.5** on demand. **Settings → Import from XAMPP** copies `htdocs` into `www`.
+**v0.1.17** adds the Apache ancestor `.htaccess` baseline with an additive migration, log paths and document-root diagnostics. Published on 23 October 2026; see the release validation report for installed-site test coverage. **v0.1.16** streams large `.sql` restores from disk, migrates PHP/phpMyAdmin import limits safely, and streams mysqldump backups without loading dumps into RAM. **v0.1.15** fixes in-app updater download progress. **v0.1.14** bundles patched PHP 8.3.36, adds PHP patch upgrades and full-version labels, and removes end-of-life PHP 8.1 from supported choices. **v0.1.13** adds project error-log access and safeguards for configuration updates. **v0.1.12** introduced **project workspaces** (connect folders outside `www`), **per-project website PHP** (installed runtimes only), and **trusted local HTTPS** with bundled mkcert. The stack still ships **MySQL 8.4 LTS**, **phpMyAdmin 5.2.2**, and **PHP 8.3** in the installer, with **8.2**, **8.4**, and **8.5** on demand. **Settings → Import from XAMPP** copies `htdocs` into `www`.
 
 ---
 
-## Next (after v0.1.14)
+## Next after v0.1.17
 
 Planned in this order for upcoming releases:
 
@@ -358,7 +358,7 @@ These are explicitly out of scope for the current product:
 - Mobile development tools
 **The following are deferred to future optional modules (not in v1 core installer, but planned or possible later):**
 
-- **Nginx** - see **Next (after v0.1.14)**; Apache remains the bundled default
+- **Nginx** - see **Next after v0.1.17**; Apache remains the bundled default
 - Redis (future optional module)
 - PostgreSQL (future optional module)
 - Node.js runtime manager (future optional module)

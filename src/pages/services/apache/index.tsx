@@ -28,8 +28,6 @@ interface ServiceStatusInfo {
   running: boolean;
   pid?: number | null;
   port?: number | null;
-  uptime?: string | null;
-  memory?: string | null;
   version?: string | null;
 }
 
@@ -79,7 +77,7 @@ export function ApacheOverviewPage() {
               <CardDescription>
                 {t(
                   "apache.description",
-                  "HTTP server serving sites from www/ on port 80.",
+                  "Serves localhost and connected projects from their configured folders.",
                 )}
               </CardDescription>
             </div>
@@ -110,22 +108,14 @@ export function ApacheOverviewPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
+          <dl className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <dt className="text-muted-foreground">PID</dt>
-              <dd className="font-mono">{status?.pid ?? "-"}</dd>
+              <dd className="font-mono">{status?.pid ?? (running ? t("apache.unavailable", "Unavailable") : t("apache.notRunning", "Not running"))}</dd>
             </div>
             <div>
-              <dt className="text-muted-foreground">Port</dt>
-              <dd className="font-mono">{status?.port ?? "80"}</dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Uptime</dt>
-              <dd className="font-mono">{status?.uptime ?? "-"}</dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Memory</dt>
-              <dd className="font-mono">{status?.memory ?? "-"}</dd>
+              <dt className="text-muted-foreground">{t("apache.port", "HTTP port")}</dt>
+              <dd className="font-mono">{status?.port ?? t("apache.unavailable", "Unavailable")}</dd>
             </div>
           </dl>
         </CardContent>
@@ -136,10 +126,10 @@ export function ApacheOverviewPage() {
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Globe className="h-4 w-4" />
-              {t("apache.openSite", "Open Local Site")}
+              {t("apache.openSite", "Open localhost")}
             </CardTitle>
             <CardDescription className="text-xs">
-              {t("apache.openSiteDesc", "Browse the default web root.")}
+              {t("apache.openSiteDesc", "Open the default localhost site. Connected projects use their own hostnames.")}
             </CardDescription>
           </CardHeader>
           <CardContent className="mt-auto">
@@ -151,7 +141,7 @@ export function ApacheOverviewPage() {
               disabled={!running}
             >
               <ExternalLink className="mr-2 h-4 w-4" />
-              {t("apache.openSite", "Open Local Site")}
+              {t("apache.openSite", "Open localhost")}
             </Button>
           </CardContent>
         </Card>
@@ -200,7 +190,7 @@ export function ApacheOverviewPage() {
               className="w-full"
               onClick={() => navigate(ROUTES.apacheSsl.path)}
             >
-              {t("apache.manageSsl", "Manage SSL")}
+              {t("apache.manageSsl", "Manage HTTPS")}
             </Button>
           </CardContent>
         </Card>

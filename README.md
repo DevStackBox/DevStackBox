@@ -6,7 +6,7 @@
 
 **Free XAMPP alternative for Windows** - Apache, MySQL 8.4 LTS, phpMyAdmin, and PHP 8.3 in one MIT-licensed desktop app.
 
-![Project details with HTTP 200 and trusted local HTTPS](docs/images/project-details-preview.jpg)
+![DevStackBox v0.1.17 Services](docs/images/services-v0.1.17-hd.jpg)
 
 Project details from an earlier development build. See [CHANGELOG.md](CHANGELOG.md) for the latest release notes.
 
@@ -45,9 +45,9 @@ Connect existing folders, manage `.test` hosts and trusted HTTPS, and select an 
 
 See the [project guide](docs/getting-started/projects.mdx), [project roadmap](PROJECT-ROADMAP.md), and [release validation](docs/RELEASE-VALIDATION.md). Framework installers, database linking and Git/SSH are future work. Frameworks will download on demand; AI integration is deferred.
 
-## v0.1.17 source preparation
+## v0.1.17
 
-This source update fixes Apache ancestor `.htaccess` handling and adds configuration/log diagnostics. Installer and installed-site verification are tracked separately in [release validation](docs/RELEASE-VALIDATION.md). See the [documentation and cleanup audit](docs/development/v0.1.17-docs-audit.md) for readiness gates and proposed cleanup; no development files were deleted.
+Released on 23 October 2026, v0.1.17 fixes Apache ancestor `.htaccess` handling and adds configuration/log diagnostics. Published artifact verification and remaining installed-site checks are tracked in [release validation](docs/RELEASE-VALIDATION.md). See the [documentation and cleanup audit](docs/development/v0.1.17-docs-audit.md) for readiness gates and proposed cleanup; no development files were deleted.
 
 ## Releasing
 

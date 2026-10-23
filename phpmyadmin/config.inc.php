@@ -16,9 +16,9 @@ $cfg['Servers'][1]['AllowNoPassword'] = true;
 $cfg['Servers'][1]['AllowRoot'] = true;
 
 // Directories with correct paths for DevStackBox
-$cfg['UploadDir'] = './upload';
-$cfg['SaveDir'] = './save';
-$cfg['TempDir'] = './tmp';
+$cfg['UploadDir'] = 'D:/Websites/DevStackBox/review-artifacts/documentation/profile/phpmyadmin/upload';
+$cfg['SaveDir'] = 'D:/Websites/DevStackBox/review-artifacts/documentation/profile/phpmyadmin/save';
+$cfg['TempDir'] = 'D:/Websites/DevStackBox/review-artifacts/documentation/profile/phpmyadmin/tmp';
 
 // Security settings
 $cfg['blowfish_secret'] = 'nYSd6wlCE7kRo3kX5o4gAZ03zEWpiaLK';
@@ -28,7 +28,7 @@ $cfg['ServerDefault'] = 1;
 // Performance settings
 $cfg['MaxRows'] = 100;
 $cfg['MemoryLimit'] = '512M';
-$cfg['ExecTimeLimit'] = 300;
+$cfg['ExecTimeLimit'] = 600;
 
 // UI settings
 $cfg['ShowPhpInfo'] = true;
@@ -38,3 +38,5 @@ $cfg['MaxNavigationItems'] = 200;
 
 // Theme
 $cfg['ThemeDefault'] = 'pmahomme';
+
+// phpMyAdminImportConfigVersion: 1

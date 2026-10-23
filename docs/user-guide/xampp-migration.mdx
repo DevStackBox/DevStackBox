@@ -1,0 +1,38 @@
+---
+title: "Connect or import XAMPP projects"
+description: "Keep existing project folders or copy htdocs and migrate databases separately."
+---
+
+# Connect or import XAMPP projects
+
+You can use an existing project folder with DevStackBox without moving it. Importing files is an alternative, not a requirement.
+
+## Connect in place
+
+1. Back up the project and export its database using the current working environment.
+2. Open **Projects → Add project / site** and select the existing folder.
+3. Choose a unique hostname and the actual document root; Laravel should serve its `public` folder.
+4. Configure the application's database connection for DevStackBox separately and test the website.
+
+Connecting does not install dependencies or copy databases. Full backups exclude project files outside the default www folder, so retain a separate file backup.
+
+## Copy htdocs
+
+1. Open **Settings → Import from XAMPP**.
+2. Use **Scan again** if necessary. Detection checks the default `C:\\xampp` location; it is not a search of every drive.
+3. Review the detected source and choose **Copy htdocs to www**.
+4. Read the copied-file count and destination. Existing destination files with the same name are skipped, not merged or overwritten.
+5. Connect/configure the copied project and test its document root and dependencies.
+
+If the XAMPP installation is elsewhere, connect the specific project folder directly or copy files deliberately outside this importer. The importer does not stop XAMPP, migrate configuration or convert MariaDB/MySQL data files.
+
+## Migrate SQL and avoid port conflicts
+
+Export databases as SQL from the source server and restore through [Databases → Backups](database-backups). Test SQL compatibility; MySQL and MariaDB are not interchangeable data directories. Keep the source until the new site is verified.
+
+Two servers cannot listen on the same address and port simultaneously. Stop the conflicting service or choose distinct ports and update the application's connection settings. Do not delete another installation to resolve a port conflict.
+
+## Recovery
+
+If file copying fails, retain the source, inspect the reported path/permissions and check which files reached the destination before retrying. If the website opens but fails, inspect PHP version, extensions, document root, database credentials and [logs](logs).
+

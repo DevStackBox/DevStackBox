@@ -37,7 +37,7 @@ Back up projects and export databases before updating. The v0.1.12 installer sto
 If auto-update fails or you prefer a browser download, install a newer release over the existing install:
 
 1. **Stop services** - stop Apache and MySQL from the dashboard or tray menu.
-2. **Back up first** - use **Settings → Backup & Restore** to create a full backup, or back up both your install folder’s `www` and `%LOCALAPPDATA%\DevStackBox\`.
+2. **Back up first** - use **Settings → Backup & Restore** to create a full backup, or back up both your install folder’s `www` and `%LOCALAPPDATA%\DevStackBox\`. Connected projects outside `www` keep their files in their original folders; back up those folders separately because full backups do not include their contents.
 3. **Download** the latest Windows installer from [devstackbox.com/download](https://www.devstackbox.com/download) or [GitHub Releases](https://github.com/DevStackBox/DevStackBox/releases/latest).
 4. **Run the installer** - accept the UAC prompt. Choose the same install directory as before (default: `C:\devstackbox`).
 5. **Launch DevStackBox** - start services and confirm your sites and databases are intact.

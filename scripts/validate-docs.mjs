@@ -5,11 +5,13 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { validateDocCoverage } from "./validate-doc-coverage.mjs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, "..");
 const docsDir = path.join(root, "docs");
+validateDocCoverage(root);
 
 const { allDocSlugs } = await import(
   pathToFileURL(path.join(docsDir, "navigation.ts")).href

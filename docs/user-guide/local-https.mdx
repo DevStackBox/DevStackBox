@@ -1,0 +1,39 @@
+---
+title: "Local HTTPS and certificates"
+description: "Set up localhost and project HTTPS and distinguish trust from website health."
+---
+
+# Local HTTPS and certificates
+
+Open **Services → Apache → HTTPS / SSL**. The app manages local certificates with mkcert. Project HTTPS can also be selected from project details.
+
+## Localhost setup and repair
+
+1. Review the HTTPS status and configured port.
+2. Use the setup or repair action offered by the screen.
+3. Review any Windows certificate-trust prompt yourself. Trust applies to the local certificate authority, not an internet certificate provider.
+4. Start or restart Apache as required, then refresh the status and test the displayed HTTPS URL.
+
+A process listening on the HTTPS port, a certificate on disk and a trusted response are different checks. If another service owns the port, resolve that conflict first.
+
+## Project hostnames
+
+1. Connect the site with its intended hostname and aliases.
+2. Enable HTTPS in **Manage project → Website settings** and save.
+3. Inspect the HTTPS result separately from the website response.
+4. Open the exact hostname covered by the certificate.
+
+Localhost certificates cover localhost addresses; a project needs coverage for its hostname/aliases. A trusted HTTPS connection can still return HTTP 404 or 500. Check the document root, dependencies, application routes and logs.
+
+## Diagnose trust failures
+
+Confirm the hostname, certificate status, system time and whether the local CA was trusted in the environment used by the client. Browser trust policies can differ. Use the app's repair/status workflow and the reported error; do not bypass certificate warnings to declare setup complete.
+
+Changes to site configuration are validated and can fail or roll back. If project details reports configuration that needs review, preserve the saved records and recovery copies before reconnecting or repairing the intended site.
+
+## Backup and privacy
+
+Do not publish local CA private keys or certificate private material. Full backups exclude the HTTPS/SSL directories, so restored configuration may require HTTPS provisioning again. The app's local HTTPS does not make DevStackBox a production internet-hosting service.
+
+See [Projects, PHP & HTTPS](../getting-started/projects), [Full backup](full-backup) and the contributor [HTTPS design notes](https://github.com/DevStackBox/DevStackBox/blob/main/docs/LOCAL-HTTPS.md).
+

@@ -1,0 +1,241 @@
+{
+  "schemaVersion": 1,
+  "screenshots": [
+    {
+      "id": "services-release",
+      "file": "services-v0.1.17-hd.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.17",
+      "capturedAt": "2026-10-23",
+      "alt": "DevStackBox Services with Apache, MySQL and PHP controls",
+      "caption": "Installed v0.1.17. Native 1920 × 1032 capture.",
+      "publicPaths": [
+        "/docs-images/services-v0.1.17-hd.jpg",
+        "/screenshots/app/services-v0.1.17-hd.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "projects-historical",
+      "file": "legacy/projects-preview.jpg",
+      "width": 1202,
+      "height": 831,
+      "version": "historical",
+      "capturedAt": null,
+      "alt": "Earlier DevStackBox release: Connected project list",
+      "caption": "Earlier release. Original 1202 × 831 capture; date and exact release were not recorded.",
+      "publicPaths": [
+        "/docs-images/legacy/projects-preview.jpg",
+        "/screenshots/app/projects-preview.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "project-details-historical",
+      "file": "legacy/project-details-preview.jpg",
+      "width": 1202,
+      "height": 831,
+      "version": "historical",
+      "capturedAt": null,
+      "alt": "Earlier DevStackBox release: Project website response and HTTPS checks",
+      "caption": "Earlier release. Original 1202 × 831 capture; date and exact release were not recorded.",
+      "publicPaths": [
+        "/docs-images/legacy/project-details-preview.jpg",
+        "/screenshots/app/project-details-preview.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "project-php-historical",
+      "file": "legacy/project-php-preview.jpg",
+      "width": 1202,
+      "height": 831,
+      "version": "historical",
+      "capturedAt": null,
+      "alt": "Earlier DevStackBox release: Per-site PHP selection",
+      "caption": "Earlier release. Original 1202 × 831 capture; date and exact release were not recorded.",
+      "publicPaths": [
+        "/docs-images/legacy/project-php-preview.jpg",
+        "/screenshots/app/project-php-preview.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "preview-dashboard",
+      "file": "source-preview/dashboard-2026-10-23.jpg",
+      "width": 1913,
+      "height": 1064,
+      "version": "v0.1.17 source preview",
+      "capturedAt": "2026-10-23",
+      "alt": "Dashboard with stopped services and a disabled demonstration site",
+      "caption": "Native 1913 × 1064 capture of the v0.1.17 source preview, 23 October 2026. Includes unreleased wording changes; demonstration data and settings are not recommendations.",
+      "publicPaths": [
+        "/docs-images/source-preview/dashboard-2026-10-23.jpg",
+        "/screenshots/source-preview/dashboard-2026-10-23.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "preview-project-details",
+      "file": "source-preview/project-details-2026-10-23.jpg",
+      "width": 1913,
+      "height": 1064,
+      "version": "v0.1.17 source preview",
+      "capturedAt": "2026-10-23",
+      "alt": "Project details separating website response, HTTPS and document root",
+      "caption": "Native 1913 × 1064 capture of the v0.1.17 source preview, 23 October 2026. Includes unreleased wording changes; demonstration data and settings are not recommendations.",
+      "publicPaths": [
+        "/docs-images/source-preview/project-details-2026-10-23.jpg",
+        "/screenshots/source-preview/project-details-2026-10-23.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "preview-project-php",
+      "file": "source-preview/project-php-2026-10-23.jpg",
+      "width": 1913,
+      "height": 1064,
+      "version": "v0.1.17 source preview",
+      "capturedAt": "2026-10-23",
+      "alt": "Demonstration project folder, public document root and PHP selection",
+      "caption": "Native 1913 × 1064 capture of the v0.1.17 source preview, 23 October 2026. Includes unreleased wording changes; demonstration data and settings are not recommendations.",
+      "publicPaths": [
+        "/docs-images/source-preview/project-php-2026-10-23.jpg",
+        "/screenshots/source-preview/project-php-2026-10-23.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "preview-php-versions",
+      "file": "source-preview/php-versions-2026-10-23.jpg",
+      "width": 1913,
+      "height": 1064,
+      "version": "v0.1.17 source preview",
+      "capturedAt": "2026-10-23",
+      "alt": "PHP manager showing branch and full patch versions",
+      "caption": "Native 1913 × 1064 capture of the v0.1.17 source preview, 23 October 2026. Includes unreleased wording changes; demonstration data and settings are not recommendations.",
+      "publicPaths": [
+        "/docs-images/source-preview/php-versions-2026-10-23.jpg",
+        "/screenshots/source-preview/php-versions-2026-10-23.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "preview-php-extensions",
+      "file": "source-preview/php-extensions-2026-10-23.jpg",
+      "width": 1913,
+      "height": 1064,
+      "version": "v0.1.17 source preview",
+      "capturedAt": "2026-10-23",
+      "alt": "Global PHP extension switches in the isolated demo profile",
+      "caption": "Native 1913 × 1064 capture of the v0.1.17 source preview, 23 October 2026. Includes unreleased wording changes; demonstration data and settings are not recommendations.",
+      "publicPaths": [
+        "/docs-images/source-preview/php-extensions-2026-10-23.jpg",
+        "/screenshots/source-preview/php-extensions-2026-10-23.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "preview-settings",
+      "file": "source-preview/settings-2026-10-23.jpg",
+      "width": 1913,
+      "height": 1064,
+      "version": "v0.1.17 source preview",
+      "capturedAt": "2026-10-23",
+      "alt": "General settings for appearance, startup and update checks",
+      "caption": "Native 1913 × 1064 capture of the v0.1.17 source preview, 23 October 2026. Includes unreleased wording changes; demonstration data and settings are not recommendations.",
+      "publicPaths": [
+        "/docs-images/source-preview/settings-2026-10-23.jpg",
+        "/screenshots/source-preview/settings-2026-10-23.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "preview-full-backup",
+      "file": "source-preview/full-backup-2026-10-23.jpg",
+      "width": 1913,
+      "height": 1064,
+      "version": "v0.1.17 source preview",
+      "capturedAt": "2026-10-23",
+      "alt": "Full backup scope and empty archive list",
+      "caption": "Native 1913 × 1064 capture of the v0.1.17 source preview, 23 October 2026. Includes unreleased wording changes; demonstration data and settings are not recommendations.",
+      "publicPaths": [
+        "/docs-images/source-preview/full-backup-2026-10-23.jpg",
+        "/screenshots/source-preview/full-backup-2026-10-23.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "preview-logs",
+      "file": "source-preview/logs-2026-10-23.jpg",
+      "width": 1913,
+      "height": 1064,
+      "version": "v0.1.17 source preview",
+      "capturedAt": "2026-10-23",
+      "alt": "Shared Apache log viewer with no log written yet",
+      "caption": "Native 1913 × 1064 capture of the v0.1.17 source preview, 23 October 2026. Includes unreleased wording changes; demonstration data and settings are not recommendations.",
+      "publicPaths": [
+        "/docs-images/source-preview/logs-2026-10-23.jpg",
+        "/screenshots/source-preview/logs-2026-10-23.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "preview-databases",
+      "file": "source-preview/databases-2026-10-23.jpg",
+      "width": 1913,
+      "height": 1064,
+      "version": "v0.1.17 source preview",
+      "capturedAt": "2026-10-23",
+      "alt": "Database list containing the isolated docs_demo database",
+      "caption": "Native 1913 × 1064 source preview, 23 October 2026. Includes unreleased wording changes. Isolated demonstration database; no import has been performed in this capture.",
+      "publicPaths": [
+        "/docs-images/source-preview/databases-2026-10-23.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "preview-database-backups",
+      "file": "source-preview/database-backups-2026-10-23.jpg",
+      "width": 1913,
+      "height": 1064,
+      "version": "v0.1.17 source preview",
+      "capturedAt": "2026-10-23",
+      "alt": "SQL backup actions for the demonstration database",
+      "caption": "Native 1913 × 1064 source preview, 23 October 2026. Includes unreleased wording changes. Isolated demonstration database; no import has been performed in this capture.",
+      "publicPaths": [
+        "/docs-images/source-preview/database-backups-2026-10-23.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "preview-sql-restore-follow",
+      "file": "source-preview/sql-restore-follow-2026-10-23.jpg",
+      "width": 1913,
+      "height": 1064,
+      "version": "v0.1.17 source preview",
+      "capturedAt": "2026-10-23",
+      "alt": "Restore dialog using database names in the SQL file",
+      "caption": "Native 1913 × 1064 source preview, 23 October 2026. Includes unreleased wording changes. Isolated demonstration database; no import has been performed in this capture.",
+      "publicPaths": [
+        "/docs-images/source-preview/sql-restore-follow-2026-10-23.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "preview-sql-restore-selected",
+      "file": "source-preview/sql-restore-selected-2026-10-23.jpg",
+      "width": 1913,
+      "height": 1064,
+      "version": "v0.1.17 source preview",
+      "capturedAt": "2026-10-23",
+      "alt": "Restore dialog with initial database and create-if-missing controls",
+      "caption": "Native 1913 × 1064 source preview, 23 October 2026. Includes unreleased wording changes. Isolated demonstration database; no import has been performed in this capture.",
+      "publicPaths": [
+        "/docs-images/source-preview/sql-restore-selected-2026-10-23.jpg"
+      ],
+      "approved": true
+    }
+  ]
+}

@@ -71,7 +71,7 @@ export function ApacheService({
       ? [
           {
             icon: OpenIcon,
-            label: t("actions.open", "Open"),
+            label: t("apache.openSite", "Open localhost"),
             onClick: openApache,
             variant: "outline" as const,
           },
@@ -139,7 +139,7 @@ export function ApacheService({
               {
                 items: [
                   {
-                    label: t("actions.www", "WWW"),
+                    label: t("apache.openSite", "Open localhost"),
                     onSelect: openWWW,
                     disabled: !status.running,
                   },
@@ -179,10 +179,7 @@ export function ApacheService({
           )}
           <ContextMenuSeparator />
           <ContextMenuItem onSelect={openApache} disabled={!status.running}>
-            {t("actions.open", "Open")}
-          </ContextMenuItem>
-          <ContextMenuItem onSelect={openWWW} disabled={!status.running}>
-            {t("actions.www", "WWW")}
+            {t("apache.openSite", "Open localhost")}
           </ContextMenuItem>
         </ContextMenuContent>
       }
@@ -194,7 +191,7 @@ export function ApacheService({
             <span className="text-muted-foreground">
               {t("common.port", "Port")}:
             </span>
-            <span className="ml-2 font-mono">{status.port || 80}</span>
+            <span className="ml-2 font-mono">{status.port ?? t("apache.unavailable", "Unavailable")}</span>
           </div>
           {status.version && (
             <div>

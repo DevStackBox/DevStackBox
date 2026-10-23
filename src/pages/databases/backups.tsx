@@ -166,7 +166,7 @@ function DatabasesBackupsContent() {
               <CardDescription>
                 {t(
                   "databases.backups.description",
-                  "Quickly export individual MySQL databases. For full-stack backups including configs and logs, use Settings > Backup & Restore.",
+                  "Export individual MySQL databases. Settings > Backup & Restore includes configuration, www files and an optional SQL dump; logs and external project files are excluded.",
                 )}
               </CardDescription>
             </div>

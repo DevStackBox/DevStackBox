@@ -48,7 +48,7 @@ C:\devstackbox\
 
 Override the user data path with `DEVSTACKBOX_DATA_DIR` if needed.
 
-Runtime configs live under the user data root. Apache serves projects from the install folder’s `www`; MySQL data remains under the user data root. `DEVSTACKBOX_DATA_DIR` does not relocate `www`.
+Runtime configs live under the user data root. Apache serves localhost from the install folder’s `www` and connected projects from their selected document roots. MySQL data remains under the user data root. `DEVSTACKBOX_DATA_DIR` does not relocate `www` or external project files.
 
 ## Update check (shipped)
 

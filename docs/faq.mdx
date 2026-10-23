@@ -28,9 +28,13 @@ Yes. DevStackBox is MIT-licensed open source. There is no paid tier.
 
 The application installs to `C:\devstackbox` by default (you can choose another path). User data - configs, logs, and MySQL files - is stored in `%LOCALAPPDATA%\devstackbox\`. Web projects use `C:\devstackbox\www` by default.
 
+## Must projects live in www?
+
+No. Connect an accessible local folder in Projects without moving files. New folders use www by default. Open connected sites through their configured hostnames. Full backups do not include external project file contents; back them up separately.
+
 ## Can I move projects from XAMPP?
 
-Yes. Use **Settings → Import from XAMPP** to copy `htdocs` into DevStackBox `www`. Export databases from XAMPP phpMyAdmin and import them in DevStackBox if needed.
+Yes. Connect an existing project folder from **Projects** to keep files where they are, or use **Settings → Import from XAMPP** to copy `htdocs` into DevStackBox `www`. Export databases from XAMPP phpMyAdmin and import them in DevStackBox if needed.
 
 ## Does DevStackBox collect telemetry?
 

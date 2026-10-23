@@ -185,8 +185,8 @@ export function SitesWorkspace({ advanced = false }: { advanced?: boolean }) {
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {text(
-              "Connect a folder, choose a .test hostname, and manage HTTPS in one place.",
-              "फ़ोल्डर जोड़ें, .test नाम चुनें और HTTPS प्रबंधित करें।",
+              "Connect an accessible local folder without moving files. www is the default folder, not a requirement.",
+              "फ़ाइलें स्थानांतरित किए बिना स्थानीय फ़ोल्डर जोड़ें। www डिफ़ॉल्ट है, अनिवार्य नहीं।",
             )}
           </p>
         </div>

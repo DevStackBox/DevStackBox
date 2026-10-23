@@ -259,9 +259,9 @@ export function BackupPage() {
         <CardContent className="px-4 pb-4">
           <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
             <li>
-              {t("backup.includedItem1", "All configuration files (httpd.conf, my.cnf, php.ini, ssl.conf, vhosts.json, phpmyadmin.conf)")}
+              {t("backup.includedItem1", "User configuration files, excluding HTTPS/SSL private material and transient locks")}
             </li>
-            <li>{t("backup.includedItem2", "All files in your web root (www/)")}</li>
+            <li>{t("backup.includedItem2", "Files in the default www folder. Files in connected folders outside www are not included.")}</li>
             <li>
               {t("backup.includedItem3", "MySQL databases via mysqldump (all-databases.sql) - requires MySQL to be running")}
             </li>
@@ -341,7 +341,7 @@ export function BackupPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t("backup.confirmRestoreTitle", "Restore this backup?")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("backup.confirmRestoreDesc", "This will overwrite your current configuration files and web root with the contents of {{filename}}. If MySQL data was included, all current databases will be replaced. Consider creating a fresh backup of your current state first. This cannot be undone.", { filename: confirmRestore?.filename })}
+              {t("backup.confirmRestoreDesc", "Restores configuration and www files from {{filename}}, overwriting matching files. If included, the SQL dump is executed and can change existing databases. Files in external project folders are not restored. A failure may leave partial changes. Back up your current state first.", { filename: confirmRestore?.filename })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

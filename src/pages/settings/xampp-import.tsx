@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { safeInvoke } from "@/lib/tauri";
@@ -11,6 +12,7 @@ type XamppDetection = {
 };
 
 export function SettingsXamppImportPage() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [detections, setDetections] = useState<XamppDetection[]>([]);
   const [loading, setLoading] = useState(false);
@@ -53,6 +55,7 @@ export function SettingsXamppImportPage() {
         <CardDescription>
           Copy projects from XAMPP htdocs into DevStackBox www. Existing files with the same name are
           skipped. Export MySQL from XAMPP phpMyAdmin and import in DevStackBox for databases.
+          {" "}{t("xamppImport.connectAlternative", "To keep project files where they are, connect their folders from Projects instead of copying.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

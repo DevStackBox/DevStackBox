@@ -1,5 +1,15 @@
 # Release validation history
 
+## v0.1.17 post-release verification - 23 October 2026
+
+- GitHub release v0.1.17 is published, with installer, signature and latest.json. `finalize-release --verify-github v0.1.17` passes the asset-digest comparison.
+- Installed C:/devstackbox/devstackbox.exe reports ProductVersion 0.1.17. This proves version presence, not the upgrade path or website health.
+- Local https://laracorekit-website.test/ could not connect during this check; live Laravel routing is still unverified.
+- Live production website smoke passed: 39 pages, headings, canonicals, internal links/anchors, assets, 404, sitemap and search.
+- Fresh HTTP checks of the public download and feature-status pages returned 200 with v0.1.17 content; the download page did not show its unavailable-release fallback.
+- Local documentation validator and four website tests passed after the post-release wording changes.
+- Documentation publication status corrected from source preparation to released; historical validation limitations retained.
+
 ## v0.1.17 qualification - 23 October 2026
 
 - Final installer: `src-tauri/target/release/bundle/nsis/DevStackBox_0.1.17_x64-setup.exe`, 187366159 bytes. SHA-256: `3128C4CAAAF8692E52E7A0EE68B7EF0ABF4FFBEC89FD224F505FF8B7AB0910AB`. Both updater signatures verified (`verify-updater-artifact.mjs`, `finalize-release`).

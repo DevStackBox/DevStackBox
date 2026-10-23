@@ -8,6 +8,14 @@ icon: "Folder"
 
 Available since **v0.1.12**: connect existing folders, select PHP per website, and manage trusted local HTTPS from project details.
 
+## Project folders and the default www directory
+
+Projects can stay in any accessible local directory, including another drive. Connecting a folder creates a site configuration without copying or moving its files. The www directory under the installation is the default for newly created folders and localhost; it is not a requirement for connected projects. Apache must be able to read the selected directory.
+
+The project folder contains the application; the document root is the folder served to visitors. For Laravel, choose public/ as the document root. Open connected projects using their .test hostnames; Open localhost opens only the default site.
+
+Full backups include configuration, files under www and a MySQL dump when available. External project file contents are not included, even though their site configuration may be saved. Back up those folders separately before upgrades or restoration.
+
 ## Connect an existing website
 
 1. Open **Projects → Add project / site** and select a local folder, including folders outside `www`.
@@ -19,6 +27,18 @@ Available since **v0.1.12**: connect existing folders, select PHP per website, a
 Connecting does not copy files or install dependencies. Disconnecting keeps your files. Projects and Virtual Hosts share the same saved site records.
 
 ## Select PHP for a project
+
+## Edit, disable or disconnect
+
+Manage project shows the saved folder, document root, hostname, aliases and HTTPS choice. Save changes and read the result; a failed validation or hosts-file operation can prevent the new configuration from taking effect. Use the returned error and retained configuration copies before retrying.
+
+Choose a unique `.test` hostname without a URL scheme, port or path. Aliases must not collide with another saved site. The folder picker selects an existing directory; connecting does not install frameworks or dependencies. A create-folder option creates files under the default www location, while connecting an existing folder leaves it in place.
+
+Disabling a site stops it being served through its generated configuration while retaining its record. Disconnecting removes the site configuration rather than deleting project files or databases. Read the confirmation and open the intended hostname afterward to verify changes. Projects and Apache Virtual Hosts edit the same records; do not maintain separate duplicate entries.
+
+The response check measures an HTTP result; HTTPS trust and the saved PHP selection are separate. The open-folder action opens the saved location. A missing folder must be restored or reconnected before the site can work. A configuration-review warning means existing generated configuration needs attention; do not delete unrelated records to dismiss it.
+
+## Select the website PHP runtime
 
 Download PHP in **Services → PHP → Versions** first. In **Projects → Manage project → PHP & tools**, choose an installed runtime and apply. Select **Use global default** to follow the stack default again.
 
@@ -59,3 +79,11 @@ If a site change reports generated hosts missing from saved records, inspect the
 ## Planned, not bundled
 
 Project database linking, project-aware terminals, Git/SSH, and Laravel/WordPress installation are future work. Frameworks will download from upstream on demand, not ship in the installer. AI integration is deferred.
+
+![Project details separating website response, HTTPS and document root](../images/source-preview/project-details-2026-10-23.jpg)
+
+*Source preview captured 23 October 2026; includes unreleased wording changes. Demo state, not recommended settings.*
+
+![Demonstration project folder, public document root and PHP selection](../images/source-preview/project-php-2026-10-23.jpg)
+
+*Source preview captured 23 October 2026; includes unreleased wording changes. Demo state, not recommended settings.*

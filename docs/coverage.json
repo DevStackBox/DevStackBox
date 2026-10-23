@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 1,
+  "screens": [
+    {
+      "route": "/",
+      "guide": "user-guide/dashboard"
+    },
+    {
+      "route": "/services",
+      "guide": "user-guide/services"
+    },
+    {
+      "route": "/services/apache",
+      "guide": "user-guide/services"
+    },
+    {
+      "route": "/services/mysql",
+      "guide": "user-guide/services"
+    },
+    {
+      "route": "/services/apache/logs",
+      "guide": "user-guide/logs"
+    },
+    {
+      "route": "/services/mysql/logs",
+      "guide": "user-guide/logs"
+    },
+    {
+      "route": "/logs/apache",
+      "guide": "user-guide/logs"
+    },
+    {
+      "route": "/logs/mysql",
+      "guide": "user-guide/logs"
+    },
+    {
+      "route": "/logs/php",
+      "guide": "user-guide/logs"
+    },
+    {
+      "route": "/services/apache/config",
+      "guide": "user-guide/configuration-editor"
+    },
+    {
+      "route": "/services/mysql/config",
+      "guide": "user-guide/configuration-editor"
+    },
+    {
+      "route": "/services/php/config",
+      "guide": "user-guide/configuration-editor"
+    },
+    {
+      "route": "/projects",
+      "guide": "getting-started/projects"
+    },
+    {
+      "route": "/projects/:projectId",
+      "guide": "getting-started/projects"
+    },
+    {
+      "route": "/services/apache/vhosts",
+      "guide": "getting-started/projects"
+    },
+    {
+      "route": "/services/apache/ssl",
+      "guide": "user-guide/local-https"
+    },
+    {
+      "route": "/services/php",
+      "guide": "user-guide/php"
+    },
+    {
+      "route": "/services/php/extensions",
+      "guide": "user-guide/php"
+    },
+    {
+      "route": "/services/php/versions",
+      "guide": "user-guide/php"
+    },
+    {
+      "route": "/databases",
+      "guide": "user-guide/databases"
+    },
+    {
+      "route": "/databases/users",
+      "guide": "user-guide/databases"
+    },
+    {
+      "route": "/databases/backups",
+      "guide": "user-guide/database-backups"
+    },
+    {
+      "route": "/terminal",
+      "guide": "user-guide/terminal"
+    },
+    {
+      "route": "/security",
+      "guide": "user-guide/security"
+    },
+    {
+      "route": "/settings",
+      "guide": "user-guide/settings"
+    },
+    {
+      "route": "/about",
+      "guide": "user-guide/settings"
+    },
+    {
+      "route": "/settings/backup",
+      "guide": "user-guide/full-backup"
+    },
+    {
+      "route": "/settings/xampp-import",
+      "guide": "user-guide/xampp-migration"
+    }
+  ],
+  "redirects": [
+    "/logs",
+    "/terminal/shell",
+    "/terminal/powershell",
+    "/terminal/cmd",
+    "/terminal/php-cli",
+    "/terminal/mysql-cli",
+    "/terminal/git",
+    "/mysql-users",
+    "/ssl",
+    "/vhosts",
+    "/backup",
+    "*"
+  ],
+  "flows": {
+    "welcome": "user-guide/dashboard",
+    "root-password": "user-guide/databases",
+    "project-connect": "getting-started/projects",
+    "sql-restore": "user-guide/database-backups",
+    "database-user-confirmations": "user-guide/databases",
+    "config-history": "user-guide/configuration-editor",
+    "updates": "user-guide/settings",
+    "command-palette": "user-guide/dashboard",
+    "tray": "user-guide/settings"
+  }
+}

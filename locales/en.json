@@ -376,7 +376,7 @@
     "emptyBackupsList": "No databases to back up yet.",
     "backups": {
       "title": "Per-database backups",
-      "description": "Quickly export individual MySQL databases. For full-stack backups including configs and logs, use Settings > Backup & Restore."
+      "description": "Export individual MySQL databases. Settings > Backup & Restore includes configuration, www files and an optional SQL dump; logs and external project files are excluded."
     }
   },
   "security": {
@@ -432,28 +432,34 @@
     "restore": "Restore",
     "delete": "Delete",
     "whatIncluded": "What is included",
-    "includedItem1": "All configuration files (httpd.conf, my.cnf, php.ini, ssl.conf, vhosts.json, phpmyadmin.conf)",
-    "includedItem2": "All files in your web root (www/)",
+    "includedItem1": "User configuration files, excluding HTTPS/SSL private material and transient locks",
+    "includedItem2": "Files in the default www folder. Files in connected folders outside www are not included.",
     "includedItem3": "MySQL databases via mysqldump (all-databases.sql) - requires MySQL to be running",
     "binariesNote": "Binaries (Apache, PHP, MySQL) are not included - they can be reinstalled.",
     "savedBackups": "Saved Backups",
     "noBackups": "No backups yet. Click \"Create Backup\" to get started.",
     "confirmRestoreTitle": "Restore this backup?",
-    "confirmRestoreDesc": "This will overwrite your current configuration files and web root with the contents of {{filename}}. If MySQL data was included, all current databases will be replaced. Consider creating a fresh backup of your current state first. This cannot be undone.",
+    "confirmRestoreDesc": "Restores configuration and www files from {{filename}}, overwriting matching files. If included, the SQL dump is executed and can change existing databases. Files in external project folders are not restored. A failure may leave partial changes. Back up your current state first.",
     "confirmDeleteTitle": "Delete backup?",
     "confirmDeleteDesc": "{{filename}} will be permanently deleted.",
     "backupDeleted": "Backup deleted.",
     "restoreComplete": "Restore complete. Please restart services for changes to take effect."
   },
+  "xamppImport": {
+    "connectAlternative": "To keep project files where they are, connect their folders from Projects instead of copying."
+  },
   "apache": {
     "status": "Status",
-    "description": "HTTP server serving sites from www/ on port 80.",
-    "openSite": "Open Local Site",
-    "openSiteDesc": "Browse the default web root.",
+    "description": "Serves localhost and connected projects from their configured folders.",
+    "openSite": "Open localhost",
+    "openSiteDesc": "Open the default localhost site. Connected projects use their own hostnames.",
     "phpmyadmin": "phpMyAdmin",
     "phpmyadminDesc": "Web database admin (requires Apache + MySQL).",
     "sslDesc": "Manage local HTTPS certificates.",
-    "manageSsl": "Manage SSL"
+    "manageSsl": "Manage HTTPS",
+    "port": "HTTP port",
+    "unavailable": "Unavailable",
+    "notRunning": "Not running"
   },
   "onboarding": {
     "title": "Welcome to DevStackBox",

@@ -1,0 +1,35 @@
+---
+title: "Terminal tabs and shells"
+description: "Use local shell sessions and understand their PHP and working-directory scope."
+---
+
+# Terminal tabs and shells
+
+Open **Terminal** to use local shell tabs. Commands run on your computer with the app's privileges; the terminal is not a sandbox.
+
+## Open and use a session
+
+1. Choose Shell, PowerShell, CMD, PHP Interactive or MySQL CLI from the tab controls. Shell and CMD both use the Windows command interpreter.
+2. Inspect the prompt and current directory before running project commands.
+3. Change to the intended project folder explicitly. A project hostname or pinned website runtime does not automatically change the shell's directory or PHP.
+4. In a Shell, CMD or PowerShell tab, run a harmless version check such as `php -v` when verifying the global CLI runtime. PHP Interactive opens `php -a` and expects PHP input instead of shell commands.
+5. Switch tabs to keep sessions separate. The app allows ten tabs; close an unused session if a new tab cannot be opened. Closing the last tab creates a new default Shell tab.
+
+Navigating away from Terminal keeps its mounted sessions available while the app is running. This is not session restoration after an app restart.
+
+## Clear versus close
+
+**Clear** clears the active terminal's scrollback display. It does not undo commands or remove files. Closing a tab or using **Kill** ends its session; stop or save any work in that shell first.
+
+## PHP and MySQL
+
+Terminals use global PHP, even when a website is pinned to a different branch. Reopen sessions after changing the global runtime. Project-aware terminal selection is not implemented.
+
+The MySQL CLI is a separate client session. Authentication can fail even when the app's database list works; supply the credentials required by that client rather than assuming the app's stored credential is injected into every shell. Do not put passwords in screenshots or command history.
+
+Git Bash is not currently offered in the shell selector. A Git-related legacy route does not establish a supported Git Bash session.
+
+## Session failures
+
+Read the launch error, check the executable and working directory, then create a new tab. For missing PHP executables use [PHP Versions](php). If only a project command fails, inspect that application's dependencies and environment; DevStackBox does not install Laravel/WordPress dependencies when connecting a folder.
+

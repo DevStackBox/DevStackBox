@@ -1,0 +1,50 @@
+---
+title: "PHP runtimes and extensions"
+description: "Download and switch PHP, manage extensions and understand global versus project settings."
+---
+
+# PHP runtimes and extensions
+
+Open **Services → PHP**. The Overview, Extensions, php.ini and Versions tabs cover different aspects of the runtime. PHP 8.3 is bundled in v0.1.17; supported additional branches are downloaded on demand. The app displays the actual patch release rather than treating a branch label as a complete version.
+
+## Download or update a branch
+
+1. Open **Versions** and refresh the available releases.
+2. Read the installed and available patch labels. **Download** installs a branch; **Update to** replaces an installed branch with the displayed patch.
+3. Before an update, stop Apache and close terminal sessions using PHP. Also consider projects pinned to that branch.
+4. Start the operation and wait for completion. Download, verification and installation can fail independently; keep the exact error.
+5. Start Apache again and verify the affected websites.
+
+Update every installed branch used by projects, not only the global default. Unsupported PHP 8.1 is no longer offered for installation or activation. A release-unavailable state is not evidence that the installed runtime is current.
+
+## Change global PHP
+
+Choose **Activate** for an installed, eligible branch and verify the active badge. The short label such as 8.3 identifies the branch; the full label such as 8.3.36 identifies its patch. Reopen terminal sessions to pick up the global runtime.
+
+The global selection affects default websites and the terminal. A project pinned to an installed branch remains pinned. In **Projects → Manage project → PHP & tools**, select a runtime or **Use global default**. See the [project guide](../getting-started/projects).
+
+## Extensions
+
+1. Open **Extensions** and check the active global runtime.
+2. Filter the list to find the extension.
+3. Toggle a switchable module; built-in entries cannot be enabled or disabled in the same way.
+4. Restart Apache and verify that the application can load the module.
+
+The extension UI targets the active global runtime, not every pinned project's generated ini. If a framework still reports a missing extension, verify the runtime serving that website and its loaded configuration before changing more files.
+
+## php.ini and information
+
+Use **php.ini** for the global user copy and [configuration history](configuration-editor). Updates preserve user settings within the documented migration limits; this is not a promise that every directive is untouched. The runtime information action helps identify configuration and extensions; avoid publishing its complete output because it can expose local paths and environment details.
+
+## Recover from failure
+
+For a failed download, check connectivity, available disk space and the error stage. Do not bypass failed integrity verification. For locked files, stop processes using that runtime before retrying. For activation failure, confirm the runtime is fully installed and meets the supported baseline; do not manually replace the current junction while Apache is serving requests.
+
+
+![PHP manager showing branch and full patch versions](../images/source-preview/php-versions-2026-10-23.jpg)
+
+*Source preview captured 23 October 2026; includes unreleased wording changes. Demo state, not recommended settings.*
+
+![Global PHP extension switches in the isolated demo profile](../images/source-preview/php-extensions-2026-10-23.jpg)
+
+*Source preview captured 23 October 2026; includes unreleased wording changes. Demo state, not recommended settings.*

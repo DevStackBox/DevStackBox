@@ -1,0 +1,39 @@
+---
+title: "Configuration editor and history"
+description: "Edit, validate and restore Apache, MySQL and global PHP configuration."
+---
+
+# Configuration editor and history
+
+The Config tabs in **Services → Apache**, **Services → MySQL** and **Services → PHP** share the same editor. They edit the user configuration, not an installer template.
+
+## Edit and apply
+
+1. Open the correct service's Config tab and confirm the displayed filename.
+2. Change only the settings needed for your task. File locations and managed settings are documented in [Configuration reference](../reference/configuration).
+3. Choose **Save**. The backend validates a staged configuration and backs up the existing file before replacing it. A rejected save shows the error; fix the draft before retrying.
+4. Restart the affected server to apply changes. For PHP used by websites, restart Apache. Existing terminal sessions may need to be reopened.
+5. Test the affected website or database connection and inspect logs.
+
+A successful configuration parse does not prove that application routes, credentials or extensions work correctly.
+
+## Reload, Revert and drafts
+
+**Reload** reads the saved file again and asks before discarding unsaved changes. **Revert** returns to the last loaded content; it does not restore factory defaults. Unsaved drafts are kept locally when you leave the screen, so returning to a draft does not mean the file has been saved.
+
+## Restore a saved backup
+
+1. Choose a file under **Restore a saved backup**.
+2. Read the confirmation. The current configuration is backed up before the selected content is restored.
+3. Complete the restoration, restart the affected service and verify the result.
+
+**No backups yet** means there is no selectable history. There is no **Restore Default** button. If a required file is missing, use a known backup or the app's normal service configuration preparation, then inspect the result; do not copy another machine's absolute paths blindly.
+
+## PHP and project scope
+
+The PHP editor changes the global user `php.ini`. A project pinned to another runtime uses its generated per-branch ini; global edits are not automatically copied to it. App-managed paths and certain logging settings can be normalized during preparation. See [PHP](php) and [upgrade preservation](../getting-started/upgrading).
+
+## Save or restore failed
+
+Record the validation error, ensure the user-data folder is writable and check disk space. Keep the existing file and history while investigating. If a restored configuration parses but the service fails, inspect its log and restore a known-working backup. Configuration history is not a database or project-file backup.
+
