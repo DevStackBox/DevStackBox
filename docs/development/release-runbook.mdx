@@ -1,102 +1,46 @@
 ---
 title: "Release Runbook"
-description: "Windows updater-signed NSIS build and GitHub publish commands."
+description: "Build, validate and publish the v0.1.17 Windows installer."
 icon: "Terminal"
 ---
-# DevStackBox release runbook (Windows)
+# v0.1.17 release runbook
 
-Single reference for **updater-signed NSIS builds** and **GitHub publish** so every release follows the same steps.
+Run from the app repository root on Windows. Source preparation is not proof of a published or installer-qualified release. Follow [Release process](./release-process) for acceptance gates.
 
-**Full checklist:** [Release process](./release-process)
-
-**Private signing key:** `%USERPROFILE%\.tauri\devstackbox.key` - never commit.
-
----
-
-The Tauri signature authenticates updates; it is not Windows Authenticode signing. Authenticode signing is pending for v0.1.14.
-
-## 1. Preflight
-
-From repo root:
+## Preflight
 
 ```powershell
-pnpm run check
-# or: npm run check
+npm ci
+npm run check
+cargo test --manifest-path src-tauri/Cargo.toml --lib
+node scripts/test-apache-overrides.mjs --legacy
+node scripts/test-apache-overrides.mjs
 ```
 
-Bump version in **all three** (must match):
+App version 0.1.17 must match package.json, Cargo.toml and tauri.conf.json. Keep the root package version in package-lock.json and the devstackbox package in Cargo.lock synchronized. Historical dependency versions are not app versions.
 
-- `package.json` → `"version"`
-- `src-tauri/Cargo.toml` → `[package] version`
-- `src-tauri/tauri.conf.json` → `"version"`
-
-Update `CHANGELOG.md` before publishing (can draft after local build test).
-
----
-
-## 2. Signed build (canonical)
-
-```powershell
-cd D:\Websites\DevStackBox   # your clone
-
-Get-Process light -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-Remove-Item "src-tauri\target\release\wix" -Recurse -Force -EA SilentlyContinue
-Remove-Item "src-tauri\target\release\bundle\msi" -Recurse -Force -EA SilentlyContinue
-
-$env:TAURI_SIGNING_PRIVATE_KEY = (Get-Content "$env:USERPROFILE\.tauri\devstackbox.key" -Raw).Trim()
-$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD = ""
-
-pnpm tauri build 2>&1
-```
-
-Or: `.\scripts\release-build.ps1`
-
-**Alternative with verify-release preflight:**
+## Build and finalize
 
 ```powershell
 $env:TAURI_SIGNING_PRIVATE_KEY_PATH = "$env:USERPROFILE\.tauri\devstackbox.key"
 npm run build:release
-```
-
----
-
-## 3. Finalize metadata (SHA + release notes)
-
-After the NSIS build finishes, **do not type the SHA by hand**. Generate notes and update `CHANGELOG.md` from the **exact** installer file you will upload:
-
-```powershell
 npm run finalize-release
 node scripts/verify-updater-artifact.mjs
-# or after upload, sync SHA from GitHub:
-node scripts/finalize-release.mjs --from-github vX.Y.Z --write-changelog
-node scripts/finalize-release.mjs --verify-github vX.Y.Z
 ```
 
-For v0.1.14, this verifies the exact installer signature, writes `release/notes-v0.1.14.md`, updates the changelog checksum, regenerates both `latest.json` files, and updates WinGet and Chocolatey version metadata. Before finalization, existing signed manifests remain associated with the previous release; do not manually relabel an old checksum or signature.
+Supply the signing-key password through your private environment if required. Never commit or print key material. The build wrapper runs input verification, Tauri build and updater-artifact verification. It does not need MSI cleanup or termination of unrelated processes.
 
----
+Finalization requires the exact installer bytes and signature. It generates release/notes-v0.1.17.md, both latest.json files, the changelog checksum and packaging metadata. Do not relabel previous hashes or signatures. Tauri updater signatures are separate from Windows Authenticode publisher signing.
 
-## 4. `latest.json` (required for auto-update)
+## Installer acceptance
+
+Test the actual generated installer using the repository checklist `docs/getting-started/local-install-test.md` and [Testing](./testing). Record results in docs/RELEASE-VALIDATION.md. Verify the real Laravel site on HTTP and HTTPS after upgrading and restarting Apache; synthetic rewrite tests alone do not qualify that site.
+
+## Publish after acceptance
 
 ```powershell
-.\scripts\make-latest-json.ps1 -Notes "DevStackBox vX.Y.Z - summary for users"
-Copy-Item release\latest.json latest.json
+gh release create v0.1.17 --verify-tag --title "DevStackBox v0.1.17" --notes-file "release/notes-v0.1.17.md" "src-tauri/target/release/bundle/nsis/DevStackBox_0.1.17_x64-setup.exe" "src-tauri/target/release/bundle/nsis/DevStackBox_0.1.17_x64-setup.exe.sig" "latest.json"
+node scripts/finalize-release.mjs --verify-github v0.1.17
 ```
 
----
-
-## 5. Publish GitHub Release
-
-Upload: `.exe`, `.exe.sig`, and **`latest.json`** (exact name). Do not mark pre-release.
-
-**Release notes:** use the generated file (never duplicate SHA in a separate doc):
-
-```powershell
-gh release create vX.Y.Z ... --notes-file release\notes-vX.Y.Z.md
-# or:
-gh release edit vX.Y.Z --notes-file release\notes-vX.Y.Z.md
-```
-
-Run `node scripts/finalize-release.mjs --verify-github vX.Y.Z` before marking the release done.
-
-See [Release process](./release-process) Step 7–8.
+Create and push the reviewed v0.1.17 tag before the publish command. Stable releases must not be marked prerelease. Verify updates from v0.1.16, then publish the website with its app-doc source pinned to the same release. Keep download URLs, hashes and sizes sourced from the published GitHub assets.

@@ -6,14 +6,22 @@ icon: "ListChecks"
 # DevStackBox - Feature Status
 
 **THE single source of truth for what is built, what is in progress, and what is planned.**  
-Reflects the **v0.1.14** source changes; publication follows final installer validation. Check the release notes for changes in a particular version.
+Reflects the **v0.1.17** source changes; publication follows final installer validation. Check the release notes for changes in a particular version.
 
-**Last Updated:** 22 October 2026
-**Current version:** v0.1.14
+**Last Updated:** 23 October 2026
+**Source version:** v0.1.17; installer publication and installed smoke tests are separate release gates.
 
 ---
 
-## v0.1.14 PHP security
+## v0.1.17 Apache compatibility
+
+The explicit directory-override baseline prevents ancestor .htaccess failures while retaining document-root rewrite rules. Existing configurations receive an additive, backed-up, syntax-checked migration. Explicit custom policies remain effective. The log viewer shows the file path, and project diagnostics warn when the selected folder contains public/index.php. See [Projects](getting-started/projects) and the release validation report for verified scope.
+
+## Recent releases
+
+v0.1.16 added streamed SQL restore, streamed backups and preservation-aware import-limit migration. v0.1.15 corrected updater download progress.
+
+## PHP security
 
 Patched PHP 8.3.36 is bundled. The version manager shows exact patch versions, updates installed branches, and offers PHP 8.2 through 8.5. PHP 8.1 has been removed. Apache startup checks active and project-pinned runtime security baselines.
 
@@ -269,11 +277,11 @@ Project details can read Apache and runtime-specific PHP errors. Configuration c
 | Feature                                    | Status  | Notes                                                                                                                                                                         |
 | ------------------------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | List / add / remove vhosts via UI          | DONE    | `list_vhosts`, `add_vhost`, `remove_vhost`, `toggle_vhost` Tauri commands; `src/commands/vhosts.rs`                                                                           |
-| vhosts.json store + vhosts.conf generation | DONE    | Definitions persisted in `%LOCALAPPDATA%\DevStackBox\config\vhosts.json`; `vhosts.conf` auto-regenerated and included via `IncludeOptional` in `httpd.conf` (configVersion 7) |
+| vhosts.json store + vhosts.conf generation | DONE    | Definitions persisted in `%LOCALAPPDATA%\DevStackBox\config\vhosts.json`; `vhosts.conf` auto-regenerated and included via `IncludeOptional` in `httpd.conf` (configVersion 9) |
 | Enable / disable per-vhost toggle          | DONE    | Toggled vhosts are removed from `vhosts.conf`; re-enabled ones are added back                                                                                                 |
 | Windows hosts file management              | DONE    | `get_hosts_entries` reads DevStackBox marker block; `update_hosts_entry` writes/removes `127.0.0.1 domain` via elevated PowerShell (UAC prompt)                               |
 | Show active vhosts on dashboard            | DONE    | Dashboard card lists all configured vhosts with enabled/disabled badge and a Manage link to the vhosts page                                                                   |
-| localhost always works with user vhosts    | DONE    | configVersion 7 template places localhost VirtualHost first with phpMyAdmin Alias inside, preventing name-based vhost mode from breaking `localhost/phpmyadmin`                |
+| localhost always works with user vhosts    | DONE    | configVersion 9 template places localhost VirtualHost first with phpMyAdmin Alias inside, preventing name-based vhost mode from breaking `localhost/phpmyadmin`                |
 | HTTPS per virtual host | DONE | v0.1.12: certificates cover each enabled site and aliases. |
 | Project details and per-project website PHP | DONE | v0.1.12: installed runtimes only; independent HTTP/HTTPS selection. Terminal still uses global PHP. |
 
@@ -304,18 +312,22 @@ Project details can read Apache and runtime-specific PHP errors. Configuration c
 
 | Version         | Key Changes                                                                                                               |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| v0.1.17 | Ancestor .htaccess baseline, backed-up migration, log paths and document-root guidance (source prepared) |
+| v0.1.16 | Streamed SQL imports/backups and PHP/phpMyAdmin import limits |
+| v0.1.15 | Updater download progress and retry feedback |
+| v0.1.14 | Patched PHP runtimes and removal of PHP 8.1 |
 | v0.1.13         | Project Apache/PHP logs, configuration recovery copies, safer site changes and serialized configuration writes |
 | v0.1.12         | Project details, per-site PHP, trusted local HTTPS and safer manual upgrades |
 | v0.1.11         | MySQL 8.4 LTS + phpMyAdmin 5.2.2; Import from XAMPP; website XAMPP positioning; CI `check:ci`                           |
 | v0.1.10         | Stable release: MySQL/DB UX, service status, terminal ConPTY fixes; NSIS detail log; PHP 8.3 bundled, 8.1–8.5 on-demand   |
 | v0.1.9          | Audit remediation batch; installer detail log fix; diagnostics, projects MVP, channel-aware updater                         |
 | v0.1.8          | Branding and logo refresh; signed NSIS installer; in-place upgrade with `www` preservation; MDX docs site                 |
-| v0.1.7          | PHP 8.4 CGI compatibility (session.sid_*, error_reporting, html_errors); configVersion 7 vhost fix; NSIS-only releases   |
+| v0.1.7          | PHP 8.4 CGI compatibility (session.sid_*, error_reporting, html_errors); configVersion 9 vhost fix; NSIS-only releases   |
 | v0.1.6          | MSI fixed, CSS restored, GitHub Actions fixed, both installers working                                                    |
 | v0.1.5          | Build system improvements                                                                                                 |
 | v0.1.0 - v0.1.4 | Early alpha, architecture setup                                                                                           |
 
 
-## Release verification (v0.1.14)
+## Release verification (v0.1.17)
 
 Ship with `npm run build:release` (runs `verify-release.mjs`, including MySQL **8.4.x** check). Installer uses Tauri minisign (not Windows Authenticode). Clean install checklist: `docs/getting-started/clean-install-checklist.md`.

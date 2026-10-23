@@ -25,8 +25,8 @@ DevStackBox is built with:
 
 ### Prerequisites
 
-- Node.js 18+ and pnpm (or npm/yarn)
-- Rust 1.70+
+- Node.js 24 LTS and npm (the app tracks package-lock.json)
+- Current stable Rust with the Windows MSVC build tools
 - Windows 11 (primary development/test platform)
 
 ### Installation
@@ -34,14 +34,16 @@ DevStackBox is built with:
 ```bash
 git clone https://github.com/DevStackBox/DevStackBox.git
 cd DevStackBox
-pnpm install
+npm ci
 pnpm tauri dev
 ```
 
 ### Build for Production
 
+Configure the private updater signing key and follow [the release runbook](docs/development/release-runbook.mdx).
+
 ```bash
-pnpm tauri build
+npm run build:release
 ```
 
 ## 📂 Project Structure
@@ -129,7 +131,7 @@ For security vulnerabilities, follow [SECURITY.md](SECURITY.md) and email **hell
 
 - DevStackBox Version:
 - OS: Windows 11
-- Installation Method: MSI / NSIS
+- Installation Method: NSIS (.exe); include whether this was a clean install or upgrade
 
 **Description:**
 Clear description of the bug

@@ -14,7 +14,7 @@ Read this before writing any new code.
 
 | Tool      | Version | Install                             |
 | --------- | ------- | ----------------------------------- |
-| Node.js   | 18+     | [nodejs.org](https://nodejs.org/)   |
+| Node.js   | 24 LTS     | [nodejs.org](https://nodejs.org/)   |
 | pnpm      | latest  | `npm install -g pnpm`               |
 | Rust      | stable  | [rustup.rs](https://rustup.rs/)     |
 | Tauri CLI | 2.x     | bundled in devDependencies          |
@@ -23,7 +23,7 @@ Read this before writing any new code.
 Verify your setup:
 
 ```bash
-node --version   # 18+
+node --version   # 24 LTS
 pnpm --version
 rustc --version
 cargo --version
@@ -36,7 +36,7 @@ cargo --version
 ```bash
 git clone https://github.com/DevStackBox/DevStackBox.git
 cd DevStackBox
-pnpm install
+npm ci
 ```
 
 The service binaries (MySQL, Apache, PHP) must be present in their directories:
@@ -45,10 +45,7 @@ The service binaries (MySQL, Apache, PHP) must be present in their directories:
 - `apache/bin/httpd.exe`
 - `php/8.3/php.exe`
 
-These are NOT committed to git (too large). Either:
-
-- Copy them from a working XAMPP installation
-- Run `scripts/prepare-binaries.ps1`
+Verify the checkout with `node scripts/verify-release.mjs`. The repository tracks bundled service resources; do not substitute XAMPP binaries. Missing or outdated resources must be restored from the project or refreshed through the maintained PHP/MySQL/phpMyAdmin refresh scripts and verified before building.
 
 ---
 

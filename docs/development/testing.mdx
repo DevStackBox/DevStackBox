@@ -19,9 +19,13 @@ cargo test --manifest-path src-tauri/Cargo.toml --lib
 
 `pnpm test` runs Vitest. `check:ci` also checks TypeScript and documentation. Rust tests require the Windows build prerequisites described in [Development setup](./building.mdx).
 
+## Apache override regression
+
+Run `node scripts/test-apache-overrides.mjs --legacy` to reproduce the original parent .htaccess error and `node scripts/test-apache-overrides.mjs` to verify the fix. Alternatively run `scripts/test-config.ps1`. These tests use disposable files and a loopback-only Apache instance, covering a path with spaces, public rewrites, static files and inaccessible private parent files. They do not restart the installed server. Temporary fixture paths are printed for inspection.
+
 ## Release checklist
 
-Use a clean Windows test environment and the installer actually attached to the release. The primary installer is NSIS (`.exe`); test MSI separately only when shipping one.
+Use a clean Windows test environment and the installer actually attached to the release. The primary installer is NSIS (`.exe`); MSI is not a current release target.
 
 - Verify the downloaded installer against its published checksum, where provided.
 - Test first installation, launch, Start Menu entries, and the default and custom installation paths.

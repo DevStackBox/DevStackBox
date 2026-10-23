@@ -12,6 +12,14 @@ DevStackBox is a free XAMPP alternative for Windows. One installer includes Apac
 
 **PHP 8.3** ships in the installer. **PHP 8.2, 8.4, and 8.5** are available under **Services → PHP → Versions** (download, then switch). PHP 8.5 is the newest supported branch. PHP Version Manager shows both the branch (for example, 8.5) and the full patch version (for example, 8.5.12). PHP 8.1 is end-of-life and has been removed from the version manager. Existing project selections must be migrated to a supported branch. Existing supported branches can be patched with the Update button after stopping Apache and closing PHP processes.
 
+## Why does Laravel return an Apache 500 error?
+
+Check the exact Apache log entry. If it names a parent .htaccess with `<IfModule not allowed here`, see the v0.1.17 directory-override fix in [Projects](getting-started/projects). Choose public/ as Laravel's document root. Other 500 errors require their own diagnosis.
+
+## Do updates preserve my php.ini changes?
+
+The editor uses a persistent user copy. Custom upload, memory and timeout limits are preserved; app-managed runtime paths and error/log settings may be normalized. See [Configuration](reference/configuration).
+
 ## Is DevStackBox free?
 
 Yes. DevStackBox is MIT-licensed open source. There is no paid tier.

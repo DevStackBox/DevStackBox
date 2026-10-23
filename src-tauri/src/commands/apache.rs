@@ -41,7 +41,8 @@ pub async fn ensure_apache_config() -> Result<(), String> {
             std::fs::write(&config_path, generated.replace(":80", &format!(":{port}"))).map_err(|e| e.to_string())?;
         }
     }
-    harden_directory_listing(&config_path)
+    harden_directory_listing(&config_path)?;
+    crate::utils::apache_overrides::migrate(&config_path, &get_apache_exe(&get_installation_path()))
 }
 
 /// Disable automatic directory indexes in managed Apache directories while
@@ -366,7 +367,7 @@ pub async fn create_default_apache_config() -> Result<(), String> {
     let php_cgi_dir_str = php_cgi_dir.display().to_string().replace('\\', "/");
 
     let config_content = format!(
-        r#"# configVersion: 9
+        r#"{override_baseline}# configVersion: 9
 # Apache Configuration for DevStackBox
 # Managed by DevStackBox. Edits to this file are preserved across upgrades
 # unless the configVersion is bumped, which triggers a migration.
@@ -473,6 +474,7 @@ IncludeOptional "{user_config_str}/ssl.conf"
 # Virtual Hosts (optional - managed via Virtual Hosts page)
 IncludeOptional "{user_config_str}/vhosts.conf"
 "#,
+        override_baseline = crate::utils::apache_overrides::BASELINE,
         apache_root_str = apache_root.display().to_string().replace('\\', "/"),
         logs_root_str = logs_root.display().to_string().replace('\\', "/"),
         www_root_str = www_root_str,

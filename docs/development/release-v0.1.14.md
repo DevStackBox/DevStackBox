@@ -1,5 +1,7 @@
 # v0.1.14 release handoff
 
+> Historical planning/evidence: version-specific sections describe their original dates. For v0.1.17 use docs/feature-status.mdx, docs/development/release-runbook.mdx and docs/RELEASE-VALIDATION.md.
+
 The previous public release is v0.1.13. These source changes target v0.1.14 only. Build and publication are left to the maintainer. No release or tag was published during this work.
 
 ## Included

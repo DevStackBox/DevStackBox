@@ -40,7 +40,7 @@ pub async fn get_service_logs(service: String, php_version: Option<String>) -> R
             if last_lines.is_empty() {
                 Ok(format!("{} log file is empty", service))
             } else {
-                Ok(last_lines)
+                Ok(format!("Log file: {}\n{}", log_file.display(), last_lines))
             }
         }
         Err(e) => Err(format!("Failed to read {} logs: {}", service, e)),

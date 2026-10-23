@@ -40,6 +40,16 @@ TLS trust and website health are separate. Check the document root, index.php/in
 
 ## Diagnose website errors (v0.1.13)
 
+### Parent .htaccess errors (v0.1.17)
+
+DevStackBox explicitly ignores `.htaccess` above a site's document root. The document root and its children still allow `.htaccess`, including Laravel's `public/.htaccess`. HTTP and HTTPS use the same policy; project files are not modified.
+
+Select the Laravel application's `public` directory. Explicit custom Apache directory policies remain in effect; projects intentionally using parent rules can keep a narrowly scoped `<Directory>` policy in their user Apache configuration.
+
+After upgrading, configuration preparation syntax-checks the additive migration and retains a timestamped `httpd.*.pre-overrides.conf` backup beside `httpd.conf`. Saved sites are not regenerated or deleted. Restart Apache to load the policy. Failed validation retains the original configuration and reports the error.
+
+An error naming the parent `.htaccess` with `<IfModule not allowed here` occurs before Laravel executes. A working HTTPS health endpoint alone does not test application rewrite rules. The log viewer includes its file path for comparison with Apache's `ErrorLog` setting; custom log destinations must still be opened separately.
+
 Open **Manage project → Server logs** to read Apache errors and the PHP error log for the saved runtime selection. Each log reports read failures independently. Logs are shared across projects using the same service or PHP runtime; check timestamps and paths before attributing an entry to this site. Empty or old logs do not prove that the website is healthy, and custom log destinations may differ.
 
 The PHP selector shows the saved configuration, not a live measurement of website PHP. A trusted HTTPS connection can still return HTTP 404 or 500.

@@ -242,42 +242,13 @@ Current path contract: `user_www_dir()` returns the install directory’s `www`.
 
 This is critical for reliable auto-updates. Violating this causes update-related data loss.
 
-### Two separate roots - NEVER mix them
+### Current storage contract
 
-**App Root (replaceable during updates):**
+The installation directory (default C:\devstackbox) contains the application, bundled service binaries and www/. Updates replace binaries while preserving www/. Connected projects can live outside the installation.
 
-```text
-C:\Program Files\DevStackBox\     (or C:\DevStackBox\ for portable)
-  DevStackBox.exe
-  apache/        <- Apache binaries
-  php/           <- PHP binaries
-  phpmyadmin/    <- phpMyAdmin PHP files
-  resources/
-```
+The user data root is %LOCALAPPDATA%\devstackbox, overridden by DEVSTACKBOX_DATA_DIR. It contains config/, config-backups/, logs/, mysql-data/ and backups/. Local HTTPS material is under config/https/. Portable mode remains planned.
 
-**User Data Root (NEVER touched during updates):**
-
-```text
-C:\dsb-data\                      (or %APPDATA%\DevStackBox\ for installed mode)
-  mysql-data/    <- MySQL database files
-  logs/          <- All service logs
-  config/        <- Runtime configs (php.ini, httpd.conf, my.cnf)
-  config-backups/
-  certs/
-  backups/
-```
-
-**Rule:** MySQL database files (`mysql/data/`) must NEVER live inside the app folder. A database inside the app folder will be destroyed or corrupted on update.
-
-**Current state (v0.1.6):** This separation does not exist yet. Everything is in one directory. Fixing this is Phase 1.8 (see roadmap).
-
-**Config versioning:** All config files should contain a version field:
-
-```json
-{ "configVersion": 1 }
-```
-
-This allows migration scripts to transform old config formats when the app updates.
+Configuration preparation can migrate or normalize selected settings; user data is not wholesale replaced. Apache configVersion 9 and the separate v0.1.17 ancestor-override baseline have distinct migration paths. See [Configuration](../reference/configuration) for preservation limits.
 
 ---
 

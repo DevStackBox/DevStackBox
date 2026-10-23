@@ -14,4 +14,4 @@ Run after a fresh install on a VM or test PC.
 .\scripts\test-installed.ps1 -InstallRoot C:\devstackbox -State Running -ReportPath clean-install-report.json
 ```
 
-Record the report path and date in `docs/archive/QA-2026-10-17-release-gate.md` when accepting a release.
+Record the exact tested version, report path and date in `docs/RELEASE-VALIDATION.md` when accepting a release.

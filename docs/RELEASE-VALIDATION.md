@@ -1,5 +1,13 @@
 # Release validation history
 
+## v0.1.17 qualification - 23 October 2026
+
+- Final installer: `src-tauri/target/release/bundle/nsis/DevStackBox_0.1.17_x64-setup.exe`, 187366159 bytes. SHA-256: `3128C4CAAAF8692E52E7A0EE68B7EF0ABF4FFBEC89FD224F505FF8B7AB0910AB`. Both updater signatures verified (`verify-updater-artifact.mjs`, `finalize-release`).
+- Isolated Apache regression (`scripts/test-apache-overrides.mjs`): parent `.htaccess` ignored; public rewrites and assets work; private parent fixture inaccessible; paths with spaces covered.
+- Automated validation: `pnpm run check` (42 frontend, docs, release inputs); 43 Rust tests; signed NSIS build completed.
+- Not repeated in this pass: in-place upgrade from an installed v0.1.16 profile, or live Laravel project HTTP/HTTPS on a maintainer machine. Treat those as post-install checks if needed.
+- Release metadata finalized: `latest.json`, WinGet template, changelog SHA, `release/notes-v0.1.17.md`.
+
 v0.1.12 was published on 18 October 2026. Reports below preserve historical candidate evidence; the internal build numbers 0.1.13–0.1.15 predate that public release and are distinct from the subsequent public v0.1.13 patch.
 
 ## v0.1.13 qualification - 19 October 2026

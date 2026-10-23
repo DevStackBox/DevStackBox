@@ -2,6 +2,7 @@
 // Roadmap Phase 2: extracted from monolithic lib.rs.
 
 pub mod app_settings;
+pub mod apache_overrides;
 pub mod config_ports;
 pub mod config_version;
 pub mod mysql_connection;

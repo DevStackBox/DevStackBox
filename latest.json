@@ -1,11 +1,11 @@
 {
-  "version": "0.1.16",
-  "notes": "### Added\r\n\r\n- **Restore from .sql** streams the file from disk into the MySQL client (no full-file load in the UI or Rust string APIs). Modes: follow dump database names, or target a database when the file does not select one-with honest partial-failure messaging and an operation lock.\r\n- One-time migration of legacy PHP import limits (64M) to recommended values (512M upload, 544M post, 600s timeouts); custom limits are preserved. Optional **Apply recommended PHP import limits** on Databases → Backups.\r\n- phpMyAdmin writable UploadDir/SaveDir/TempDir under user data; ExecTimeLimit 600 when still at bundled default.\r\n\r\n### Changed\r\n\r\n- Per-database and full-server mysqldump backups stream stdout to disk instead of buffering in memory.\r\n\r\n### Removed\r\n\r\n- `restore_mysql_database` (in-memory SQL string restore).",
-  "pub_date": "2026-10-22T11:12:57.095Z",
+  "version": "0.1.17",
+  "notes": "### Fixed\n\n- Apache explicitly ignores ancestor .htaccess files unless a directory policy enables them. Laravel projects served from public/ no longer fail with parent .htaccess: <IfModule not allowed here under the default configuration. Public-directory rewrite rules remain enabled for HTTP and HTTPS.\n- Existing Apache configurations receive an additive, syntax-checked migration with a timestamped backup; custom ports, site records and explicit directory policies are preserved.\n- Replace the destructive legacy configuration test script with an isolated Apache regression test.",
+  "pub_date": "2026-10-23T11:35:49.500Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRMTM4U1RGRFJNV3Nyb3k2RUxGQ09NY0JGdnBORDJRZk9INEdka0hYQS85eHVFNndWK0l4T2orYUQzMUlocXRUTzh0aHdHbWZDR1MwMERnNmdSeHgvbjh2VlVXRjdCNVFrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNjY3NTM5CWZpbGU6RGV2U3RhY2tCb3hfMC4xLjE2X3g2NC1zZXR1cC5leGUKY1orYnlKZHVDZmljOVpyMjJLVDZ2T3JmZlN0NEdhcGVLbTZERmZwV01SSHRMZ01Bc2JNNFM0TFVOQ3ozT0wvbUdKZHpLL3ZyUUZaazlEdGFrdHBvQnc9PQo=",
-      "url": "https://github.com/DevStackBox/DevStackBox/releases/download/v0.1.16/DevStackBox_0.1.16_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRMTM4U1RGRFJNV3BNcnQ4VXV0SC9McGtPVldnNGtVZVJCbGlVREV0cVBNUTJPRHlSN0Q4bHdFcUR5U3J6bHg2dU1hVFphWGd2dXZRSXptTk5ZRTZyZC9halhkOVhFN0FJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNzU0OTE5CWZpbGU6RGV2U3RhY2tCb3hfMC4xLjE3X3g2NC1zZXR1cC5leGUKKysrcHYvbW1Ua2o0SFd6am5lRDFYdUNhWWNMbW1STVZ2ek91Z1FvdDYzTHVDUjVCcEJFV1UvbkdlQUh4QmY5aGM2cmt4NDhqZ09DZUJvZTh0bmFjQnc9PQo=",
+      "url": "https://github.com/DevStackBox/DevStackBox/releases/download/v0.1.17/DevStackBox_0.1.17_x64-setup.exe"
     }
   }
 }

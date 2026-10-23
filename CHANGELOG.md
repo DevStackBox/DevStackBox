@@ -4,6 +4,16 @@ All notable changes to DevStackBox are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.17] - 2026-10-23
+
+### Fixed
+
+- Apache explicitly ignores ancestor .htaccess files unless a directory policy enables them. Laravel projects served from public/ no longer fail with parent .htaccess: <IfModule not allowed here under the default configuration. Public-directory rewrite rules remain enabled for HTTP and HTTPS.
+- Existing Apache configurations receive an additive, syntax-checked migration with a timestamped backup; custom ports, site records and explicit directory policies are preserved.
+- Replace the destructive legacy configuration test script with an isolated Apache regression test.
+
+**Installer SHA-256:** `3128C4CAAAF8692E52E7A0EE68B7EF0ABF4FFBEC89FD224F505FF8B7AB0910AB`
+
 ## [0.1.16] - 2026-10-22
 
 ### Added

@@ -8,7 +8,7 @@
 
 ![Project details with HTTP 200 and trusted local HTTPS](docs/images/project-details-preview.jpg)
 
-Project details from an earlier development build. See the changelog for v0.1.14 changes.
+Project details from an earlier development build. See [CHANGELOG.md](CHANGELOG.md) for the latest release notes.
 
 ## Stack
 
@@ -45,11 +45,13 @@ Connect existing folders, manage `.test` hosts and trusted HTTPS, and select an 
 
 See the [project guide](docs/getting-started/projects.mdx), [project roadmap](PROJECT-ROADMAP.md), and [release validation](docs/RELEASE-VALIDATION.md). Framework installers, database linking and Git/SSH are future work. Frameworks will download on demand; AI integration is deferred.
 
-## v0.1.14 PHP security update
+## v0.1.17 source preparation
 
-Bundles PHP 8.3.36 for CVE-2026-109618 and CVE-2026-109619. PHP Version Manager shows both branch and full patch versions and updates existing branches with verified downloads. PHP 8.1 has been removed from supported choices. Stop Apache and PHP terminals before updating each installed branch, including those pinned to projects. Apache startup rejects outdated web runtimes until they are updated.
+This source update fixes Apache ancestor `.htaccess` handling and adds configuration/log diagnostics. Installer and installed-site verification are tracked separately in [release validation](docs/RELEASE-VALIDATION.md). See the [documentation and cleanup audit](docs/development/v0.1.17-docs-audit.md) for readiness gates and proposed cleanup; no development files were deleted.
 
-Version 0.1.14 is prepared in this source tree; download links resolve to the latest published GitHub release. Generate the final installer and updater metadata using the release runbook before publication.
+## Releasing
+
+Maintainers: follow [Release process](docs/development/release-process.mdx) and the [Release runbook](docs/development/release-runbook.mdx) for signed builds, `finalize-release`, and GitHub publication. Download links for users always resolve to the [latest published GitHub release](https://github.com/DevStackBox/DevStackBox/releases/latest).
 
 ## Diagnostics and configuration safety
 

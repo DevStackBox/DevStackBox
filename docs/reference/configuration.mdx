@@ -27,7 +27,7 @@ Runtime configs are generated and stored under the user data root:
   config\
     httpd.conf
     my.cnf
-    php.ini          (via php/current/)
+    php.ini          (editable user copy; loaded through PHPRC)
     phpmyadmin.conf
   config-backups\    timestamped .bak files from in-app edits
 ```
@@ -38,7 +38,7 @@ Override the user data root with the `DEVSTACKBOX_DATA_DIR` environment variable
 
 ## configVersion
 
-Generated config files include a `configVersion` field (or `# configVersion: N` header in `php.ini`). This supports future migrations when defaults change between releases. Do not remove the version marker when editing by hand.
+Apache and MySQL use configuration version markers. Apache currently uses `configVersion: 9`; the v0.1.17 directory baseline is a separate additive migration, so it does not trigger wholesale regeneration. PHP import limits use a separate `phpImportLimitsVersion` comment. Preserve these markers. Older Apache template migrations can regenerate configuration with a backup; do not assume every migration preserves every custom directive.
 
 ## Common changes
 
@@ -47,9 +47,19 @@ Generated config files include a `configVersion` field (or `# configVersion: N` 
 | Change Apache port      | `config/httpd.conf` → `Listen`         |
 | Change MySQL port       | `config/my.cnf` → `port`               |
 | PHP settings            | `config/php.ini` or in-app PHP editor  |
-| Document root           | `config/httpd.conf` → `DocumentRoot`   |
+| Project document root | Projects → Manage project → document root |
 
 After editing, restart the affected service from the dashboard.
+
+## PHP settings and updates
+
+The bundled php.ini is a seed template. The editor reads and writes the user copy, which survives normal upgrades. Pinned project runtimes use config/php-runtimes/BRANCH/php.ini; the global editor and terminal use the global configuration.
+
+Custom upload, memory and timeout settings are preserved by the import-limit migration. App-managed extension/session paths and logging/error-display settings can be normalized during configuration preparation. Do not describe every directive as untouched.
+
+## Apache .htaccess baseline
+
+v0.1.17 adds AllowOverride None and AllowOverrideList None at the filesystem-root scope. Existing document-root AllowOverride All blocks still enable site rewrites on HTTP and HTTPS. Explicit, more-specific custom rules remain effective. The migration validates a staged file and retains a timestamped backup beside httpd.conf. Restart Apache after upgrading. See [Projects](../getting-started/projects).
 
 ## Related
 

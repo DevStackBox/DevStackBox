@@ -12,6 +12,9 @@ pub struct ProjectDiagnostics {
 }
 
 fn document_root_message(root: &std::path::Path) -> Option<String> {
+    if root.join("public/index.php").is_file() {
+        return Some("This folder contains public/index.php. For Laravel, select the public folder as the document root so private application files are not served.".into());
+    }
     match fs::read_dir(root) {
         Err(e) => Some(format!("Document root cannot be read: {e}")),
         Ok(mut files) => match files.next() {

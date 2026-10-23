@@ -6,10 +6,16 @@ icon: "Wrench"
 
 # DevStackBox - Error Reference
 
-**Every known error message, what it means, and how to fix it.**  
+**Common errors, diagnostic steps, and historical issue notes.**
 When you see an error in the UI or logs, find it here first.
 
 ---
+
+## Apache rejects a parent .htaccess
+
+An error such as `project/.htaccess: <IfModule not allowed here` occurs before Laravel runs. The failing file may be above the selected public document root. v0.1.17 adds an explicit ancestor-directory baseline; restart Apache after upgrading and compare the exact path in the new log entry. Custom directory policies can still override that baseline. Do not add a broad rule for an entire drive or hardcode an XAMPP folder. See [Projects](../getting-started/projects).
+
+The Logs view displays the file it reads. If entries do not advance after a request, compare that path with the running Apache configuration's ErrorLog directive. HTTP status 500 alone does not establish a Laravel bug.
 
 ## Service Errors
 
@@ -23,7 +29,7 @@ When you see an error in the UI or logs, find it here first.
 
 1. Open the Debug panel (dev builds only) - it shows what path was resolved
 2. Check that `apache/bin/httpd.exe`, `mysql/bin/mysqld.exe`, or `php/8.3/php.exe` exist
-3. If they are missing, re-run `scripts/prepare-binaries.ps1` or copy from your XAMPP installation
+3. If they are missing, reinstall the official DevStackBox release; developers should restore the project resources and run `node scripts/verify-release.mjs`
 4. If the path looks wrong (pointing to `C:\xampp\htdocs\DevStackBox` in a production install), see `advanced/troubleshooting` ISSUE-009
 
 ---
@@ -199,7 +205,7 @@ Remove-Item "mysql\data\<hostname>.pid" -ErrorAction SilentlyContinue
 2. Install Microsoft Visual C++ Redistributable 2022 (x64)
 3. Temporarily disable antivirus during install
 
-See `docs/MSI_TROUBLESHOOTING.md` for more detail.
+See `docs/archive/MSI_TROUBLESHOOTING.md` for more detail.
 
 ---
 

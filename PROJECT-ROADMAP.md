@@ -1,5 +1,7 @@
 # Project workspace roadmap
 
+> Historical planning/evidence: version-specific sections describe their original dates. For v0.1.17 use docs/feature-status.mdx, docs/development/release-runbook.mdx and docs/RELEASE-VALIDATION.md.
+
 Status: implementation started on 18 October 2026. AI integration is deferred
 at the user's request, including MCP and agent-specific tools.
 This roadmap includes future work; the progress log below distinguishes source

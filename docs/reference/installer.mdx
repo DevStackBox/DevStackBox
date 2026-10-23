@@ -72,7 +72,7 @@ Download, signature verification, and in-app install are **shipped** as of v0.1.
 - [x] Updater plugin wired in the app
 - [x] Updater endpoint and signing public key in `tauri.conf.json`
 - [ ] Pre-update service shutdown (Apache + MySQL) before the installer runs
-- [ ] Config backup and `configVersion` migration runner
+- [x] Configuration backups and version migrations exist; v0.1.17 adds a separate syntax-checked Apache override migration. See the configuration reference for preservation limits.
 - [ ] Documented end-to-end test: install v0.X.Y → update to v0.X.Y+1 with data intact
 
 Target milestone for the remaining items: **v0.2.0** ([Roadmap](../roadmap)). Publishing steps are in [Release process](../development/release-process).
