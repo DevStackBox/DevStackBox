@@ -39,6 +39,8 @@ XAMPP for Windows ships PHP 8.2. DevStackBox gives you 8.3 immediately and 8.5 w
 
 [devstackbox.com/docs](https://www.devstackbox.com/docs)
 
+Using an AI coding tool? Give it [DEVSTACKBOX.md](DEVSTACKBOX.md) for runtime discovery, project setup and database guidance.
+
 ## Project workspaces
 
 Connect existing folders, manage `.test` hosts and trusted HTTPS, and select an installed PHP version per website. Download extra runtimes in PHP Versions first. The terminal currently uses global PHP.
