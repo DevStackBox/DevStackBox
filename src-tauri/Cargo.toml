@@ -1,6 +1,6 @@
 [package]
 name = "devstackbox"
-version = "0.1.17"
+version = "0.1.18"
 description = "A lightweight, portable, open-source local development environment for PHP developers"
 authors = ["Nomad Programmer <hello@devstackbox.com>"]
 edition = "2021"
@@ -20,6 +20,7 @@ tauri-build = { version = "2.0", features = [] }
 [dependencies]
 rfd = "0.15"
 sha2 = "0.10"
+flate2 = "1"
 tauri = { version = "2.1", features = ["tray-icon", "image-ico", "image-png"] }
 tauri-plugin-updater = "2.0"
 tauri-plugin-process = "2.0"

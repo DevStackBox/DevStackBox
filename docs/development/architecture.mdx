@@ -363,3 +363,12 @@ Resources bundled into the installer are declared in `tauri.conf.json`:
 | Progressive disclosure in service UI    | Beginners see start/stop; experts expand for logs, config, PID                  |
 | App/data directory separation           | Required for safe auto-updates; see reference/installer              |
 | Installed mode only (no portable in v1) | Portable mode cannot support auto-updates reliably; adds architectural conflict |
+
+
+## Unreleased database operation layer
+
+`commands/database_workspace.rs` owns native operation records and sequential worker execution. `DatabaseOperationsProvider` polls the native registry so route changes do not discard progress. The process-local database guard coordinates imports, exports, account/schema mutations and MySQL stop operations. Native window/tray close paths refuse ordinary app exit during active operations; this does not promise crash survival or automatic resume.
+
+`utils/database_io.rs` keeps sensitive SQL on stdin and publishes backup files only after successful process/file completion. The SQL connection sets a known literal-escaping mode for generated statements. Imported dumps keep their own SQL semantics. ZIP imports use a versioned manifest, strict entry validation, expanded-size limits and checksums before executing SQL. Backup integrity is distinct from restore verification.
+
+Database metadata is cached in memory, invalidated when the observed MySQL port changes, and older requests cannot overwrite newer refresh results. Persistent operation history is bounded to 50 entries and unfinished jobs are marked interrupted after restart. This is a local operation log, not a distributed transaction coordinator.

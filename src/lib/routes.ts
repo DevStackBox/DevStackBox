@@ -145,9 +145,9 @@ export const ROUTES = {
     parent: "/databases",
   },
   databasesBackups: {
-    path: "/databases/backups",
+    path: "/databases/import-export",
     labelKey: "navigation.dbBackups",
-    defaultLabel: "Backups",
+    defaultLabel: "Import & Export",
     icon: HardDriveDownload,
     parent: "/databases",
   },

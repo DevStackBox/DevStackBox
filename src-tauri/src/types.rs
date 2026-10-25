@@ -29,6 +29,7 @@ pub struct PHPVersionInfo {
 /// `information_schema.tables` in a single query.
 #[derive(serde::Serialize)]
 pub struct DatabaseInfo {
+    pub view_count: u64,
     pub name: String,
     pub table_count: u64,
     pub size_bytes: u64,

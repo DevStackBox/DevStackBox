@@ -2,7 +2,7 @@
 
 /// MySQL string literal escaping: single quotes doubled per SQL standard.
 pub fn escape_mysql_string_literal(value: &str) -> String {
-    value.replace('\\', "\\\\").replace('\'', "''")
+    value.replace('\'', "''")
 }
 
 fn has_forbidden_sql_chars(s: &str) -> bool {
@@ -75,7 +75,7 @@ pub fn quote_mysql_user_host(user: &str, host: &str) -> Result<String, String> {
     let host = validate_mysql_host(host)?;
     Ok(format!(
         "'{}'@'{}'",
-        escape_mysql_string_literal(user),
+        escape_mysql_string_literal(user.trim()),
         escape_mysql_string_literal(&host)
     ))
 }

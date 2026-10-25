@@ -4,6 +4,19 @@ All notable changes to DevStackBox are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.18] - 2026-10-25
+
+### Added
+
+- **Database workspace** with **Databases**, **Users**, and **Import & Export** tabs: database details (overview, tables and views, access, backups), bulk selection, and visible manage, backup, export, and import actions.
+- SQL and GZIP export and import with risk review, sequential batches, shared activity history, and cancellation.
+- DevStackBox ZIP packages, saved backup records with integrity checks, reviewed restore, and full-server backup from the workspace.
+- Database-level permissions editor and clearer MySQL account controls; improved stopped-MySQL and stale-cache empty states.
+
+### Changed
+
+- Database backup and restore workflows are centered in the workspace; legacy SQL backup entry points redirect where documented.
+
 ## [0.1.17] - 2026-10-23
 
 ### Fixed

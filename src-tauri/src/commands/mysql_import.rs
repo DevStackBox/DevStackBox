@@ -10,7 +10,7 @@ use std::thread;
 
 use crate::utils::mysql_connection::{mysql_command, prepare_mysql_client};
 
-pub static MYSQL_DATA_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+pub static MYSQL_DATA_LOCK: crate::utils::database_lock::DatabaseLock = crate::utils::database_lock::DatabaseLock::new();
 
 const MAX_SQL_FILE_BYTES: u64 = 32 * 1024 * 1024 * 1024;
 const SNIFF_BYTES: usize = 256 * 1024;
@@ -174,14 +174,14 @@ fn run_mysql_import_blocking(
     let _ = reader.join();
 
     if !status.success() {
-        let msg = stderr_tail
+        let _msg = stderr_tail
             .lock()
             .ok()
             .map(|v| String::from_utf8_lossy(&v).trim().to_string())
             .filter(|s| !s.is_empty())
             .unwrap_or_else(|| "mysql client exited with an error".into());
         return Err(format!(
-            "Import failed; some changes may already have been applied. {msg}"
+            "Import failed; some changes may already have been applied. Check input compatibility and permissions; sensitive SQL diagnostics are omitted."
         ));
     }
 

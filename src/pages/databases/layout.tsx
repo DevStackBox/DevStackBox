@@ -21,7 +21,7 @@ export function DatabasesLayout() {
     },
     {
       to: ROUTES.databasesBackups.path,
-      label: t("navigation.dbBackups", "Backups"),
+      label: t("databaseWorkspace.transfer"),
       icon: HardDriveDownload,
     },
   ];
@@ -34,7 +34,7 @@ export function DatabasesLayout() {
           icon={Database}
           title={t("navigation.databases", "Databases")}
           description={t(
-            "workspace.databases.description",
+            "databaseWorkspace.workspaceDescription",
             "Databases, MySQL users, and per-database backups.",
           )}
         />

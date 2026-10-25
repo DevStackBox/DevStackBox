@@ -1,3 +1,6 @@
+import { DatabasePermissions } from "@/components/database-permissions";
+import { useDatabaseOperations } from "@/context/database-operations-context";
+import { useLocation } from "react-router-dom";
 import { MySQLRequired } from "@/components/mysql-required";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -43,12 +46,25 @@ interface MySQLUser {
 }
 
 export function MySQLUsersPage() {
-  return <MySQLRequired><MySQLUsersPageContent /></MySQLRequired>;
+  return (
+    <MySQLRequired>
+      <MySQLUsersPageContent />
+    </MySQLRequired>
+  );
 }
 
 function MySQLUsersPageContent() {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { active } = useDatabaseOperations();
+  const location = useLocation();
+  const [permissionTarget, setPermissionTarget] = useState<MySQLUser | null>(
+    null,
+  );
+  const [search, setSearch] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [confirmation, setConfirmation] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
 
   const [loadError, setLoadError] = useState<string | null>(null);
   const [users, setUsers] = useState<MySQLUser[]>([]);
@@ -91,7 +107,7 @@ function MySQLUsersPageContent() {
   };
 
   const handleCreate = async () => {
-    if (!newUsername.trim()) return;
+    if (!newUsername.trim() || newPassword !== confirmation || active) return;
     setCreating(true);
     try {
       const msg = await safeInvoke<string>(
@@ -145,7 +161,7 @@ function MySQLUsersPageContent() {
   };
 
   const handleSetPassword = async () => {
-    if (!pwdTarget) return;
+    if (!pwdTarget || newPwd !== passwordConfirmation || active) return;
     setUpdatingPwd(true);
     try {
       const msg = await safeInvoke<string>(
@@ -172,7 +188,16 @@ function MySQLUsersPageContent() {
     }
   };
 
-  if (loadError) return <div role="alert" className="rounded-md border p-6 space-y-3"><h2 className="font-semibold">Could not read MySQL users</h2><p className="text-sm text-muted-foreground">{loadError}</p><Button onClick={() => void loadUsers()} disabled={loading}>Try again</Button></div>;
+  if (loadError)
+    return (
+      <div role="alert" className="rounded-md border p-6 space-y-3">
+        <h2 className="font-semibold">Could not read MySQL users</h2>
+        <p className="text-sm text-muted-foreground">{loadError}</p>
+        <Button onClick={() => void loadUsers()} disabled={loading}>
+          Try again
+        </Button>
+      </div>
+    );
 
   return (
     <motion.div
@@ -181,6 +206,22 @@ function MySQLUsersPageContent() {
       transition={{ duration: 0.2 }}
       className="space-y-6"
     >
+      <DatabasePermissions
+        account={permissionTarget}
+        initialDatabase={
+          (location.state as { database?: string } | null)?.database
+        }
+        onClose={() => setPermissionTarget(null)}
+      />
+      <p className="text-sm text-muted-foreground">
+        {t("databaseWorkspace.authenticationNote")}
+      </p>
+      <Input
+        aria-label={t("databaseWorkspace.searchUsers")}
+        placeholder={t("databaseWorkspace.searchUsers")}
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
       <div className="flex items-center justify-end gap-2">
         <Button
           variant="outline"
@@ -193,7 +234,14 @@ function MySQLUsersPageContent() {
           />
           {t("actions.refresh", "Refresh")}
         </Button>
-        <Button size="sm" onClick={() => setCreateOpen(true)}>
+        <Button
+          size="sm"
+          disabled={active}
+          onClick={() => {
+            setConfirmation("");
+            setCreateOpen(true);
+          }}
+        >
           <Plus className="mr-2 h-4 w-4" />
           {t("mysql.users.addUser", "Add User")}
         </Button>
@@ -205,7 +253,7 @@ function MySQLUsersPageContent() {
             <TableRow>
               <TableHead>{t("mysql.users.username", "Username")}</TableHead>
               <TableHead>{t("mysql.users.host", "Host")}</TableHead>
-              <TableHead>{t("mysql.users.password", "Password")}</TableHead>
+              <TableHead>{t("databaseWorkspace.passwordStatus")}</TableHead>
               <TableHead className="text-right">
                 {t("actions.actions", "Actions")}
               </TableHead>
@@ -218,57 +266,83 @@ function MySQLUsersPageContent() {
                   colSpan={4}
                   className="text-center text-muted-foreground py-8"
                 >
-                  {t(
-                    "mysql.users.noUsers",
-                    "No MySQL users found.",
-                  )}
+                  {t("mysql.users.noUsers", "No MySQL users found.")}
                 </TableCell>
               </TableRow>
             )}
-            {users.map((u) => (
-              <TableRow key={`${u.user}@${u.host}`}>
-                <TableCell className="font-mono font-medium">
-                  {u.user}
-                </TableCell>
-                <TableCell className="font-mono text-muted-foreground">
-                  {u.host}
-                </TableCell>
-                <TableCell>
-                  {u.has_password ? (
-                    <Badge variant="secondary">
-                      {t("mysql.users.hasPassword", "Set")}
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-muted-foreground">
-                      {t("mysql.users.noPassword", "None")}
-                    </Badge>
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setPwdTarget(u);
-                        setNewPwd("");
-                        setPwdOpen(true);
-                      }}
-                    >
-                      <KeyRound className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setDeleteTarget(u)}
-                      disabled={u.user === "root"}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+            {users
+              .filter((u) =>
+                `${u.user}@${u.host}`
+                  .toLowerCase()
+                  .includes(search.toLowerCase()),
+              )
+              .map((u) => (
+                <TableRow key={`${u.user}@${u.host}`}>
+                  <TableCell className="font-mono font-medium">
+                    {u.user}
+                  </TableCell>
+                  <TableCell className="font-mono text-muted-foreground">
+                    {u.host}
+                  </TableCell>
+                  <TableCell>
+                    {u.has_password ? (
+                      <Badge variant="secondary">
+                        {t("databaseWorkspace.present")}
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className="text-muted-foreground"
+                      >
+                        {t("databaseWorkspace.empty")}
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={
+                          active ||
+                          u.user === "root" ||
+                          u.user.startsWith("mysql.")
+                        }
+                        onClick={() => setPermissionTarget(u)}
+                      >
+                        {t("databaseWorkspace.permissions")}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={active || u.user.startsWith("mysql.")}
+                        onClick={() => {
+                          setPasswordConfirmation("");
+                          setPwdTarget(u);
+                          setNewPwd("");
+                          setPwdOpen(true);
+                        }}
+                      >
+                        <KeyRound className="h-4 w-4 mr-2" />
+                        {t("databaseWorkspace.changePassword")}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDeleteTarget(u)}
+                        aria-label={`${t("mysql.users.dropUser")} ${u.user}@${u.host}`}
+                        disabled={
+                          active ||
+                          u.user === "root" ||
+                          u.user.startsWith("mysql.")
+                        }
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
       </div>
@@ -304,7 +378,7 @@ function MySQLUsersPageContent() {
                 {t("mysql.users.passwordOptional", "Password (optional)")}
               </Label>
               <Input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder={t(
@@ -314,6 +388,22 @@ function MySQLUsersPageContent() {
               />
             </div>
           </div>
+          <label className="text-sm flex gap-2">
+            <input
+              type="checkbox"
+              checked={showPassword}
+              onChange={(e) => setShowPassword(e.target.checked)}
+            />
+            {t("databaseWorkspace.showPassword")}
+          </label>
+          <label className="text-sm">
+            {t("databaseWorkspace.confirmPassword")}
+            <Input
+              type={showPassword ? "text" : "password"}
+              value={confirmation}
+              onChange={(e) => setConfirmation(e.target.value)}
+            />
+          </label>
           <DialogFooter>
             <Button
               variant="outline"
@@ -324,7 +414,12 @@ function MySQLUsersPageContent() {
             </Button>
             <Button
               onClick={handleCreate}
-              disabled={creating || !newUsername.trim()}
+              disabled={
+                creating ||
+                active ||
+                !newUsername.trim() ||
+                newPassword !== confirmation
+              }
             >
               {creating
                 ? t("actions.creating", "Creating...")
@@ -349,7 +444,7 @@ function MySQLUsersPageContent() {
             <div className="space-y-2">
               <Label>{t("mysql.users.newPassword", "New Password")}</Label>
               <Input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={newPwd}
                 onChange={(e) => setNewPwd(e.target.value)}
                 placeholder={t(
@@ -360,6 +455,22 @@ function MySQLUsersPageContent() {
               />
             </div>
           </div>
+          <label className="text-sm flex gap-2">
+            <input
+              type="checkbox"
+              checked={showPassword}
+              onChange={(e) => setShowPassword(e.target.checked)}
+            />
+            {t("databaseWorkspace.showPassword")}
+          </label>
+          <label className="text-sm">
+            {t("databaseWorkspace.confirmPassword")}
+            <Input
+              type={showPassword ? "text" : "password"}
+              value={passwordConfirmation}
+              onChange={(e) => setPasswordConfirmation(e.target.value)}
+            />
+          </label>
           <DialogFooter>
             <Button
               variant="outline"
@@ -368,7 +479,12 @@ function MySQLUsersPageContent() {
             >
               {t("actions.cancel", "Cancel")}
             </Button>
-            <Button onClick={handleSetPassword} disabled={updatingPwd}>
+            <Button
+              onClick={handleSetPassword}
+              disabled={
+                updatingPwd || active || newPwd !== passwordConfirmation
+              }
+            >
               {updatingPwd
                 ? t("actions.saving", "Saving...")
                 : t("actions.save", "Save")}

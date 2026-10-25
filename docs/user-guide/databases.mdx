@@ -7,7 +7,50 @@ description: "Create databases, manage local accounts and understand authenticat
 
 Start MySQL before opening **Databases**. Open phpMyAdmin only when both Apache and MySQL are running. The app uses its configured local MySQL client credentials; an authentication error is different from an empty database list.
 
-## Create and inspect a database
+## Database workspace
+
+**Databases | Users | Import & Export** (v0.1.18) replaces the older scattered database-only list for day-to-day management:
+
+- Select databases in the list and choose **Export selected**, or use **Manage** for details. The visible action menu also provides import, backup, phpMyAdmin and deletion.
+- Counts distinguish tables and views. Sizes and row counts are estimates, not an exact measurement of disk usage.
+- The create dialog can use server defaults or a supported character set/collation. Database deletion requires the exact name; system schemas are protected by the native delete command.
+- Details show metadata and a searchable table/view list. Access links to the shared account permission editor; saved backups open filtered to the database.
+- The Users screen searches username and host and provides labeled password changes with confirmation. **Database permissions** edits direct database grants: Read only gives SELECT; Read/write adds INSERT, UPDATE and DELETE. Schema migrations need separately selected privileges. Review additions and removals before applying them.
+- Unsupported global, role, table and routine grants are preserved. Direct grants are not a complete effective-access report. The editor refuses servers using partial revokes; use phpMyAdmin for that advanced policy. Administrative and system identities are protected from ordinary deletion and permission editing.
+- When MySQL stops, cached names remain labeled stale. No live database query is required to display that state. New metadata is fetched after MySQL returns.
+
+Creating an account and editing its grants remain separate explicit actions. Copy/migration, account renaming and remote transfer are not implemented in this workspace.
+
+
+### Workspace screenshots
+
+Native captures from v0.1.18 on 25 October 2026 using isolated demonstration data. Images retain their original 1536 × 912 resolution, without upscaling.
+
+![Database list and visible actions](../images/source-preview/database-list-2026-10-25.jpg)
+
+*Database list and visible actions.*
+
+![Database overview and metadata](../images/source-preview/database-details-2026-10-25.jpg)
+
+*Database overview and metadata.*
+
+![Separate table and view listings](../images/source-preview/database-tables-2026-10-25.jpg)
+
+*Separate table and view listings.*
+
+![Local MySQL accounts and protected system actions](../images/source-preview/database-users-2026-10-25.jpg)
+
+*Local MySQL accounts and protected system actions.*
+
+![Direct database permission editor](../images/source-preview/database-permissions-2026-10-25.jpg)
+
+*Direct database permission editor.*
+
+![Stopped MySQL with stale cached names in dark mode](../images/source-preview/database-stopped-dark-2026-10-25.jpg)
+
+*Stopped MySQL with stale cached names in dark mode.*
+
+## Create and inspect
 
 1. Open **Databases** and refresh the list.
 2. Choose the create action, enter the database name and submit.

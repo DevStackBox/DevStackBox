@@ -344,3 +344,18 @@ tauri::generate_handler![
    ```
 
 5. Update this document with the new command entry.
+
+
+## Unreleased database workspace commands
+
+These commands are available in current source and are not part of the published v0.1.17 command contract.
+
+| Commands | Purpose |
+| --- | --- |
+| `database_details`, `database_collations`, `create_database_with_options` | Schema/object metadata and validated creation options |
+| `start_database_operation`, `database_operations`, `cancel_database_operation` | Native sequential jobs, bounded history and cancellation |
+| `pick_database_files`, `pick_database_destination`, `inspect_database_files` | Native file selection and risk-review metadata |
+| `database_backups`, `verify_database_backup`, `delete_database_backup` | Managed backup records, checksum checks and scoped file deletion |
+| `database_grants`, `set_database_grants` | Direct database privilege inspection and explicit additions/removals |
+
+Operations use DevStackBox's verified local MySQL connection. A selected initial database is not confinement for arbitrary imported SQL. Cancellation does not reverse SQL already applied. The grants editor refuses partial-revoke mode rather than changing global restrictions, and escapes database wildcard characters for ordinary database grants.

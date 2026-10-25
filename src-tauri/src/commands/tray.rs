@@ -22,6 +22,7 @@ pub async fn hide_to_tray(app_handle: tauri::AppHandle) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn quit_app(app_handle: tauri::AppHandle) -> Result<(), String> {
+    if crate::commands::database_workspace::has_active_database_operation() { return Err("A database operation is running. Cancel it or wait before quitting.".into()); }
     app_handle.exit(0);
     Ok(())
 }

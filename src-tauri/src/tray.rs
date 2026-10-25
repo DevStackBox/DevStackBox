@@ -232,7 +232,7 @@ pub fn setup_tray(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
                 "quit" => {
-                    app.exit(0);
+                    if !crate::commands::database_workspace::has_active_database_operation() { app.exit(0); } else if let Some(window) = app.get_webview_window("main") { let _ = window.show(); let _ = window.set_focus(); }
                 }
                 _ => {}
             }

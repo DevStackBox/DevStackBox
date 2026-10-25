@@ -236,6 +236,160 @@
         "/docs-images/source-preview/sql-restore-selected-2026-10-23.jpg"
       ],
       "approved": true
+    },
+    {
+      "id": "database-workspace-list",
+      "file": "source-preview/database-list-2026-10-25.jpg",
+      "width": 1536,
+      "height": 912,
+      "version": "0.1.18",
+      "capturedAt": "2026-10-25",
+      "alt": "Database list and visible actions",
+      "caption": "Database workspace in v0.1.18, 25 October 2026. Isolated demonstration data. Original 1536 × 912 native capture; not upscaled.",
+      "publicPaths": [
+        "/docs-images/source-preview/database-list-2026-10-25.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "database-workspace-details",
+      "file": "source-preview/database-details-2026-10-25.jpg",
+      "width": 1536,
+      "height": 912,
+      "version": "0.1.18",
+      "capturedAt": "2026-10-25",
+      "alt": "Database overview and metadata",
+      "caption": "Database workspace in v0.1.18, 25 October 2026. Isolated demonstration data. Original 1536 × 912 native capture; not upscaled.",
+      "publicPaths": [
+        "/docs-images/source-preview/database-details-2026-10-25.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "database-workspace-tables",
+      "file": "source-preview/database-tables-2026-10-25.jpg",
+      "width": 1536,
+      "height": 912,
+      "version": "0.1.18",
+      "capturedAt": "2026-10-25",
+      "alt": "Separate table and view listings",
+      "caption": "Database workspace in v0.1.18, 25 October 2026. Isolated demonstration data. Original 1536 × 912 native capture; not upscaled.",
+      "publicPaths": [
+        "/docs-images/source-preview/database-tables-2026-10-25.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "database-workspace-users",
+      "file": "source-preview/database-users-2026-10-25.jpg",
+      "width": 1536,
+      "height": 912,
+      "version": "0.1.18",
+      "capturedAt": "2026-10-25",
+      "alt": "Local MySQL accounts and protected system actions",
+      "caption": "Database workspace in v0.1.18, 25 October 2026. Isolated demonstration data. Original 1536 × 912 native capture; not upscaled.",
+      "publicPaths": [
+        "/docs-images/source-preview/database-users-2026-10-25.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "database-workspace-permissions",
+      "file": "source-preview/database-permissions-2026-10-25.jpg",
+      "width": 1536,
+      "height": 912,
+      "version": "0.1.18",
+      "capturedAt": "2026-10-25",
+      "alt": "Direct database permission editor",
+      "caption": "Database workspace in v0.1.18, 25 October 2026. Isolated demonstration data. Original 1536 × 912 native capture; not upscaled.",
+      "publicPaths": [
+        "/docs-images/source-preview/database-permissions-2026-10-25.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "database-workspace-export",
+      "file": "source-preview/database-export-2026-10-25.jpg",
+      "width": 1536,
+      "height": 912,
+      "version": "0.1.18",
+      "capturedAt": "2026-10-25",
+      "alt": "Export format and backup controls",
+      "caption": "Database workspace in v0.1.18, 25 October 2026. Isolated demonstration data. Original 1536 × 912 native capture; not upscaled.",
+      "publicPaths": [
+        "/docs-images/source-preview/database-export-2026-10-25.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "database-workspace-import",
+      "file": "source-preview/database-import-2026-10-25.jpg",
+      "width": 1536,
+      "height": 912,
+      "version": "0.1.18",
+      "capturedAt": "2026-10-25",
+      "alt": "Empty import workflow",
+      "caption": "Database workspace in v0.1.18, 25 October 2026. Isolated demonstration data. Original 1536 × 912 native capture; not upscaled.",
+      "publicPaths": [
+        "/docs-images/source-preview/database-import-2026-10-25.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "database-workspace-import-review",
+      "file": "source-preview/database-import-review-2026-10-25.jpg",
+      "width": 1536,
+      "height": 912,
+      "version": "0.1.18",
+      "capturedAt": "2026-10-25",
+      "alt": "Import target and risk review",
+      "caption": "Database workspace in v0.1.18, 25 October 2026. Isolated demonstration data. Original 1536 × 912 native capture; not upscaled.",
+      "publicPaths": [
+        "/docs-images/source-preview/database-import-review-2026-10-25.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "database-workspace-activity",
+      "file": "source-preview/database-activity-2026-10-25.jpg",
+      "width": 1536,
+      "height": 912,
+      "version": "0.1.18",
+      "capturedAt": "2026-10-25",
+      "alt": "Completed backup operation history",
+      "caption": "Database workspace in v0.1.18, 25 October 2026. Isolated demonstration data. Original 1536 × 912 native capture; not upscaled.",
+      "publicPaths": [
+        "/docs-images/source-preview/database-activity-2026-10-25.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "database-workspace-saved-backups",
+      "file": "source-preview/database-saved-backups-2026-10-25.jpg",
+      "width": 1536,
+      "height": 912,
+      "version": "0.1.18",
+      "capturedAt": "2026-10-25",
+      "alt": "Saved backup integrity and restore status",
+      "caption": "Database workspace in v0.1.18, 25 October 2026. Isolated demonstration data. Original 1536 × 912 native capture; not upscaled.",
+      "publicPaths": [
+        "/docs-images/source-preview/database-saved-backups-2026-10-25.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "database-workspace-stopped-dark",
+      "file": "source-preview/database-stopped-dark-2026-10-25.jpg",
+      "width": 1536,
+      "height": 912,
+      "version": "0.1.18",
+      "capturedAt": "2026-10-25",
+      "alt": "Stopped MySQL with stale cached names in dark mode",
+      "caption": "Database workspace in v0.1.18, 25 October 2026. Isolated demonstration data. Original 1536 × 912 native capture; not upscaled.",
+      "publicPaths": [
+        "/docs-images/source-preview/database-stopped-dark-2026-10-25.jpg"
+      ],
+      "approved": true
     }
   ]
 }

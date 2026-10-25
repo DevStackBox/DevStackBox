@@ -86,10 +86,6 @@
       "guide": "user-guide/databases"
     },
     {
-      "route": "/databases/backups",
-      "guide": "user-guide/database-backups"
-    },
-    {
       "route": "/terminal",
       "guide": "user-guide/terminal"
     },
@@ -112,6 +108,18 @@
     {
       "route": "/settings/xampp-import",
       "guide": "user-guide/xampp-migration"
+    },
+    {
+      "route": "/databases/import-export",
+      "guide": "user-guide/database-backups"
+    },
+    {
+      "route": "/databases/legacy-backups",
+      "guide": "user-guide/database-backups"
+    },
+    {
+      "route": "/databases/database/:name",
+      "guide": "user-guide/databases"
     }
   ],
   "redirects": [
@@ -126,7 +134,8 @@
     "/ssl",
     "/vhosts",
     "/backup",
-    "*"
+    "*",
+    "/databases/backups"
   ],
   "flows": {
     "welcome": "user-guide/dashboard",

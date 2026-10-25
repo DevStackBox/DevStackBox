@@ -132,6 +132,7 @@ pub async fn start_mysql() -> Result<bool, String> {
 
 #[tauri::command]
 pub async fn stop_mysql() -> Result<bool, String> {
+    let _lock = super::mysql_import::MYSQL_DATA_LOCK.try_lock().map_err(|_| "A database operation is running. Cancel it or wait before stopping MySQL.")?;
     let mysql_path = mysqld_exe_path();
 
     if !is_our_process_running("mysqld.exe", &mysql_path) {
@@ -298,6 +299,8 @@ pub async fn toggle_mysql() -> Result<bool, String> {
 
 #[tauri::command]
 pub async fn backup_mysql_database() -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+    let _lock = super::mysql_import::MYSQL_DATA_LOCK.try_lock().map_err(|_| "Another database operation is in progress.")?;
     prepare_mysql_client()?;
 
     let backups_dir = crate::utils::paths::user_backups_dir().join("mysql");
@@ -307,13 +310,14 @@ pub async fn backup_mysql_database() -> Result<String, String> {
     let timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_err(|e| format!("Failed to generate backup timestamp: {}", e))?
-        .as_secs();
+        .as_nanos();
 
     let backup_file = backups_dir.join(format!("mysql_backup_{}.sql", timestamp));
 
     stream_mysqldump_to_file(&["--all-databases"], &backup_file)?;
 
     Ok(format!("MySQL backup created: {}", backup_file.display()))
+    }).await.map_err(|e| e.to_string())?
 }
 
 /// List all non-system databases on the running MySQL server.
@@ -347,75 +351,21 @@ pub async fn list_mysql_databases() -> Result<Vec<String>, String> {
 /// query. Used by the Databases page row UI.
 #[tauri::command]
 pub async fn list_mysql_databases_detailed() -> Result<Vec<crate::types::DatabaseInfo>, String> {
-    prepare_mysql_client()?;
-
-    // Excluding system schemas at SQL level keeps the result tight.
-    let sql = "SELECT table_schema, COUNT(*), \
-        IFNULL(SUM(data_length + index_length), 0) \
-        FROM information_schema.tables \
-        WHERE table_schema NOT IN ('information_schema','performance_schema','mysql','sys') \
-        GROUP BY table_schema";
-
-    let output = mysql_command()?
-        .args(["-N", "-B", "-e", sql])
-        .output()
-        .map_err(|e| format!("Failed to execute mysql client: {}", e))?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!("mysql query failed: {}", stderr.trim()));
-    }
-
-    // Some user databases may exist with zero tables. They are not returned
-    // by the GROUP BY above, so fold them in via the plain SHOW DATABASES
-    // result with zeroed metrics.
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let mut detailed: std::collections::HashMap<String, (u64, u64)> =
-        std::collections::HashMap::new();
-    for line in stdout.lines() {
-        let parts: Vec<&str> = line.split('\t').collect();
-        if parts.len() != 3 {
-            continue;
-        }
-        let name = parts[0].trim().to_string();
-        let table_count: u64 = parts[1].trim().parse().unwrap_or(0);
-        let size_bytes: u64 = parts[2].trim().parse().unwrap_or(0);
-        detailed.insert(name, (table_count, size_bytes));
-    }
-
-    let show_out = mysql_command()?
-        .args(["-N", "-B", "-e", "SHOW DATABASES"])
-        .output()
-        .map_err(|e| format!("Failed to list databases: {}", e))?;
-    if !show_out.status.success() {
-        let stderr = String::from_utf8_lossy(&show_out.stderr);
-        return Err(format!("SHOW DATABASES failed: {}", stderr.trim()));
-    }
-    let system = ["information_schema", "performance_schema", "mysql", "sys"];
-    let all_names: Vec<String> = String::from_utf8_lossy(&show_out.stdout)
-        .lines()
-        .map(|s| s.trim().to_string())
-        .filter(|s| !s.is_empty() && !system.contains(&s.as_str()))
-        .collect();
-
-    let mut result: Vec<crate::types::DatabaseInfo> = all_names
-        .into_iter()
-        .map(|name| {
-            let (table_count, size_bytes) = detailed.remove(&name).unwrap_or((0, 0));
-            crate::types::DatabaseInfo {
-                name,
-                table_count,
-                size_bytes,
-            }
-        })
-        .collect();
-    result.sort_by_key(|a| a.name.to_lowercase());
-    Ok(result)
+    tauri::async_runtime::spawn_blocking(|| {
+        let raw = run_mysql_query("SELECT s.SCHEMA_NAME, SUM(CASE WHEN t.TABLE_TYPE='BASE TABLE' THEN 1 ELSE 0 END), COALESCE(SUM(t.DATA_LENGTH+t.INDEX_LENGTH),0), SUM(CASE WHEN t.TABLE_TYPE='VIEW' THEN 1 ELSE 0 END) FROM information_schema.schemata s LEFT JOIN information_schema.tables t ON s.SCHEMA_NAME=t.TABLE_SCHEMA WHERE s.SCHEMA_NAME NOT IN ('mysql','sys','information_schema','performance_schema') GROUP BY s.SCHEMA_NAME ORDER BY s.SCHEMA_NAME;")?;
+        raw.lines().map(|line| {
+            let parts: Vec<_> = line.split('\t').collect();
+            if parts.len() != 4 { return Err("Invalid database metadata response".to_string()); }
+            Ok(crate::types::DatabaseInfo { name: parts[0].into(), table_count: parts[1].parse().map_err(|_| "Invalid table count")?, size_bytes: parts[2].parse().map_err(|_| "Invalid database size")?, view_count: parts[3].parse().map_err(|_| "Invalid view count")? })
+        }).collect()
+    }).await.map_err(|e| e.to_string())?
 }
 
 /// Back up a single MySQL database to `<user_data>/backups/mysql/<db>_<timestamp>.sql`.
 #[tauri::command]
 pub async fn backup_mysql_database_named(database: String) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+    let _lock = super::mysql_import::MYSQL_DATA_LOCK.try_lock().map_err(|_| "Another database operation is in progress.")?;
     if database.trim().is_empty() {
         return Err("Database name is required".to_string());
     }
@@ -432,93 +382,26 @@ pub async fn backup_mysql_database_named(database: String) -> Result<String, Str
     let timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_err(|e| format!("Failed to generate backup timestamp: {}", e))?
-        .as_secs();
+        .as_nanos();
 
     let backup_file = backups_dir.join(format!("{}_{}.sql", database, timestamp));
 
     stream_mysqldump_to_file(&["--databases", &database], &backup_file)?;
 
     Ok(format!("Backup created: {}", backup_file.display()))
+    }).await.map_err(|e| e.to_string())?
 }
 
-fn stream_mysqldump_to_file(args: &[&str], backup_file: &std::path::Path) -> Result<(), String> {
-    use std::io::{Read, Write};
-    use std::process::Stdio;
-
-    let mut child = mysqldump_command()?
-        .args(args)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|e| format!("Failed to execute mysqldump: {}", e))?;
-
-    let mut stderr = child.stderr.take().ok_or("mysqldump stderr unavailable")?;
-    let stderr_tail: std::sync::Arc<std::sync::Mutex<Vec<u8>>> =
-        std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
-    let tail_reader = stderr_tail.clone();
-    let err_thread = std::thread::spawn(move || {
-        let mut chunk = [0_u8; 4096];
-        loop {
-            match stderr.read(&mut chunk) {
-                Ok(0) => break,
-                Ok(n) => {
-                    if let Ok(mut tail) = tail_reader.lock() {
-                        tail.extend_from_slice(&chunk[..n]);
-                        if tail.len() > 8192 {
-                            let keep = 8192;
-                            let drop = tail.len() - keep;
-                            tail.drain(0..drop);
-                        }
-                    }
-                }
-                Err(_) => break,
-            }
-        }
-    });
-
-    let mut stdout = child
-        .stdout
-        .take()
-        .ok_or("mysqldump stdout unavailable")?;
-    let mut file = std::fs::File::create(backup_file)
-        .map_err(|e| format!("Failed to create backup file: {}", e))?;
-    std::io::copy(&mut stdout, &mut file)
-        .map_err(|e| format!("Failed to write backup file: {}", e))?;
-    file.flush().ok();
-
-    let status = child
-        .wait()
-        .map_err(|e| format!("Failed to wait for mysqldump: {}", e))?;
-    let _ = err_thread.join();
-    if !status.success() {
-        let _ = std::fs::remove_file(backup_file);
-        let msg = stderr_tail
-            .lock()
-            .ok()
-            .map(|v| String::from_utf8_lossy(&v).trim().to_string())
-            .filter(|s| !s.is_empty())
-            .unwrap_or_else(|| "mysqldump exited with an error".into());
-        return Err(format!("mysqldump failed: {msg}"));
-    }
-    Ok(())
+pub(crate) fn stream_mysqldump_to_file(args: &[&str], backup_file: &std::path::Path) -> Result<(), String> {
+    let mut command = mysqldump_command()?;
+    command.args(["--routines", "--events", "--triggers", "--hex-blob"]);
+    command.args(args);
+    crate::utils::database_io::dump(command, backup_file)
 }
 
-// ── MySQL user management ────────────────────────────────────────────────────
-
-fn run_mysql_query(query: &str) -> Result<String, String> {
+pub(crate) fn run_mysql_query(query: &str) -> Result<String, String> {
     prepare_mysql_client()?;
-
-    let output = mysql_command()?
-        .args(["--batch", "--skip-column-names", "-e", query])
-        .output()
-        .map_err(|e| format!("Failed to run mysql query: {}", e))?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(stderr.trim().to_string());
-    }
-
-    Ok(String::from_utf8_lossy(&output.stdout).to_string())
+    crate::utils::database_io::query(mysql_command()?, query)
 }
 
 #[tauri::command]
@@ -550,13 +433,14 @@ pub async fn create_mysql_user(
     host: String,
     password: String,
 ) -> Result<String, String> {
+    let _lock = super::mysql_import::MYSQL_DATA_LOCK.try_lock()?;
     let user_host = quote_mysql_user_host(&username, &host)?;
 
     let query = if password.is_empty() {
-        format!("CREATE USER {user_host}; FLUSH PRIVILEGES;")
+        format!("CREATE USER {user_host};")
     } else {
         let pwd = escape_mysql_string_literal(&password);
-        format!("CREATE USER {user_host} IDENTIFIED BY '{pwd}'; FLUSH PRIVILEGES;")
+        format!("CREATE USER {user_host} IDENTIFIED BY '{pwd}';")
     };
 
     run_mysql_query(&query)?;
@@ -565,8 +449,10 @@ pub async fn create_mysql_user(
 
 #[tauri::command]
 pub async fn drop_mysql_user(username: String, host: String) -> Result<String, String> {
+    let _lock = super::mysql_import::MYSQL_DATA_LOCK.try_lock()?;
+    ensure_deletable_account(&username)?;
     let user_host = quote_mysql_user_host(&username, &host)?;
-    let query = format!("DROP USER IF EXISTS {user_host}; FLUSH PRIVILEGES;");
+    let query = format!("DROP USER IF EXISTS {user_host};");
     run_mysql_query(&query)?;
     Ok(format!("User '{}' dropped", username.trim()))
 }
@@ -577,14 +463,15 @@ pub async fn set_mysql_user_password(
     host: String,
     password: String,
 ) -> Result<String, String> {
+    let _lock = super::mysql_import::MYSQL_DATA_LOCK.try_lock()?;
     let user_host = quote_mysql_user_host(&username, &host)?;
     let host_norm = validate_mysql_host(&host)?;
 
     let query = if password.is_empty() {
-        format!("ALTER USER {user_host} IDENTIFIED BY ''; FLUSH PRIVILEGES;")
+        format!("ALTER USER {user_host} IDENTIFIED BY '';")
     } else {
         let pwd = escape_mysql_string_literal(&password);
-        format!("ALTER USER {user_host} IDENTIFIED BY '{pwd}'; FLUSH PRIVILEGES;")
+        format!("ALTER USER {user_host} IDENTIFIED BY '{pwd}';")
     };
 
     run_mysql_query(&query)?;
@@ -597,7 +484,7 @@ pub async fn set_mysql_user_password(
         } else {
             Some(password)
         };
-        write_stored_root_password(stored)?;
+        write_stored_root_password(stored).map_err(|_| "The server password changed, but DevStackBox could not save its credential. Update the saved credential before reconnecting.".to_string())?;
     }
 
     Ok(format!("Password updated for '{}'", username.trim()))
@@ -622,7 +509,9 @@ pub(crate) fn validate_database_name(name: &str) -> Result<String, String> {
 
 #[tauri::command]
 pub async fn create_mysql_database(name: String) -> Result<String, String> {
+    let _lock = super::mysql_import::MYSQL_DATA_LOCK.try_lock()?;
     let name = validate_database_name(&name)?;
+    ensure_user_database(&name)?;
     prepare_mysql_client()?;
     let escaped = name.replace('`', "``");
     let query = format!("CREATE DATABASE `{escaped}`;");
@@ -636,9 +525,37 @@ pub async fn drop_mysql_database(name: String) -> Result<String, String> {
         .try_lock()
         .map_err(|_| "Another database import or maintenance operation is in progress.")?;
     let name = validate_database_name(&name)?;
+    ensure_user_database(&name)?;
     prepare_mysql_client()?;
     let escaped = name.replace('`', "``");
     let query = format!("DROP DATABASE `{escaped}`;");
     run_mysql_query(&query)?;
     Ok(format!("Database '{}' dropped", name))
+}
+
+pub(crate) fn ensure_user_database(name: &str) -> Result<(), String> {
+    if ["mysql", "sys", "information_schema", "performance_schema"].contains(&name.trim().to_ascii_lowercase().as_str()) {
+        return Err("System databases are protected from this operation.".into());
+    }
+    Ok(())
+}
+fn ensure_deletable_account(name: &str) -> Result<(), String> {
+    if name.trim().eq_ignore_ascii_case("root") || name.trim().to_ascii_lowercase().starts_with("mysql.") {
+        return Err("The administrative and MySQL system accounts cannot be deleted.".into());
+    }
+    Ok(())
+}
+#[cfg(test)]
+mod workspace_protection_tests {
+    use super::*;
+    #[test]
+    fn system_schemas_are_protected_case_insensitively() {
+        for name in ["mysql", "MYSQL", " sys ", "information_schema", "performance_schema"] { assert!(ensure_user_database(name).is_err()); }
+        assert!(ensure_user_database("mysql_project").is_ok());
+    }
+    #[test]
+    fn administrative_identities_are_protected() {
+        for name in ["root", "mysql.sys", "mysql.session", "mysql.infoschema"] { assert!(ensure_deletable_account(name).is_err()); }
+        assert!(ensure_deletable_account("app_user").is_ok());
+    }
 }

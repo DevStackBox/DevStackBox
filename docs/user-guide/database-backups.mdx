@@ -7,7 +7,58 @@ description: "Export individual databases or the whole server and restore SQL fr
 
 Open **Databases → Backups** with MySQL running and working local credentials. These actions create SQL exports; they are different from the ZIP archives in **Settings → Backup & Restore**.
 
-## Export SQL
+## Import & Export
+
+Open **Databases → Import & Export** (v0.1.18). The workspace opens on Export with sections for Export, Import, Saved backups, and Activity. Older Backups links redirect here.
+
+### Export and backup
+
+Select one or several databases, choose structure and data, structure only or data only, then SQL, SQL.GZ or a DevStackBox ZIP package and an output folder. Each database is exported separately. ZIP includes a versioned manifest with source version, character set/collation, included objects, sizes and checksums. Backup selected uses recovery-oriented SQL defaults and records files in the managed backup folder.
+
+Schema exports include views, triggers, routines and events. Data-only exports need compatible pre-existing tables. Transactional tables use a consistent-snapshot option; nontransactional tables and concurrent schema changes require care. Separate exports are not one server-wide snapshot.
+
+### Import risk review
+
+Choose SQL, SQL.GZ or a supported DevStackBox ZIP package, then review files and initial targets. An existing initial target may be changed; a missing one is created. A blank target follows names in the SQL. Packages use their recorded database names and are imported individually. Original-name arbitrary SQL files are also imported individually because their targets may overlap. Multiple explicitly selected initial databases must be distinct.
+
+An initial target is **not a confinement boundary**. SQL can contain USE, schema-qualified statements, destructive SQL or account changes. A preview cannot prove the full effects of arbitrary SQL. Only import trusted files; check engine/version, character set and collation compatibility and back up affected data first. No database-name search-and-replace is performed.
+
+ZIP manifests and paths are validated, including duplicate names, unsupported entries, links, path traversal, expansion limits and file checksums. SQL files are still executable input after integrity verification. Current input/expanded package limits are 32 GiB and 100 selected items, with an archive expansion-ratio limit of 1000.
+
+### Activity, cancellation and partial results
+
+Native jobs continue when navigating between screens. Jobs run sequentially and stop after the first failure. Activity records completed, failed, cancelled and unstarted items separately. **Review unfinished imports** prepares a new review; it does not replay SQL automatically. The user must review the files and acknowledge the risk again.
+
+Exports report bytes written without inventing a completion percentage. Import progress shows operation state rather than claiming bytes read equal committed SQL. Cancellation terminates the active client and prevents pending work; earlier SQL may already be applied. There is no automatic rollback. App close/quit is blocked while an operation is active; an external crash can still interrupt it, and unfinished history is marked interrupted on restart.
+
+### Saved backups
+
+Filter by database; review source metadata, open the file's folder, check integrity, restore through the import review, or delete the backup file by typing its database name. Deleting a backup never deletes the database. Missing files and checksum mismatches are distinct states. A matching checksum does **not** establish that restoration was tested: the UI labels restore verification separately.
+
+Saved backups also offers **Full-server backup** with an explicit scope acknowledgement and the same Activity records. Restoring these files can affect system schemas, accounts and credentials; test recovery separately before relying on them. Older backup files are retained on disk. **Full-server and legacy backup tools** opens the original SQL controls for compatibility; those older controls do not create new per-item Activity records. Settings archives remain a separate application/configuration workflow.
+
+
+### Workspace screenshots
+
+Native captures from v0.1.18 on 25 October 2026 using isolated demonstration data. Images retain their original 1536 × 912 resolution, without upscaling.
+
+![Export format and backup controls](../images/source-preview/database-export-2026-10-25.jpg)
+
+*Export format and backup controls.*
+
+![Import target and risk review](../images/source-preview/database-import-review-2026-10-25.jpg)
+
+*Import target and risk review.*
+
+![Saved backup integrity and restore status](../images/source-preview/database-saved-backups-2026-10-25.jpg)
+
+*Saved backup integrity and restore status.*
+
+![Completed backup operation history](../images/source-preview/database-activity-2026-10-25.jpg)
+
+*Completed backup operation history.*
+
+## Legacy SQL export (compatibility)
 
 1. Choose **Backup all databases** for a server dump or the backup action beside one database.
 2. Wait for completion and note the reported file destination.

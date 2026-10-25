@@ -1,3 +1,5 @@
+import { MemoryRouter } from "react-router-dom";
+import en from "../../locales/en.json";
 import { DatabaseCacheProvider } from "./database-cache-context";
 import { DatabasesPage } from "@/pages/databases-list";
 import { MySQLUsersPage } from "@/pages/mysql-users";
@@ -10,11 +12,12 @@ import { MySQLRequired } from "@/components/mysql-required";
 import { TAURI_COMMANDS as C } from "@/lib/commands";
 
 const mocks = vi.hoisted(() => ({ invoke: vi.fn(), toast: vi.fn(), handlers: new Map<string, (e: { payload: unknown }) => void>() }));
+vi.mock("./database-operations-context", () => ({ useDatabaseOperations: () => ({ active: false, start: vi.fn() }), databaseInvoke: mocks.invoke }));
 vi.mock("@/lib/tauri", () => ({ isTauri: () => true, safeInvoke: mocks.invoke }));
 vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: mocks.toast }) }));
 vi.mock("@/lib/notify", () => ({ notify: vi.fn(), primeNotificationPermission: vi.fn() }));
 vi.mock("@/lib/app-settings", () => ({ syncAppSettingsToBackend: vi.fn(), AUTOSTART_APACHE_KEY: "autoApache", AUTOSTART_MYSQL_KEY: "autoMysql" }));
-vi.mock("react-i18next", () => ({ useTranslation: () => ({ t: (_: string, fallback: string) => fallback }) }));
+vi.mock("react-i18next", () => ({ useTranslation: () => ({ t: (key: string, fallback?: string) => fallback ?? key.split(".").reduce((obj: any, segment) => obj?.[segment], en) ?? key }) }));
 vi.mock("@tauri-apps/api/event", () => ({ listen: async (name: string, cb: (e: { payload: unknown }) => void) => { mocks.handlers.set(name, cb); return () => mocks.handlers.delete(name); } }));
 
 let api: ReturnType<typeof useServiceStatus>;
@@ -24,7 +27,7 @@ let root: Root;
 const query = vi.fn();
 function Consumer() { useEffect(() => { query(); }, []); return <div>Live databases</div>; }
 function Harness() { api = useServiceStatus(); return <MySQLRequired><Consumer /></MySQLRequired>; }
-async function mount() { await act(async () => root.render(<ServiceStatusProvider><Harness /></ServiceStatusProvider>)); }
+async function mount() { await act(async () => root.render(<MemoryRouter><ServiceStatusProvider><DatabaseCacheProvider><Harness /></DatabaseCacheProvider></ServiceStatusProvider></MemoryRouter>)); }
 beforeEach(() => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   localStorage.clear(); sessionStorage.clear(); mocks.toast.mockClear(); query.mockClear(); mocks.handlers.clear(); running = false;
@@ -144,7 +147,7 @@ describe("service availability and crash regression cases", () => {
 
 describe("database screen regression cases", () => {
   it.each([DatabasesPage, MySQLUsersPage, DatabasesBackupsPage])("does not query MySQL or show failure toasts when visiting %s with MySQL stopped", async (Page) => {
-    await act(async () => root.render(<ServiceStatusProvider><DatabaseCacheProvider><Page /></DatabaseCacheProvider></ServiceStatusProvider>));
+    await act(async () => root.render(<MemoryRouter><ServiceStatusProvider><DatabaseCacheProvider><Page /></DatabaseCacheProvider></ServiceStatusProvider></MemoryRouter>));
     expect(host.textContent).toContain("MySQL is stopped");
     expect(host.textContent).not.toContain("No databases match");
     expect(host.textContent).not.toContain("No users found");
@@ -154,7 +157,7 @@ describe("database screen regression cases", () => {
   it("distinguishes a successfully loaded empty database list from a failed search", async () => {
     running = true;
     mocks.invoke.mockImplementation(async (command: string) => command === C.services.listMysqlDatabasesDetailed ? [] : { running: true });
-    await act(async () => root.render(<ServiceStatusProvider><DatabaseCacheProvider><DatabasesPage /></DatabaseCacheProvider></ServiceStatusProvider>));
+    await act(async () => root.render(<MemoryRouter><ServiceStatusProvider><DatabaseCacheProvider><DatabasesPage /></DatabaseCacheProvider></ServiceStatusProvider></MemoryRouter>));
     expect(host.textContent).toContain("No user databases yet. Select Create");
     expect(host.textContent).not.toContain("No databases match your search");
   });
@@ -164,7 +167,7 @@ describe("database screen regression cases", () => {
       return { running: true };
     });
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
-    await act(async () => root.render(<ServiceStatusProvider><DatabaseCacheProvider><DatabasesPage /></DatabaseCacheProvider></ServiceStatusProvider>));
+    await act(async () => root.render(<MemoryRouter><ServiceStatusProvider><DatabaseCacheProvider><DatabasesPage /></DatabaseCacheProvider></ServiceStatusProvider></MemoryRouter>));
     expect(host.textContent).toContain("Access denied"); expect(host.textContent).toContain("Try again");
     expect(host.textContent).not.toContain("0 user databases"); expect(mocks.toast).not.toHaveBeenCalled();
     mocks.invoke.mockResolvedValue([]);

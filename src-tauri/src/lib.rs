@@ -1,3 +1,4 @@
+use crate::commands::database_workspace::*;
 // DevStackBox - Tauri application entry point.
 //
 // Roadmap Phase 2: this file holds only module declarations and `run()`.
@@ -88,6 +89,20 @@ pub fn run() {
             toggle_mysql,
             toggle_php,
             toggle_apache,
+            inspect_database_files,
+            database_collations,
+            create_database_with_options,
+            database_operations,
+            cancel_database_operation,
+            start_database_operation,
+            pick_database_files,
+            pick_database_destination,
+            database_backups,
+            verify_database_backup,
+            delete_database_backup,
+            database_details,
+            database_grants,
+            set_database_grants,
             backup_mysql_database,
             backup_mysql_database_named,
             list_mysql_databases,
@@ -181,6 +196,11 @@ pub fn run() {
         })
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                if crate::commands::database_workspace::has_active_database_operation() {
+                    api.prevent_close();
+                    let _ = window.emit("database-close-blocked", ());
+                    return;
+                }
                 let settings = read_app_settings();
                 if settings.minimize_to_tray {
                     let _ = window.emit("window-hidden-to-tray", ());

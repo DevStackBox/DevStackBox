@@ -1,3 +1,6 @@
+import { DatabaseOperationsProvider } from "./context/database-operations-context";
+import { DatabaseTransferPage } from "./pages/databases/transfer";
+import { DatabaseDetailsPage } from "./pages/databases/details";
 import { useState, useEffect } from "react";
 import {
   HashRouter,
@@ -261,7 +264,10 @@ function AppShell() {
             <Route path="/databases" element={<DatabasesLayout />}>
               <Route index element={<DatabasesIndexPage />} />
               <Route path="users" element={<DatabasesUsersPage />} />
-              <Route path="backups" element={<DatabasesBackupsPage />} />
+              <Route path="backups" element={<Navigate to="/databases/import-export" state={{ tab: "backups" }} replace />} />
+              <Route path="import-export" element={<DatabaseTransferPage />} />
+              <Route path="legacy-backups" element={<DatabasesBackupsPage />} />
+              <Route path="database/:name" element={<DatabaseDetailsPage />} />
             </Route>
 
             <Route path="/logs" element={<LogsLayout />}>
@@ -356,13 +362,13 @@ function App() {
     <ThemeProvider defaultTheme="system" storageKey="devstackbox-ui-theme">
       <HashRouter>
         <ServiceStatusProvider>
-          <DatabaseCacheProvider>
+          <DatabaseCacheProvider><DatabaseOperationsProvider>
             <UpdaterProvider>
               <TerminalProvider>
                 <AppShell />
               </TerminalProvider>
             </UpdaterProvider>
-          </DatabaseCacheProvider>
+          </DatabaseOperationsProvider></DatabaseCacheProvider>
         </ServiceStatusProvider>
       </HashRouter>
     </ThemeProvider>

@@ -18,3 +18,5 @@ pub mod tray;
 pub mod vhosts;
 
 pub mod projects;
+
+pub mod database_workspace;

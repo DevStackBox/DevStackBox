@@ -1,207 +1,102 @@
-/**
- * DatabaseCacheContext
- *
- * Single source of truth for the MySQL database list.
- * Uses sessionStorage - instant within a session, fresh on app restart.
- *
- * Rules:
- *  - NO auto-poll. refresh() is called explicitly after mutations.
- *  - Lazy warmup - does NOT fetch on app startup.
- *    Data loads only when refresh() is first called by a consumer.
- *  - On a failed refresh the existing state is preserved (never cleared).
- *  - Shared refreshPromiseRef - every `await refresh()` waits for the same
- *    in-flight request (no duplicate MySQL queries).
- *  - hasCache distinguishes "no databases yet" from "still loading first time".
- */
-
 import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useRef,
   useState,
   type ReactNode,
 } from "react";
 import { safeInvoke, isTauri } from "@/lib/tauri";
 import { TAURI_COMMANDS } from "@/lib/commands";
-
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
+import { useServiceStatus } from "./service-status-context";
 export interface DatabaseInfo {
   name: string;
   tableCount: number;
+  viewCount?: number;
   sizeBytes: number;
 }
-
-interface RawDatabaseInfo {
+interface Raw {
   name: string;
   table_count: number;
+  view_count: number;
   size_bytes: number;
 }
-
-function mapDatabase(raw: RawDatabaseInfo): DatabaseInfo {
-  return {
-    name: raw.name,
-    tableCount: raw.table_count,
-    sizeBytes: raw.size_bytes,
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Cache constants
-// ---------------------------------------------------------------------------
-
-const DATABASE_CACHE_VERSION = 1;
-const DATABASE_CACHE_KEY = "dsb:databases";
-
-interface CachedDatabases {
-  version: number;
-  timestamp: number;
-  lastSuccessfulRefresh: number;
+interface Value {
   databases: DatabaseInfo[];
-}
-
-function readDatabaseCache(): CachedDatabases | null {
-  try {
-    const raw = sessionStorage.getItem(DATABASE_CACHE_KEY);
-    if (!raw) return null;
-    const cache = JSON.parse(raw) as CachedDatabases;
-    if (cache.version !== DATABASE_CACHE_VERSION) return null;
-    return cache;
-  } catch {
-    return null;
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Context shape
-// ---------------------------------------------------------------------------
-
-interface DatabaseCacheContextValue {
-  databases: DatabaseInfo[];
-  /** true while a refresh is in flight */
   loading: boolean;
-  /**
-   * true once at least one successful fetch has occurred (or session cache existed).
-   * Distinguishes "empty list" from "still loading for the first time".
-   *
-   * | hasCache | loading | databases.length | Correct UI         |
-   * |----------|---------|------------------|--------------------|
-   * | false    | true    | 0                | Skeleton           |
-   * | false    | false   | 0                | Empty state        |
-   * | true     | false   | 0                | Empty state (real) |
-   * | true     | false   | N                | List immediately   |
-   */
   hasCache: boolean;
   error: string | null;
-  /**
-   * The ONLY way to (re-)fetch the database list.
-   * Call this after: create DB, delete DB, restore backup, import SQL, manual Refresh.
-   * Pages must NOT introduce their own local fetch functions.
-   */
+  lastSuccessfulRefresh: number | null;
   refresh: () => Promise<void>;
 }
-
-const DatabaseCacheContext = createContext<DatabaseCacheContextValue | null>(
-  null,
-);
-
-// ---------------------------------------------------------------------------
-// Provider
-// ---------------------------------------------------------------------------
-
+const Context = createContext<Value | null>(null);
 export function DatabaseCacheProvider({ children }: { children: ReactNode }) {
-  const [error, setError] = useState<string | null>(null);
-
-  const [databases, setDatabases] = useState<DatabaseInfo[]>(() => {
-    return readDatabaseCache()?.databases ?? [];
-  });
+  const { services } = useServiceStatus();
+  const [databases, setDatabases] = useState<DatabaseInfo[]>([]);
   const [loading, setLoading] = useState(false);
-  const [hasCache, setHasCache] = useState(() => !!readDatabaseCache());
-
-  // Shared promise - prevents duplicate in-flight requests
-  const refreshPromiseRef = useRef<Promise<void> | null>(null);
-
-  const refresh = useCallback((): Promise<void> => {
-    if (refreshPromiseRef.current) {
-      return refreshPromiseRef.current;
-    }
-
-    refreshPromiseRef.current = (async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        if (!isTauri()) {
-          // Browser / dev mode mock
-          const mock: DatabaseInfo[] = [
-            { name: "sample_db", tableCount: 5, sizeBytes: 1024000 },
-            { name: "wordpress", tableCount: 12, sizeBytes: 5242880 },
-            { name: "laravel_app", tableCount: 0, sizeBytes: 0 },
-          ];
-          setDatabases(mock);
-          setHasCache(true);
-          return;
-        }
-
-        const list = await safeInvoke<RawDatabaseInfo[]>(
-          TAURI_COMMANDS.services.listMysqlDatabasesDetailed,
+  const [hasCache, setHasCache] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [lastSuccessfulRefresh, setLastSuccessfulRefresh] = useState<
+    number | null
+  >(null);
+  const generation = useRef(0);
+  // Memory-only cache never restores another app/data profile. New refreshes supersede older responses.
+  useEffect(() => {
+    generation.current++;
+    setDatabases([]);
+    setHasCache(false);
+    setLastSuccessfulRefresh(null);
+    setLoading(false);
+  }, [services.mysql.port]);
+  const refresh = useCallback(async () => {
+    const request = ++generation.current;
+    setLoading(true);
+    setError(null);
+    try {
+      if (!isTauri())
+        throw new Error(
+          "Database information requires the native DevStackBox application.",
         );
-        const mapped = (list ?? []).map(mapDatabase);
-        setDatabases(mapped);
-        setHasCache(true);
-
-        const now = Date.now();
-        try {
-          sessionStorage.setItem(
-            DATABASE_CACHE_KEY,
-            JSON.stringify({
-              version: DATABASE_CACHE_VERSION,
-              timestamp: now,
-              lastSuccessfulRefresh: now,
-              databases: mapped,
-            } satisfies CachedDatabases),
-          );
-        } catch {
-          // sessionStorage quota exceeded - non-fatal
-        }
-      } catch (err) {
-        // RULE: never clear existing databases on failure - keep what was showing.
-        console.error("[DatabaseCacheProvider] refresh failed:", err);
-        setError(String(err));
-      } finally {
-        setLoading(false);
-        refreshPromiseRef.current = null;
-      }
-    })();
-
-    return refreshPromiseRef.current;
+      const raw = await safeInvoke<Raw[]>(
+        TAURI_COMMANDS.services.listMysqlDatabasesDetailed,
+      );
+      if (request !== generation.current) return;
+      if (!Array.isArray(raw))
+        throw new Error("Invalid database metadata response");
+      setDatabases(
+        raw.map((row) => ({
+          name: row.name,
+          tableCount: row.table_count,
+          viewCount: row.view_count,
+          sizeBytes: row.size_bytes,
+        })),
+      );
+      setHasCache(true);
+      setLastSuccessfulRefresh(Date.now());
+    } catch (e) {
+      if (request === generation.current) setError(String(e));
+    } finally {
+      if (request === generation.current) setLoading(false);
+    }
   }, []);
-
-  // NO useEffect here - lazy warmup only.
-  // Data is fetched when the consumer calls refresh() for the first time.
-
   return (
-    <DatabaseCacheContext.Provider
-      value={{ databases, loading, hasCache, error, refresh }}
+    <Context.Provider
+      value={{
+        databases,
+        loading,
+        hasCache,
+        error,
+        lastSuccessfulRefresh,
+        refresh,
+      }}
     >
       {children}
-    </DatabaseCacheContext.Provider>
+    </Context.Provider>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Hook
-// ---------------------------------------------------------------------------
-
-export function useDatabaseCache(): DatabaseCacheContextValue {
-  const ctx = useContext(DatabaseCacheContext);
-  if (!ctx) {
-    throw new Error(
-      "useDatabaseCache must be used inside <DatabaseCacheProvider>",
-    );
-  }
-  return ctx;
+export function useDatabaseCache() {
+  const value = useContext(Context);
+  if (!value) throw new Error("DatabaseCacheProvider is missing");
+  return value;
 }
