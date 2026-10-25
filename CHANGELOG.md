@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Database backup and restore workflows are centered in the workspace; legacy SQL backup entry points redirect where documented.
 
+**Installer SHA-256:** `5A86AF4BC95D6683691A142C86820A9D95D93A2D17057A0EC42A2D18B5559B18`
+
 ## [0.1.17] - 2026-10-23
 
 ### Fixed

@@ -1,11 +1,11 @@
 {
-  "version": "0.1.17",
-  "notes": "### Fixed\n\n- Apache explicitly ignores ancestor .htaccess files unless a directory policy enables them. Laravel projects served from public/ no longer fail with parent .htaccess: <IfModule not allowed here under the default configuration. Public-directory rewrite rules remain enabled for HTTP and HTTPS.\n- Existing Apache configurations receive an additive, syntax-checked migration with a timestamped backup; custom ports, site records and explicit directory policies are preserved.\n- Replace the destructive legacy configuration test script with an isolated Apache regression test.",
-  "pub_date": "2026-10-23T11:35:49.500Z",
+  "version": "0.1.18",
+  "notes": "### Added\r\n\r\n- **Database workspace** with **Databases**, **Users**, and **Import & Export** tabs: database details (overview, tables and views, access, backups), bulk selection, and visible manage, backup, export, and import actions.\r\n- SQL and GZIP export and import with risk review, sequential batches, shared activity history, and cancellation.\r\n- DevStackBox ZIP packages, saved backup records with integrity checks, reviewed restore, and full-server backup from the workspace.\r\n- Database-level permissions editor and clearer MySQL account controls; improved stopped-MySQL and stale-cache empty states.\r\n\r\n### Changed\r\n\r\n- Database backup and restore workflows are centered in the workspace; legacy SQL backup entry points redirect where documented.",
+  "pub_date": "2026-10-25T14:56:51.318Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRMTM4U1RGRFJNV3BNcnQ4VXV0SC9McGtPVldnNGtVZVJCbGlVREV0cVBNUTJPRHlSN0Q4bHdFcUR5U3J6bHg2dU1hVFphWGd2dXZRSXptTk5ZRTZyZC9halhkOVhFN0FJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyNzU0OTE5CWZpbGU6RGV2U3RhY2tCb3hfMC4xLjE3X3g2NC1zZXR1cC5leGUKKysrcHYvbW1Ua2o0SFd6am5lRDFYdUNhWWNMbW1STVZ2ek91Z1FvdDYzTHVDUjVCcEJFV1UvbkdlQUh4QmY5aGM2cmt4NDhqZ09DZUJvZTh0bmFjQnc9PQo=",
-      "url": "https://github.com/DevStackBox/DevStackBox/releases/download/v0.1.17/DevStackBox_0.1.17_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRMTM4U1RGRFJNV2lkNG5NOGVvZDVCVjgzSTJIam5Kblc0Mko4M2hoTHdLVk5BbDdkUjJIdUwrMG12SU81WEFwVGhkTkVrQ1F6SUVqS1l2NzhZUFNqN0FKdDJsa2RjTVFBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkyOTQwMTAwCWZpbGU6RGV2U3RhY2tCb3hfMC4xLjE4X3g2NC1zZXR1cC5leGUKQjdtTW9NNTZVTVFzd0dmRm9iQ0x0em41aVhyM0VBL1ZZRldMS1loK2MvL0wxRFAxVnlMRjhkVDlpRmhCSENBeXdNYWk4UjBFaC9WNWRmRzZpbzk4QXc9PQo=",
+      "url": "https://github.com/DevStackBox/DevStackBox/releases/download/v0.1.18/DevStackBox_0.1.18_x64-setup.exe"
     }
   }
 }

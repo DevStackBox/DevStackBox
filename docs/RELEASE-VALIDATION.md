@@ -1,5 +1,11 @@
 # Release validation history
 
+## v0.1.18 qualification - 25 October 2026
+
+- Final installer: `src-tauri/target/release/bundle/nsis/DevStackBox_0.1.18_x64-setup.exe`, 187491450 bytes. SHA-256: `5A86AF4BC95D6683691A142C86820A9D95D93A2D17057A0EC42A2D18B5559B18`. Updater signatures verified (`build:release`, `finalize-release`).
+- Automated: `pnpm run check` (45 frontend tests, 39 docs); 50 Rust lib tests; Apache override regressions (legacy + baseline); `scripts/test-database-workspace.ps1` (`native_workspace_round_trip`).
+- Not repeated in this pass: in-place upgrade from installed v0.1.17 on a maintainer profile; live browser visual audit of every database dialog state.
+
 ## v0.1.17 post-release verification - 23 October 2026
 
 - GitHub release v0.1.17 is published, with installer, signature and latest.json. `finalize-release --verify-github v0.1.17` passes the asset-digest comparison.
