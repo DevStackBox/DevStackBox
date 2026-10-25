@@ -2,7 +2,7 @@
 
 > Practical environment context for working on PHP applications served by DevStackBox on Windows. Read this file before choosing PHP, running Composer or Artisan, connecting to MySQL, or changing server configuration.
 
-Maintained: 24 October 2026. Baseline: v0.1.17, with current source behavior checked where relevant. Installed builds can differ; verify their behavior. This guide describes the environment, not permission to change it. Follow the user's task and the application's own instructions.
+Maintained: 25 October 2026. Baseline: v0.1.18. Installed builds can differ; verify their behavior. This guide describes the environment, not permission to change it. Follow the user's task and the application's own instructions.
 
 ## Give this file to your AI tool
 
@@ -161,10 +161,10 @@ State the installed app version, chosen PHP executable/full version/ini, project
 Maintainers: this is the canonical file. The website copies it unchanged to /DEVSTACKBOX.md, /llms.txt and the existing /llms-full.txt URL during content preparation. Update it when runtime resolution, configuration paths or user workflows change; do not maintain separate tool-specific copies.
 
 
-## Unreleased database workspace source
+## Database workspace (v0.1.18)
 
-The current source adds Databases | Users | Import & Export. This is not a claim about the published v0.1.17 binary. Use the list selection or per-database actions for native SQL/GZIP exports, imports, managed backups and versioned DevStackBox ZIP packages. Activity tracks native jobs across page navigation; failed or cancelled imports can leave changes and never retry automatically. Initial target selection does not confine SQL to that database. Packages restore their original recorded names; arbitrary original-name dumps are imported individually.
+**Databases | Users | Import & Export** provides native SQL/GZIP exports, imports, managed backups and versioned DevStackBox ZIP packages. Activity tracks native jobs across page navigation; failed or cancelled imports can leave changes and never retry automatically. Initial target selection does not confine SQL to that database. Packages restore their original recorded names; arbitrary original-name dumps are imported individually.
 
 Use Manage for table/view metadata. Users > Database permissions edits direct database grants, preserving unmanaged scopes. Read/write omits schema-migration privileges. Root/system identities and native schema deletion have explicit protections; those protections are not a sandbox for arbitrary SQL imports.
 
-Checksum checks verify file integrity, not restoration. Current-source native tests use scripts/test-database-workspace.ps1 with a disposable data directory and port. Never point destructive tests at a user's projects. Database migration, remote transfer and account renaming remain deferred. See docs/user-guide/database-backups.mdx for limitations and the distinct published workflow.
+Checksum checks verify file integrity, not restoration. Native integration tests use scripts/test-database-workspace.ps1 with a disposable data directory and port. Never point destructive tests at a user's projects. Database migration, remote transfer and account renaming remain deferred. See docs/user-guide/database-backups.mdx for limitations and the distinct published workflow.
