@@ -26,6 +26,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - False Apache/MySQL **crash** toasts from short-lived version/diagnostic process probes (`httpd -v`, `mysql --version`, etc.).
 - PHP Versions no longer shows **Not installed** while the default runtime is still being resolved.
 
+**Installer SHA-256:** `0ACA257FDFDBD60EDEB6A0196D90048EDB1D3CC83E1FFCF6E1F1599CF5A916DC`
+
 ## [0.1.18] - 2026-10-25
 
 ### Added

@@ -1,5 +1,12 @@
 # Release validation history
 
+## v0.1.19 qualification - 26 October 2026
+
+- Final installer: `src-tauri/target/release/bundle/nsis/DevStackBox_0.1.19_x64-setup.exe`. SHA-256: `0ACA257FDFDBD60EDEB6A0196D90048EDB1D3CC83E1FFCF6E1F1599CF5A916DC`. Updater signatures verified (`build:release`, `finalize-release`).
+- Automated: `pnpm run check` (70 frontend tests); 61 Rust lib tests; `test:packaging`, `test:php-cli`; Apache override regression.
+- Includes post-audit fixes: PHP CLI launcher and PATH, Logs archives tabs, false crash probe filtering, PHP default UI states (see `docs/development/php-environment-and-logs-2026-10-26.md`).
+- Not repeated in this pass: full in-place upgrade smoke from every prior public version on a maintainer machine.
+
 ## v0.1.18 qualification - 25 October 2026
 
 - Final installer: `src-tauri/target/release/bundle/nsis/DevStackBox_0.1.18_x64-setup.exe`, 187491450 bytes. SHA-256: `5A86AF4BC95D6683691A142C86820A9D95D93A2D17057A0EC42A2D18B5559B18`. Updater signatures verified (`build:release`, `finalize-release`).
