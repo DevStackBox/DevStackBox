@@ -47,7 +47,8 @@
       "../php/8.3": "php/8.3",
       "../packaging/phpmyadmin-runtime": "phpmyadmin",
       "../www": "www",
-      "../tools/mkcert": "tools/mkcert"
+      "../tools/mkcert": "tools/mkcert",
+      "../packaging/php-cli": "bin"
     },
     "externalBin": [],
     "copyright": "\u00a9 2026 Nomad Programmer",

@@ -178,6 +178,13 @@ export const ROUTES = {
     icon: Server,
     parent: "/logs",
   },
+  logsManagement: {
+    path: "/logs/management",
+    labelKey: "navigation.logsManagement",
+    defaultLabel: "Archives & rotation",
+    icon: FileText,
+    parent: "/logs",
+  },
   terminal: {
     path: "/terminal",
     labelKey: "navigation.terminal",

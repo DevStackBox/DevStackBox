@@ -33,3 +33,11 @@ Git Bash is not currently offered in the shell selector. A Git-related legacy ro
 
 Read the launch error, check the executable and working directory, then create a new tab. For missing PHP executables use [PHP Versions](php). If only a project command fails, inspect that application's dependencies and environment; DevStackBox does not install Laravel/WordPress dependencies when connecting a folder.
 
+
+## PHP in external terminals
+
+The updated installer registers `C:/devstackbox/bin` in the machine PATH. Its native `php.exe` launcher resolves the current default runtime on every invocation and uses the current Windows user's DevStackBox configuration. It does not set a machine-wide `PHPRC` or copy one user's profile path into another user's configuration. Open a new terminal after installation; restart an already-open IDE or Windows Terminal if it still has the old environment.
+
+Run `where.exe php`, `php -v`, and `php --ini` to check resolution. Existing PATH entries are preserved and the DevStackBox entry is appended. If another PHP comes first, either adjust PATH deliberately or run `C:/devstackbox/bin/php.exe` explicitly. Uninstall removes only the PATH entry that DevStackBox added; upgrades retain it without duplicates.
+
+The launcher forwards arguments, standard input/output and exit codes. PHP's `-n`, `-c` and `-d` options remain available for explicit overrides. A project-pinned web runtime does not change external CLI PHP; use an explicit versioned executable and that project's ini when needed. Portable copies do not change the machine PATH automatically.

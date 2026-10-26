@@ -19,18 +19,26 @@ Update every installed branch used by projects, not only the global default. Uns
 
 ## Change global PHP
 
-Choose **Activate** for an installed, eligible branch and verify the active badge. The short label such as 8.3 identifies the branch; the full label such as 8.3.36 identifies its patch. Reopen terminal sessions to pick up the global runtime.
+Choose **Set as default** for an installed, eligible branch and verify the **Default** badge. The short label such as 8.3 identifies the branch; the full label such as 8.3.36 identifies its patch. Reopen terminal sessions to pick up the global runtime.
 
 The global selection affects default websites and the terminal. A project pinned to an installed branch remains pinned. In **Projects → Manage project → PHP & tools**, select a runtime or **Use global default**. See the [project guide](../getting-started/projects).
 
 ## Extensions
 
-1. Open **Extensions** and check the active global runtime.
+1. Open **Extensions** and check the default global runtime.
 2. Filter the list to find the extension.
 3. Toggle a switchable module; built-in entries cannot be enabled or disabled in the same way.
 4. Restart Apache and verify that the application can load the module.
 
-The extension UI targets the active global runtime, not every pinned project's generated ini. If a framework still reports a missing extension, verify the runtime serving that website and its loaded configuration before changing more files.
+The extension UI targets the default global runtime, not every pinned project's generated ini. If a framework still reports a missing extension, verify the runtime serving that website and its loaded configuration before changing more files.
+
+Fresh global and pinned profiles enable bundled `mysqli`, `pdo_mysql`, `pdo_sqlite`, `sqlite3`, `mbstring`, `openssl`, `curl`, `gd`, `zip`, `intl`, `fileinfo`, `exif`, `sockets` and `sodium` extensions when their DLLs are present. Laravel's core modules such as Ctype, DOM, Filter, Hash, PDO, Session, Tokenizer and XML are compiled into the bundled PHP. Existing profiles retain explicit extension choices. Optional third-party modules such as Imagick are not bundled; GD supplies image support. Individual plugins and applications may require additional modules.
+
+These defaults follow the [Laravel requirements](https://laravel.com/docs/12.x/deployment#server-requirements) and [WordPress server guidance](https://make.wordpress.org/hosting/handbook/server-environment/). Check each project's dependency requirements as well.
+
+## Temporary files
+
+Missing or empty `sys_temp_dir` and `upload_tmp_dir` are initialized to the user's DevStackBox `tmp` directory. The directory is created per user; no developer username is baked into the installer. The fix applies to new profiles and older configurations, including pinned runtime ini files. Nonempty custom paths are preserved: ensure those paths exist and are writable. Restart Apache after configuration changes; existing PHP processes retain their old settings.
 
 ## php.ini and information
 
@@ -38,12 +46,12 @@ Use **php.ini** for the global user copy and [configuration history](configurati
 
 ## Recover from failure
 
-For a failed download, check connectivity, available disk space and the error stage. Do not bypass failed integrity verification. For locked files, stop processes using that runtime before retrying. For activation failure, confirm the runtime is fully installed and meets the supported baseline; do not manually replace the current junction while Apache is serving requests.
+For a failed download, check connectivity, available disk space and the error stage. Do not bypass failed integrity verification. For locked files, stop processes using that runtime before retrying. If setting the default fails, confirm the runtime is fully installed and meets the supported baseline; do not manually replace the current junction while Apache is serving requests.
 
 
-![PHP manager showing branch and full patch versions](../images/source-preview/php-versions-2026-10-23.jpg)
+![PHP manager showing default selection and full patch versions](../images/php-default-v0.1.19-hd.jpg)
 
-*Source preview captured 23 October 2026; includes unreleased wording changes. Demo state, not recommended settings.*
+*Native 1920 × 1032 capture of the local v0.1.19 production build, 26 October 2026. Isolated audit profile; this build has not been published.*
 
 ![Global PHP extension switches in the isolated demo profile](../images/source-preview/php-extensions-2026-10-23.jpg)
 

@@ -19,7 +19,7 @@ The updated log workspace below is implemented and tested in a local v0.1.18 bui
 
 ## Live log and Clear view
 
-Choose **Live log**, then select the managed file. Apache offers error, access and DevStackBox crash logs. PHP offers the global log and branch-specific logs, including legacy PHP 8.1 history. This does not enable installation or activation of PHP 8.1.
+Choose **Apache**, **MySQL** or **PHP**, then select the managed file. Apache offers error, access and DevStackBox crash logs. PHP offers the global log and branch-specific logs, including legacy PHP 8.1 history. This does not enable installation or activation of PHP 8.1.
 
 **Clear view** hides all entries up to the current file position. Auto-refresh continues with new entries instead of repopulating old lines. It does not delete data or free disk space. **Show recent history** restores the recent tail. The viewer retains at most 1,000 lines and 512 KiB; it is not a complete-file export. Copy and download apply to the displayed tail.
 
@@ -31,11 +31,11 @@ Auto-refresh reads incrementally every two seconds while changing, slows to ten 
 
 **Delete log contents…** permanently empties the selected file without a backup. Type its exact filename to confirm. The operation refuses a file that changed after review. Prefer archiving when investigating an issue.
 
-Open **Archives** to view the verified recent tail, export the complete `.log.gz`, open the archive folder, or explicitly delete an archive. Exports require a new destination filename. Archives are shared across service tabs and stored under the user-data `logs/archives` directory. Unknown files and incomplete archives are not automatically removed.
+Open **Logs → Archives & rotation → Archives** to view the verified recent tail, export the complete `.log.gz`, open the archive folder, or explicitly delete an archive. Exports require a new destination filename. Archives are shared across service tabs and stored under the user-data `logs/archives` directory. Unknown files and incomplete archives are not automatically removed.
 
 ## Automatic rotation and retention
 
-Automatic maintenance is **off by default**. In **Rotation & retention**, review and save the policy before enabling it. Defaults are a 20 MiB rotation threshold, 14 days, 10 archives per log, and a 200 MiB combined archive budget. The earliest retention limit applies to recognized closed archives only.
+One saved policy applies to all managed Apache, MySQL, PHP and DevStackBox diagnostic logs. Service workspaces link to the same management page instead of showing separate settings. Automatic maintenance is **off by default**. In **Logs → Archives & rotation → Rotation & retention**, review and save the policy before enabling it. Defaults are a 20 MiB rotation threshold, 14 days, 10 archives per log, and a 200 MiB combined archive budget. The earliest retention limit applies to recognized closed archives only.
 
 Maintenance runs at launch, after service stops and every five minutes while DevStackBox is open. It is independent of the viewer refresh timer. Service logs wait for their writers to stop; active files may exceed the threshold until then. Crash-log writes and maintenance are serialized. The scheduler does not run while DevStackBox is closed.
 
@@ -58,6 +58,6 @@ For startup and configuration errors, see [Troubleshooting](../advanced/troubles
 Full-stack backups do not include service logs. Preserve relevant logs separately when investigating a failure or before removing a development profile.
 
 
-![Log workspace after Clear view, with archive and rotation controls](../images/local-build/logs-2026-10-26.jpg)
+![Shared rotation and retention policy for all managed logs](../images/log-rotation-v0.1.19-hd.jpg)
 
-*Native 1920 × 1032 capture of the installed local v0.1.18 build, 26 October 2026. Disposable audit profile; not a published release or recommended settings.*
+*Native 1920 × 1032 capture of the local v0.1.19 production build, 26 October 2026. Isolated audit profile; automatic maintenance is off. This build has not been published.*

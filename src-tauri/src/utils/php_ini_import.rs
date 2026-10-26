@@ -139,13 +139,21 @@ pub fn maybe_migrate_php_import_limits(content: &str, upload_tmp_dir: &str) -> O
     }
     Some(apply_recommended_import_limits(
         content,
-        Some(upload_tmp_dir),
+        crate::utils::php_defaults::needs_default(content, "upload_tmp_dir").then_some(upload_tmp_dir),
     ))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn automatic_migration_keeps_custom_upload_directory() {
+        let content = "upload_tmp_dir=\"D:/custom uploads\"\n";
+        let updated = maybe_migrate_php_import_limits(content, "C:/managed/tmp").unwrap();
+        assert!(updated.contains("upload_tmp_dir=\"D:/custom uploads\""));
+        assert!(!updated.contains("C:/managed/tmp"));
+    }
 
     #[test]
     fn legacy_defaults_are_detected() {

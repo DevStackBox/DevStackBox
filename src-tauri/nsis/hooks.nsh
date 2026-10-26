@@ -531,6 +531,13 @@ FunctionEnd
   ${If} $UpdateMode = 1
     DetailPrint "Update mode - skipping application file removal."
   ${Else}
+    ${If} ${FileExists} "$INSTDIR\bin\manage-php-path.ps1"
+      nsExec::ExecToLog 'powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\bin\manage-php-path.ps1" -Action Uninstall -InstallRoot "$INSTDIR"'
+      Pop $R0
+      ${If} $R0 != 0
+        DetailPrint "Could not remove the DevStackBox PATH entry. Remove only $INSTDIR\bin manually after uninstall."
+      ${EndIf}
+    ${EndIf}
     !insertmacro RenameWwwForKeep
     !insertmacro RemoveInstallComponent "apache" "Apache"
     !insertmacro RemoveInstallComponent "mysql" "MySQL"
@@ -812,6 +819,11 @@ FunctionEnd
     ${EndIf}
   ${EndIf}
   DetailPrint "PHP configuration completed."
+  nsExec::ExecToLog 'powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$INSTDIR\bin\manage-php-path.ps1" -Action Install -InstallRoot "$INSTDIR"'
+  Pop $R0
+  ${If} $R0 != 0
+    MessageBox MB_ICONEXCLAMATION "PHP PATH registration failed. The app can still run PHP. Add $INSTDIR\bin to PATH manually and open a new terminal."
+  ${EndIf}
   ${If} $EnableLocalHttps = 1
     FileOpen $R0 "$INSTDIR\https-autosetup" w
     FileWrite $R0 "Trusted local HTTPS requested during installation."

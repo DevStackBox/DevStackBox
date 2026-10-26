@@ -621,5 +621,13 @@
     "serverBackupWarning": "Full-server dumps include MySQL system schemas and may affect accounts and credentials when restored. They are not interchangeable with application-database exports. Test recovery on an isolated compatible MySQL server.",
     "serverBackupAcknowledgement": "I understand the full-server scope and recovery limitations.",
     "workspaceDescription": "Local databases, accounts, imports, exports and backups."
+  },
+  "php": {
+    "active": "Default",
+    "activeVersion": "Default",
+    "activate": "Set as default",
+    "activated": "PHP {{version}} is now the default",
+    "activateFailed": "Failed to set PHP {{version}} as default",
+    "defaultScope": "The default version is used by the PHP command and projects set to inherit it. Projects pinned to another installed version keep their selection."
   }
 }

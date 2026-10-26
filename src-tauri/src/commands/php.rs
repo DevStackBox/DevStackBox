@@ -105,7 +105,12 @@ pub(crate) fn prepare_project_runtime(version: &str) -> Result<(), String> {
     if !output.status.success() || String::from_utf8_lossy(&output.stdout).trim() != version {
         return Err(format!("The installed PHP {version} runtime failed validation. Reinstall it from PHP Versions."));
     }
-    if ini.is_file() { return Ok(()); }
+    if ini.is_file() {
+        let content = fs::read_to_string(&ini).map_err(|e| e.to_string())?;
+        let updated = temporary_defaults(&content, &to_apache_path(&crate::utils::paths::user_tmp_dir()));
+        if content != updated { fs::write(&ini, updated).map_err(|e| e.to_string())?; }
+        return Ok(());
+    }
     let template = [directory.join("php.ini"), directory.join("php.ini-production")]
         .into_iter().find(|p| p.is_file()).ok_or("Installed PHP configuration template is missing")?;
     let content = fs::read_to_string(template).map_err(|e| e.to_string())?;
@@ -119,7 +124,7 @@ pub(crate) fn prepare_project_runtime(version: &str) -> Result<(), String> {
         to_apache_path(&directory.join("ext")), to_apache_path(&sessions),
         to_apache_path(&crate::utils::paths::user_logs_dir().join(format!("php-{version}-error.log"))));
     fs::create_dir_all(ini.parent().unwrap()).map_err(|e| e.to_string())?;
-    fs::write(ini, format!("{header}{}", enable_essential_extensions(settings, &directory.join("ext"))))
+    fs::write(ini, temporary_defaults(&format!("{header}{}", enable_essential_extensions(settings, &directory.join("ext"))), &to_apache_path(&crate::utils::paths::user_tmp_dir())))
         .map_err(|e| e.to_string())
 }
 
@@ -194,83 +199,7 @@ async fn update_php_config(_version: &str) -> Result<(), String> {
     Ok(())
 }
 
-// Extensions required for phpMyAdmin and Laravel projects.  Each entry is
-// (extension_name, dll_filename).  Only extensions whose DLL actually exists
-// in the active PHP ext/ directory are activated; missing ones are skipped.
-const ESSENTIAL_EXTENSIONS: &[(&str, &str)] = &[
-    ("mysqli",     "php_mysqli.dll"),
-    ("pdo_mysql",  "php_pdo_mysql.dll"),
-    ("mbstring",   "php_mbstring.dll"),
-    ("openssl",    "php_openssl.dll"),
-    ("curl",       "php_curl.dll"),
-    ("gd",         "php_gd.dll"),
-    ("zip",        "php_zip.dll"),
-    ("intl",       "php_intl.dll"),
-    ("fileinfo",   "php_fileinfo.dll"),
-    ("exif",       "php_exif.dll"),
-    ("sockets",    "php_sockets.dll"),
-    ("sodium",     "php_sodium.dll"),
-];
-
-// Scans `content` for each essential extension and enables it if:
-// - the DLL exists in `ext_dir`
-// - no un-commented `extension=NAME` line already exists
-// If a commented-out `;extension=...NAME...` line is found it is uncommented,
-// otherwise `extension=NAME` is appended at the end.
-fn enable_essential_extensions(content: String, ext_dir: &std::path::Path) -> String {
-    let mut result = content;
-
-    for (name, dll) in ESSENTIAL_EXTENSIONS {
-        // Skip if DLL is not present in this PHP build.
-        if !ext_dir.join(dll).exists() {
-            continue;
-        }
-
-        // Check if already actively enabled (line not starting with ;).
-        let already_active = result.lines().any(|l| {
-            let t = l.trim();
-            !t.starts_with(';')
-                && (t.eq_ignore_ascii_case(&format!("extension={}", name))
-                    || t.eq_ignore_ascii_case(&format!("extension={}.so", name))
-                    || t.eq_ignore_ascii_case(&format!("extension=php_{}.dll", name))
-                    || t.eq_ignore_ascii_case(&format!("extension={}", dll)))
-        });
-        if already_active {
-            continue;
-        }
-
-        // Try to uncomment an existing commented line for this extension.
-        let lower_name = name.to_ascii_lowercase();
-        let uncommented = {
-            let mut found = false;
-            let new: String = result
-                .lines()
-                .map(|l| {
-                    let t = l.trim();
-                    if !found
-                        && t.starts_with(';')
-                        && t.to_ascii_lowercase().contains(&format!("extension={}", lower_name))
-                    {
-                        found = true;
-                        format!("extension={}\n", name)
-                    } else {
-                        format!("{}\n", l)
-                    }
-                })
-                .collect();
-            if found { Some(new) } else { None }
-        };
-
-        if let Some(new_content) = uncommented {
-            result = new_content;
-        } else {
-            // Extension not mentioned at all - append it.
-            result.push_str(&format!("extension={}\n", name));
-        }
-    }
-
-    result
-}
+use crate::utils::php_defaults::{enable_extensions as enable_essential_extensions, temporary_defaults};
 
 // Ensures the active PHP's php.ini has the minimum settings required for
 // DevStackBox to work (session path, extension_dir, essential extensions).
@@ -460,7 +389,8 @@ pub fn patch_php_ini() {
     // Enable essential extensions if not already active.
     if first_run { new_content = enable_essential_extensions(new_content, &ext_dir); }
 
-    let _ = std::fs::write(&php_ini, new_content);
+    let new_content = temporary_defaults(&new_content, &to_apache_path(&crate::utils::paths::user_tmp_dir()));
+    if content != new_content { let _ = std::fs::write(&php_ini, new_content); }
     if let Ok(content) = std::fs::read_to_string(&php_ini) {
         let tmp = crate::utils::paths::to_apache_path(&crate::utils::paths::user_tmp_dir());
         if let Some(migrated) =

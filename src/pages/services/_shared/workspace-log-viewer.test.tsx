@@ -1,3 +1,4 @@
+import { MemoryRouter } from 'react-router-dom';
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
@@ -10,9 +11,9 @@ const cursor = { identity: 'file', offset: 4, prefix: 'hash', prefix_len: 4 };
 const base = { path: 'C:/test/error.log', size: 4, cursor, missing: false, reset: false, skipped: false };
 beforeEach(() => { workspaceCache.reset(); workspaceCache.setVisible(true); vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true); });
 afterEach(() => { workspaceCache.reset(); vi.clearAllMocks(); vi.unstubAllGlobals(); });
-async function mount() {
+async function mount(management = false) {
   const host = document.createElement('div'); document.body.append(host); const root = createRoot(host);
-  await act(async () => root.render(<WorkspaceLogViewer service="apache" />));
+  await act(async () => root.render(<MemoryRouter><WorkspaceLogViewer service="apache" management={management} /></MemoryRouter>));
   return { host, click: async (label: string) => {
     const button = [...host.querySelectorAll('button')].find(node => node.textContent === label);
     if (!button) throw new Error(`Missing button: ${label}`);
@@ -20,6 +21,19 @@ async function mount() {
   }, dispose: async () => { await act(async () => root.unmount()); host.remove(); } };
 }
 describe('log workspace actions', () => {
+  it('loads shared management without polling a service log', async () => {
+    mocks.invoke.mockImplementation(async (command) => {
+      if (command === 'list_log_archives') return [];
+      if (command === 'get_log_policy') return { enabled: false, rotate_mib: 20, retention_days: 14, per_log: 10, budget_mib: 200 };
+      throw new Error(`Unexpected ${command}`);
+    });
+    const ui = await mount(true);
+    try {
+      await ui.click('Rotation & retention');
+      expect(ui.host.textContent).toContain('One shared policy');
+      expect(mocks.invoke.mock.calls.some(([name]) => name === 'read_log_chunk')).toBe(false);
+    } finally { await ui.dispose(); }
+  });
   it('keeps Clear view empty on refresh, then restores history explicitly', async () => {
     mocks.invoke.mockImplementation(async (command, args) => {
       if (command === 'read_log_chunk') return { ...base, text: args.clear || args.cursor ? '' : 'old\n', reset: !args.cursor };

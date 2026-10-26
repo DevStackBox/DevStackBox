@@ -6,7 +6,7 @@
   "scripts": {
     "predev": "node scripts/sync-logo.mjs && node scripts/stage-phpmyadmin.mjs",
     "dev": "vite",
-    "prebuild": "node scripts/sync-logo.mjs && node scripts/stage-phpmyadmin.mjs",
+    "prebuild": "node scripts/sync-logo.mjs && node scripts/stage-phpmyadmin.mjs && node scripts/build-php-cli.mjs",
     "build": "tsc && vite build",
     "test": "vitest run",
     "test:packaging": "node --test scripts/stage-phpmyadmin.check.mjs",
@@ -21,7 +21,9 @@
     "finalize-release": "node scripts/finalize-release.mjs --write-changelog",
     "release": "node scripts/verify-release.mjs",
     "check": "npm test && tsc --noEmit && node scripts/validate-docs.mjs && node scripts/verify-release.mjs",
-    "check:ci": "npm test && tsc --noEmit && node scripts/validate-docs.mjs"
+    "check:ci": "npm test && tsc --noEmit && node scripts/validate-docs.mjs",
+    "build:php-cli": "node scripts/build-php-cli.mjs",
+    "test:php-cli": "node scripts/build-php-cli.mjs && node --test scripts/php-cli.check.mjs"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

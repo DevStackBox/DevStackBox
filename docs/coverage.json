@@ -120,6 +120,10 @@
     {
       "route": "/databases/database/:name",
       "guide": "user-guide/databases"
+    },
+    {
+      "route": "/logs/management",
+      "guide": "user-guide/logs"
     }
   ],
   "redirects": [

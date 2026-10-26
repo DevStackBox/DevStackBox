@@ -1,3 +1,4 @@
+import { WorkspaceLogViewer } from "@/pages/services/_shared/workspace-log-viewer";
 import { DatabaseOperationsProvider } from "./context/database-operations-context";
 import { DatabaseTransferPage } from "./pages/databases/transfer";
 import { DatabaseDetailsPage } from "./pages/databases/details";
@@ -275,6 +276,7 @@ function AppShell() {
               <Route path="apache" element={<LogsApachePage />} />
               <Route path="mysql" element={<LogsMysqlPage />} />
               <Route path="php" element={<LogsPhpPage />} />
+              <Route path="management" element={<WorkspaceLogViewer management />} />
             </Route>
             {/* Universal terminal - single route, sessions survive navigation */}
             <Route path="/terminal" element={null} />

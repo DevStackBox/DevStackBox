@@ -1,4 +1,4 @@
-import { FileText, Database, Server } from "lucide-react";
+import { FileText, Database, Server, Archive } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ServiceWorkspaceLayout } from "@/components/service-workspace-layout";
 import { ServiceWorkspaceHeader } from "@/components/service-workspace-header";
@@ -23,6 +23,7 @@ export function LogsLayout() {
       label: t("navigation.php", "PHP"),
       icon: FileText,
     },
+    { to: ROUTES.logsManagement.path, label: t("navigation.logsManagement", "Archives & rotation"), icon: Archive },
   ];
 
   return (

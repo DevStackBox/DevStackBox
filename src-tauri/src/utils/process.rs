@@ -165,7 +165,7 @@ pub fn batch_find_processes_by_image(process_names: &[&str]) -> HashMap<String, 
 
     let script = format!(
         "Get-CimInstance Win32_Process | Where-Object {{ $_.Name -in @({in_list}) }} | \
-         ForEach-Object {{ \"$($_.Name)|$($_.ProcessId)|$($_.ExecutablePath)\" }}"
+         ForEach-Object {{ \"$($_.Name)|$($_.ProcessId)|$($_.ExecutablePath)|$($_.CommandLine)\" }}"
     );
 
     let output = match create_hidden_command("powershell.exe")
@@ -182,10 +182,12 @@ pub fn batch_find_processes_by_image(process_names: &[&str]) -> HashMap<String, 
         if line.is_empty() {
             continue;
         }
-        let mut parts = line.splitn(3, '|');
+        let mut parts = line.splitn(4, '|');
         let img = parts.next().unwrap_or("").trim().to_lowercase();
         let pid_str = parts.next().unwrap_or("").trim();
         let path_str = parts.next().unwrap_or("").trim();
+        let command_line = parts.next().unwrap_or("");
+        if is_diagnostic_process(&img, command_line) { continue; }
         if let Ok(pid) = pid_str.parse::<u32>() {
             map.entry(img)
                 .or_default()
@@ -272,6 +274,49 @@ pub fn find_our_processes(process_name: &str, expected_path: &std::path::Path) -
             }
         })
         .collect()
+}
+
+// Version/configuration probes use the same executable as the server, but
+// their normal exit must never establish a running-service/crash baseline.
+fn is_diagnostic_process(image: &str, command_line: &str) -> bool {
+    let mut quoted = false;
+    let mut token = String::new();
+    let mut tokens = Vec::new();
+    for ch in command_line.chars() {
+        if ch == '"' { quoted = !quoted; }
+        else if ch.is_whitespace() && !quoted {
+            if !token.is_empty() { tokens.push(std::mem::take(&mut token)); }
+        } else { token.push(ch); }
+    }
+    if !token.is_empty() { tokens.push(token); }
+    tokens.iter().skip(1).any(|arg| match image {
+        "httpd.exe" => matches!(arg.as_str(), "-v" | "-V" | "-t" | "-S" | "-M" | "-l" | "-L" | "-h" | "-?"),
+        "mysqld.exe" => matches!(arg.as_str(), "--version" | "-V" | "--help" | "-?" | "--validate-config" | "--initialize" | "--initialize-insecure"),
+        _ => false,
+    })
+}
+
+#[cfg(test)]
+mod service_probe_tests {
+    use super::is_diagnostic_process;
+
+    #[test]
+    fn probes_are_not_servers() {
+        for flag in ["-v", "-V", "-t", "-S", "-M"] {
+            assert!(is_diagnostic_process("httpd.exe", &format!("\"C:\\Program Files\\Apache\\httpd.exe\" {flag}")));
+        }
+        for flag in ["--version", "--help", "--initialize-insecure", "--validate-config"] {
+            assert!(is_diagnostic_process("mysqld.exe", &format!("mysqld.exe {flag}")));
+        }
+    }
+
+    #[test]
+    fn real_servers_and_quoted_paths_remain_visible() {
+        assert!(!is_diagnostic_process("httpd.exe", "httpd.exe -d C:/apache -f \"C:/config -v/httpd.conf\""));
+        assert!(!is_diagnostic_process("httpd.exe", "httpd.exe -k runservice"));
+        assert!(!is_diagnostic_process("mysqld.exe", "mysqld.exe --defaults-file=C:/config/my.ini --console"));
+        assert!(!is_diagnostic_process("httpd.exe", ""));
+    }
 }
 
 fn normalize_path(p: &std::path::Path) -> String {

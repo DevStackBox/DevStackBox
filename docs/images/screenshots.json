@@ -2,6 +2,30 @@
   "schemaVersion": 1,
   "screenshots": [
     {
+      "id": "php-default-local-019",
+      "file": "php-default-v0.1.19-hd.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19 local build",
+      "capturedAt": "2026-10-26",
+      "alt": "PHP manager showing default selection and full patch versions",
+      "caption": "Native 1920 × 1032 capture of the local v0.1.19 production build. Isolated audit profile; not published.",
+      "publicPaths": ["/docs-images/php-default-v0.1.19-hd.jpg"],
+      "approved": true
+    },
+    {
+      "id": "log-rotation-local-019",
+      "file": "log-rotation-v0.1.19-hd.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19 local build",
+      "capturedAt": "2026-10-26",
+      "alt": "Shared rotation and retention policy for all managed logs",
+      "caption": "Native 1920 × 1032 capture of the local v0.1.19 production build. Isolated audit profile; automatic maintenance off; not published.",
+      "publicPaths": ["/docs-images/log-rotation-v0.1.19-hd.jpg"],
+      "approved": true
+    },
+    {
       "id": "services-release",
       "file": "services-v0.1.17-hd.jpg",
       "width": 1920,

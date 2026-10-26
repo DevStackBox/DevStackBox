@@ -44,7 +44,7 @@ const BRANCH_NOTES: Record<
   },
   "8.3": {
     description:
-      "Default bundled version - enhanced type system and performance improvements",
+      "Bundled runtime - enhanced type system and performance improvements",
     features: [
       "Typed class constants",
       "Anonymous readonly classes",
@@ -233,11 +233,11 @@ export function PhpVersionsPage() {
       );
       loadVersions();
       toast({
-        title: t("php.activated", "PHP {{version}} is now active", { version }),
+        title: t("php.activated", "PHP {{version}} is now the default", { version }),
       });
     } catch (err) {
       toast({
-        title: t("php.activateFailed", "Failed to activate PHP {{version}}", {
+        title: t("php.activateFailed", "Failed to set PHP {{version}} as default", {
           version,
         }),
         description: String(err),
@@ -267,7 +267,7 @@ export function PhpVersionsPage() {
     if (v.is_active) {
       return (
         <Badge className="bg-primary text-primary-foreground hover:bg-primary/90">
-          {t("php.active", "Active")}
+          {t("php.active", "Default")}
         </Badge>
       );
     }
@@ -311,7 +311,7 @@ export function PhpVersionsPage() {
       return (
         <Button disabled size="sm" variant="secondary">
           <Check className="w-3.5 h-3.5 mr-1.5" />
-          {t("php.activeVersion", "Active")}
+          {t("php.activeVersion", "Default")}
         </Button>
       );
     }
@@ -319,7 +319,7 @@ export function PhpVersionsPage() {
       return (
         <Button size="sm" disabled={operationInProgress} onClick={() => handleActivate(v.version)}>
           <Check className="w-3.5 h-3.5 mr-1.5" />
-          {t("php.activate", "Activate")}
+          {t("php.activate", "Set as default")}
         </Button>
       );
     }
@@ -348,9 +348,9 @@ export function PhpVersionsPage() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 {t("php.title", "PHP Version Manager")}
-                <Badge variant="outline" className="font-mono">
+                {versions.length > 0 && <Badge variant="outline" className="font-mono">
                   {currentVersion}
-                </Badge>
+                </Badge>}
                 {currentFullVersion && <span className="text-sm font-normal text-muted-foreground">{currentFullVersion}</span>}
               </CardTitle>
               <CardDescription>
@@ -374,6 +374,7 @@ export function PhpVersionsPage() {
           </div>
         </CardHeader>
         <CardContent>
+          <p className="mb-3 text-sm text-muted-foreground">{t("php.defaultScope", "The default version is used by the PHP command and projects set to inherit it. Projects pinned to another installed version keep their selection.")}</p>
           <p className="mb-3 text-sm text-muted-foreground">
             {t("php.securityUpdateHint", "Keep every installed PHP branch updated, including versions pinned to projects. Stop Apache and close PHP terminals before updating; start Apache again afterward.")}
           </p>

@@ -9,16 +9,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - **Log management:** Clear view with a session cursor, archive current log to verified GZIP, read-only archive preview and export, delete log contents with typed confirmation, and opt-in rotation/retention settings (automatic maintenance off by default).
+- **Logs workspace** tabs: Apache, MySQL, PHP, and **Archives & rotation** with one shared policy for managed diagnostic logs.
 - **Workspace cache** for Projects, Databases, and Users: show the last successful result when returning to a screen, with shared request deduplication and sensible polling.
+- **PHP CLI launcher** (`bin/php.exe`): selects the configured default PHP on each invocation, uses the invoking user's configuration, and is added to machine PATH on install (existing PATH entries preserved).
 
 ### Changed
 
 - phpMyAdmin installer payload is staged from policy: **pmahomme** theme only, smaller extracted footprint, hash-checked upgrade cleanup that preserves customized files.
-- Service log viewer: action buttons above the viewer; clearer messaging after Clear view.
+- Service log viewer: action buttons above the viewer; clearer messaging after Clear view; service viewers link to shared archives/rotation instead of duplicating controls.
+- Fresh PHP profiles get sensible default `sys_temp_dir` / `upload_tmp_dir` and common Laravel/WordPress extensions when unset; custom paths and existing extension choices are preserved.
+- PHP Versions: **Default** and **Set as default** clarify global CLI/default vs per-project pinned runtimes.
 
 ### Fixed
 
 - Clear view no longer reports an incorrect omitted-history warning when the user intentionally cleared the display.
+- False Apache/MySQL **crash** toasts from short-lived version/diagnostic process probes (`httpd -v`, `mysql --version`, etc.).
+- PHP Versions no longer shows **Not installed** while the default runtime is still being resolved.
 
 ## [0.1.18] - 2026-10-25
 

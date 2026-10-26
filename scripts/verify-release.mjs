@@ -9,13 +9,15 @@ const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json")));
 const config = JSON.parse(fs.readFileSync(path.join(root, "src-tauri/tauri.conf.json")));
 if (config.bundle.resources["../packaging/phpmyadmin-runtime"] !== "phpmyadmin" || config.bundle.resources["../phpmyadmin"]) throw new Error("Installer must use only the staged phpMyAdmin payload");
 stagePhpMyAdmin();
+if (config.bundle.resources["../packaging/php-cli"] !== "bin") throw new Error("Installer must include the PHP CLI launcher");
+execFileSync(process.execPath, [path.join(root, "scripts/build-php-cli.mjs")], { stdio: "inherit" });
 const cargo = fs.readFileSync(path.join(root, "src-tauri/Cargo.toml"), "utf8");
 if (config.version !== pkg.version || !cargo.includes(`version = "${pkg.version}"`)) throw new Error("Release versions disagree");
 const installerHooks = fs.readFileSync(path.join(root, "src-tauri/nsis/hooks.nsh"), "utf8");
 if (!installerHooks.includes('ReadRegStr $R7 HKCU "${UNINSTKEY}" "InstallLocation"') || !installerHooks.includes('DeleteRegKey HKCU "${UNINSTKEY}"')) {
  throw new Error("Installer must remove a stale same-path per-user uninstall registration when migrating to a machine install");
 }
-for (const rel of ["apache/bin/httpd.exe", "apache/bin/openssl.exe", "mysql/bin/mysqld.exe", "mysql/bin/mysql.exe", "mysql/bin/mysqldump.exe", "mysql/bin/mysqladmin.exe", "php/8.3/php.exe", "php/8.3/php-cgi.exe"]) {
+for (const rel of ["apache/bin/httpd.exe", "apache/bin/openssl.exe", "mysql/bin/mysqld.exe", "mysql/bin/mysql.exe", "mysql/bin/mysqldump.exe", "mysql/bin/mysqladmin.exe", "php/8.3/php.exe", "php/8.3/php-cgi.exe", "packaging/php-cli/php.exe"]) {
  const file = path.join(root, rel);
  const fd = fs.openSync(file, "r"); const magic = Buffer.alloc(2); fs.readSync(fd, magic); fs.closeSync(fd);
  if (magic.toString() !== "MZ" || fs.statSync(file).size < 4096) throw new Error(`Missing or invalid bundled binary: ${rel}`);

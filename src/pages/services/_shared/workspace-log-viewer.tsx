@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { LogViewer } from '@/components/services';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,9 +12,10 @@ interface Policy { enabled: boolean; rotate_mib: number; retention_days: number;
 interface ArchivedLog { id: string; source: string; created: number; original_bytes: number; bytes: number; sha256: string; }
 const size = (bytes: number) => bytes < 1024 ? `${bytes} B` : bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KiB` : `${(bytes / 1024 / 1024).toFixed(1)} MiB`;
 const labels: Record<string, string> = { apache: 'Apache error', 'apache-access': 'Apache access', mysql: 'MySQL error', php: 'PHP global error', crash: 'DevStackBox crash' };
-export function WorkspaceLogViewer({ service }: { service: 'apache' | 'mysql' | 'php' }) {
+export function WorkspaceLogViewer({ service = 'apache', management = false }: { service?: 'apache' | 'mysql' | 'php'; management?: boolean }) {
+  const inLogsWorkspace = useLocation().pathname.startsWith('/logs');
   const [selected, setSelected] = useState(service as string);
-  const [panel, setPanel] = useState<'live' | 'archives' | 'rotation'>('live');
+  const [panel, setPanel] = useState<'live' | 'archives' | 'rotation'>(management ? 'archives' : 'live');
   const [auto, setAuto] = useState(true);
   const [scroll, setScroll] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -25,7 +27,7 @@ export function WorkspaceLogViewer({ service }: { service: 'apache' | 'mysql' | 
   const [deletion, setDeletion] = useState<ArchivedLog | 'active' | null>(null);
   const [confirmation, setConfirmation] = useState('');
   const [deleteCursor, setDeleteCursor] = useState<LogCursor | null>(null);
-  const stream = useLogStream(selected, auto, panel === 'live' && deletion === null);
+  const stream = useLogStream(selected, auto, !management && panel === 'live' && deletion === null);
   const filename = stream.data?.path.split(/[\\/]/).pop() ?? '';
   const options = service === 'apache' ? ['apache', 'apache-access', 'crash'] : service === 'php' ? ['php', 'php-8.2', 'php-8.3', 'php-8.4', 'php-8.5', 'php-8.1'] : ['mysql'];
   const title = labels[selected] ?? `${selected.replace('php-', 'PHP ')} error`;
@@ -41,9 +43,10 @@ export function WorkspaceLogViewer({ service }: { service: 'apache' | 'mysql' | 
   }, [panel]);
   const deleteTarget = deletion === 'active' ? filename : deletion?.id ?? '';
   return <div className="space-y-4">
-    <div className="flex flex-wrap items-center gap-2" aria-label="Log tools">
-      {(['live', 'archives', 'rotation'] as const).map(value => <Button key={value} size="sm" variant={panel === value ? 'default' : 'outline'} aria-pressed={panel === value} disabled={busy} onClick={() => { setPanel(value); setError(''); setNotice(''); }}>{value === 'live' ? 'Live log' : value === 'archives' ? 'Archives' : 'Rotation & retention'}</Button>)}
-    </div>
+    {(management || !inLogsWorkspace) && <div className="flex flex-wrap items-center gap-2" aria-label="Log tools">
+      {!management && <Button asChild size="sm" variant="outline"><Link to="/logs/management">Archives & rotation</Link></Button>}
+      {management && (['archives', 'rotation'] as const).map(value => <Button key={value} size="sm" variant={panel === value ? 'default' : 'outline'} aria-pressed={panel === value} disabled={busy} onClick={() => { setPanel(value); setError(''); setNotice(''); }}>{value === 'archives' ? 'Archives' : 'Rotation & retention'}</Button>)}
+    </div>}
     {error && <p role="alert" className="rounded-md border border-destructive p-3 text-sm text-destructive break-words">{error}</p>}
     {notice && <p role="status" className="rounded-md border p-3 text-sm">{notice}</p>}
     {panel === 'live' && <>
@@ -80,7 +83,7 @@ export function WorkspaceLogViewer({ service }: { service: 'apache' | 'mysql' | 
     </section>}
     {panel === 'rotation' && <section className="space-y-4 rounded-lg border p-5">
       <h2 className="text-lg font-semibold">Rotation & retention</h2>
-      <p className="text-sm text-muted-foreground">Applies only to managed diagnostic logs and archives. Automatic rotation waits for a safe shutdown of service writers; it never stops your services. Maintenance runs at launch, after service stops, and every five minutes while DevStackBox is open.</p>
+      <p className="text-sm text-muted-foreground">One shared policy applies to all managed Apache, MySQL, PHP and DevStackBox diagnostic logs and archives. Automatic rotation waits for a safe shutdown of service writers; it never stops your services. Maintenance runs at launch, after service stops, and every five minutes while DevStackBox is open.</p>
       {policy ? <form className="space-y-4" onSubmit={event => { event.preventDefault(); void run(async () => { await safeInvoke('set_log_policy', { value: policy }); setNotice('Log policy saved. Automatic archive deletion follows these limits only while enabled.'); }); }}>
         <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={policy.enabled} onChange={e => setPolicy({ ...policy, enabled: e.target.checked })} /><span>Enable automatic rotation and deletion of old managed archives</span></label>
         <div className="grid gap-4 sm:grid-cols-2">{([{ key: 'rotate_mib', label: 'Rotate at (MiB)', min: 1, max: 1024 }, { key: 'retention_days', label: 'Keep for (days)', min: 1, max: 3650 }, { key: 'per_log', label: 'Maximum archives per log', min: 1, max: 1000 }, { key: 'budget_mib', label: 'Total archive budget (MiB)', min: 10, max: 102400 }] as const).map(field => <label key={field.key} className="space-y-2 text-sm">{field.label}<Input type="number" required min={field.min} max={field.max} step={1} value={policy[field.key]} onChange={e => setPolicy({ ...policy, [field.key]: Number(e.target.value) })} /></label>)}</div>

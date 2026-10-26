@@ -129,3 +129,5 @@ src-tauri/tauri.local-test.conf.json
 /packaging/phpmyadmin-report.json
 /packaging/.phpmyadmin-stage-*/
 /packaging/.phpmyadmin-previous-*/
+
+/packaging/php-cli/

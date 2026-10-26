@@ -57,6 +57,25 @@ describe("service availability and crash regression cases", () => {
     await mount();
     expect(query).not.toHaveBeenCalled(); expect(host.textContent).toContain("MySQL is stopped"); expect(mocks.toast).not.toHaveBeenCalled();
   });
+  it("does not report a crash after a failed startup check with stale running cache", async () => {
+    const status = { running: true, state: "running", pid: 9999 };
+    localStorage.setItem("dsb:service-status", JSON.stringify({ version: 1, timestamp: Date.now(), services: { apache: status, mysql: status, php: status } }));
+    mocks.invoke.mockRejectedValue(new Error("Status check unavailable"));
+    await mount();
+    expect(api.services.apache.running).toBe(false);
+    mocks.invoke.mockResolvedValue({ running: false });
+    await act(async () => api.refresh());
+    await act(async () => api.refresh());
+    expect(mocks.toast).not.toHaveBeenCalled();
+    expect(mocks.invoke.mock.calls.some(([command]) => command === C.services.logCrashEvent)).toBe(false);
+  });
+  it("never reports a crash for a service that stays stopped throughout this launch", async () => {
+    await mount();
+    for (let poll = 0; poll < 3; poll++) await act(async () => api.refresh());
+    expect(api.services.apache.running).toBe(false);
+    expect(mocks.toast).not.toHaveBeenCalled();
+    expect(mocks.invoke.mock.calls.some(([command]) => command === C.services.logCrashEvent)).toBe(false);
+  });
   it("Start All followed by Stop All updates immediately without crash notifications", async () => {
     await mount();
     await act(async () => api.runBulk("start")); expect(api.services.mysql.running).toBe(true);
