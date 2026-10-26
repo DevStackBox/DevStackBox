@@ -1,7 +1,9 @@
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
+import { workspaceCache } from "@/lib/workspace-cache";
+beforeEach(() => workspaceCache.reset());
 import { ProjectDetailsPage } from "./project-details";
 
 const mocks = vi.hoisted(() => ({ invoke: vi.fn() }));
@@ -57,6 +59,19 @@ async function render() {
 }
 
 describe("project details", () => {
+  it("reuses metadata and health on a quick return without repeating native checks", async () => {
+    mocks.invoke.mockImplementation(async (command: string) => {
+      if (command === 'list_vhosts') return [site];
+      if (command === 'get_php_versions') return [];
+      return health;
+    });
+    const first = await render(); await first.dispose();
+    const calls = mocks.invoke.mock.calls.length;
+    const second = await render();
+    expect(second.host.textContent).toContain('shop.test');
+    expect(mocks.invoke.mock.calls.length).toBe(calls);
+    await second.dispose();
+  });
   it("reads the pinned PHP log and keeps Apache results when PHP log reading fails", async () => {
     mocks.invoke.mockImplementation(async (command: string, args?: Record<string, unknown>) => {
       if (command === "list_vhosts") return [{ ...site, php_version: "8.3" }];

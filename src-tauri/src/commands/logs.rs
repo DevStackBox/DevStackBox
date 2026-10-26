@@ -28,7 +28,7 @@ pub async fn get_service_logs(service: String, php_version: Option<String>) -> R
         let mut file = std::fs::File::open(&log_file)?;
         let size = file.metadata()?.len();
         file.seek(SeekFrom::Start(size.saturating_sub(512 * 1024)))?;
-        let mut bytes = Vec::new(); file.read_to_end(&mut bytes)?;
+        let mut bytes = Vec::new(); file.take(512 * 1024).read_to_end(&mut bytes)?;
         Ok(String::from_utf8_lossy(&bytes).into_owned())
     })();
     match tail {
@@ -52,10 +52,12 @@ pub async fn get_service_logs(service: String, php_version: Option<String>) -> R
 /// `service` is the service name ("apache", "mysql", "php").
 #[tauri::command]
 pub async fn log_crash_event(service: String, timestamp: String) -> Result<(), String> {
+    let _lock = super::log_management::LOG_LOCK.lock().map_err(|e| e.to_string())?;
     // Basic validation: reject empty or suspiciously long inputs.
     if service.is_empty() || service.len() > 64 || timestamp.is_empty() || timestamp.len() > 64 {
         return Err("Invalid service or timestamp".to_string());
     }
+    if timestamp.contains(['\r', '\n']) { return Err("Invalid timestamp".into()); }
     // Allow only safe characters to avoid log injection.
     if !service.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_') {
         return Err("Invalid service name".to_string());

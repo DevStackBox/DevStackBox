@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useWorkspaceQuery } from "@/hooks/use-workspace-query";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { FolderOpen, Globe, Plus, RefreshCw, ShieldCheck } from "lucide-react";
@@ -24,16 +25,21 @@ export function SitesWorkspace({ advanced = false }: { advanced?: boolean }) {
   const text = (en: string, hi: string) =>
     i18n.language.startsWith("hi") ? hi : en;
   const navigate = useNavigate();
-  const [sites, setSites] = useState<VhostEntry[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [health, setHealth] = useState<HttpsStatus | null>(null);
-  const [hosts, setHosts] = useState<string[]>([]);
+  const siteQuery = useWorkspaceQuery('project:sites', async () => (await safeInvoke<VhostEntry[]>('list_vhosts')) ?? [], 30000);
+  const projectQuery = useWorkspaceQuery('project:folders', async () => (await safeInvoke<Project[]>('list_www_projects')) ?? [], 30000);
+  const hostsQuery = useWorkspaceQuery('project:hosts', async () => (await safeInvoke<string[]>('get_hosts_entries')) ?? [], 30000);
+  const warningQuery = useWorkspaceQuery('project:warnings', async () => (await safeInvoke<string[]>('get_site_configuration_warnings')) ?? [], 60000, true, false);
+  const healthQuery = useWorkspaceQuery('project:ssl', async () => await safeInvoke<HttpsStatus>('get_ssl_status'), 60000, true, false);
+  const sites = siteQuery.data ?? [];
+  const projects = projectQuery.data ?? [];
+  const hosts = hostsQuery.data ?? [];
+  const health = healthQuery.data ?? null;
+  const configurationWarnings = warningQuery.data ?? [];
   const [busy, setBusy] = useState(false);
-  const [checking, setChecking] = useState(false);
-  const [error, setError] = useState("");
-  const [configurationWarnings, setConfigurationWarnings] = useState<string[]>(
-    [],
-  );
+  const [actionError, setError] = useState('');
+  const error = actionError || siteQuery.error || projectQuery.error || hostsQuery.error || warningQuery.error || healthQuery.error || '';
+  const checking = healthQuery.data === undefined && healthQuery.refreshing;
+  const refreshing = [siteQuery, projectQuery, hostsQuery, warningQuery, healthQuery].some(query => query.refreshing);
   const [notice, setNotice] = useState("");
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -44,32 +50,7 @@ export function SitesWorkspace({ advanced = false }: { advanced?: boolean }) {
   const [aliases, setAliases] = useState("");
   const [https, setHttps] = useState(true);
   const [createName, setCreateName] = useState("");
-  const load = useCallback(async () => {
-    setChecking(true);
-    setHealth(null);
-    try {
-      const [s, p, h] = await Promise.all([
-        safeInvoke<VhostEntry[]>("list_vhosts"),
-        safeInvoke<Project[]>("list_www_projects"),
-        safeInvoke<string[]>("get_hosts_entries"),
-      ]);
-      setSites(s ?? []);
-      setProjects(p ?? []);
-      setHosts(h ?? []);
-      const warnings = await safeInvoke<string[]>(
-        "get_site_configuration_warnings",
-      );
-      setConfigurationWarnings(warnings ?? []);
-      setHealth(await safeInvoke<HttpsStatus>("get_ssl_status"));
-    } catch (e) {
-      setError(String(e));
-    } finally {
-      setChecking(false);
-    }
-  }, []);
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const load = async () => { setError(''); await Promise.all([siteQuery.refresh(), projectQuery.refresh(), hostsQuery.refresh(), warningQuery.refresh(), healthQuery.refresh()]); };
   async function selectFolder(path: string) {
     setFolder(path);
     setRoot(path);
@@ -112,7 +93,6 @@ export function SitesWorkspace({ advanced = false }: { advanced?: boolean }) {
     setBusy(true);
     setError("");
     setNotice("");
-    setHealth(null);
     try {
       await action();
       setNotice(message);
@@ -193,7 +173,7 @@ export function SitesWorkspace({ advanced = false }: { advanced?: boolean }) {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            disabled={busy || checking}
+            disabled={busy || refreshing}
             onClick={() => void load()}
           >
             <RefreshCw className="mr-2 h-4 w-4" />
@@ -205,6 +185,7 @@ export function SitesWorkspace({ advanced = false }: { advanced?: boolean }) {
           </Button>
         </div>
       </div>
+      {siteQuery.updatedAt && <p role="status" className="text-xs text-muted-foreground">{refreshing ? 'Updating in background… ' : ''}Last checked: {new Date(siteQuery.updatedAt).toLocaleTimeString()}. {healthQuery.stale ? 'Health needs rechecking.' : 'Health reflects the last completed check.'}</p>}
       {!isTauri() && (
         <p className="rounded-lg border p-3 text-sm">
           {text(

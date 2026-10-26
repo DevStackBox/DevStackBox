@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ROUTES } from "@/lib/routes";
 import type { ServiceName } from "@/types/services";
 import { useServiceStatus } from "@/context/service-status-context";
+import { bulkServiceActions } from "@/lib/service-actions";
 
 interface ServicesPageProps {
   onOpenPHPVersionSelector: () => void;
@@ -41,11 +42,12 @@ export function ServicesPage({
   const { t } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { loading, runBulk } = useServiceStatus();
+  const { services, initialLoading, loading, runBulk } = useServiceStatus();
 
   const [bulkLoading, setBulkLoading] = useState<
     "start" | "stop" | "restart" | null
   >(null);
+  const { canStart, canStop, canRestart } = bulkServiceActions(services, initialLoading, loading !== null || bulkLoading !== null);
 
   const handleOpenConfig = (service: string) => {
     onOpenConfig(service as ServiceName);
@@ -112,7 +114,7 @@ export function ServicesPage({
           <Button
             size="sm"
             onClick={startAllServices}
-            disabled={loading !== null || bulkLoading !== null}
+            disabled={!canStart}
           >
             <Play className="mr-2 h-4 w-4" />
             {bulkLoading === "start"
@@ -123,7 +125,7 @@ export function ServicesPage({
             size="sm"
             variant="outline"
             onClick={stopAllServices}
-            disabled={loading !== null || bulkLoading !== null}
+            disabled={!canStop}
           >
             <Square className="mr-2 h-4 w-4" />
             {bulkLoading === "stop"
@@ -134,7 +136,7 @@ export function ServicesPage({
             size="sm"
             variant="outline"
             onClick={restartAllServices}
-            disabled={loading !== null || bulkLoading !== null}
+            disabled={!canRestart}
           >
             <RefreshCw className="mr-2 h-4 w-4" />
             {bulkLoading === "restart"

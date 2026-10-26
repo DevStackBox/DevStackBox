@@ -125,3 +125,7 @@ src-tauri/tauri.local-test.conf.json
 
 # Local app review screenshots (may contain local paths)
 /review-artifacts/
+/packaging/phpmyadmin-runtime/
+/packaging/phpmyadmin-report.json
+/packaging/.phpmyadmin-stage-*/
+/packaging/.phpmyadmin-previous-*/

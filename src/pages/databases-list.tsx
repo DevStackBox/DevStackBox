@@ -1,3 +1,4 @@
+import { useWorkspaceQuery } from "@/hooks/use-workspace-query";
 import { useNavigate } from "react-router-dom";
 import {
   databaseInvoke,
@@ -85,9 +86,7 @@ function DatabasesPageContent() {
   const [confirmation, setConfirmation] = useState("");
   const [charset, setCharset] = useState("");
   const [collation, setCollation] = useState("");
-  const [collations, setCollations] = useState<
-    { charset: string; collation: string }[]
-  >([]);
+
   const transfer = (tab: string, names: string[]) =>
     navigate("/databases/import-export", {
       state: {
@@ -109,23 +108,23 @@ function DatabasesPageContent() {
   const [busy, setBusy] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const collationQuery = useWorkspaceQuery(
+    "db:collations",
+    () =>
+      databaseInvoke<{ charset: string; collation: string }[]>(
+        "database_collations",
+      ),
+    300000,
+    createOpen,
+    false,
+  );
+  const collations = collationQuery.data ?? [];
   const [newDbName, setNewDbName] = useState("");
   const [dropTarget, setDropTarget] = useState<string | null>(null);
 
   useEffect(() => {
     setConfirmation("");
   }, [dropTarget]);
-  useEffect(() => {
-    if (createOpen)
-      void databaseInvoke<typeof collations>("database_collations")
-        .then(setCollations)
-        .catch(() => setCollations([]));
-  }, [createOpen]);
-
-  // Lazy warmup: trigger the first fetch when this page is first visited.
-  useEffect(() => {
-    void refresh();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const backupDatabase = async (name: string) => {
     setBusy(name);
@@ -266,11 +265,17 @@ function DatabasesPageContent() {
           [t("databaseWorkspace.databases"), databases.length],
           [
             t("databaseWorkspace.tables"),
-            databases.reduce((sum, db) => sum + db.tableCount, 0),
+            databases.every((db) => db.statsKnown !== false)
+              ? databases.reduce((sum, db) => sum + db.tableCount, 0)
+              : "-",
           ],
           [
             t("databaseWorkspace.estimatedSize"),
-            formatBytes(databases.reduce((sum, db) => sum + db.sizeBytes, 0)),
+            databases.every((db) => db.statsKnown !== false)
+              ? formatBytes(
+                  databases.reduce((sum, db) => sum + db.sizeBytes, 0),
+                )
+              : "-",
           ],
         ].map(([label, value]) => (
           <div className="border rounded-md p-4" key={label}>
@@ -430,11 +435,17 @@ function DatabasesPageContent() {
                           {db.name}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {t("databases.tablesCount", "{{count}} tables", {
-                            count: db.tableCount,
-                          })}
+                          {db.statsKnown === false
+                            ? "- tables"
+                            : t("databases.tablesCount", "{{count}} tables", {
+                                count: db.tableCount,
+                              })}
                           <span className="mx-1.5">&middot;</span>
-                          {formatBytes(db.sizeBytes)} · {db.viewCount ?? 0}{" "}
+                          {db.statsKnown === false
+                            ? "Updating estimates…"
+                            : formatBytes(db.sizeBytes)}{" "}
+                          ·{" "}
+                          {db.statsKnown === false ? "-" : (db.viewCount ?? 0)}{" "}
                           {t("databaseWorkspace.views")}
                         </div>
                       </div>

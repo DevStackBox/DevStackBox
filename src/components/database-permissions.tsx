@@ -41,16 +41,14 @@ export function DatabasePermissions({
 }) {
   const { t } = useTranslation();
   const text = (key: string) => t(`databaseWorkspace.${key}`);
-  const { databases, refresh } = useDatabaseCache();
+  const { databases } = useDatabaseCache(account !== null);
   const [database, setDatabase] = useState(initialDatabase ?? "");
   const [original, setOriginal] = useState<string[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
-  useEffect(() => {
-    if (account) void refresh();
-  }, [account, refresh]);
+
   useEffect(() => {
     setLoaded(false);
     setOriginal([]);
@@ -160,10 +158,10 @@ export function DatabasePermissions({
             </fieldset>
             <div className="rounded border p-3 text-sm">
               <p>
-                {text("additions")}: {additions.join(", ") || "—"}
+                {text("additions")}: {additions.join(", ") || "-"}
               </p>
               <p>
-                {text("removals")}: {removals.join(", ") || "—"}
+                {text("removals")}: {removals.join(", ") || "-"}
               </p>
             </div>
             <Button
@@ -178,6 +176,7 @@ export function DatabasePermissions({
                     database,
                     additions,
                     removals,
+                    expected: original,
                   });
                   onClose();
                 } catch (e) {

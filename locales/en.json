@@ -501,7 +501,8 @@
     "trayNoticeDesc": "The app is minimized to the system tray. Click the tray icon to restore it."
   },
   "sidebar": {
-    "builtBy": "Built by Nomad Programmer"
+    "builtBy": "Built by Nomad Programmer",
+    "builtWithLove": "Built with Love"
   },
   "databaseWorkspace": {
     "transfer": "Import & Export",

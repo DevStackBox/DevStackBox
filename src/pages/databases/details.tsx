@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useWorkspaceQuery } from "@/hooks/use-workspace-query";
+import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -33,28 +34,12 @@ export function DatabaseDetailsPage() {
   const { services } = useServiceStatus();
   const live = services.mysql.state === "running";
   const { active } = useDatabaseOperations();
-  const [details, setDetails] = useState<Details | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const query = useWorkspaceQuery('db:details:' + name, () => databaseInvoke<Details>('database_details', { name }), 30000, live && !active);
+  const details = query.data ?? null;
+  const [actionError, setError] = useState<string | null>(null);
+  const error = actionError || query.error;
   const [tab, setTab] = useState("overview");
   const [search, setSearch] = useState("");
-  useEffect(() => {
-    setDetails(null);
-    if (!live) return;
-    let cancelled = false;
-    databaseInvoke<Details>("database_details", { name })
-      .then((result) => {
-        if (!cancelled) {
-          setDetails(result);
-          setError(null);
-        }
-      })
-      .catch((e) => {
-        if (!cancelled) setError(String(e));
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [name, live, active]);
   const transfer = (tab: string) =>
     navigate("/databases/import-export", {
       state: { tab, sources: tab === "import" ? [] : [name], database: name },

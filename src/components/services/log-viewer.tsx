@@ -21,6 +21,8 @@ interface LogViewerProps {
   autoScroll?: boolean;
   onAutoScrollChange?: (enabled: boolean) => void;
   loading?: boolean;
+  clearLabel?: string;
+  emptyLabel?: string;
 }
 
 // Classify a log line for terminal-style coloring. Cheap substring checks only.
@@ -65,6 +67,8 @@ export function LogViewer({
   autoScroll = true,
   onAutoScrollChange,
   loading = false,
+  clearLabel,
+  emptyLabel,
 }: LogViewerProps) {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
@@ -98,6 +102,7 @@ export function LogViewer({
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
+    URL.revokeObjectURL(element.href);
   };
 
   const hasContent = filteredLines.some((l) => l.length > 0);
@@ -165,7 +170,7 @@ export function LogViewer({
         >
           {!hasContent ? (
             <span className="text-zinc-500">
-              {t("logs.empty", "No logs yet...")}
+              {emptyLabel || t("logs.empty", "No logs yet...")}
             </span>
           ) : (
             filteredLines.map((line, idx) => (
@@ -187,9 +192,9 @@ export function LogViewer({
             </Button>
           )}
           {onClear && (
-            <Button onClick={onClear} variant="outline" size="sm">
+            <Button onClick={onClear} variant="outline" size="sm" disabled={loading}>
               <Trash2 className="mr-2 h-4 w-4" />
-              {t("actions.clear", "Clear")}
+              {clearLabel || t("actions.clear", "Clear")}
             </Button>
           )}
           <div className="flex-1" />

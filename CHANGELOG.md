@@ -4,6 +4,22 @@ All notable changes to DevStackBox are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.19] - 2026-10-26
+
+### Added
+
+- **Log management:** Clear view with a session cursor, archive current log to verified GZIP, read-only archive preview and export, delete log contents with typed confirmation, and opt-in rotation/retention settings (automatic maintenance off by default).
+- **Workspace cache** for Projects, Databases, and Users: show the last successful result when returning to a screen, with shared request deduplication and sensible polling.
+
+### Changed
+
+- phpMyAdmin installer payload is staged from policy: **pmahomme** theme only, smaller extracted footprint, hash-checked upgrade cleanup that preserves customized files.
+- Service log viewer: action buttons above the viewer; clearer messaging after Clear view.
+
+### Fixed
+
+- Clear view no longer reports an incorrect omitted-history warning when the user intentionally cleared the display.
+
 ## [0.1.18] - 2026-10-25
 
 ### Added

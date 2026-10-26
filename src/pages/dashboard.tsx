@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { safeInvoke, isTauri } from "@/lib/tauri";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -13,8 +13,9 @@ import { TAURI_COMMANDS } from "@/lib/commands";
 import { ROUTES } from "@/lib/routes";
 import { Play, Square, Server, Loader2, Globe, ArrowRight } from "lucide-react";
 import { useServiceStatus } from "@/context/service-status-context";
-import { useToast } from "@/hooks/use-toast";
+import { useWorkspaceQuery } from "@/hooks/use-workspace-query";
 import type { VhostEntry } from "@/types/vhosts";
+import { bulkServiceActions } from "@/lib/service-actions";
 
 interface DashboardPageProps {
   onOpenPHPVersionSelector: () => void;
@@ -33,28 +34,12 @@ export function DashboardPage({
 }: DashboardPageProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { services, loading, runBulk } = useServiceStatus();
-  const { toast } = useToast();
+  const { services, loading, initialLoading, runBulk } = useServiceStatus();
   const [bulkBusy, setBulkBusy] = useState<"start" | "stop" | null>(null);
-  const [vhosts, setVhosts] = useState<VhostEntry[]>([]);
-  const [vhostsLoading, setVhostsLoading] = useState(true);
-
-  useEffect(() => {
-    if (!isTauri()) {
-      setVhostsLoading(false);
-      return;
-    }
-    setVhostsLoading(true);
-    void safeInvoke<VhostEntry[]>(TAURI_COMMANDS.vhosts.list)
-      .then((v) => setVhosts(v ?? []))
-      .catch(() => {
-        toast({
-          variant: "destructive",
-          title: t("vhosts.loadError", "Could not load virtual hosts"),
-        });
-      })
-      .finally(() => setVhostsLoading(false));
-  }, [t, toast]);
+  const vhostQuery = useWorkspaceQuery('project:sites', async () => (await safeInvoke<VhostEntry[]>(TAURI_COMMANDS.vhosts.list)) ?? [], 30000, isTauri(), false);
+  const vhosts = vhostQuery.data ?? [];
+  const vhostsLoading = vhostQuery.data === undefined && vhostQuery.refreshing;
+  const { canStart, canStop } = bulkServiceActions(services, initialLoading, loading !== null || bulkBusy !== null);
 
   const runningCount = [
     services.apache.running,
@@ -108,7 +93,7 @@ export function DashboardPage({
           <Button
             size="sm"
             onClick={handleStartAll}
-            disabled={loading !== null || bulkBusy !== null}
+            disabled={!canStart}
           >
             {bulkBusy === "start" ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -121,7 +106,7 @@ export function DashboardPage({
             size="sm"
             variant="outline"
             onClick={handleStopAll}
-            disabled={loading !== null || bulkBusy !== null}
+            disabled={!canStop}
           >
             {bulkBusy === "stop" ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -7,6 +7,12 @@ description: "Create databases, manage local accounts and understand authenticat
 
 Start MySQL before opening **Databases**. Open phpMyAdmin only when both Apache and MySQL are running. The app uses its configured local MySQL client credentials; an authentication error is different from an empty database list.
 
+### Unreleased cache and packaging changes
+
+The source now keeps database/user lists in memory between visits and refreshes them in the background while their screen is visible. Database names are checked about every 15 seconds; size estimates about every 60 seconds; users about every 30 seconds. Refresh remains available for an immediate check. Changes in phpMyAdmin can appear on the next scheduled check or when returning to the app. Errors do not mean the database list is empty; previous results can be marked outdated. Caches are not saved across app restarts.
+
+New installer builds bundle the pmahomme phpMyAdmin theme only and hide the theme selector. Translations and offline help remain included. Older customized files can remain after an upgrade; cleanup does not remove unknown or edited files. These changes do not describe previously published installers.
+
 ## Database workspace
 
 **Databases | Users | Import & Export** (v0.1.18) replaces the older scattered database-only list for day-to-day management:

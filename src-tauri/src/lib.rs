@@ -18,6 +18,7 @@ use crate::commands::config::{
 };
 use crate::commands::fullbackup::{create_full_backup, delete_full_backup, list_full_backups, open_backups_folder, restore_full_backup};
 use crate::commands::logs::{get_service_logs, log_crash_event};
+use crate::commands::log_management::*;
 use crate::commands::migration::{detect_xampp_installations, import_from_xampp};
 use crate::commands::mysql::{
     backup_mysql_database, backup_mysql_database_named, create_mysql_database, create_mysql_user,
@@ -119,6 +120,17 @@ pub fn run() {
             set_mysql_user_password,
             open_php_terminal,
             get_service_logs,
+            read_log_chunk,
+            get_log_policy,
+            set_log_policy,
+            archive_log,
+            delete_log_contents,
+            list_log_archives,
+            read_log_archive,
+            delete_log_archive,
+            export_log_archive,
+            open_log_archives,
+            run_log_maintenance,
             log_crash_event,
             read_config,
             update_config,
@@ -171,6 +183,7 @@ pub fn run() {
             // Roadmap Phase 1.8: ensure user data root and subdirs exist
             // before any service can try to read/write configs or data.
             ensure_user_data_dirs();
+            crate::commands::log_management::start_maintenance();
             let _ = ensure_phpmyadmin_config_inc();
             let _ = patch_phpmyadmin_config();
 

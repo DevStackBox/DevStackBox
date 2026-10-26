@@ -356,6 +356,12 @@ These commands are available in current source and are not part of the published
 | `start_database_operation`, `database_operations`, `cancel_database_operation` | Native sequential jobs, bounded history and cancellation |
 | `pick_database_files`, `pick_database_destination`, `inspect_database_files` | Native file selection and risk-review metadata |
 | `database_backups`, `verify_database_backup`, `delete_database_backup` | Managed backup records, checksum checks and scoped file deletion |
-| `database_grants`, `set_database_grants` | Direct database privilege inspection and explicit additions/removals |
+| `database_grants`, `set_database_grants` | Direct database privilege inspection and explicit additions/removals. The editor supplies the optional `expected` original grants to reject conflicting changes before applying edits. |
+
+### Managed diagnostic logs
+
+`read_log_chunk` reads a bounded increment using a server-returned cursor; `clear: true` captures the current end without modifying the file. `archive_log` verifies a GZIP archive before resetting a stopped-writer log. `delete_log_contents` requires the reviewed cursor and exact filename confirmation. These commands accept logical IDs, not arbitrary paths.
+
+`list_log_archives`, `read_log_archive`, `export_log_archive`, `delete_log_archive` and `open_log_archives` manage recognized diagnostic archives. `get_log_policy` and `set_log_policy` control opt-in rotation/retention. `run_log_maintenance` applies the saved policy and reports deferred or failed operations. These commands never handle MySQL binary/relay/redo/undo logs.
 
 Operations use DevStackBox's verified local MySQL connection. A selected initial database is not confinement for arbitrary imported SQL. Cancellation does not reverse SQL already applied. The grants editor refuses partial-revoke mode rather than changing global restrictions, and escapes database wildcard characters for ordinary database grants.

@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { NavLink } from "react-router-dom";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart } from "lucide-react";
+import { openExternalUrl } from "@/lib/tauri";
 import { useTranslation } from "react-i18next";
 import { AppLogo } from "@/components/app-logo";
 import { Button } from "@/components/ui/button";
@@ -117,7 +118,10 @@ export function Sidebar({
             transition={{ delay: 0.2 }}
             className="text-xs text-muted-foreground text-center"
           >
-            <p>{t("sidebar.builtBy", "Built by Nomad Programmer")}</p>
+            <a href="https://www.nomadprogrammer.in/" onClick={(event) => { event.preventDefault(); void openExternalUrl("https://www.nomadprogrammer.in/"); }} className="inline-flex items-center gap-1.5 hover:text-foreground">
+              {t("sidebar.builtWithLove", "Built with Love")}
+              <Heart aria-hidden="true" className="h-3.5 w-3.5 fill-red-500 text-red-500" />
+            </a>
           </motion.div>
         )}
       </div>

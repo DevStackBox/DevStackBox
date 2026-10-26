@@ -10,6 +10,7 @@ import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { ServiceStatusProvider, useServiceStatus } from "./service-status-context";
 import { MySQLRequired } from "@/components/mysql-required";
 import { TAURI_COMMANDS as C } from "@/lib/commands";
+import { workspaceCache } from "@/lib/workspace-cache";
 
 const mocks = vi.hoisted(() => ({ invoke: vi.fn(), toast: vi.fn(), handlers: new Map<string, (e: { payload: unknown }) => void>() }));
 vi.mock("./database-operations-context", () => ({ useDatabaseOperations: () => ({ active: false, start: vi.fn() }), databaseInvoke: mocks.invoke }));
@@ -29,6 +30,7 @@ function Consumer() { useEffect(() => { query(); }, []); return <div>Live databa
 function Harness() { api = useServiceStatus(); return <MySQLRequired><Consumer /></MySQLRequired>; }
 async function mount() { await act(async () => root.render(<MemoryRouter><ServiceStatusProvider><DatabaseCacheProvider><Harness /></DatabaseCacheProvider></ServiceStatusProvider></MemoryRouter>)); }
 beforeEach(() => {
+  workspaceCache.reset();
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   localStorage.clear(); sessionStorage.clear(); mocks.toast.mockClear(); query.mockClear(); mocks.handlers.clear(); running = false;
   mocks.invoke.mockReset().mockImplementation(async (command: string) => {
@@ -156,14 +158,14 @@ describe("database screen regression cases", () => {
   });
   it("distinguishes a successfully loaded empty database list from a failed search", async () => {
     running = true;
-    mocks.invoke.mockImplementation(async (command: string) => command === C.services.listMysqlDatabasesDetailed ? [] : { running: true });
+    mocks.invoke.mockImplementation(async (command: string) => [C.services.listMysqlDatabasesDetailed, C.services.listMysqlDatabases].includes(command as never) ? [] : { running: true });
     await act(async () => root.render(<MemoryRouter><ServiceStatusProvider><DatabaseCacheProvider><DatabasesPage /></DatabaseCacheProvider></ServiceStatusProvider></MemoryRouter>));
     expect(host.textContent).toContain("No user databases yet. Select Create");
     expect(host.textContent).not.toContain("No databases match your search");
   });
   it("shows connection failures inline with retry rather than claiming there are zero databases", async () => {
     mocks.invoke.mockImplementation(async (command: string) => {
-      if (command === C.services.listMysqlDatabasesDetailed) throw new Error("Access denied");
+      if ([C.services.listMysqlDatabasesDetailed, C.services.listMysqlDatabases].includes(command as never)) throw new Error("Access denied");
       return { running: true };
     });
     const log = vi.spyOn(console, "error").mockImplementation(() => {});

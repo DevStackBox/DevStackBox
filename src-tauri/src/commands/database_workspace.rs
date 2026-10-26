@@ -1041,6 +1041,7 @@ pub async fn set_database_grants(
     database: String,
     additions: Vec<String>,
     removals: Vec<String>,
+    expected: Option<Vec<String>>,
 ) -> Result<(), String> {
     tauri::async_runtime::spawn_blocking(move || {
         let _lock = super::mysql_import::MYSQL_DATA_LOCK
@@ -1053,6 +1054,12 @@ pub async fn set_database_grants(
         let database = validate_database_name(&database)?;
         ensure_user_database(&database)?;
         let database = database_grant_scope(&database)?;
+        if let Some(mut expected) = expected {
+            let query = format!("SELECT PRIVILEGE_TYPE FROM information_schema.schema_privileges WHERE GRANTEE='{}' AND TABLE_SCHEMA='{}' ORDER BY PRIVILEGE_TYPE;", escape_mysql_string_literal(&account), escape_mysql_string_literal(&database));
+            let mut current: Vec<String> = run_mysql_query(&query)?.lines().map(str::to_owned).collect();
+            expected.sort(); current.sort();
+            if expected != current { return Err("Permissions changed since your review. Reopen the editor and review the current grants.".into()); }
+        }
         for p in additions.iter().chain(removals.iter()) {
             if !PRIVILEGES.contains(&p.as_str()) {
                 return Err("Unsupported privilege".into());
@@ -1271,6 +1278,7 @@ mod tests {
             "dw_test".into(),
             vec!["SELECT".into()],
             vec![],
+            Some(vec![]),
         ))
         .unwrap();
         let grants = tauri::async_runtime::block_on(database_grants(

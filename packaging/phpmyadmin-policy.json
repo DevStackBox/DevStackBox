@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "theme": "pmahomme",
+  "excludedDirectories": {
+    "themes/bootstrap": "Alternative theme",
+    "themes/metro": "Alternative theme",
+    "themes/original": "Alternative theme",
+    "setup": "DevStackBox supplies configuration",
+    "examples": "Upstream examples",
+    "tmp": "Generated runtime cache"
+  },
+  "excludedFiles": {
+    ".rtlcssrc.json": "Theme build configuration",
+    "babel.config.json": "JavaScript build configuration",
+    "yarn.lock": "JavaScript build dependency lock",
+    "package.json": "JavaScript build manifest",
+    "CONTRIBUTING.md": "Contributor instructions"
+  },
+  "requiredFiles": [
+    "index.php", "url.php", "show_config_errors.php", "LICENSE", "README", "ChangeLog",
+    "vendor/autoload.php", "vendor/composer/installed.php", "libraries/config.default.php",
+    "libraries/classes/ThemeManager.php", "templates/login/form.twig", "sql/create_tables.sql",
+    "themes/dot.gif", "themes/pmahomme/theme.json", "themes/pmahomme/css/theme.css",
+    "themes/pmahomme/css/theme.rtl.css", "config.inc.php", "devstackbox-theme.inc.php"
+  ]
+}

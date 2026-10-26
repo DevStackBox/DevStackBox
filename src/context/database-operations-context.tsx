@@ -10,7 +10,8 @@ import {
 import { isTauri, safeInvoke } from "@/lib/tauri";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
-import { useDatabaseCache } from "./database-cache-context";
+import { workspaceCache } from "@/lib/workspace-cache";
+import { useLocation } from "react-router-dom";
 
 export interface DatabaseOperationItem {
   source: string;
@@ -86,40 +87,68 @@ export function DatabaseOperationsProvider({
   const [operations, setOperations] = useState<DatabaseOperation[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
-  const { refresh } = useDatabaseCache();
-  const previouslyActive = useRef(false);
-  const fetching = useRef(false);
-  const reload = useCallback(async () => {
-    if (!isTauri() || fetching.current) return;
-    fetching.current = true;
+  const location = useLocation();
+  const seen = useRef(new Map<string, string>());
+  const pending = useRef<Promise<void> | null>(null);
+  const reload = useCallback((): Promise<void> => {
+    if (!isTauri()) return Promise.resolve();
+    if (pending.current) return pending.current;
+    pending.current = (async () => {
     try {
       const records = await databaseInvoke<DatabaseOperation[]>(
         "database_operations",
       );
-      const active = records.some((op) =>
-        ["queued", "running"].includes(op.status),
-      );
       setOperations(records);
       setError(null);
-      if (previouslyActive.current && !active) void refresh();
-      previouslyActive.current = active;
+      let changed = false;
+      for (const record of records) {
+        const previous = seen.current.get(record.id);
+        const finished = !['queued', 'running'].includes(record.status);
+        if (record.kind === 'import' && finished && (previous === 'queued' || previous === 'running' || (!previous && record.status === 'interrupted'))) changed = true;
+        seen.current.set(record.id, record.status);
+      }
+      if (changed) workspaceCache.invalidate('db:');
     } catch (e) {
       setError(String(e));
     } finally {
-      fetching.current = false;
+      pending.current = null;
     }
-  }, [refresh]);
+    })();
+    return pending.current;
+  }, []);
+  useEffect(() => { if (location.pathname.startsWith('/databases')) void reload(); }, [location.pathname, reload]);
   useEffect(() => {
     void reload();
-    const timer = setInterval(() => void reload(), 1500);
-    return () => clearInterval(timer);
+    const focus = () => { if (document.visibilityState !== 'hidden') void reload(); };
+    window.addEventListener('focus', focus);
+    document.addEventListener('visibilitychange', focus);
+    return () => { window.removeEventListener('focus', focus); document.removeEventListener('visibilitychange', focus); };
   }, [reload]);
+  const hasActiveJob = operations.some(op => ['queued', 'running'].includes(op.status));
+  useEffect(() => {
+    if (!hasActiveJob) return;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let disposed = false;
+    let focused = document.hasFocus();
+    const schedule = () => {
+      clearTimeout(timer);
+      if (!disposed && focused && document.visibilityState !== 'hidden') timer = setTimeout(() => { void reload().finally(schedule); }, 1500);
+    };
+    schedule();
+    document.addEventListener('visibilitychange', schedule);
+    const onFocus = () => { focused = true; schedule(); };
+    const onBlur = () => { focused = false; schedule(); };
+    window.addEventListener('focus', onFocus); window.addEventListener('blur', onBlur);
+    return () => { disposed = true; clearTimeout(timer); document.removeEventListener('visibilitychange', schedule); window.removeEventListener('focus', onFocus); window.removeEventListener('blur', onBlur); };
+  }, [hasActiveJob, reload]);
   const start = async (request: DatabaseRequest) => {
     setStarting(true);
     try {
       const id = await databaseInvoke<string>("start_database_operation", {
         request,
       });
+      seen.current.set(id, 'queued');
+      await pending.current;
       await reload();
       return id;
     } finally {

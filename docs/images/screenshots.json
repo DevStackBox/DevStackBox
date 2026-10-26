@@ -167,6 +167,21 @@
       "approved": true
     },
     {
+      "id": "local-build-logs",
+      "file": "local-build/logs-2026-10-26.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.18 local build",
+      "capturedAt": "2026-10-26",
+      "alt": "Log workspace after Clear view, with archive and rotation controls",
+      "caption": "Native 1920 × 1032 capture of the installed local v0.1.18 build, 26 October 2026. Disposable audit profile; not a published release or recommended settings.",
+      "publicPaths": [
+        "/docs-images/local-build/logs-2026-10-26.jpg",
+        "/screenshots/local-build/logs-2026-10-26.jpg"
+      ],
+      "approved": true
+    },
+    {
       "id": "preview-logs",
       "file": "source-preview/logs-2026-10-23.jpg",
       "width": 1913,

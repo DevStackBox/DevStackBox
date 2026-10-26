@@ -8,6 +8,8 @@ icon: "Folder"
 
 Available since **v0.1.12**: connect existing folders, select PHP per website, and manage trusted local HTTPS from project details.
 
+Since v0.1.19, project metadata and previous health results stay in memory when navigating between screens. Stale metadata refreshes in the background; health shows when it was last checked and can be rechecked explicitly. A previous successful check is not a guarantee that the website is reachable now. Background refresh preserves unsaved fields, and saving checks for configuration changes made since editing began. The details screen uses the available workspace width.
+
 ## Project folders and the default www directory
 
 Projects can stay in any accessible local directory, including another drive. Connecting a folder creates a site configuration without copying or moving its files. The www directory under the installation is the default for newly created folders and localhost; it is not a requirement for connected projects. Apache must be able to read the selected directory.

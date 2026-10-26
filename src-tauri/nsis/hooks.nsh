@@ -1,4 +1,6 @@
 !define DSB_UPGRADE_STOP_SCRIPT "${__FILEDIR__}\stop-upgrade-services.ps1"
+!define DSB_PMA_PRUNE_SCRIPT "${__FILEDIR__}\prune-phpmyadmin.ps1"
+!define DSB_PMA_REPORT "${__FILEDIR__}\..\..\packaging\phpmyadmin-report.json"
 ; DevStackBox NSIS hooks - install/uninstall logging and cleanup
 
 ; ---------------------------------------------------------------------------
@@ -752,6 +754,20 @@ FunctionEnd
     DetailPrint "Existing installation detected."
   ${EndIf}
   !insertmacro StopServicesBeforeUpgrade
+  ; Preserve the user's phpMyAdmin connection and directory configuration.
+  ${If} ${FileExists} "$INSTDIR\phpmyadmin\config.inc.php.dsb-upgrade-backup"
+    MessageBox MB_ICONSTOP "A previous phpMyAdmin configuration backup exists. Recover or move config.inc.php.dsb-upgrade-backup before retrying."
+    Abort
+  ${EndIf}
+  InitPluginsDir
+  ${If} ${FileExists} "$INSTDIR\phpmyadmin\config.inc.php"
+    ClearErrors
+    CopyFiles /SILENT "$INSTDIR\phpmyadmin\config.inc.php" "$INSTDIR\phpmyadmin\config.inc.php.dsb-upgrade-backup"
+    ${If} ${Errors}
+      MessageBox MB_ICONSTOP "Cannot preserve phpMyAdmin configuration. Installation stopped."
+      Abort
+    ${EndIf}
+  ${EndIf}
   !insertmacro ProtectWwwBeforeInstall
   ${If} $UpdateMode = 1
     DetailPrint "Upgrading to ${VERSION}..."
@@ -761,6 +777,24 @@ FunctionEnd
 
 
 !macro NSIS_HOOK_POSTINSTALL
+  ; Only prune old files that exactly match the approved source hashes.
+  ; Modified/custom files and all runtime caches/dumps are preserved.
+  File /oname=$PLUGINSDIR\dsb-prune-phpmyadmin.ps1 "${DSB_PMA_PRUNE_SCRIPT}"
+  File /oname=$PLUGINSDIR\dsb-phpmyadmin-report.json "${DSB_PMA_REPORT}"
+  nsExec::ExecToLog 'powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$PLUGINSDIR\dsb-prune-phpmyadmin.ps1" -InstallRoot "$INSTDIR" -Manifest "$PLUGINSDIR\dsb-phpmyadmin-report.json"'
+  Pop $R0
+  ${If} $R0 != 0
+    DetailPrint "Some obsolete phpMyAdmin files could not be cleaned. Existing custom files are preserved."
+  ${EndIf}
+  ${If} ${FileExists} "$INSTDIR\phpmyadmin\config.inc.php.dsb-upgrade-backup"
+    ClearErrors
+    CopyFiles /SILENT "$INSTDIR\phpmyadmin\config.inc.php.dsb-upgrade-backup" "$INSTDIR\phpmyadmin\config.inc.php"
+    ${If} ${Errors}
+      MessageBox MB_ICONSTOP "Could not restore phpMyAdmin configuration. Recover config.inc.php.dsb-upgrade-backup in the phpmyadmin installation directory before retrying."
+      Abort
+    ${EndIf}
+  ${EndIf}
+  Delete "$INSTDIR\phpmyadmin\config.inc.php.dsb-upgrade-backup"
   !insertmacro RestoreWwwAfterInstall
   !insertmacro LogPhase 4 7 "Configuring services"
 

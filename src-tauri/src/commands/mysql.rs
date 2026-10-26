@@ -132,6 +132,7 @@ pub async fn start_mysql() -> Result<bool, String> {
 
 #[tauri::command]
 pub async fn stop_mysql() -> Result<bool, String> {
+    let _maintenance = super::log_management::MaintenanceAfterStop;
     let _lock = super::mysql_import::MYSQL_DATA_LOCK.try_lock().map_err(|_| "A database operation is running. Cancel it or wait before stopping MySQL.")?;
     let mysql_path = mysqld_exe_path();
 

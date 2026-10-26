@@ -279,6 +279,7 @@ pub async fn start_apache() -> Result<bool, String> {
 
 #[tauri::command]
 pub async fn stop_apache() -> Result<bool, String> {
+    let _maintenance = super::log_management::MaintenanceAfterStop;
     let apache_path = apache_exe_path();
 
     if !is_our_process_running("httpd.exe", &apache_path) {

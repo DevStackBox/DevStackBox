@@ -31,7 +31,7 @@ const selectClass = "h-10 w-full rounded-md border bg-background px-3 text-sm";
 export function DatabaseTransferPage() {
   const { t } = useTranslation();
   const text = (key: string) => t(`databaseWorkspace.${key}`);
-  const { databases, refresh } = useDatabaseCache();
+  const { databases } = useDatabaseCache();
   const { services } = useServiceStatus();
   const live = services.mysql.state === "running";
   const {
@@ -67,9 +67,7 @@ export function DatabaseTransferPage() {
       warning: string;
     }[]
   >([]);
-  useEffect(() => {
-    if (live) void refresh();
-  }, [live, refresh]);
+
   useEffect(() => {
     const state = location.state as {
       tab?: string;

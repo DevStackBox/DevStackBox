@@ -9,7 +9,7 @@ import { Link } from "react-router-dom";
 export function MySQLRequired({ children }: { children: ReactNode }) {
   const { services, initialLoading, loading, toggleService, refresh } =
     useServiceStatus();
-  const { databases, hasCache, lastSuccessfulRefresh } = useDatabaseCache();
+  const { databases, hasCache, lastSuccessfulRefresh } = useDatabaseCache(false);
   const { t } = useTranslation();
   const state = services.mysql.state;
   if (!initialLoading && state === "running") return <>{children}</>;

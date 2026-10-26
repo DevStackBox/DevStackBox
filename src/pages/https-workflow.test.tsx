@@ -1,3 +1,6 @@
+import { workspaceCache } from "@/lib/workspace-cache";
+import { beforeEach } from "vitest";
+beforeEach(() => workspaceCache.reset());
 import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { describe, it, expect, vi, afterEach } from "vitest";

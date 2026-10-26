@@ -50,7 +50,7 @@ export function RestoreSqlDialog({
 }: RestoreSqlDialogProps) {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const { databases } = useDatabaseCache();
+  const { databases } = useDatabaseCache(open);
 
   const [fileInfo, setFileInfo] = useState<SqlRestoreFileInfo | null>(null);
   const [mode, setMode] = useState<SqlRestoreMode>("follow_dump");

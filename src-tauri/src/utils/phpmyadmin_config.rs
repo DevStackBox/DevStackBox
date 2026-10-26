@@ -85,6 +85,17 @@ pub fn patch_phpmyadmin_config() -> Result<(), String> {
         .map_err(|e| format!("Failed to read phpMyAdmin config: {e}"))?;
 
     let mut updated = content.clone();
+    // Config files may end the PHP block explicitly. Keep appended settings in
+    // that block instead of emitting them as page text.
+    if updated.trim_end().ends_with("?>") {
+        updated = updated.trim_end().trim_end_matches("?>").to_owned();
+        updated.push('\n');
+    }
+    // Installed configurations survive upgrades; append the packaged UI policy
+    // without replacing connection credentials, ports or user directory settings.
+    if !updated.contains("/devstackbox-theme.inc.php") {
+        updated.push_str("\nif (is_file(__DIR__ . '/devstackbox-theme.inc.php')) {\n    include __DIR__ . '/devstackbox-theme.inc.php';\n}\n");
+    }
     if content.contains("$cfg['UploadDir']") {
         if let Some(line) = content.lines().find(|l| l.contains("$cfg['UploadDir']")) {
             if is_bundled_relative_dir(line.split('=').nth(1).unwrap_or("")) {

@@ -1,6 +1,7 @@
 /**
  * Tauri environment detection and safe invoke wrapper
  */
+import { invalidateAfterCommand, revalidateAfterExternalDatabaseTool } from "./workspace-cache";
 
 // Check if we're running in a Tauri environment
 export const isTauri = (): boolean => {
@@ -9,6 +10,7 @@ export const isTauri = (): boolean => {
 
 // Open a URL in the system default browser (works in both Tauri and browser)
 export const openExternalUrl = async (url: string): Promise<void> => {
+  if (new URL(url).pathname.toLowerCase().includes("/phpmyadmin")) revalidateAfterExternalDatabaseTool();
   if (isTauri()) {
     const { openUrl } = await import("@tauri-apps/plugin-opener");
     await openUrl(url);
@@ -31,7 +33,8 @@ export const safeInvoke = async <T>(
 
   try {
     const { invoke } = await import("@tauri-apps/api/core");
-    return await invoke<T>(command, args);
+    try { return await invoke<T>(command, args); }
+    finally { invalidateAfterCommand(command); }
   } catch (error) {
     console.error(`[Tauri] Failed to invoke '${command}':`, error);
     throw error;

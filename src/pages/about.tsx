@@ -159,7 +159,7 @@ export function AboutPage() {
           </div>
           <div>
             <p className="font-semibold">
-              {t("about.author", "Author")}: Nomad Programmer
+              {t("about.author", "Author")}: <a href="https://www.nomadprogrammer.in/" className="underline underline-offset-4" onClick={(event) => { event.preventDefault(); void openExternalUrl("https://www.nomadprogrammer.in/"); }}>Nomad Programmer</a>
             </p>
             <p className="text-sm text-muted-foreground">hello@devstackbox.com</p>
           </div>

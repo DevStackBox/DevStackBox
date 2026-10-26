@@ -15,7 +15,31 @@ Open **Logs** and choose Apache, MySQL or PHP. Apache and MySQL also have Logs t
 4. If auto-refresh is available, it refreshes the view at the displayed interval. Manual Refresh requests another read.
 5. Copy the relevant error text for a report after removing secrets and personal information.
 
-The shared service workspace viewer offers **Auto-refresh (2s)**. Clearing the displayed output clears the view; it does not rotate or delete the underlying log, and a later refresh can show the same lines again.
+The updated log workspace below is implemented and tested in a local v0.1.18 build; published installers may still show the older viewer.
+
+## Live log and Clear view
+
+Choose **Live log**, then select the managed file. Apache offers error, access and DevStackBox crash logs. PHP offers the global log and branch-specific logs, including legacy PHP 8.1 history. This does not enable installation or activation of PHP 8.1.
+
+**Clear view** hides all entries up to the current file position. Auto-refresh continues with new entries instead of repopulating old lines. It does not delete data or free disk space. **Show recent history** restores the recent tail. The viewer retains at most 1,000 lines and 512 KiB; it is not a complete-file export. Copy and download apply to the displayed tail.
+
+Auto-refresh reads incrementally every two seconds while changing, slows to ten seconds when idle, and pauses when the window is unfocused or hidden. Only the selected log is polled. Errors keep the previous output visible with a warning.
+
+## Archive or delete a log
+
+**Archive current log** creates a GZIP recovery copy, verifies its SHA-256 and original size, and only then empties the active file. Stop Apache or MySQL first; for PHP, close PHP terminals and other PHP writers as well. Locked files remain unchanged. Archiving does not stop services for you. Live Apache/MySQL rotation is not enabled in this build.
+
+**Delete log contents…** permanently empties the selected file without a backup. Type its exact filename to confirm. The operation refuses a file that changed after review. Prefer archiving when investigating an issue.
+
+Open **Archives** to view the verified recent tail, export the complete `.log.gz`, open the archive folder, or explicitly delete an archive. Exports require a new destination filename. Archives are shared across service tabs and stored under the user-data `logs/archives` directory. Unknown files and incomplete archives are not automatically removed.
+
+## Automatic rotation and retention
+
+Automatic maintenance is **off by default**. In **Rotation & retention**, review and save the policy before enabling it. Defaults are a 20 MiB rotation threshold, 14 days, 10 archives per log, and a 200 MiB combined archive budget. The earliest retention limit applies to recognized closed archives only.
+
+Maintenance runs at launch, after service stops and every five minutes while DevStackBox is open. It is independent of the viewer refresh timer. Service logs wait for their writers to stop; active files may exceed the threshold until then. Crash-log writes and maintenance are serialized. The scheduler does not run while DevStackBox is closed.
+
+Custom log destinations, MySQL binary/relay/redo/undo logs, database files and PID files are excluded. The UI displays the managed path so you can check whether your custom configuration writes somewhere else.
 
 ## Global versus project PHP logs
 
@@ -34,6 +58,6 @@ For startup and configuration errors, see [Troubleshooting](../advanced/troubles
 Full-stack backups do not include service logs. Preserve relevant logs separately when investigating a failure or before removing a development profile.
 
 
-![Shared Apache log viewer with no log written yet](../images/source-preview/logs-2026-10-23.jpg)
+![Log workspace after Clear view, with archive and rotation controls](../images/local-build/logs-2026-10-26.jpg)
 
-*Source preview captured 23 October 2026; includes unreleased wording changes. Demo state, not recommended settings.*
+*Native 1920 × 1032 capture of the installed local v0.1.18 build, 26 October 2026. Disposable audit profile; not a published release or recommended settings.*

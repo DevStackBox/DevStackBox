@@ -501,7 +501,8 @@
     "trayNoticeDesc": "ऐप सिस्टम ट्रे में मिनिमाइज है। इसे वापस खोलने के लिए ट्रे आइकन पर क्लिक करें।"
   },
   "sidebar": {
-    "builtBy": "Nomad Programmer द्वारा निर्मित"
+    "builtBy": "Nomad Programmer द्वारा निर्मित",
+    "builtWithLove": "प्यार से बनाया"
   },
   "databaseWorkspace": {
     "transfer": "आयात और निर्यात",

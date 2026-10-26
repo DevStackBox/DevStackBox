@@ -1,83 +1,58 @@
-import { useCallback, useEffect, useState } from "react";
+import { useWorkspaceQuery } from "@/hooks/use-workspace-query";
+import { workspaceCache } from "@/lib/workspace-cache";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, ExternalLink, FolderOpen, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { safeInvoke, openExternalUrl, isTauri } from "@/lib/tauri";
+import { safeInvoke, openExternalUrl } from "@/lib/tauri";
 import type { VhostEntry, ProjectDiagnostics } from "@/types/vhosts";
 type PhpVersion = { version: string; installed: boolean; is_active: boolean };
 
 export function ProjectDetailsPage() {
   const { projectId } = useParams();
-  const [site, setSite] = useState<VhostEntry | null>(null);
+  const sitesQuery = useWorkspaceQuery('project:sites', async () => (await safeInvoke<VhostEntry[]>('list_vhosts')) ?? [], 30000);
+  const site = sitesQuery.data?.find(item => item.id === projectId) ?? null;
+  const versionsQuery = useWorkspaceQuery('project:php', async () => { const result = await safeInvoke<PhpVersion[]>('get_php_versions'); return Array.isArray(result) ? result : []; }, 300000, true, false);
+  const healthKey = 'project:health:' + projectId;
+  const healthQuery = useWorkspaceQuery(healthKey, async () => await safeInvoke<ProjectDiagnostics>('get_project_diagnostics', { projectId }), 60000, !!site, false);
+  const diagnostics = healthQuery.data ?? null;
+  const phpVersions = (versionsQuery.data ?? []).filter(version => version.installed);
   const [draft, setDraft] = useState<VhostEntry | null>(null);
   const [aliases, setAliases] = useState("");
-  const [diagnostics, setDiagnostics] = useState<ProjectDiagnostics | null>(
-    null,
-  );
-  const [loading, setLoading] = useState(true);
+  const loading = sitesQuery.data === undefined;
+  const refreshing = sitesQuery.refreshing || healthQuery.refreshing || versionsQuery.refreshing;
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [projectLogs, setProjectLogs] = useState<string | null>(null);
   const [logsLoading, setLogsLoading] = useState(false);
-  const [phpVersions, setPhpVersions] = useState<PhpVersion[]>([]);
-  const [phpVersion, setPhpVersion] = useState("");
-  const load = useCallback(
-    async (resetDraft = true) => {
-      setLoading(true);
-      setDiagnostics(null);
-      setProjectLogs(null);
-      setError("");
-      try {
-        const sites = await safeInvoke<VhostEntry[]>("list_vhosts");
-        const next = sites?.find((s) => s.id === projectId);
-        if (!next) {
-          setSite(null);
-          setDraft(null);
-          throw new Error(
-            isTauri()
-              ? "Project not found. Return to Projects and refresh the list."
-              : "Open the desktop app to manage real projects.",
-          );
-        }
-        setSite(next);
-        const versions = await safeInvoke<PhpVersion[]>("get_php_versions");
-        const installed = (Array.isArray(versions) ? versions : []).filter(
-          (v) => v.installed,
-        );
-        setPhpVersions(installed);
-        if (resetDraft)
-          setPhpVersion(
-            installed.some((v) => v.version === next.php_version)
-              ? next.php_version!
-              : "",
-          );
-        if (resetDraft) {
-          setDraft({
-            ...next,
-            project_root: next.project_root || next.doc_root,
-          });
-          setAliases(next.aliases.join(", "));
-        }
-        setDiagnostics(
-          await safeInvoke<ProjectDiagnostics>("get_project_diagnostics", {
-            projectId,
-          }),
-        );
-      } catch (e) {
-        setError(String(e));
-      } finally {
-        setLoading(false);
-      }
-    },
-    [projectId],
-  );
-  useEffect(() => {
-    void load();
-  }, [load]);
 
+  const [phpVersion, setPhpVersion] = useState("");
+  const adopted = useRef<string | null>(null);
+  const adoptedAliases = useRef('');
+  const adoptedProject = useRef<string | undefined>(undefined);
+  const dirty = !!draft && !!site && (JSON.stringify(draft) !== adopted.current || aliases !== adoptedAliases.current || phpVersion !== (site.php_version ?? ''));
+  useEffect(() => {
+    if (!site) return;
+    if (adoptedProject.current === projectId && draft && dirty) return;
+    const next = { ...site, project_root: site.project_root || site.doc_root };
+    adopted.current = JSON.stringify(next);
+    adoptedAliases.current = site.aliases.join(', ');
+    adoptedProject.current = projectId;
+    setDraft(next);
+    setAliases(site.aliases.join(', '));
+    setPhpVersion(site.php_version ?? '');
+  }, [site]);
+  const load = async (resetDraft = true) => {
+    setError('');
+    await Promise.all([sitesQuery.refresh(), versionsQuery.refresh(), healthQuery.refresh()]);
+    if (resetDraft) {
+      const next = workspaceCache.snapshot<VhostEntry[]>('project:sites').data?.find(item => item.id === projectId);
+      if (next) { const updated = { ...next, project_root: next.project_root || next.doc_root }; adopted.current = JSON.stringify(updated); adoptedAliases.current = next.aliases.join(', '); setDraft(updated); setAliases(next.aliases.join(', ')); setPhpVersion(next.php_version ?? ''); }
+    }
+  };
   async function save(event: React.FormEvent) {
     event.preventDefault();
     if (!draft || !site) return;
@@ -85,6 +60,12 @@ export function ProjectDetailsPage() {
     setError("");
     setNotice("");
     try {
+      await sitesQuery.refresh();
+      const latest = workspaceCache.snapshot<VhostEntry[]>('project:sites');
+      const current = latest.data?.find(item => item.id === projectId);
+      if (latest.error || !current || JSON.stringify({ ...current, project_root: current.project_root || current.doc_root }) !== adopted.current) {
+        throw new Error('Project configuration changed or could not be checked. Your edits are preserved. Reset changes to load the current configuration before saving.');
+      }
       await safeInvoke("add_vhost", {
         domain: draft.domain,
         docRoot: draft.doc_root,
@@ -105,10 +86,10 @@ export function ProjectDetailsPage() {
     }
   }
   const https = diagnostics?.https;
-  const canOpen = site?.enabled && https && (!site.https || https.verified);
+  const canOpen = site?.enabled && https && (!site.https || (https.verified && !healthQuery.stale));
   const blocked = busy || loading;
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="w-full min-w-0 space-y-6">
       <Link
         to="/projects"
         className="inline-flex items-center gap-2 text-sm underline underline-offset-4"
@@ -170,6 +151,10 @@ export function ProjectDetailsPage() {
           {notice}
         </p>
       )}
+      {sitesQuery.updatedAt && <p role="status" className="text-xs text-muted-foreground">{refreshing ? 'Updating in background… ' : ''}Configuration last checked: {new Date(sitesQuery.updatedAt).toLocaleTimeString()}. {healthQuery.updatedAt ? 'Health last checked: ' + new Date(healthQuery.updatedAt).toLocaleTimeString() : 'Health not checked.'} {healthQuery.stale ? 'Health needs rechecking.' : ''}</p>}
+      {(sitesQuery.error || healthQuery.error || versionsQuery.error) && <p role="alert" className="text-sm text-destructive">Could not refresh. Previous results may be outdated. {sitesQuery.error || healthQuery.error || versionsQuery.error}</p>}
+      {sitesQuery.data && !site && <p role="alert">Project not found. Return to Projects and refresh the list.</p>}
+      {dirty && site && JSON.stringify({ ...site, project_root: site.project_root || site.doc_root }) !== adopted.current && <p role="alert" className="text-sm">This project changed since editing began. Your edits are preserved; reset to load the current configuration before saving.</p>}
       {loading && (
         <p role="status" className="text-sm text-muted-foreground">
           Checking project configuration and website…
@@ -352,6 +337,8 @@ export function ProjectDetailsPage() {
                     type="button"
                     variant="outline"
                     onClick={() => {
+                      adopted.current = JSON.stringify({ ...site, project_root: site.project_root || site.doc_root });
+                      adoptedAliases.current = site.aliases.join(', ');
                       setDraft({
                         ...site,
                         project_root: site.project_root || site.doc_root,

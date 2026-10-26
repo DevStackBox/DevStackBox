@@ -1,8 +1,9 @@
+import { useWorkspaceQuery } from "@/hooks/use-workspace-query";
 import { DatabasePermissions } from "@/components/database-permissions";
 import { useDatabaseOperations } from "@/context/database-operations-context";
 import { useLocation } from "react-router-dom";
 import { MySQLRequired } from "@/components/mysql-required";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { safeInvoke } from "@/lib/tauri";
@@ -66,9 +67,15 @@ function MySQLUsersPageContent() {
   const [confirmation, setConfirmation] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
 
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [users, setUsers] = useState<MySQLUser[]>([]);
-  const [loading, setLoading] = useState(false);
+  const userQuery = useWorkspaceQuery<MySQLUser[]>('db:users', async () => {
+    const result = await safeInvoke<MySQLUser[]>(TAURI_COMMANDS.services.listMysqlUsers);
+    if (!Array.isArray(result)) throw new Error('Invalid MySQL users response');
+    return result;
+  }, 30000);
+  const users = userQuery.data ?? [];
+  const loading = userQuery.refreshing;
+  const loadError = userQuery.error;
+  const loadUsers = userQuery.refresh;
 
   // Create user dialog
   const [createOpen, setCreateOpen] = useState(false);
@@ -86,25 +93,6 @@ function MySQLUsersPageContent() {
   // Delete confirmation
   const [deleteTarget, setDeleteTarget] = useState<MySQLUser | null>(null);
   const [deleting, setDeleting] = useState(false);
-
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  const loadUsers = async () => {
-    setLoading(true);
-    setLoadError(null);
-    try {
-      const result = await safeInvoke<MySQLUser[]>(
-        TAURI_COMMANDS.services.listMysqlUsers,
-      );
-      setUsers(result ?? []);
-    } catch (err) {
-      setLoadError(String(err));
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleCreate = async () => {
     if (!newUsername.trim() || newPassword !== confirmation || active) return;
@@ -206,6 +194,7 @@ function MySQLUsersPageContent() {
       transition={{ duration: 0.2 }}
       className="space-y-6"
     >
+      {userQuery.updatedAt && <p role="status" className="text-xs text-muted-foreground">{loading ? 'Updating… ' : ''}Last checked: {new Date(userQuery.updatedAt).toLocaleTimeString()}</p>}
       <DatabasePermissions
         account={permissionTarget}
         initialDatabase={

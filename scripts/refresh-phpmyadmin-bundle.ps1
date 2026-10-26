@@ -1,32 +1,48 @@
 param(
   [string]$Version = "5.2.2",
-  [string]$RepoRoot = (Split-Path -Parent $PSScriptRoot),
-  [bool]$RemovePreviousBackup = $true
+  [Parameter(Mandatory = $true)][ValidatePattern('^[a-fA-F0-9]{64}$')][string]$Sha256,
+  [string]$RepoRoot = (Split-Path -Parent $PSScriptRoot)
 )
 $ErrorActionPreference = "Stop"
-$pmaDir = Join-Path $RepoRoot "phpmyadmin"
+if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw "Use an exact stable release version." }
+$RepoRoot = (Resolve-Path -LiteralPath $RepoRoot).Path
+$pmaDir = Join-Path $RepoRoot 'phpmyadmin'
+if ((Get-Item -LiteralPath $pmaDir -ErrorAction SilentlyContinue).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Refusing linked phpMyAdmin source directory.' }
 $zipName = "phpMyAdmin-$Version-all-languages.zip"
-$url = "https://files.phpmyadmin.net/phpMyAdmin/$Version/$zipName"
-$temp = Join-Path $env:TEMP "devstackbox-pma-refresh"
-New-Item -ItemType Directory -Force -Path $temp | Out-Null
+$temp = Join-Path ([IO.Path]::GetTempPath()) ("devstackbox-pma-" + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $temp | Out-Null
 $zipPath = Join-Path $temp $zipName
-Write-Host "Downloading $url ..."
-Invoke-WebRequest -Uri $url -OutFile $zipPath -UseBasicParsing
-Expand-Archive -Path $zipPath -DestinationPath $temp -Force
-$extracted = Get-ChildItem -Path $temp -Directory | Where-Object { $_.Name -like "phpMyAdmin-*" } | Select-Object -First 1
-if (-not $extracted) { throw "Extracted folder not found" }
-$backupDir = $null
-if (Test-Path $pmaDir) {
-  $backupName = "phpmyadmin-backup-" + (Get-Date -Format "yyyyMMdd-HHmmss")
-  Rename-Item -Path $pmaDir -NewName $backupName
-  $backupDir = Join-Path $RepoRoot $backupName
+$extractedName = "phpMyAdmin-$Version-all-languages"
+$extracted = Join-Path $temp $extractedName
+$backupDir = Join-Path $RepoRoot ("phpmyadmin-backup-" + [guid]::NewGuid().ToString('N'))
+try {
+  Invoke-WebRequest -Uri "https://files.phpmyadmin.net/phpMyAdmin/$Version/$zipName" -OutFile $zipPath -UseBasicParsing
+  if ((Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash -ne $Sha256) { throw 'Archive checksum does not match the supplied trusted SHA-256.' }
+  Add-Type -AssemblyName System.IO.Compression.FileSystem
+  $archive = [IO.Compression.ZipFile]::OpenRead($zipPath)
+  try {
+    foreach ($entry in $archive.Entries) {
+      $name = $entry.FullName.Replace('\', '/')
+      if (-not $name.StartsWith("$extractedName/", [StringComparison]::Ordinal) -or $name -match '(^|/)\.\.(/|$)|:|^/' -or (($entry.ExternalAttributes -shr 16) -band 0xF000) -eq 0xA000) { throw "Unsafe archive entry: $name" }
+    }
+  } finally { $archive.Dispose() }
+  Expand-Archive -LiteralPath $zipPath -DestinationPath $temp
+  foreach ($relative in @('index.php','vendor/autoload.php','themes/pmahomme/theme.json','LICENSE',"RELEASE-DATE-$Version")) {
+    if (-not (Test-Path -LiteralPath (Join-Path $extracted $relative) -PathType Leaf)) { throw "Missing release file: $relative" }
+  }
+  Copy-Item -LiteralPath (Join-Path $RepoRoot 'config/phpmyadmin.config.inc.php') -Destination (Join-Path $extracted 'config.inc.php')
+  if (Test-Path -LiteralPath $pmaDir) { Move-Item -LiteralPath $pmaDir -Destination $backupDir }
+  try {
+    Move-Item -LiteralPath $extracted -Destination $pmaDir
+    & node (Join-Path $PSScriptRoot 'stage-phpmyadmin.mjs') --repo-root $RepoRoot
+    if ($LASTEXITCODE -ne 0) { throw 'Staged payload validation failed.' }
+  } catch {
+    # Retain failed inputs for diagnosis instead of deleting either tree.
+    if (Test-Path -LiteralPath $pmaDir) { Move-Item -LiteralPath $pmaDir -Destination (Join-Path $temp 'rejected-source') }
+    if (Test-Path -LiteralPath $backupDir) { Move-Item -LiteralPath $backupDir -Destination $pmaDir }
+    throw
+  }
+  Write-Host "phpMyAdmin source refreshed and staged. Previous source retained at $backupDir"
+} finally {
+  Write-Host "Refresh evidence retained at $temp"
 }
-Copy-Item -Path $extracted.FullName -Destination $pmaDir -Recurse
-$devstackConfig = Join-Path $RepoRoot "config/phpmyadmin.config.inc.php"
-if (-not (Test-Path -LiteralPath $devstackConfig)) { throw "Missing DevStackBox phpMyAdmin template: $devstackConfig" }
-Copy-Item -LiteralPath $devstackConfig -Destination (Join-Path $pmaDir "config.inc.php") -Force
-if ($RemovePreviousBackup -and $backupDir -and (Test-Path -LiteralPath $backupDir)) {
-  Remove-Item -LiteralPath $backupDir -Recurse -Force
-  Write-Host "Removed previous backup: $(Split-Path -Leaf $backupDir)"
-}
-Write-Host "phpMyAdmin updated under $pmaDir"
