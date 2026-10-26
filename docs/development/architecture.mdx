@@ -5,7 +5,7 @@ icon: "Layers"
 ---
 # DevStackBox - Architecture Overview
 
-**Architecture baseline**: v0.1.8 (July 2026). For current project/PHP/HTTPS behavior, see [Projects, PHP & HTTPS](../getting-started/projects) and [Feature status](../feature-status).
+**Architecture baseline**: v0.1.19 (October 2026). For current project/PHP/HTTPS behavior, see [Projects, PHP & HTTPS](../getting-started/projects) and [Feature status](../feature-status).
 **Single Source of Truth**: This file describes how all parts of DevStackBox connect. Update this file whenever you change the architecture.
 
 ---
@@ -46,9 +46,9 @@ DevStackBox/
 |   |   |-- databases-list.tsx       # Databases overview
 |   |   |-- settings-general.tsx     # App settings
 |   |   |-- services/                # Per-service sub-pages (Apache/MySQL/PHP each have layout, index, logs, config)
-|   |   |-- databases/               # Database sub-pages (index, users, backups)
+|   |   |-- databases/               # Database sub-pages (index, users, details, transfer, legacy backups)
 |   |   |-- settings/                # Settings sub-pages (index, backup)
-|   |   |-- logs/                    # Log sub-pages per service (apache, mysql, php)
+|   |   |-- logs/                    # Log sub-pages per service and shared management
 |   |   |-- terminal/                # Embedded terminal sub-pages
 |   |   |-- index.ts                 # Re-exports pages used by App.tsx
 |   |
@@ -310,6 +310,9 @@ Runtime data is separate from binaries and lives under `%LOCALAPPDATA%\DevStackB
 
 ## State Management
 
+`src/lib/workspace-cache.ts` and `use-workspace-query.ts` share in-memory snapshots, deduplicate requests and reject outdated results. Project/database mutations invalidate related keys. Visible screens refresh on bounded intervals; hidden windows suspend polling. These caches improve navigation, not process truth or credential storage.
+
+
 There is no global state manager (no Redux, Zustand, etc.). State is managed:
 
 - **Local component state**: `useState` in each page/component
@@ -324,16 +327,24 @@ There is no global state manager (no Redux, Zustand, etc.). State is managed:
 ## Build Pipeline
 
 ```text
-pnpm tauri:build
+npm run build:release
   --> npm run build (tsc && vite build)  --> dist/
   --> cargo build --release              --> src-tauri/target/release/
-  --> tauri bundle                       --> MSI + NSIS installers
+  --> tauri bundle                       --> NSIS installer and updater artifacts
 ```
 
 Resources bundled into the installer are declared in `tauri.conf.json`:
 
 ```json
-"resources": ["../mysql/**/*", "../php/**/*", "../phpmyadmin/**/*", "../www/**/*", "../config/**/*"]
+"resources": {
+  "../apache": "apache",
+  "../mysql": "mysql",
+  "../php/8.3": "php/8.3",
+  "../packaging/phpmyadmin-runtime": "phpmyadmin",
+  "../www": "www",
+  "../tools/mkcert": "tools/mkcert",
+  "../packaging/php-cli": "bin"
+}
 ```
 
 ---
@@ -365,10 +376,16 @@ Resources bundled into the installer are declared in `tauri.conf.json`:
 | Installed mode only (no portable in v1) | Portable mode cannot support auto-updates reliably; adds architectural conflict |
 
 
-## Unreleased database operation layer
+## Database operation layer
 
 `commands/database_workspace.rs` owns native operation records and sequential worker execution. `DatabaseOperationsProvider` polls the native registry so route changes do not discard progress. The process-local database guard coordinates imports, exports, account/schema mutations and MySQL stop operations. Native window/tray close paths refuse ordinary app exit during active operations; this does not promise crash survival or automatic resume.
 
 `utils/database_io.rs` keeps sensitive SQL on stdin and publishes backup files only after successful process/file completion. The SQL connection sets a known literal-escaping mode for generated statements. Imported dumps keep their own SQL semantics. ZIP imports use a versioned manifest, strict entry validation, expanded-size limits and checksums before executing SQL. Backup integrity is distinct from restore verification.
 
 Database metadata is cached in memory, invalidated when the observed MySQL port changes, and older requests cannot overwrite newer refresh results. Persistent operation history is bounded to 50 entries and unfinished jobs are marked interrupted after restart. This is a local operation log, not a distributed transaction coordinator.
+
+## Log management and PHP CLI
+
+`commands/log_management.rs` owns managed-file validation, archive integrity and shared rotation/retention. `use-log-stream.ts` reads bounded incremental tails and pauses background polling. Clear view advances a view cursor; archive/delete are separate filesystem operations. Service writers must stop before archival.
+
+The installer stages phpMyAdmin using `scripts/stage-phpmyadmin.mjs` and builds the native launcher with `scripts/build-php-cli.mjs`. The launcher in `bin/php.exe` resolves default PHP and the invoking user's configuration on each invocation. It does not make a project pin the system default or set machine-wide PHPRC.

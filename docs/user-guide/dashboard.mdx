@@ -18,7 +18,7 @@ The welcome dialog offers **Start all services** or **Explore first**. Choose Ex
 3. Use a connected project's hostname to open that website. The Apache open action opens the default localhost site.
 4. For project response, HTTPS or PHP checks, open **Projects → Manage project**. Recent logs can contain activity from more than one site.
 
-**Start All** and **Stop All** act on the managed server services. Use [Services](services) for individual controls and startup failures.
+**Start All** and **Stop All** act on the managed server services. Start All is disabled when both are running; Stop All is disabled when both are stopped. Controls also prevent overlapping transitions. Short-lived version probes do not count as running servers or trigger crash notifications. Use [Services](services) for individual controls and startup failures.
 
 ## Navigation and commands
 
@@ -33,6 +33,6 @@ Theme and language controls are available in the header and [Settings](settings)
 Refresh in Services and compare the relevant [log](logs), process state and actual project response. A blank or old log is not evidence of success. Report the app version from About, the failing action, timestamp and relevant error text; remove credentials and personal paths first.
 
 
-![Dashboard with stopped services and a disabled demonstration site](../images/source-preview/dashboard-2026-10-23.jpg)
+![Dashboard with stopped services and a disabled demonstration site](../images/v0.1.19/dashboard.jpg)
 
-*Source preview captured 23 October 2026; includes unreleased wording changes. Demo state, not recommended settings.*
+*Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026, using an isolated demonstration profile. Screenshots document the interface; download availability is shown separately on the website.*

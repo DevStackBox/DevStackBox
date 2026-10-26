@@ -7,15 +7,15 @@ description: "Create databases, manage local accounts and understand authenticat
 
 Start MySQL before opening **Databases**. Open phpMyAdmin only when both Apache and MySQL are running. The app uses its configured local MySQL client credentials; an authentication error is different from an empty database list.
 
-### Unreleased cache and packaging changes
+## Freshness and phpMyAdmin packaging
 
-The source now keeps database/user lists in memory between visits and refreshes them in the background while their screen is visible. Database names are checked about every 15 seconds; size estimates about every 60 seconds; users about every 30 seconds. Refresh remains available for an immediate check. Changes in phpMyAdmin can appear on the next scheduled check or when returning to the app. Errors do not mean the database list is empty; previous results can be marked outdated. Caches are not saved across app restarts.
+DevStackBox keeps database/user lists in memory between visits and refreshes them in the background while their screen is visible. Database names are checked about every 15 seconds; size estimates about every 60 seconds; users about every 30 seconds. Refresh remains available for an immediate check. Changes in phpMyAdmin can appear on the next scheduled check or when returning to the app. Errors do not mean the database list is empty; previous results can be marked outdated. Caches are not saved across app restarts.
 
-New installer builds bundle the pmahomme phpMyAdmin theme only and hide the theme selector. Translations and offline help remain included. Older customized files can remain after an upgrade; cleanup does not remove unknown or edited files. These changes do not describe previously published installers.
+New installer builds bundle the pmahomme phpMyAdmin theme only and hide the theme selector. Translations and offline help remain included. Older customized files can remain after an upgrade; cleanup does not remove unknown or edited files.
 
 ## Database workspace
 
-**Databases | Users | Import & Export** (v0.1.18) replaces the older scattered database-only list for day-to-day management:
+**Databases | Users | Import & Export** replaces the older scattered database-only list for day-to-day management:
 
 - Select databases in the list and choose **Export selected**, or use **Manage** for details. The visible action menu also provides import, backup, phpMyAdmin and deletion.
 - Counts distinguish tables and views. Sizes and row counts are estimates, not an exact measurement of disk usage.
@@ -30,31 +30,23 @@ Creating an account and editing its grants remain separate explicit actions. Cop
 
 ### Workspace screenshots
 
-Native captures from v0.1.18 on 25 October 2026 using isolated demonstration data. Images retain their original 1536 × 912 resolution, without upscaling.
+Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026, using an isolated demonstration profile. Screenshots document the interface; download availability is shown separately on the website.
 
-![Database list and visible actions](../images/source-preview/database-list-2026-10-25.jpg)
+![Database list and visible actions](../images/v0.1.19/databases.jpg)
 
 *Database list and visible actions.*
 
-![Database overview and metadata](../images/source-preview/database-details-2026-10-25.jpg)
+![Database overview and metadata](../images/v0.1.19/database-details.jpg)
 
 *Database overview and metadata.*
 
-![Separate table and view listings](../images/source-preview/database-tables-2026-10-25.jpg)
+![Separate table and view listings](../images/v0.1.19/database-tables.jpg)
 
 *Separate table and view listings.*
 
-![Local MySQL accounts and protected system actions](../images/source-preview/database-users-2026-10-25.jpg)
+![Local MySQL accounts and protected system actions](../images/v0.1.19/database-users.jpg)
 
 *Local MySQL accounts and protected system actions.*
-
-![Direct database permission editor](../images/source-preview/database-permissions-2026-10-25.jpg)
-
-*Direct database permission editor.*
-
-![Stopped MySQL with stale cached names in dark mode](../images/source-preview/database-stopped-dark-2026-10-25.jpg)
-
-*Stopped MySQL with stale cached names in dark mode.*
 
 ## Create and inspect
 
@@ -63,7 +55,7 @@ Native captures from v0.1.18 on 25 October 2026 using isolated demonstration dat
 3. Confirm the new name appears. Update your application's database connection settings separately; creating a database does not connect a project automatically.
 4. Use the per-database backup action before risky changes. Use phpMyAdmin for tables, SQL queries and privileges not exposed by the desktop UI.
 
-Search/filter controls affect the displayed list. Right-click a database row to find **Drop database** in its context menu. Deleting a database requires confirmation and removes its data; a successful deletion is not reversible without a suitable backup.
+Search/filter controls affect the displayed list. Use the database action menu to find **Delete**. Deleting a database requires confirmation and removes its data; a successful deletion is not reversible without a suitable backup.
 
 ## Users and account hosts
 
@@ -72,7 +64,7 @@ Open **Databases → Users**. A MySQL account is a username plus a host, so `exa
 1. Choose the create-user action and enter username, host and password.
 2. Review the account scope and create it.
 3. Refresh the list to confirm the account.
-4. Grant only the application's needed database privileges using phpMyAdmin or SQL.
+4. Open **Database permissions**, select the database and required privileges, and review additions/removals before saving. Use phpMyAdmin or SQL for advanced grants outside this editor.
 
 Creating a user in this screen does **not** automatically grant database privileges. The backend creates the account; database grants require a separate step.
 
@@ -87,8 +79,3 @@ The startup root-password prompt is guidance based on the security check. Dismis
 If a list fails to load, read the error, confirm MySQL is running and verify its port and credentials. Do not create a new empty data directory to fix an authentication error. Password recovery for an inaccessible server is an administrative operation; retain your data and seek help with the exact error.
 
 See [SQL backups and restore](database-backups), [Security checks](security) and [Troubleshooting](../advanced/troubleshooting).
-
-
-![Database list containing the isolated docs_demo database](../images/source-preview/databases-2026-10-23.jpg)
-
-*Source preview, 23 October 2026. Isolated demonstration data; includes unreleased wording changes.*

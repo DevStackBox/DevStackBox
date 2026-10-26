@@ -7,7 +7,7 @@ description: "Start Apache and MySQL, inspect status and open their workspaces."
 
 Open **Services** to manage the bundled Apache and MySQL servers and inspect the global PHP runtime. Before starting, ensure the configured ports are available. Another XAMPP, IIS or database service may already be listening.
 
-![Installed DevStackBox v0.1.17 Services](../images/services-v0.1.17-hd.jpg)
+![DevStackBox v0.1.19 Services](../images/v0.1.19/services.jpg)
 
 ## Start, stop and restart
 
@@ -22,7 +22,7 @@ The Services page links to dedicated Apache, MySQL and PHP workspaces. Overflow 
 
 Open **Services → Apache → Overview** for process and port information. Localhost serves the default installation's `www` folder. Connected projects use their configured document roots, which may be elsewhere on disk, and their own hostnames.
 
-The localhost action is labeled **Open Local Site** in released v0.1.17; pending wording changes call it **Open localhost**. It opens the same default site. The phpMyAdmin action requires both Apache and MySQL. The HTTPS entry opens [local certificate management](local-https).
+**Open localhost** opens the default web root. Connected projects can use other accessible folders and their own hostnames. The phpMyAdmin action requires both Apache and MySQL. The HTTPS entry opens [local certificate management](local-https).
 
 ## MySQL overview
 
@@ -39,3 +39,7 @@ PHP Ready indicates an installed runtime. There is no separate persistent PHP se
 - For server startup failures, inspect [logs](logs). Do not delete MySQL data to make a failed startup disappear.
 - A running process with an HTTP 404/500 needs [project diagnosis](../getting-started/projects), not necessarily a service restart.
 
+
+![Apache overview and localhost controls](../images/v0.1.19/apache.jpg)
+
+*Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.*

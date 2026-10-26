@@ -35,20 +35,25 @@ export function PhpOverviewPage() {
   const [error, setError] = useState("");
 
   const refresh = useCallback(async () => {
-    setLoading(true); setError("");
+    setLoading(true);
+    setError("");
     if (!isTauri()) {
-      setVersions([]); setLoading(false);
+      setVersions([]);
+      setLoading(false);
       return;
     }
     try {
       const list = await safeInvoke<PhpVersion[]>(
         TAURI_COMMANDS.php.getVersions,
       );
-      if (!list) throw new Error("PHP status was not returned. Refresh to retry.");
+      if (!list)
+        throw new Error("PHP status was not returned. Refresh to retry.");
       setVersions(list);
     } catch (error) {
       setError(String(error));
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -74,11 +79,19 @@ export function PhpOverviewPage() {
                 {t("php.title", "PHP")}
                 <Badge
                   variant={ready ? "default" : "secondary"}
-                  className={ready ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}
+                  className={
+                    ready
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                      : ""
+                  }
                 >
-                  {loading && !versions.length ? t("php.checking", "Checking…") : error && !versions.length ? t("php.statusUnavailable", "Status unavailable") : ready
-                    ? t("php.statusReady", "Ready")
-                    : t("php.statusNotInstalled", "Not installed")}
+                  {loading && !versions.length
+                    ? t("php.checking", "Checking…")
+                    : error && !versions.length
+                      ? t("php.statusUnavailable", "Status unavailable")
+                      : ready
+                        ? t("php.statusReady", "Ready")
+                        : t("php.statusNotInstalled", "Not installed")}
                 </Badge>
                 {active && (
                   <Badge variant="outline" className="font-mono">
@@ -94,7 +107,12 @@ export function PhpOverviewPage() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" disabled={loading} onClick={refresh}>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={loading}
+                onClick={refresh}
+              >
                 <RefreshCw className="mr-2 h-4 w-4" />
                 {t("actions.refresh", "Refresh")}
               </Button>
@@ -109,7 +127,11 @@ export function PhpOverviewPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {error && <p role="alert" className="mb-3 text-sm text-destructive">{error}</p>}
+          {error && (
+            <p role="alert" className="mb-3 text-sm text-destructive">
+              {error}
+            </p>
+          )}
           <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">
             <div>
               <dt className="text-muted-foreground">
@@ -121,13 +143,17 @@ export function PhpOverviewPage() {
               <dt className="text-muted-foreground">
                 {t("php.installedCount", "Installed branches")}
               </dt>
-              <dd className="font-mono">{!versions.length && (loading || error) ? "—" : installedCount}</dd>
+              <dd className="font-mono">
+                {!versions.length && (loading || error) ? "-" : installedCount}
+              </dd>
             </div>
             <div>
               <dt className="text-muted-foreground">
                 {t("php.totalVersions", "Total branches")}
               </dt>
-              <dd className="font-mono">{!versions.length && (loading || error) ? "—" : versions.length}</dd>
+              <dd className="font-mono">
+                {!versions.length && (loading || error) ? "-" : versions.length}
+              </dd>
             </div>
           </dl>
         </CardContent>

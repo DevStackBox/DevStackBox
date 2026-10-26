@@ -1,0 +1,53 @@
+---
+title: "Application guide map"
+description: "Find instructions for every DevStackBox screen and shared workflow."
+---
+
+# Application guide map
+
+This guide covers the v0.1.19 interface. Follow the linked instructions for prerequisites, steps, expected results and recovery guidance. Screenshots use isolated demonstration data at native 1920 × 1032 resolution; empty or stopped examples are not recommended settings. Open an image at full size to inspect its text.
+
+## Screens and tabs
+
+| Workspace | Screens and controls covered | Guide |
+| --- | --- | --- |
+| Dashboard | Service state, Start/Stop All, PHP version, virtual hosts and recent logs | [Dashboard](dashboard) |
+| Services | Individual server controls, overflow actions and status failures | [Services](services) |
+| Apache | Overview, localhost, phpMyAdmin, Logs, Config, Virtual Hosts and HTTPS / SSL | [Services](services), [Projects](../getting-started/projects), [HTTPS](local-https) |
+| MySQL | Overview, port/status, Logs and Config | [Services](services), [Configuration editor](configuration-editor), [Logs](logs) |
+| PHP | Overview, full patch version, Extensions, php.ini, Versions, default and project-pinned runtimes | [PHP](php) |
+| Projects | Connect existing folder, project details, document root, health, server logs, PHP & tools, HTTPS and removal | [Projects](../getting-started/projects) |
+| Databases | Search, create, bulk selection, actions and database details: Overview, Tables & Views, Access | [Databases and users](databases) |
+| Users | Username/host, create, password change, direct database permissions and deletion | [Databases and users](databases) |
+| Import & Export | Export, Import risk review, Saved backups, full-server scope, Activity and legacy SQL tools | [SQL import, export and backups](database-backups) |
+| Logs | Apache/MySQL/PHP file selection, search, copy/download, Clear view, history and archive/delete | [Logs](logs) |
+| Archives & rotation | Shared archives, preview/export, rotation threshold and retention policy | [Logs](logs) |
+| Terminal | Shell, PowerShell, CMD, PHP Interactive and MySQL CLI; tabs, clear and close | [Terminal](terminal) |
+| Security | Read-only findings, scope and limitations | [Security checks](security) |
+| Settings | General: appearance, language, launch/auto-start, tray and updates | [Settings](settings) |
+| Backup & Restore | Full-stack archive scope, external-folder exclusions and restoration | [Full backup](full-backup) |
+| Import from XAMPP | Detection, file-copy scope and separate SQL migration | [XAMPP migration](xampp-migration) |
+| About | App/runtime information, author/support links and update checks | [Settings and About](settings) |
+
+## Shared workflows
+
+| Workflow | Where to start |
+| --- | --- |
+| First-run welcome and Explore first | [Dashboard](dashboard#first-launch) |
+| Root-password reminder and connection errors | [Databases](databases#root-password-prompt-and-connection-failures) |
+| Ctrl+P command palette and keyboard navigation | [Dashboard](dashboard#navigation-and-commands) |
+| Config drafts, validation, Reload/Revert and saved history | [Configuration editor](configuration-editor) |
+| Tray actions, close versus quit, and updater | [Settings](settings) |
+| External terminal PHP, PATH precedence and per-user ini | [Terminal](terminal#php-in-external-terminals) |
+| Temporary-file defaults and framework extensions | [PHP](php) |
+| Cached results, manual refresh and changes made in phpMyAdmin | [Databases](databases#freshness-and-phpmyadmin-packaging), [Projects](../getting-started/projects) |
+| Upgrade preservation and recovery | [Upgrading](../getting-started/upgrading), [Troubleshooting](../advanced/troubleshooting) |
+| Working with an AI coding tool | [Overview](https://www.devstackbox.com/DEVSTACKBOX.md) |
+
+## Understand the scope
+
+DevStackBox manages a local development stack. Connecting a project does not install its dependencies, migrate its database or prove it is healthy. A running process, a successful configuration parse and a successful HTTP response are different checks. A saved SQL backup needs a test restore before it can be relied on for recovery.
+
+The database workspace is not a full SQL editor or a remote-server transfer tool. Use phpMyAdmin for table editing and advanced SQL. PHP's default selection applies to default websites and CLI; project pins apply to those websites. Automatic log maintenance only runs while the app is open and waits for service writers to stop.
+
+The repository's documentation coverage check maps every application route and the shared flows above to maintained guides. That check detects missing guide mappings; it is not a substitute for runtime testing of every state or third-party application.

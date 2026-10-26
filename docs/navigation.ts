@@ -27,13 +27,14 @@ export const docsNav: NavSection[] = [
   {
     title: "Using DevStackBox",
     items: [
+      { title: "Application guide map", slug: "user-guide/application-map" },
       { title: "Dashboard", slug: "user-guide/dashboard" },
       { title: "Services", slug: "user-guide/services" },
       { title: "PHP and extensions", slug: "user-guide/php" },
       { title: "Configuration editor", slug: "user-guide/configuration-editor" },
       { title: "Local HTTPS", slug: "user-guide/local-https" },
       { title: "Databases and users", slug: "user-guide/databases" },
-      { title: "SQL backup and restore", slug: "user-guide/database-backups" },
+      { title: "SQL import, export and backups", slug: "user-guide/database-backups" },
       { title: "Full backup and restore", slug: "user-guide/full-backup" },
       { title: "Logs", slug: "user-guide/logs" },
       { title: "Terminal", slug: "user-guide/terminal" },

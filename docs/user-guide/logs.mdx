@@ -15,7 +15,7 @@ Open **Logs** and choose Apache, MySQL or PHP. Apache and MySQL also have Logs t
 4. If auto-refresh is available, it refreshes the view at the displayed interval. Manual Refresh requests another read.
 5. Copy the relevant error text for a report after removing secrets and personal information.
 
-The updated log workspace below is implemented and tested in a local v0.1.18 build; published installers may still show the older viewer.
+The v0.1.19 workspace uses one shared Archives & rotation tab for all managed logs.
 
 ## Live log and Clear view
 
@@ -51,7 +51,7 @@ Logs can be shared across websites using the same service or runtime. A line in 
 
 An empty file can mean no entries were written there. It does not establish that a website is healthy. Check that the service is running, that the request reached the intended hostname, and that logging points to the expected file. A missing-file or access error is a diagnostic result, not an empty successful read.
 
-For startup and configuration errors, see [Troubleshooting](../advanced/troubleshooting). An Apache error naming a parent `.htaccess` happens before Laravel executes; the [project guide](../getting-started/projects) explains the v0.1.17 policy.
+For startup and configuration errors, see [Troubleshooting](../advanced/troubleshooting). An Apache error naming a parent `.htaccess` happens before Laravel executes; the [project guide](../getting-started/projects) explains the ancestor-directory policy.
 
 ## Keep logs separately
 
@@ -60,4 +60,8 @@ Full-stack backups do not include service logs. Preserve relevant logs separatel
 
 ![Shared rotation and retention policy for all managed logs](../images/log-rotation-v0.1.19-hd.jpg)
 
-*Native 1920 × 1032 capture of the local v0.1.19 production build, 26 October 2026. Isolated audit profile; automatic maintenance is off. This build has not been published.*
+*Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026, using an isolated demonstration profile. Screenshots document the interface; download availability is shown separately on the website.*
+
+![Live log selection, Clear view and archive controls](../images/v0.1.19/logs.jpg)
+
+*Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026, using an isolated demonstration profile. Screenshots document the interface; download availability is shown separately on the website.*

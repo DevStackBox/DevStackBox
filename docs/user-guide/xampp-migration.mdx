@@ -28,7 +28,7 @@ If the XAMPP installation is elsewhere, connect the specific project folder dire
 
 ## Migrate SQL and avoid port conflicts
 
-Export databases as SQL from the source server and restore through [Databases → Backups](database-backups). Test SQL compatibility; MySQL and MariaDB are not interchangeable data directories. Keep the source until the new site is verified.
+Export databases as SQL from the source server and restore through [Databases → Import & Export](database-backups). Test SQL compatibility; MySQL and MariaDB are not interchangeable data directories. Keep the source until the new site is verified.
 
 Two servers cannot listen on the same address and port simultaneously. Stop the conflicting service or choose distinct ports and update the application's connection settings. Do not delete another installation to resolve a port conflict.
 
@@ -36,3 +36,7 @@ Two servers cannot listen on the same address and port simultaneously. Stop the 
 
 If file copying fails, retain the source, inspect the reported path/permissions and check which files reached the destination before retrying. If the website opens but fails, inspect PHP version, extensions, document root, database credentials and [logs](logs).
 
+
+![XAMPP migration scope and detection](../images/v0.1.19/migration.jpg)
+
+*Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026, using an isolated demonstration profile. Screenshots document the interface; download availability is shown separately on the website.*

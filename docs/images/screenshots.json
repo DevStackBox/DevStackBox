@@ -1,16 +1,21 @@
 {
   "schemaVersion": 1,
+  "documentationVersion": "v0.1.19",
+  "minimumWidth": 1920,
   "screenshots": [
     {
       "id": "php-default-local-019",
       "file": "php-default-v0.1.19-hd.jpg",
       "width": 1920,
       "height": 1032,
-      "version": "v0.1.19 local build",
+      "version": "v0.1.19",
       "capturedAt": "2026-10-26",
       "alt": "PHP manager showing default selection and full patch versions",
-      "caption": "Native 1920 × 1032 capture of the local v0.1.19 production build. Isolated audit profile; not published.",
-      "publicPaths": ["/docs-images/php-default-v0.1.19-hd.jpg"],
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "publicPaths": [
+        "/docs-images/php-default-v0.1.19-hd.jpg",
+        "/screenshots/php-default-v0.1.19-hd.jpg"
+      ],
       "approved": true
     },
     {
@@ -18,415 +23,388 @@
       "file": "log-rotation-v0.1.19-hd.jpg",
       "width": 1920,
       "height": 1032,
-      "version": "v0.1.19 local build",
+      "version": "v0.1.19",
       "capturedAt": "2026-10-26",
       "alt": "Shared rotation and retention policy for all managed logs",
-      "caption": "Native 1920 × 1032 capture of the local v0.1.19 production build. Isolated audit profile; automatic maintenance off; not published.",
-      "publicPaths": ["/docs-images/log-rotation-v0.1.19-hd.jpg"],
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "publicPaths": [
+        "/docs-images/log-rotation-v0.1.19-hd.jpg",
+        "/screenshots/log-rotation-v0.1.19-hd.jpg"
+      ],
       "approved": true
     },
     {
-      "id": "services-release",
-      "file": "services-v0.1.17-hd.jpg",
+      "id": "v019-about",
+      "file": "v0.1.19/about.jpg",
       "width": 1920,
       "height": 1032,
-      "version": "v0.1.17",
-      "capturedAt": "2026-10-23",
-      "alt": "DevStackBox Services with Apache, MySQL and PHP controls",
-      "caption": "Installed v0.1.17. Native 1920 × 1032 capture.",
-      "publicPaths": [
-        "/docs-images/services-v0.1.17-hd.jpg",
-        "/screenshots/app/services-v0.1.17-hd.jpg"
-      ],
-      "approved": true
-    },
-    {
-      "id": "projects-historical",
-      "file": "legacy/projects-preview.jpg",
-      "width": 1202,
-      "height": 831,
-      "version": "historical",
-      "capturedAt": null,
-      "alt": "Earlier DevStackBox release: Connected project list",
-      "caption": "Earlier release. Original 1202 × 831 capture; date and exact release were not recorded.",
-      "publicPaths": [
-        "/docs-images/legacy/projects-preview.jpg",
-        "/screenshots/app/projects-preview.jpg"
-      ],
-      "approved": true
-    },
-    {
-      "id": "project-details-historical",
-      "file": "legacy/project-details-preview.jpg",
-      "width": 1202,
-      "height": 831,
-      "version": "historical",
-      "capturedAt": null,
-      "alt": "Earlier DevStackBox release: Project website response and HTTPS checks",
-      "caption": "Earlier release. Original 1202 × 831 capture; date and exact release were not recorded.",
-      "publicPaths": [
-        "/docs-images/legacy/project-details-preview.jpg",
-        "/screenshots/app/project-details-preview.jpg"
-      ],
-      "approved": true
-    },
-    {
-      "id": "project-php-historical",
-      "file": "legacy/project-php-preview.jpg",
-      "width": 1202,
-      "height": 831,
-      "version": "historical",
-      "capturedAt": null,
-      "alt": "Earlier DevStackBox release: Per-site PHP selection",
-      "caption": "Earlier release. Original 1202 × 831 capture; date and exact release were not recorded.",
-      "publicPaths": [
-        "/docs-images/legacy/project-php-preview.jpg",
-        "/screenshots/app/project-php-preview.jpg"
-      ],
-      "approved": true
-    },
-    {
-      "id": "preview-dashboard",
-      "file": "source-preview/dashboard-2026-10-23.jpg",
-      "width": 1913,
-      "height": 1064,
-      "version": "v0.1.17 source preview",
-      "capturedAt": "2026-10-23",
-      "alt": "Dashboard with stopped services and a disabled demonstration site",
-      "caption": "Native 1913 × 1064 capture of the v0.1.17 source preview, 23 October 2026. Includes unreleased wording changes; demonstration data and settings are not recommendations.",
-      "publicPaths": [
-        "/docs-images/source-preview/dashboard-2026-10-23.jpg",
-        "/screenshots/source-preview/dashboard-2026-10-23.jpg"
-      ],
-      "approved": true
-    },
-    {
-      "id": "preview-project-details",
-      "file": "source-preview/project-details-2026-10-23.jpg",
-      "width": 1913,
-      "height": 1064,
-      "version": "v0.1.17 source preview",
-      "capturedAt": "2026-10-23",
-      "alt": "Project details separating website response, HTTPS and document root",
-      "caption": "Native 1913 × 1064 capture of the v0.1.17 source preview, 23 October 2026. Includes unreleased wording changes; demonstration data and settings are not recommendations.",
-      "publicPaths": [
-        "/docs-images/source-preview/project-details-2026-10-23.jpg",
-        "/screenshots/source-preview/project-details-2026-10-23.jpg"
-      ],
-      "approved": true
-    },
-    {
-      "id": "preview-project-php",
-      "file": "source-preview/project-php-2026-10-23.jpg",
-      "width": 1913,
-      "height": 1064,
-      "version": "v0.1.17 source preview",
-      "capturedAt": "2026-10-23",
-      "alt": "Demonstration project folder, public document root and PHP selection",
-      "caption": "Native 1913 × 1064 capture of the v0.1.17 source preview, 23 October 2026. Includes unreleased wording changes; demonstration data and settings are not recommendations.",
-      "publicPaths": [
-        "/docs-images/source-preview/project-php-2026-10-23.jpg",
-        "/screenshots/source-preview/project-php-2026-10-23.jpg"
-      ],
-      "approved": true
-    },
-    {
-      "id": "preview-php-versions",
-      "file": "source-preview/php-versions-2026-10-23.jpg",
-      "width": 1913,
-      "height": 1064,
-      "version": "v0.1.17 source preview",
-      "capturedAt": "2026-10-23",
-      "alt": "PHP manager showing branch and full patch versions",
-      "caption": "Native 1913 × 1064 capture of the v0.1.17 source preview, 23 October 2026. Includes unreleased wording changes; demonstration data and settings are not recommendations.",
-      "publicPaths": [
-        "/docs-images/source-preview/php-versions-2026-10-23.jpg",
-        "/screenshots/source-preview/php-versions-2026-10-23.jpg"
-      ],
-      "approved": true
-    },
-    {
-      "id": "preview-php-extensions",
-      "file": "source-preview/php-extensions-2026-10-23.jpg",
-      "width": 1913,
-      "height": 1064,
-      "version": "v0.1.17 source preview",
-      "capturedAt": "2026-10-23",
-      "alt": "Global PHP extension switches in the isolated demo profile",
-      "caption": "Native 1913 × 1064 capture of the v0.1.17 source preview, 23 October 2026. Includes unreleased wording changes; demonstration data and settings are not recommendations.",
-      "publicPaths": [
-        "/docs-images/source-preview/php-extensions-2026-10-23.jpg",
-        "/screenshots/source-preview/php-extensions-2026-10-23.jpg"
-      ],
-      "approved": true
-    },
-    {
-      "id": "preview-settings",
-      "file": "source-preview/settings-2026-10-23.jpg",
-      "width": 1913,
-      "height": 1064,
-      "version": "v0.1.17 source preview",
-      "capturedAt": "2026-10-23",
-      "alt": "General settings for appearance, startup and update checks",
-      "caption": "Native 1913 × 1064 capture of the v0.1.17 source preview, 23 October 2026. Includes unreleased wording changes; demonstration data and settings are not recommendations.",
-      "publicPaths": [
-        "/docs-images/source-preview/settings-2026-10-23.jpg",
-        "/screenshots/source-preview/settings-2026-10-23.jpg"
-      ],
-      "approved": true
-    },
-    {
-      "id": "preview-full-backup",
-      "file": "source-preview/full-backup-2026-10-23.jpg",
-      "width": 1913,
-      "height": 1064,
-      "version": "v0.1.17 source preview",
-      "capturedAt": "2026-10-23",
-      "alt": "Full backup scope and empty archive list",
-      "caption": "Native 1913 × 1064 capture of the v0.1.17 source preview, 23 October 2026. Includes unreleased wording changes; demonstration data and settings are not recommendations.",
-      "publicPaths": [
-        "/docs-images/source-preview/full-backup-2026-10-23.jpg",
-        "/screenshots/source-preview/full-backup-2026-10-23.jpg"
-      ],
-      "approved": true
-    },
-    {
-      "id": "local-build-logs",
-      "file": "local-build/logs-2026-10-26.jpg",
-      "width": 1920,
-      "height": 1032,
-      "version": "v0.1.18 local build",
+      "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "Log workspace after Clear view, with archive and rotation controls",
-      "caption": "Native 1920 × 1032 capture of the installed local v0.1.18 build, 26 October 2026. Disposable audit profile; not a published release or recommended settings.",
+      "alt": "DevStackBox about workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
       "publicPaths": [
-        "/docs-images/local-build/logs-2026-10-26.jpg",
-        "/screenshots/local-build/logs-2026-10-26.jpg"
+        "/docs-images/v0.1.19/about.jpg",
+        "/screenshots/v0.1.19/about.jpg"
       ],
       "approved": true
     },
     {
-      "id": "preview-logs",
-      "file": "source-preview/logs-2026-10-23.jpg",
-      "width": 1913,
-      "height": 1064,
-      "version": "v0.1.17 source preview",
-      "capturedAt": "2026-10-23",
-      "alt": "Shared Apache log viewer with no log written yet",
-      "caption": "Native 1913 × 1064 capture of the v0.1.17 source preview, 23 October 2026. Includes unreleased wording changes; demonstration data and settings are not recommendations.",
+      "id": "v019-apache",
+      "file": "v0.1.19/apache.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox apache workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
       "publicPaths": [
-        "/docs-images/source-preview/logs-2026-10-23.jpg",
-        "/screenshots/source-preview/logs-2026-10-23.jpg"
+        "/docs-images/v0.1.19/apache.jpg",
+        "/screenshots/v0.1.19/apache.jpg"
       ],
       "approved": true
     },
     {
-      "id": "preview-databases",
-      "file": "source-preview/databases-2026-10-23.jpg",
-      "width": 1913,
-      "height": 1064,
-      "version": "v0.1.17 source preview",
-      "capturedAt": "2026-10-23",
-      "alt": "Database list containing the isolated docs_demo database",
-      "caption": "Native 1913 × 1064 source preview, 23 October 2026. Includes unreleased wording changes. Isolated demonstration database; no import has been performed in this capture.",
+      "id": "v019-configuration",
+      "file": "v0.1.19/configuration.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox configuration workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
       "publicPaths": [
-        "/docs-images/source-preview/databases-2026-10-23.jpg"
+        "/docs-images/v0.1.19/configuration.jpg",
+        "/screenshots/v0.1.19/configuration.jpg"
       ],
       "approved": true
     },
     {
-      "id": "preview-database-backups",
-      "file": "source-preview/database-backups-2026-10-23.jpg",
-      "width": 1913,
-      "height": 1064,
-      "version": "v0.1.17 source preview",
-      "capturedAt": "2026-10-23",
-      "alt": "SQL backup actions for the demonstration database",
-      "caption": "Native 1913 × 1064 source preview, 23 October 2026. Includes unreleased wording changes. Isolated demonstration database; no import has been performed in this capture.",
+      "id": "v019-dashboard",
+      "file": "v0.1.19/dashboard.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox dashboard workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
       "publicPaths": [
-        "/docs-images/source-preview/database-backups-2026-10-23.jpg"
+        "/docs-images/v0.1.19/dashboard.jpg",
+        "/screenshots/v0.1.19/dashboard.jpg"
       ],
       "approved": true
     },
     {
-      "id": "preview-sql-restore-follow",
-      "file": "source-preview/sql-restore-follow-2026-10-23.jpg",
-      "width": 1913,
-      "height": 1064,
-      "version": "v0.1.17 source preview",
-      "capturedAt": "2026-10-23",
-      "alt": "Restore dialog using database names in the SQL file",
-      "caption": "Native 1913 × 1064 source preview, 23 October 2026. Includes unreleased wording changes. Isolated demonstration database; no import has been performed in this capture.",
+      "id": "v019-database-activity",
+      "file": "v0.1.19/database-activity.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox database activity workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
       "publicPaths": [
-        "/docs-images/source-preview/sql-restore-follow-2026-10-23.jpg"
+        "/docs-images/v0.1.19/database-activity.jpg",
+        "/screenshots/v0.1.19/database-activity.jpg"
       ],
       "approved": true
     },
     {
-      "id": "preview-sql-restore-selected",
-      "file": "source-preview/sql-restore-selected-2026-10-23.jpg",
-      "width": 1913,
-      "height": 1064,
-      "version": "v0.1.17 source preview",
-      "capturedAt": "2026-10-23",
-      "alt": "Restore dialog with initial database and create-if-missing controls",
-      "caption": "Native 1913 × 1064 source preview, 23 October 2026. Includes unreleased wording changes. Isolated demonstration database; no import has been performed in this capture.",
+      "id": "v019-database-backups",
+      "file": "v0.1.19/database-backups.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox database backups workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
       "publicPaths": [
-        "/docs-images/source-preview/sql-restore-selected-2026-10-23.jpg"
+        "/docs-images/v0.1.19/database-backups.jpg",
+        "/screenshots/v0.1.19/database-backups.jpg"
       ],
       "approved": true
     },
     {
-      "id": "database-workspace-list",
-      "file": "source-preview/database-list-2026-10-25.jpg",
-      "width": 1536,
-      "height": 912,
-      "version": "0.1.18",
-      "capturedAt": "2026-10-25",
-      "alt": "Database list and visible actions",
-      "caption": "Database workspace in v0.1.18, 25 October 2026. Isolated demonstration data. Original 1536 × 912 native capture; not upscaled.",
+      "id": "v019-database-details",
+      "file": "v0.1.19/database-details.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox database details workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
       "publicPaths": [
-        "/docs-images/source-preview/database-list-2026-10-25.jpg"
+        "/docs-images/v0.1.19/database-details.jpg",
+        "/screenshots/v0.1.19/database-details.jpg"
       ],
       "approved": true
     },
     {
-      "id": "database-workspace-details",
-      "file": "source-preview/database-details-2026-10-25.jpg",
-      "width": 1536,
-      "height": 912,
-      "version": "0.1.18",
-      "capturedAt": "2026-10-25",
-      "alt": "Database overview and metadata",
-      "caption": "Database workspace in v0.1.18, 25 October 2026. Isolated demonstration data. Original 1536 × 912 native capture; not upscaled.",
+      "id": "v019-database-export",
+      "file": "v0.1.19/database-export.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox database export workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
       "publicPaths": [
-        "/docs-images/source-preview/database-details-2026-10-25.jpg"
+        "/docs-images/v0.1.19/database-export.jpg",
+        "/screenshots/v0.1.19/database-export.jpg"
       ],
       "approved": true
     },
     {
-      "id": "database-workspace-tables",
-      "file": "source-preview/database-tables-2026-10-25.jpg",
-      "width": 1536,
-      "height": 912,
-      "version": "0.1.18",
-      "capturedAt": "2026-10-25",
-      "alt": "Separate table and view listings",
-      "caption": "Database workspace in v0.1.18, 25 October 2026. Isolated demonstration data. Original 1536 × 912 native capture; not upscaled.",
+      "id": "v019-database-import",
+      "file": "v0.1.19/database-import.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox database import workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
       "publicPaths": [
-        "/docs-images/source-preview/database-tables-2026-10-25.jpg"
+        "/docs-images/v0.1.19/database-import.jpg",
+        "/screenshots/v0.1.19/database-import.jpg"
       ],
       "approved": true
     },
     {
-      "id": "database-workspace-users",
-      "file": "source-preview/database-users-2026-10-25.jpg",
-      "width": 1536,
-      "height": 912,
-      "version": "0.1.18",
-      "capturedAt": "2026-10-25",
-      "alt": "Local MySQL accounts and protected system actions",
-      "caption": "Database workspace in v0.1.18, 25 October 2026. Isolated demonstration data. Original 1536 × 912 native capture; not upscaled.",
+      "id": "v019-database-tables",
+      "file": "v0.1.19/database-tables.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox database tables workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
       "publicPaths": [
-        "/docs-images/source-preview/database-users-2026-10-25.jpg"
+        "/docs-images/v0.1.19/database-tables.jpg",
+        "/screenshots/v0.1.19/database-tables.jpg"
       ],
       "approved": true
     },
     {
-      "id": "database-workspace-permissions",
-      "file": "source-preview/database-permissions-2026-10-25.jpg",
-      "width": 1536,
-      "height": 912,
-      "version": "0.1.18",
-      "capturedAt": "2026-10-25",
-      "alt": "Direct database permission editor",
-      "caption": "Database workspace in v0.1.18, 25 October 2026. Isolated demonstration data. Original 1536 × 912 native capture; not upscaled.",
+      "id": "v019-database-users",
+      "file": "v0.1.19/database-users.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox database users workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
       "publicPaths": [
-        "/docs-images/source-preview/database-permissions-2026-10-25.jpg"
+        "/docs-images/v0.1.19/database-users.jpg",
+        "/screenshots/v0.1.19/database-users.jpg"
       ],
       "approved": true
     },
     {
-      "id": "database-workspace-export",
-      "file": "source-preview/database-export-2026-10-25.jpg",
-      "width": 1536,
-      "height": 912,
-      "version": "0.1.18",
-      "capturedAt": "2026-10-25",
-      "alt": "Export format and backup controls",
-      "caption": "Database workspace in v0.1.18, 25 October 2026. Isolated demonstration data. Original 1536 × 912 native capture; not upscaled.",
+      "id": "v019-databases",
+      "file": "v0.1.19/databases.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox databases workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
       "publicPaths": [
-        "/docs-images/source-preview/database-export-2026-10-25.jpg"
+        "/docs-images/v0.1.19/databases.jpg",
+        "/screenshots/v0.1.19/databases.jpg"
       ],
       "approved": true
     },
     {
-      "id": "database-workspace-import",
-      "file": "source-preview/database-import-2026-10-25.jpg",
-      "width": 1536,
-      "height": 912,
-      "version": "0.1.18",
-      "capturedAt": "2026-10-25",
-      "alt": "Empty import workflow",
-      "caption": "Database workspace in v0.1.18, 25 October 2026. Isolated demonstration data. Original 1536 × 912 native capture; not upscaled.",
+      "id": "v019-full-backup",
+      "file": "v0.1.19/full-backup.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox full backup workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
       "publicPaths": [
-        "/docs-images/source-preview/database-import-2026-10-25.jpg"
+        "/docs-images/v0.1.19/full-backup.jpg",
+        "/screenshots/v0.1.19/full-backup.jpg"
       ],
       "approved": true
     },
     {
-      "id": "database-workspace-import-review",
-      "file": "source-preview/database-import-review-2026-10-25.jpg",
-      "width": 1536,
-      "height": 912,
-      "version": "0.1.18",
-      "capturedAt": "2026-10-25",
-      "alt": "Import target and risk review",
-      "caption": "Database workspace in v0.1.18, 25 October 2026. Isolated demonstration data. Original 1536 × 912 native capture; not upscaled.",
+      "id": "v019-https",
+      "file": "v0.1.19/https.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox https workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
       "publicPaths": [
-        "/docs-images/source-preview/database-import-review-2026-10-25.jpg"
+        "/docs-images/v0.1.19/https.jpg",
+        "/screenshots/v0.1.19/https.jpg"
       ],
       "approved": true
     },
     {
-      "id": "database-workspace-activity",
-      "file": "source-preview/database-activity-2026-10-25.jpg",
-      "width": 1536,
-      "height": 912,
-      "version": "0.1.18",
-      "capturedAt": "2026-10-25",
-      "alt": "Completed backup operation history",
-      "caption": "Database workspace in v0.1.18, 25 October 2026. Isolated demonstration data. Original 1536 × 912 native capture; not upscaled.",
+      "id": "v019-logs",
+      "file": "v0.1.19/logs.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox logs workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
       "publicPaths": [
-        "/docs-images/source-preview/database-activity-2026-10-25.jpg"
+        "/docs-images/v0.1.19/logs.jpg",
+        "/screenshots/v0.1.19/logs.jpg"
       ],
       "approved": true
     },
     {
-      "id": "database-workspace-saved-backups",
-      "file": "source-preview/database-saved-backups-2026-10-25.jpg",
-      "width": 1536,
-      "height": 912,
-      "version": "0.1.18",
-      "capturedAt": "2026-10-25",
-      "alt": "Saved backup integrity and restore status",
-      "caption": "Database workspace in v0.1.18, 25 October 2026. Isolated demonstration data. Original 1536 × 912 native capture; not upscaled.",
+      "id": "v019-migration",
+      "file": "v0.1.19/migration.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox migration workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
       "publicPaths": [
-        "/docs-images/source-preview/database-saved-backups-2026-10-25.jpg"
+        "/docs-images/v0.1.19/migration.jpg",
+        "/screenshots/v0.1.19/migration.jpg"
       ],
       "approved": true
     },
     {
-      "id": "database-workspace-stopped-dark",
-      "file": "source-preview/database-stopped-dark-2026-10-25.jpg",
-      "width": 1536,
-      "height": 912,
-      "version": "0.1.18",
-      "capturedAt": "2026-10-25",
-      "alt": "Stopped MySQL with stale cached names in dark mode",
-      "caption": "Database workspace in v0.1.18, 25 October 2026. Isolated demonstration data. Original 1536 × 912 native capture; not upscaled.",
+      "id": "v019-php-extensions",
+      "file": "v0.1.19/php-extensions.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox php extensions workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
       "publicPaths": [
-        "/docs-images/source-preview/database-stopped-dark-2026-10-25.jpg"
+        "/docs-images/v0.1.19/php-extensions.jpg",
+        "/screenshots/v0.1.19/php-extensions.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "v019-php-overview",
+      "file": "v0.1.19/php-overview.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox php overview workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "publicPaths": [
+        "/docs-images/v0.1.19/php-overview.jpg",
+        "/screenshots/v0.1.19/php-overview.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "v019-project-details",
+      "file": "v0.1.19/project-details.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox project details workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "publicPaths": [
+        "/docs-images/v0.1.19/project-details.jpg",
+        "/screenshots/v0.1.19/project-details.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "v019-project-settings",
+      "file": "v0.1.19/project-settings.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox project settings workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "publicPaths": [
+        "/docs-images/v0.1.19/project-settings.jpg",
+        "/screenshots/v0.1.19/project-settings.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "v019-projects",
+      "file": "v0.1.19/projects.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox projects workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "publicPaths": [
+        "/docs-images/v0.1.19/projects.jpg",
+        "/screenshots/v0.1.19/projects.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "v019-security",
+      "file": "v0.1.19/security.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox security workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "publicPaths": [
+        "/docs-images/v0.1.19/security.jpg",
+        "/screenshots/v0.1.19/security.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "v019-services",
+      "file": "v0.1.19/services.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox services workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "publicPaths": [
+        "/docs-images/v0.1.19/services.jpg",
+        "/screenshots/v0.1.19/services.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "v019-settings",
+      "file": "v0.1.19/settings.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox settings workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "publicPaths": [
+        "/docs-images/v0.1.19/settings.jpg",
+        "/screenshots/v0.1.19/settings.jpg"
+      ],
+      "approved": true
+    },
+    {
+      "id": "v019-terminal",
+      "file": "v0.1.19/terminal.jpg",
+      "width": 1920,
+      "height": 1032,
+      "version": "v0.1.19",
+      "capturedAt": "2026-10-26",
+      "alt": "DevStackBox terminal workspace",
+      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "publicPaths": [
+        "/docs-images/v0.1.19/terminal.jpg",
+        "/screenshots/v0.1.19/terminal.jpg"
       ],
       "approved": true
     }
