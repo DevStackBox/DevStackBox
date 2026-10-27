@@ -89,6 +89,12 @@ Native restoration streams the file through the MySQL client and avoids browser 
 
 ## A backup or restore failed
 
+**MySQL error 1050 (table already exists)** means the dump tried to create a table already present in its target. Import does not automatically replace existing tables. For a separate full restore, enter a new, empty initial database name. If you intend to replace an existing database, verify its backup and explicitly prepare that replacement first. Do not delete data just to dismiss an import error. A dump with its own `USE` statements can still select another database.
+
+**MySQL error 1062 (duplicate key)** means incoming data conflicts with an existing unique key. Review the target and dump before retrying; a full dump usually needs an empty database, whereas a data-only import needs a compatible schema and a deliberate data-merging strategy.
+
+Activity now reports the MySQL error number and SQL line when available, with guidance for common failures. Raw SQL values and server diagnostic text are not stored in history. An error can occur after earlier statements have changed data, so retries are never automatic.
+
 Keep the error and the source file. Check MySQL availability, credentials, destination permissions and disk space. If the dump contains unsupported syntax or references unavailable databases, fix a copy or obtain a compatible export. Retrying an import blindly may duplicate data or repeat partial changes.
 
 Full-stack archives, external-folder exclusions and restoration of configuration are covered in [Full backup and restore](full-backup).

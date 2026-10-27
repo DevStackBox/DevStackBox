@@ -1,4 +1,4 @@
-# SQL ZIP import fix and verification — 2026-10-27
+# SQL ZIP import fix and verification - 2026-10-27
 
 ## Cause and change
 

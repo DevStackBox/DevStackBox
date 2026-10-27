@@ -352,7 +352,9 @@ export function DatabaseTransferPage() {
                     }}
                   />
                 </label>
-                <p className="text-xs text-muted-foreground">
+                <p className={databases.some((db) => db.name === targets[i])
+                  ? "rounded-md border border-amber-500/50 bg-amber-500/10 p-2 text-sm"
+                  : "text-xs text-muted-foreground"}>
                   {targets[i]
                     ? databases.some((db) => db.name === targets[i])
                       ? text("existingTarget")

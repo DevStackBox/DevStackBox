@@ -383,6 +383,33 @@ fn execute(id: &str, r: &Request, cancel: &Arc<AtomicBool>) -> Result<(), String
     Ok(())
 }
 
+// Only numeric metadata and our own text may reach history, never SQL values.
+fn mysql_failure_summary(diagnostic: &[u8]) -> String {
+    let text = String::from_utf8_lossy(diagnostic);
+    for line in text.lines() {
+        let Some(rest) = line.trim().strip_prefix("ERROR ") else { continue; };
+        let Some(code_text) = rest.split_whitespace().next() else { continue; };
+        let Ok(code) = code_text.parse::<u16>() else { continue; };
+        let line_number = rest.split_once(" at line ")
+            .and_then(|(_, tail)| tail.split(':').next())
+            .and_then(|value| value.parse::<u64>().ok());
+        let location = line_number.map(|n| format!(" at SQL line {n}")).unwrap_or_default();
+        let guidance = match code {
+            1050 => "A table already exists in the target database. Import into a new, empty database, or explicitly prepare a replacement restore after backing up existing data. DevStackBox does not automatically delete existing tables.",
+            1062 => "A duplicate key conflicts with existing data. Use an empty database for a full dump, or resolve the conflicting data before retrying.",
+            1044 | 1045 | 1142 | 1227 => "The MySQL account lacks access or a required privilege. Check saved credentials and permissions.",
+            1049 => "A referenced database does not exist. Check the initial target and USE statements in the dump.",
+            1064 => "MySQL rejected the SQL syntax. Check the source database version and dump compatibility.",
+            1273 => "The dump uses an unsupported collation. Export with a collation supported by this MySQL version.",
+            1153 | 2020 => "A SQL statement exceeds the allowed packet size. Check client and server max_allowed_packet settings.",
+            2006 | 2013 => "The MySQL connection was lost. Check the server log, packet limits and available disk space.",
+            _ => "MySQL rejected the operation. Check the error code, dump compatibility, permissions and server log.",
+        };
+        return format!("MySQL error {code}{location}. {guidance} Imports may have partially applied; review the target before retrying.");
+    }
+    "MySQL operation failed. Check file compatibility, permissions and free disk space. Imports may have partially applied. Raw SQL diagnostics are omitted to protect sensitive data.".into()
+}
+
 fn run_process(
     mut command: Command,
     output: Option<File>,
@@ -400,7 +427,14 @@ fn run_process(
     let mut stderr = child.stderr.take().expect("piped stderr");
     let error_reader = std::thread::spawn(move || {
         let mut buffer = [0_u8; 4096];
-        while matches!(stderr.read(&mut buffer), Ok(n) if n > 0) {}
+        // Drain everything to avoid deadlock, retaining only a bounded prefix.
+        let mut diagnostic = Vec::new();
+        while let Ok(n) = stderr.read(&mut buffer) {
+            if n == 0 { break; }
+            let keep = n.min(16_384_usize.saturating_sub(diagnostic.len()));
+            diagnostic.extend_from_slice(&buffer[..keep]);
+        }
+        diagnostic
     });
     let bytes = Arc::new(AtomicU64::new(0));
     let worker_bytes = bytes.clone();
@@ -450,13 +484,13 @@ fn run_process(
                 .and_then(|r| r.map_err(|e| e.to_string()))
         })
         .unwrap_or(Ok(()));
-    let _ = error_reader.join();
+    let diagnostic = error_reader.join().unwrap_or_default();
     if cancel.load(Ordering::Relaxed) {
         return Err("Cancelled; imports may already have changed the database.".into());
     }
     written?;
     if !status.map_err(|e| e.to_string())?.success() {
-        return Err("MySQL operation failed. Check file compatibility, permissions and free disk space. Imports may have partially applied; SQL diagnostics are omitted to protect sensitive data.".into());
+        return Err(mysql_failure_summary(&diagnostic));
     }
     Ok(())
 }
@@ -1212,6 +1246,20 @@ mod tests {
         let _ = fs::remove_dir_all(dir);
     }
     #[test]
+    fn mysql_error_summary_omits_private_values() {
+        let error = mysql_failure_summary(b"ERROR 1050 (42S01) at line 30: Table 'private_table' already exists");
+        assert!(error.contains("1050 at SQL line 30"));
+        assert!(error.contains("new, empty database"));
+        assert!(!error.contains("private_table"));
+        let duplicate = mysql_failure_summary(b"ERROR 1062 (23000) at line 50: Duplicate entry 'secret_value' for key 'private_key'");
+        assert!(duplicate.contains("duplicate key"));
+        assert!(!duplicate.contains("secret_value"));
+        assert!(!duplicate.contains("private_key"));
+        assert!(!mysql_failure_summary(b"ERROR 9999 (HY000): secret SQL").contains("secret SQL"));
+        assert!(!mysql_failure_summary(b"password=secret").contains("password=secret"));
+    }
+
+    #[test]
     #[ignore = "Requires scripts/test-database-workspace.ps1 disposable MySQL profile"]
     fn native_external_zip_import() {
         let root = crate::utils::paths::get_user_data_root();
@@ -1224,6 +1272,12 @@ mod tests {
         assert_eq!(preview[0]["databases"], serde_json::json!([]));
         let temp = root.join("external-zip");
         fs::create_dir_all(&temp).unwrap();
+        run_mysql_query("CREATE DATABASE zip_conflict_audit; CREATE TABLE zip_conflict_audit.abandoned_cart_reminders(id INT PRIMARY KEY); INSERT INTO zip_conflict_audit.abandoned_cart_reminders VALUES(42);").unwrap();
+        let error = import_item("external-zip", 0, &source, Some("zip_conflict_audit"), &temp, &Arc::new(AtomicBool::new(false))).unwrap_err();
+        assert!(error.contains("MySQL error 1050 at SQL line 30"), "{error}");
+        assert!(error.contains("new, empty database"));
+        assert_eq!(run_mysql_query("SELECT id FROM zip_conflict_audit.abandoned_cart_reminders;").unwrap().trim(), "42");
+        println!("Existing-table conflict reproduced: MySQL 1050 at line 30; existing row preserved.");
         import_item("external-zip", 0, &source, Some("zip_import_audit"), &temp, &Arc::new(AtomicBool::new(false))).unwrap();
         let count = run_mysql_query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='zip_import_audit' AND table_type='BASE TABLE';").unwrap();
         println!("Native ZIP inspection and import succeeded; base tables: {}", count.trim());

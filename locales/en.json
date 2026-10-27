@@ -532,7 +532,7 @@
     "importDescription": "Choose SQL, SQL.GZ, a ZIP containing one SQL file at its root, or a DevStackBox ZIP package. Jobs run sequentially and stop after the first failure. Review existing targets and take a backup before importing.",
     "chooseFiles": "Choose files",
     "initialDatabase": "Initial database (blank: names in SQL)",
-    "existingTarget": "Existing target: SQL may modify or delete its objects and data.",
+    "existingTarget": "Existing target: a full dump may fail if tables already exist. Use a new, empty database for a separate restore. SQL may also modify or delete existing objects and data.",
     "newTarget": "The initial database will be created if missing.",
     "originalNames": "Uses database names in the SQL or package. Import original-name files individually.",
     "checking": "Checking files…",

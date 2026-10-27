@@ -191,11 +191,6 @@ export function AutoUpdater({ mode = "button" }: AutoUpdaterProps) {
         size="sm"
         onClick={handleButtonClick}
         disabled={checking}
-        className={
-          updateAvailable && !downloading
-            ? "border-primary text-primary hover:bg-primary/10"
-            : ""
-        }
       >
         <ButtonIcon
           className={`h-4 w-4 mr-2 ${checking ? "animate-spin" : ""}`}

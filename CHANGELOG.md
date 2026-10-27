@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Show safe MySQL error codes, SQL line numbers and actionable import failure messages instead of discarding all diagnostics. Existing-table and duplicate-key conflicts now explain how to proceed without automatically deleting data.
+- Highlight existing import targets and explain why a full dump may require a new, empty database.
+
 ## [0.1.20] - 2026-10-27
 
 ### Fixed

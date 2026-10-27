@@ -74,6 +74,10 @@ describe("database import risk review", () => {
     const target = view.host.querySelector('input:not([type="checkbox"])') as HTMLInputElement;
     expect(target.disabled).toBe(kind === "package");
     expect(target.value).toBe(kind === "package" ? "" : "example");
+    if (kind === "sql-zip") {
+      expect(view.host.textContent).toContain("a full dump may fail if tables already exist");
+      expect(view.host.textContent).toContain("Use a new, empty database");
+    }
     await view.dispose();
   });
   it("clears a failed review on retry and restores controls", async () => {
