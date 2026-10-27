@@ -1,8 +1,8 @@
 import { MemoryRouter } from "react-router-dom";
 import en from "../../locales/en.json";
 import { DatabaseCacheProvider } from "./database-cache-context";
-import { DatabasesPage } from "@/pages/databases-list";
-import { MySQLUsersPage } from "@/pages/mysql-users";
+import { DatabasesPage } from "@/pages/databases/index";
+import { MySQLUsersPage } from "@/pages/databases/users";
 import { DatabasesBackupsPage } from "@/pages/databases/backups";
 import { act, useEffect } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -17,7 +17,7 @@ vi.mock("./database-operations-context", () => ({ useDatabaseOperations: () => (
 vi.mock("@/lib/tauri", () => ({ isTauri: () => true, safeInvoke: mocks.invoke }));
 vi.mock("@/hooks/use-toast", () => ({ useToast: () => ({ toast: mocks.toast }) }));
 vi.mock("@/lib/notify", () => ({ notify: vi.fn(), primeNotificationPermission: vi.fn() }));
-vi.mock("@/lib/app-settings", () => ({ syncAppSettingsToBackend: vi.fn(), AUTOSTART_APACHE_KEY: "autoApache", AUTOSTART_MYSQL_KEY: "autoMysql" }));
+vi.mock("@/lib/app-settings", () => ({ syncAppSettingsToBackend: vi.fn().mockResolvedValue(undefined), AUTOSTART_APACHE_KEY: "autoApache", AUTOSTART_MYSQL_KEY: "autoMysql" }));
 vi.mock("react-i18next", () => ({ useTranslation: () => ({ t: (key: string, fallback?: string) => fallback ?? key.split(".").reduce((obj: any, segment) => obj?.[segment], en) ?? key }) }));
 vi.mock("@tauri-apps/api/event", () => ({ listen: async (name: string, cb: (e: { payload: unknown }) => void) => { mocks.handlers.set(name, cb); return () => mocks.handlers.delete(name); } }));
 

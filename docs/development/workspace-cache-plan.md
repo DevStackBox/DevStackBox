@@ -23,7 +23,7 @@ Returning to Projects, Databases or Users should show the last successful result
 - `src/components/sites-workspace.tsx` stores projects, vhosts, hosts entries and SSL results locally. Every mount starts a load and clears health. Configuration warnings and SSL checks follow the list requests, keeping the checking state active longer.
 - `src/pages/project-details.tsx` reloads the vhost list, PHP versions and diagnostics on mount. It clears diagnostics and logs, and ordinarily resets the editing draft.
 - `src/context/database-cache-context.tsx` already retains database metadata in memory and rejects superseded responses. However, it has no freshness window or shared pending-request deduplication. The list page requests a refresh on every mount. Its current scope reset uses the MySQL port alone.
-- `src/pages/mysql-users.tsx` keeps users locally and reloads on mount. Successful account mutations reload that page, rather than invalidating a shared account cache.
+- `src/pages/databases/users.tsx` keeps users locally and reloads on mount. Successful account mutations reload that page, rather than invalidating a shared account cache.
 - Database operation history polls every 1.5 seconds even when idle. Every active-to-idle transition refreshes database metadata, including read-only backups/exports. Imports may also change users and privileges, so refreshing only databases is insufficient.
 - Database names and relatively expensive table/view/size aggregates currently come from one detailed metadata query.
 

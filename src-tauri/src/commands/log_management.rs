@@ -279,13 +279,13 @@ mod tests {
         let root = temp(); fs::write(root.join("crash.log"), "first\nsecond\n").unwrap();
         let record = archive_locked(&root, "crash").unwrap(); assert_eq!(fs::metadata(root.join("crash.log")).unwrap().len(), 0);
         let (data, _) = archive_paths(&root, &record.id).unwrap(); assert_eq!(verify_gzip(&data, &record, true).unwrap(), "first\nsecond\n");
-        fs::write(root.join("archives/keep.txt"), "custom").unwrap(); let mut p = LogPolicy::default(); p.budget_mib = 0; retain(&root, &p).unwrap();
+        fs::write(root.join("archives/keep.txt"), "custom").unwrap(); let p = LogPolicy { budget_mib: 0, ..LogPolicy::default() }; retain(&root, &p).unwrap();
         assert!(archives(&root).unwrap().is_empty()); assert!(root.join("archives/keep.txt").exists()); fs::remove_dir_all(root).unwrap();
     }
     #[test]
     fn identifiers_and_policy_are_bounded() {
         assert!(filename("../mysql.ibd").is_err()); assert!(filename("mysql-bin").is_err());
-        let root = temp(); assert!(archive_paths(&root, "../oops").is_err()); let mut p = LogPolicy::default(); p.retention_days = 0; assert!(validate_policy(&p).is_err()); fs::remove_dir_all(root).unwrap();
+        let root = temp(); assert!(archive_paths(&root, "../oops").is_err()); let p = LogPolicy { retention_days: 0, ..LogPolicy::default() }; assert!(validate_policy(&p).is_err()); fs::remove_dir_all(root).unwrap();
     }
     #[test]
     fn malformed_archive_is_rejected_and_failed_archive_keeps_source() {

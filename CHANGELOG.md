@@ -4,6 +4,21 @@ All notable changes to DevStackBox are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+## [0.1.20] - 2026-10-27
+
+### Fixed
+
+- Distinguish log errors and warnings, report clipboard results, and include service names and timestamps in downloaded log filenames.
+- Show virtual-host load errors and configuration loading/failure states; translate error recovery and add a page-not-found screen.
+- Share bulk-service controls across Dashboard and Services, distinguish partially running status, and remove obsolete frontend types, assets and page forwarding files.
+- Keep browser Print available on Ctrl+P (browser command palette: Ctrl+Shift+P); retain Ctrl+P in the desktop app.
+- Import ordinary ZIP backups containing one root-level SQL file without requiring a DevStackBox manifest. Preserve package checksum validation and archive safety limits.
+- Determine import target controls from the inspected archive type, clear inherited targets for DevStackBox packages, and reset stale review errors.
+
+**Installer SHA-256:** `845B3732973E0D0E02BFD5255563F87B71616CD5893DD81A3EDD0DF1FDAC1FC4`
+
 ## [0.1.19] - 2026-10-26
 
 ### Added

@@ -1,4 +1,5 @@
 # Runs only against a newly initialized, disposable data profile.
+param([string]$SqlZip)
 $ErrorActionPreference = 'Stop'
 $workspaceRoot = Split-Path -Parent $PSScriptRoot
 $testRoot = Join-Path $workspaceRoot ('review-artifacts/database-workspace-' + [Guid]::NewGuid().ToString('N'))
@@ -25,6 +26,7 @@ $ErrorActionPreference = $prevEap
 if ($initExit -ne 0) { throw "MySQL initialization failed ($initExit): $testRoot" }
 $process = Start-Process -FilePath (Join-Path $mysqlBin 'mysqld.exe') -ArgumentList @("--defaults-file=`"$(Join-Path $testConfig 'my.cnf')`"") -WindowStyle Hidden -PassThru
 $priorProfile = $env:DEVSTACKBOX_DATA_DIR
+$priorZip = $env:DEVSTACKBOX_TEST_SQL_ZIP
 try {
     $env:DEVSTACKBOX_DATA_DIR = $testRoot
     $ready = $false
@@ -34,7 +36,12 @@ try {
         Start-Sleep -Milliseconds 500
     }
     if (!$ready) { throw "Disposable MySQL did not become ready: $testRoot" }
-    & cargo test --manifest-path (Join-Path $workspaceRoot 'src-tauri/Cargo.toml') --lib native_workspace_round_trip -- --ignored --nocapture --test-threads=1
+    $testName = 'native_workspace_round_trip'
+    if ($SqlZip) {
+        $env:DEVSTACKBOX_TEST_SQL_ZIP = (Resolve-Path -LiteralPath $SqlZip).Path
+        $testName = 'native_external_zip_import'
+    }
+    & cargo test --manifest-path (Join-Path $workspaceRoot 'src-tauri/Cargo.toml') --lib $testName -- --ignored --nocapture --test-threads=1
     $testExit = $LASTEXITCODE
     if ($testExit -ne 0) { throw "Native tests failed. Evidence retained at $testRoot" }
     Write-Output "Native database tests passed. Evidence: $testRoot"
@@ -42,4 +49,5 @@ try {
     & (Join-Path $mysqlBin 'mysqladmin.exe') '--no-defaults' '-h' '127.0.0.1' '--protocol=TCP' '-P' "$testPort" '-u' 'root' 'shutdown' 2>&1 | Out-Null
     if (!$process.WaitForExit(10000)) { Stop-Process -Id $process.Id }
     $env:DEVSTACKBOX_DATA_DIR = $priorProfile
+    $env:DEVSTACKBOX_TEST_SQL_ZIP = $priorZip
 }

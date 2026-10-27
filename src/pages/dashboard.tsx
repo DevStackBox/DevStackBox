@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { safeInvoke, isTauri } from "@/lib/tauri";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -11,11 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TAURI_COMMANDS } from "@/lib/commands";
 import { ROUTES } from "@/lib/routes";
-import { Play, Square, Server, Loader2, Globe, ArrowRight } from "lucide-react";
+import { Server, Globe, ArrowRight } from "lucide-react";
 import { useServiceStatus } from "@/context/service-status-context";
 import { useWorkspaceQuery } from "@/hooks/use-workspace-query";
 import type { VhostEntry } from "@/types/vhosts";
-import { bulkServiceActions } from "@/lib/service-actions";
+import { BulkServiceActions } from "@/components/services/bulk-service-actions";
 
 interface DashboardPageProps {
   onOpenPHPVersionSelector: () => void;
@@ -34,12 +33,10 @@ export function DashboardPage({
 }: DashboardPageProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { services, loading, initialLoading, runBulk } = useServiceStatus();
-  const [bulkBusy, setBulkBusy] = useState<"start" | "stop" | null>(null);
+  const { services } = useServiceStatus();
   const vhostQuery = useWorkspaceQuery('project:sites', async () => (await safeInvoke<VhostEntry[]>(TAURI_COMMANDS.vhosts.list)) ?? [], 30000, isTauri(), false);
   const vhosts = vhostQuery.data ?? [];
   const vhostsLoading = vhostQuery.data === undefined && vhostQuery.refreshing;
-  const { canStart, canStop } = bulkServiceActions(services, initialLoading, loading !== null || bulkBusy !== null);
 
   const runningCount = [
     services.apache.running,
@@ -56,15 +53,9 @@ export function DashboardPage({
     runningCount === totalServices
       ? "bg-primary text-primary-foreground hover:bg-primary/90"
       : runningCount > 0
-        ? "bg-primary text-primary-foreground hover:bg-primary/90"
+        ? "bg-amber-500 text-black hover:bg-amber-500"
         : "bg-gray-500 hover:bg-gray-600";
 
-  const runAll = async (action: "start" | "stop") => {
-    setBulkBusy(action);
-    try { await runBulk(action); } finally { setBulkBusy(null); }
-  };
-  const handleStartAll = () => runAll("start");
-  const handleStopAll = () => runAll("stop");
 
   return (
     <motion.div
@@ -90,31 +81,7 @@ export function DashboardPage({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            size="sm"
-            onClick={handleStartAll}
-            disabled={!canStart}
-          >
-            {bulkBusy === "start" ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Play className="mr-2 h-4 w-4" />
-            )}
-            {t("dashboard.actions.startAll", "Start All")}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleStopAll}
-            disabled={!canStop}
-          >
-            {bulkBusy === "stop" ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Square className="mr-2 h-4 w-4" />
-            )}
-            {t("dashboard.actions.stopAll", "Stop All")}
-          </Button>
+          <BulkServiceActions />
           <Button
             size="sm"
             variant="outline"
@@ -153,12 +120,13 @@ export function DashboardPage({
           </Button>
         </CardHeader>
         <CardContent className="px-4 pb-4">
+          {vhostQuery.error && <div role="alert" className="mb-2 text-sm text-destructive"><p>{t("audit.vhostsFailed")}</p><Button variant="outline" size="sm" disabled={vhostQuery.refreshing} onClick={() => void vhostQuery.refresh()}>{t("actions.retry", "Retry")}</Button></div>}
           {vhostsLoading ? (
             <div className="space-y-2">
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-4 w-1/2" />
             </div>
-          ) : vhosts.length === 0 ? (
+          ) : vhosts.length === 0 && !vhostQuery.error ? (
             <p className="text-xs text-muted-foreground">
               {t("vhosts.noVhosts", "No virtual hosts configured yet.")}
             </p>

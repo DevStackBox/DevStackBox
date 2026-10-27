@@ -84,7 +84,7 @@ export function MySQLService({
   // Primary actions: Start/Stop + one Open (phpMyAdmin while running).
   const primaryActions = [
     {
-      icon: status.running ? StopIcon : StartIcon,
+      icon: status.running ? <StopIcon /> : <StartIcon />,
       label: loading
         ? t("common.loading", "Loading...")
         : status.running
@@ -99,7 +99,7 @@ export function MySQLService({
     ...(status.running
       ? [
           {
-            icon: OpenIcon,
+            icon: <OpenIcon />,
             label: t("quickActions.openPhpMyAdmin", "phpMyAdmin"),
             onClick: openPhpMyAdmin,
             variant: "outline" as const,

@@ -495,6 +495,7 @@ fn checksum(path: &Path) -> Result<String, String> {
     }
     Ok(format!("{:x}", hash.finalize()))
 }
+#[allow(clippy::too_many_arguments)]
 fn export_item(
     id: &str,
     index: usize,
@@ -697,7 +698,11 @@ fn write_package(path: &Path, records: &[BackupRecord], cancel: &AtomicBool) -> 
     let _ = fs::remove_file(staged);
     result
 }
-fn unpack(path: &Path, temp: &Path, cancel: &AtomicBool) -> Result<Vec<BackupRecord>, String> {
+enum ZipImport {
+    Package(Vec<BackupRecord>),
+    Sql(PathBuf),
+}
+fn unpack_archive(path: &Path, temp: &Path, cancel: &AtomicBool) -> Result<ZipImport, String> {
     let mut zip = zip::ZipArchive::new(File::open(path).map_err(|e| e.to_string())?)
         .map_err(|e| e.to_string())?;
     if zip.len() > MAX_ITEMS + 1 {
@@ -714,7 +719,7 @@ fn unpack(path: &Path, temp: &Path, cancel: &AtomicBool) -> Result<Vec<BackupRec
             || entry
                 .unix_mode()
                 .is_some_and(|mode| mode & 0o170000 == 0o120000)
-            || !(name == "manifest.json" || name.ends_with(".sql"))
+            || !(name == "manifest.json" || name.to_lowercase().ends_with(".sql"))
         {
             return Err("Unsupported or unsafe package entry".into());
         }
@@ -722,6 +727,21 @@ fn unpack(path: &Path, temp: &Path, cancel: &AtomicBool) -> Result<Vec<BackupRec
         if total > MAX_BYTES || entry.size() > entry.compressed_size().max(1).saturating_mul(1000) {
             return Err("Package exceeds expansion limits".into());
         }
+    }
+    // Ordinary backups have no DevStackBox metadata. Accept exactly one flat SQL
+    // entry; never guess the order or database mapping of multiple SQL files.
+    if !names.contains("manifest.json") {
+        if zip.len() != 1 {
+            return Err("A ZIP without a DevStackBox manifest must contain exactly one SQL file at its root. Extract multiple SQL files and review them separately.".into());
+        }
+        let entry = zip.by_index(0).map_err(|e| e.to_string())?;
+        let expected = entry.size();
+        let output = temp.join(format!("sql-zip-{}.sql", unique_suffix()));
+        let bytes = copy_bounded(entry, File::create(&output).map_err(|e| e.to_string())?, MAX_BYTES, cancel)?;
+        if bytes != expected {
+            return Err("ZIP SQL size mismatch".into());
+        }
+        return Ok(ZipImport::Sql(output));
     }
     let mut manifest_bytes = Vec::new();
     zip.by_name("manifest.json")
@@ -767,7 +787,14 @@ fn unpack(path: &Path, temp: &Path, cancel: &AtomicBool) -> Result<Vec<BackupRec
         }
         record.path = output.display().to_string();
     }
-    Ok(manifest.databases)
+    Ok(ZipImport::Package(manifest.databases))
+}
+#[cfg(test)]
+fn unpack(path: &Path, temp: &Path, cancel: &AtomicBool) -> Result<Vec<BackupRecord>, String> {
+    match unpack_archive(path, temp, cancel)? {
+        ZipImport::Package(records) => Ok(records),
+        ZipImport::Sql(_) => Err("Expected a DevStackBox package".into()),
+    }
 }
 fn import_item(
     id: &str,
@@ -779,13 +806,16 @@ fn import_item(
 ) -> Result<(), String> {
     let path = validate_input(source)?;
     if source.to_lowercase().ends_with(".zip") {
+        let records = match unpack_archive(&path, temp, cancel)? {
+            ZipImport::Sql(sql) => return import_sql(id, index, &sql, target, cancel),
+            ZipImport::Package(records) => records,
+        };
         if target.is_some() {
             return Err(
                 "Packages restore their original database names; import a package individually"
                     .into(),
             );
         }
-        let records = unpack(&path, temp, cancel)?;
         for record in records {
             import_sql(
                 id,
@@ -864,7 +894,7 @@ pub async fn inspect_database_files(paths: Vec<String>) -> Result<Vec<serde_json
     tauri::async_runtime::spawn_blocking(move || {
     if paths.is_empty() || paths.len() > MAX_ITEMS { return Err("Choose between 1 and 100 files".into()); }
     let temp = crate::utils::paths::user_tmp_dir().join(format!("inspect-{}", unique_suffix())); fs::create_dir_all(&temp).map_err(|e| e.to_string())?;
-    let result = (|| { let mut result = Vec::new(); for path in paths { let input = validate_input(&path)?; let size = fs::metadata(&input).map_err(|e|e.to_string())?.len(); let records = if path.to_lowercase().ends_with(".zip") { unpack(&input, &temp, &AtomicBool::new(false))? } else { vec![] }; result.push(serde_json::json!({"file":path,"size":size,"databases":records.iter().map(|r|&r.database).collect::<Vec<_>>(),"engine":records.iter().map(|r|&r.engine).collect::<Vec<_>>(),"warning":"SQL can modify databases beyond the selected initial target. Review trusted files only. Version, collation and object compatibility are not guaranteed; integrity checking does not verify restorability."})); } Ok(result) })();
+    let result = (|| { let mut result = Vec::new(); for path in paths { let input = validate_input(&path)?; let size = fs::metadata(&input).map_err(|e|e.to_string())?.len(); let (records, kind) = if path.to_lowercase().ends_with(".zip") { match unpack_archive(&input, &temp, &AtomicBool::new(false))? { ZipImport::Package(records) => (records, "package"), ZipImport::Sql(_) => (vec![], "sql-zip") } } else { (vec![], "sql") }; result.push(serde_json::json!({"file":path,"size":size,"kind":kind,"databases":records.iter().map(|r|&r.database).collect::<Vec<_>>(),"engine":records.iter().map(|r|&r.engine).collect::<Vec<_>>(),"warning":"SQL can modify databases beyond the selected initial target. Review trusted files only. Version, collation and object compatibility are not guaranteed; integrity checking does not verify restorability."})); } Ok(result) })();
     let _ = fs::remove_dir_all(temp); result
 }).await.map_err(|e|e.to_string())?
 }
@@ -1092,6 +1122,17 @@ pub async fn set_database_grants(
     .map_err(|e| e.to_string())?
 }
 
+pub fn has_active_database_operation() -> bool {
+    super::mysql_import::MYSQL_DATA_LOCK.is_busy()
+        || jobs()
+            .lock()
+            .map(|jobs| {
+                jobs.iter()
+                    .any(|j| ["queued", "running"].contains(&j.operation.status.as_str()))
+            })
+            .unwrap_or(true)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1128,6 +1169,36 @@ mod tests {
         assert!(copy_bounded(&b"a"[..], Vec::new(), 10, &cancel).is_err());
     }
     #[test]
+    fn ordinary_sql_zip_is_distinct_from_package_and_rejects_unsafe_entries() {
+        let dir = std::env::temp_dir().join(format!("dsb-zip-{}", unique_suffix()));
+        fs::create_dir_all(&dir).unwrap();
+        let cancel = AtomicBool::new(false);
+        for (names, accepted) in [
+            (vec!["backup.SQL"], true),
+            (vec!["one.sql", "two.sql"], false),
+            (vec!["../escape.sql"], false),
+            (vec!["folder/backup.sql"], false),
+            (vec!["notes.txt"], false),
+            (vec!["backup.sql", "manifest.json"], false),
+        ] {
+            let archive = dir.join("input.zip");
+            let mut zip = zip::ZipWriter::new(File::create(&archive).unwrap());
+            for name in names {
+                zip.start_file(name, zip::write::SimpleFileOptions::default()).unwrap();
+                zip.write_all(b"SELECT 1;").unwrap();
+            }
+            zip.finish().unwrap();
+            let result = unpack_archive(&archive, &dir, &cancel);
+            if accepted {
+                let ZipImport::Sql(sql) = result.unwrap() else { panic!("Wrong ZIP kind") };
+                assert_eq!(fs::read(sql).unwrap(), b"SELECT 1;");
+            } else {
+                assert!(result.is_err());
+            }
+        }
+        fs::remove_dir_all(dir).unwrap();
+    }
+    #[test]
     fn publish_preserves_existing_file_and_cleans_partial_output() {
         let dir = std::env::temp_dir().join(format!("dsb-publish-{}", unique_suffix()));
         fs::create_dir_all(&dir).unwrap();
@@ -1139,6 +1210,24 @@ mod tests {
         assert_eq!(fs::read(&destination).unwrap(), b"existing backup");
         assert_eq!(fs::read_dir(&dir).unwrap().count(), 2);
         let _ = fs::remove_dir_all(dir);
+    }
+    #[test]
+    #[ignore = "Requires scripts/test-database-workspace.ps1 disposable MySQL profile"]
+    fn native_external_zip_import() {
+        let root = crate::utils::paths::get_user_data_root();
+        assert!(root.join("database-workspace-test-profile").is_file());
+        assert_ne!(crate::utils::config_ports::mysql_port(), 3306);
+        let source = std::env::var("DEVSTACKBOX_TEST_SQL_ZIP").expect("Explicit test ZIP required");
+        prepare_mysql_client().unwrap();
+        let preview = tauri::async_runtime::block_on(inspect_database_files(vec![source.clone()])).unwrap();
+        assert_eq!(preview[0]["kind"], "sql-zip");
+        assert_eq!(preview[0]["databases"], serde_json::json!([]));
+        let temp = root.join("external-zip");
+        fs::create_dir_all(&temp).unwrap();
+        import_item("external-zip", 0, &source, Some("zip_import_audit"), &temp, &Arc::new(AtomicBool::new(false))).unwrap();
+        let count = run_mysql_query("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='zip_import_audit' AND table_type='BASE TABLE';").unwrap();
+        println!("Native ZIP inspection and import succeeded; base tables: {}", count.trim());
+        assert!(count.trim().parse::<usize>().unwrap() > 0);
     }
     #[test]
     #[ignore = "Requires scripts/test-database-workspace.ps1 disposable MySQL profile"]
@@ -1230,7 +1319,7 @@ mod tests {
             "1"
         );
         let package = temp.join("round-trip.zip");
-        write_package(&package, &[record.clone()], &cancel).unwrap();
+        write_package(&package, std::slice::from_ref(&record), &cancel).unwrap();
         let unpacked_dir = temp.join("unpacked");
         fs::create_dir_all(&unpacked_dir).unwrap();
         let unpacked = unpack(&package, &unpacked_dir, &cancel).unwrap();
@@ -1306,10 +1395,9 @@ mod tests {
                 .trim(),
             "2"
         );
-        assert!(run_mysql_query("THIS IS INVALID 'test-secret';")
+        assert!(!run_mysql_query("THIS IS INVALID 'test-secret';")
             .unwrap_err()
-            .find("test-secret")
-            .is_none());
+            .contains("test-secret"));
         let failure = temp.join("partial.sql");
         fs::write(
             &failure,
@@ -1385,15 +1473,4 @@ mod tests {
         )
         .unwrap();
     }
-}
-
-pub fn has_active_database_operation() -> bool {
-    super::mysql_import::MYSQL_DATA_LOCK.is_busy()
-        || jobs()
-            .lock()
-            .map(|jobs| {
-                jobs.iter()
-                    .any(|j| ["queued", "running"].contains(&j.operation.status.as_str()))
-            })
-            .unwrap_or(true)
 }

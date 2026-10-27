@@ -393,10 +393,10 @@ Do not weaken current local-instance guards to add remote support. Define a sepa
 
 | Existing area | Expected work after approval |
 | --- | --- |
-| `src/pages/databases-list.tsx` | List, selection, visible menu and shared entry points |
+| `src/pages/databases/index.tsx` | List, selection, visible menu and shared entry points |
 | `src/pages/databases/layout.tsx` | Tab naming/navigation |
 | `src/pages/databases/backups.tsx` | Evolve into Import & Export; preserve legacy navigation |
-| `src/pages/mysql-users.tsx` | Account UX and permission editor integration |
+| `src/pages/databases/users.tsx` | Account UX and permission editor integration |
 | `src/components/restore-sql-dialog.tsx` | Shared import/restore review and result flow |
 | `src/components/mysql-required.tsx` | Service-state presentation without losing useful cached context |
 | `src/context/database-cache-context.tsx` | Identity, freshness, race prevention and invalidation |

@@ -5,7 +5,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
-import { SslPage } from "./ssl";
+import { SslPage } from "./services/apache/ssl";
 import { SitesWorkspace } from "@/components/sites-workspace";
 const mocks = vi.hoisted(() => ({ invoke: vi.fn() }));
 vi.mock("@/lib/tauri", () => ({

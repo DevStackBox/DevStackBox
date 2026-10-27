@@ -5,7 +5,7 @@ icon: "Layers"
 ---
 # DevStackBox - Architecture Overview
 
-**Architecture baseline**: v0.1.19 (October 2026). For current project/PHP/HTTPS behavior, see [Projects, PHP & HTTPS](../getting-started/projects) and [Feature status](../feature-status).
+**Architecture baseline**: v0.1.20 (October 2026). For current project/PHP/HTTPS behavior, see [Projects, PHP & HTTPS](../getting-started/projects) and [Feature status](../feature-status).
 **Single Source of Truth**: This file describes how all parts of DevStackBox connect. Update this file whenever you change the architecture.
 
 ---
@@ -42,9 +42,9 @@ DevStackBox/
 |   |   |-- ssl.tsx                  # HTTPS / SSL management
 |   |   |-- vhosts.tsx               # Virtual host management
 |   |   |-- backup.tsx               # Full backup / restore
-|   |   |-- mysql-users.tsx          # MySQL user management
-|   |   |-- databases-list.tsx       # Databases overview
-|   |   |-- settings-general.tsx     # App settings
+|   |   |-- databases/users.tsx      # MySQL user management
+|   |   |-- databases/index.tsx      # Databases overview
+|   |   |-- settings/index.tsx       # App settings
 |   |   |-- services/                # Per-service sub-pages (Apache/MySQL/PHP each have layout, index, logs, config)
 |   |   |-- databases/               # Database sub-pages (index, users, details, transfer, legacy backups)
 |   |   |-- settings/                # Settings sub-pages (index, backup)

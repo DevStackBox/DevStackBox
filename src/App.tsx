@@ -71,7 +71,6 @@ import { SettingsXamppImportPage } from "./pages/settings/xampp-import";
 import { Toaster } from "@/components/ui/toaster";
 import type { ServiceName } from "@/types/services";
 import { ROUTES } from "@/lib/routes";
-import { syncAppSettingsToBackend } from "@/lib/app-settings";
 import "./lib/i18n";
 
 function AppShell() {
@@ -113,7 +112,6 @@ function AppShell() {
         );
         return;
       }
-      await syncAppSettingsToBackend();
       const binaries =
         (await safeInvoke<Record<string, boolean>>(
           TAURI_COMMANDS.system.checkBinaries,
@@ -144,7 +142,7 @@ function AppShell() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "p") {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "p" && (isTauri() || e.shiftKey)) {
         e.preventDefault();
         setCommandPaletteOpen(true);
       }
@@ -171,7 +169,7 @@ function AppShell() {
       {mobileNavOpen && (
         <button
           type="button"
-          aria-label="Close navigation"
+          aria-label={t("audit.closeNavigation")}
           className="fixed inset-0 z-40 bg-black/50 md:hidden"
           onClick={() => setMobileNavOpen(false)}
         />
@@ -212,7 +210,7 @@ function AppShell() {
         </header>
 
         <main className="container mx-auto px-4 py-4">
-          <ErrorBoundary>
+          <ErrorBoundary resetKey={location.pathname}>
           <Routes>
             <Route
               path="/"
@@ -335,7 +333,7 @@ function AppShell() {
             <Route path={ROUTES.projects.path} element={<ProjectsPage />} />
             <Route path="/projects/:projectId" element={<ProjectDetailsPage />} />
 
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<div className="space-y-3 py-8"><h1 className="text-xl font-semibold">{t("audit.notFound")}</h1><p>{t("audit.notFoundHelp")}</p><Button onClick={() => navigate("/")}>{t("audit.dashboard")}</Button></div>} />
           </Routes>
           {terminalVisited && <div hidden={location.pathname !== "/terminal"}><UniversalTerminalPage /></div>}
           </ErrorBoundary>

@@ -41,17 +41,22 @@ export function WorkspaceConfigEditor({
   const [content, setContent] = useState("");
   const [original, setOriginal] = useState("");
   const [backups, setBackups] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const draftKey = `devstackbox-config-draft-${service}`;
 
   const monacoTheme = resolvedTheme === "dark" ? "vs-dark" : "vs";
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       const data = await safeInvoke<string>(TAURI_COMMANDS.config.read, {
         service,
       });
+      if (data == null) throw new Error("Configuration was not returned");
+      setLoaded(true);
       const history = await safeInvoke<string[]>(TAURI_COMMANDS.config.listBackups, { service });
       setBackups(history ?? []);
       if (data != null) {
@@ -59,6 +64,7 @@ export function WorkspaceConfigEditor({
         setOriginal(data);
       }
     } catch (err) {
+      setLoadError(true);
       toast({
         title: t("common.error", "Error"),
         description: `Failed to load config: ${err}`,
@@ -127,7 +133,7 @@ export function WorkspaceConfigEditor({
                 variant="outline"
                 size="sm"
                 onClick={() => { localStorage.removeItem(draftKey); setContent(original); }}
-                disabled={loading || !dirty}
+                disabled={loading || !loaded || loadError || !dirty}
               >
                 <RotateCcw className="mr-2 h-4 w-4" />
                 {t("actions.revert", "Revert")}
@@ -156,14 +162,18 @@ export function WorkspaceConfigEditor({
             }}><option value="">{backups.length ? "Choose a backup" : "No backups yet"}</option>{backups.map(name => <option key={name} value={name}>{name}</option>)}</select>
           </div>
           {dirty && <p className="mb-2 text-xs text-muted-foreground" role="status">Unsaved changes. Your draft is kept locally when you leave this screen.</p>}
-          <div className="overflow-hidden rounded-md border border-border">
+          {loading && <p role="status" className="mb-3 text-sm">{t("audit.configLoading")}</p>}
+          {loadError && <p role="alert" className="mb-3 text-sm text-destructive">{t("audit.configFailed")}</p>}
+          <div className="overflow-hidden rounded-md border border-border" aria-busy={loading}>
             <Editor
               height="60vh"
               language={language}
               value={content}
               theme={monacoTheme}
               onChange={(v) => { const next = v ?? ""; setContent(next); if (next === original) localStorage.removeItem(draftKey); else localStorage.setItem(draftKey, next); }}
+              loading={<p role="status">{t("audit.configLoading")}</p>}
               options={{
+                readOnly: loading || !loaded || loadError,
                 minimap: { enabled: false },
                 fontSize: 13,
                 lineNumbers: "on",

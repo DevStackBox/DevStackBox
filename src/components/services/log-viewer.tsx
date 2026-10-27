@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
 import {
   Card,
@@ -26,27 +27,27 @@ interface LogViewerProps {
 }
 
 // Classify a log line for terminal-style coloring. Cheap substring checks only.
-function classifyLine(line: string): string {
+export function classifyLine(line: string): string {
   const lower = line.toLowerCase();
   if (
-    lower.includes("[error]") ||
+    /\[(?:[\w-]+:)?(?:error|crit|alert|emerg)\]/.test(lower) ||
     lower.includes(" error ") ||
     lower.startsWith("error") ||
     lower.includes("fatal") ||
     lower.includes("critical")
   ) {
-    return "text-primary";
+    return "text-red-400";
   }
   if (
-    lower.includes("[warn]") ||
+    /\[(?:[\w-]+:)?warn(?:ing)?\]/.test(lower) ||
     lower.includes("warning") ||
     lower.includes(" warn ")
   ) {
-    return "text-primary";
+    return "text-amber-400";
   }
   if (
     lower.includes("[info]") ||
-    lower.includes("[notice]") ||
+    /\[(?:[\w-]+:)?notice\]/.test(lower) ||
     lower.startsWith("info")
   ) {
     return "text-sky-300";
@@ -71,6 +72,7 @@ export function LogViewer({
   emptyLabel,
 }: LogViewerProps) {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const scrollRef = useRef<HTMLPreElement | null>(null);
 
@@ -90,15 +92,20 @@ export function LogViewer({
     }
   }, [filteredLines, autoScroll]);
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(logs);
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(logs);
+      toast({ title: t("audit.logsCopied") });
+    } catch {
+      toast({ title: t("audit.copyFailed"), variant: "destructive" });
+    }
   };
 
   const downloadLogs = () => {
     const element = document.createElement("a");
     const file = new Blob([logs], { type: "text/plain" });
     element.href = URL.createObjectURL(file);
-    element.download = "logs.txt";
+    element.download = `${(title || "logs").replace(/[^a-z0-9_-]+/gi, "-")}-${new Date().toISOString().replace(/[:.]/g, "-")}.txt`;
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);

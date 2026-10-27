@@ -163,7 +163,7 @@ Maintainers: this is the canonical file. The website copies it unchanged to /DEV
 
 ## Database workspace (v0.1.18)
 
-**Databases | Users | Import & Export** provides native SQL/GZIP exports, imports, managed backups and versioned DevStackBox ZIP packages. Activity tracks native jobs across page navigation; failed or cancelled imports can leave changes and never retry automatically. Initial target selection does not confine SQL to that database. Packages restore their original recorded names; arbitrary original-name dumps are imported individually.
+**Databases | Users | Import & Export** provides native SQL/GZIP exports, imports, managed backups and versioned DevStackBox ZIP packages. Imports also accept ordinary ZIP archives containing exactly one SQL file at the archive root, with an editable initial target database. Activity tracks native jobs across page navigation; failed or cancelled imports can leave changes and never retry automatically. Initial target selection does not confine SQL to that database. DevStackBox packages restore their original recorded names; arbitrary original-name dumps are imported individually.
 
 Use Manage for table/view metadata. Users > Database permissions edits direct database grants, preserving unmanaged scopes. Read/write omits schema-migration privileges. Root/system identities and native schema deletion have explicit protections; those protections are not a sandbox for arbitrary SQL imports.
 

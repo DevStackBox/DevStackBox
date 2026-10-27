@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -56,11 +56,13 @@ export function DatabaseTransferPage() {
   const [backupScope, setBackupScope] = useState("");
   const [serverReviewed, setServerReviewed] = useState(false);
   const [checking, setChecking] = useState<string | null>(null);
+  const inspection = useRef(0);
   const [deleteTarget, setDeleteTarget] = useState<BackupRecord | null>(null);
   const [deleteName, setDeleteName] = useState("");
   const [preview, setPreview] = useState<
     {
       file: string;
+      kind?: "sql" | "sql-zip" | "package";
       size: number;
       databases: string[];
       engine: string[];
@@ -76,6 +78,8 @@ export function DatabaseTransferPage() {
       database?: string;
     } | null;
     if (state) {
+      inspection.current++;
+      setChecking(null);
       setTab(state.tab ?? "export");
       setSelected(state.sources ?? []);
       setBackupScope(state.database ?? "");
@@ -114,6 +118,8 @@ export function DatabaseTransferPage() {
     }
   };
   const inspect = async (paths: string[]) => {
+    const generation = ++inspection.current;
+    setError(null);
     setReviewed(false);
     setPreview([]);
     setChecking("preview");
@@ -122,11 +128,15 @@ export function DatabaseTransferPage() {
         "inspect_database_files",
         { paths },
       );
+      if (generation !== inspection.current) return;
       setPreview(result);
+      setTargets((current) => paths.map((file, index) =>
+        result.find((item) => item.file === file)?.kind === "package" ? "" : current[index] ?? "",
+      ));
     } catch (e) {
-      setError(String(e));
+      if (generation === inspection.current) setError(String(e));
     } finally {
-      setChecking(null);
+      if (generation === inspection.current) setChecking(null);
     }
   };
   const pickFiles = async () => {
@@ -318,7 +328,7 @@ export function DatabaseTransferPage() {
           </p>
           <Button
             variant="outline"
-            disabled={active}
+            disabled={active || checking !== null}
             onClick={() => void pickFiles()}
           >
             {text("chooseFiles")}
@@ -331,7 +341,7 @@ export function DatabaseTransferPage() {
                   {text("initialDatabase")}
                   <Input
                     value={targets[i] ?? ""}
-                    disabled={active || file.toLowerCase().endsWith(".zip")}
+                    disabled={active || checking !== null || preview.find((item) => item.file === file)?.kind === "package"}
                     onChange={(e) => {
                       setTargets(
                         targets.map((value, index) =>

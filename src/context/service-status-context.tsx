@@ -422,7 +422,7 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isTauri()) return;
     let cancelled = false;
-    void syncAppSettingsToBackend();
+    void syncAppSettingsToBackend().catch(error => console.warn("Failed to sync app settings:", error));
     void (async () => {
       const startMysql =
         localStorage.getItem(AUTOSTART_MYSQL_KEY) === "true";

@@ -7,9 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Activity,
-  RefreshCw,
-  Play,
-  Square,
   Terminal,
   Wrench,
   ArrowRight,
@@ -22,8 +19,7 @@ import { TAURI_COMMANDS } from "@/lib/commands";
 import { useToast } from "@/hooks/use-toast";
 import { ROUTES } from "@/lib/routes";
 import type { ServiceName } from "@/types/services";
-import { useServiceStatus } from "@/context/service-status-context";
-import { bulkServiceActions } from "@/lib/service-actions";
+import { BulkServiceActions } from "@/components/services/bulk-service-actions";
 
 interface ServicesPageProps {
   onOpenPHPVersionSelector: () => void;
@@ -42,13 +38,6 @@ export function ServicesPage({
   const { t } = useTranslation();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { services, initialLoading, loading, runBulk } = useServiceStatus();
-
-  const [bulkLoading, setBulkLoading] = useState<
-    "start" | "stop" | "restart" | null
-  >(null);
-  const { canStart, canStop, canRestart } = bulkServiceActions(services, initialLoading, loading !== null || bulkLoading !== null);
-
   const handleOpenConfig = (service: string) => {
     onOpenConfig(service as ServiceName);
   };
@@ -57,13 +46,6 @@ export function ServicesPage({
     onViewLogs(service as ServiceName);
   };
 
-  const runAll = async (action: "start" | "stop" | "restart") => {
-    setBulkLoading(action);
-    try { await runBulk(action); } finally { setBulkLoading(null); }
-  };
-  const startAllServices = () => runAll("start");
-  const stopAllServices = () => runAll("stop");
-  const restartAllServices = () => runAll("restart");
 
   const [toolLoading, setToolLoading] = useState<string | null>(null);
 
@@ -111,38 +93,7 @@ export function ServicesPage({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button
-            size="sm"
-            onClick={startAllServices}
-            disabled={!canStart}
-          >
-            <Play className="mr-2 h-4 w-4" />
-            {bulkLoading === "start"
-              ? t("status.starting", "Starting...")
-              : t("actions.startAll", "Start All")}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={stopAllServices}
-            disabled={!canStop}
-          >
-            <Square className="mr-2 h-4 w-4" />
-            {bulkLoading === "stop"
-              ? t("status.stopping", "Stopping...")
-              : t("actions.stopAll", "Stop All")}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={restartAllServices}
-            disabled={!canRestart}
-          >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            {bulkLoading === "restart"
-              ? t("status.restarting", "Restarting...")
-              : t("actions.restartAll", "Restart All")}
-          </Button>
+          <BulkServiceActions restart />
         </div>
       </div>
 

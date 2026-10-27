@@ -46,10 +46,6 @@ export function mapRawStatus(
   };
 }
 
-export interface ServiceInfo extends ServiceStatus {
-  uptime?: string;
-  memory?: number;
-}
 
 export interface PHPVersionInfo {
   version: string;
@@ -71,22 +67,8 @@ export interface ServiceAction {
   label: string;
   onClick: () => void;
   disabled?: boolean;
-  variant?: "default" | "destructive" | "outline" | "ghost";
+  variant?: "default" | "secondary" | "destructive" | "outline" | "ghost";
+  tooltip?: string;
 }
 
 export type ServiceName = "mysql" | "apache" | "php";
-
-export interface LogEntry {
-  timestamp: string;
-  level: "info" | "warning" | "error" | "debug";
-  message: string;
-  service: ServiceName;
-}
-
-export interface ConfigFile {
-  name: string;
-  path: string;
-  service: ServiceName;
-  content: string;
-  syntax: "ini" | "conf" | "json";
-}

@@ -2,6 +2,12 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 pub struct DatabaseLock(AtomicBool);
 pub struct Guard<'a>(&'a AtomicBool);
+impl Default for DatabaseLock {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DatabaseLock {
     pub const fn new() -> Self {
         Self(AtomicBool::new(false))

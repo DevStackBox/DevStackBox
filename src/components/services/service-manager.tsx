@@ -8,18 +8,14 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ApacheService, MySQLService, PHPService } from "./index";
-import type { ServiceStatus } from "@/types/services";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { ROUTES } from "@/lib/routes";
 import { useServiceStatus } from "@/context/service-status-context";
 
-// Re-export ServiceStatus so importers that use the old path still work.
-export type { ServiceStatus };
 
 interface ServiceManagerProps {
   compact?: boolean;
-  onServiceToggle?: (service: string, status: boolean) => void;
   onOpenConfig?: (service: string) => void;
   onViewLogs?: (service: string) => void;
   onOpenPHPVersionSelector?: () => void;

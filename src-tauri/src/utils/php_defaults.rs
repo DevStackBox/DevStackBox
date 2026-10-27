@@ -17,8 +17,11 @@ fn value(raw: &str) -> &str {
 }
 
 pub fn needs_default(content: &str, name: &str) -> bool {
-    !content.lines().filter_map(directive).filter(|(key, _)| key.eq_ignore_ascii_case(name)).last()
-        .is_some_and(|(_, raw)| !value(raw).is_empty())
+    content
+        .lines()
+        .rfind(|line| directive(line).is_some_and(|(key, _)| key.eq_ignore_ascii_case(name)))
+        .and_then(|line| directive(line))
+        .is_none_or(|(_, raw)| value(raw).is_empty())
 }
 
 /// Fill missing/empty temporary paths, independently of old upload-limit migrations.

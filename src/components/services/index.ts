@@ -10,17 +10,10 @@ export {
   ServiceActions,
   StartIcon,
   StopIcon,
-  ConfigIcon,
-  LogsIcon,
   OpenIcon,
-  BackupIcon,
-  CopyIcon,
 } from "./service-actions";
 export { LogViewer } from "./log-viewer";
 export { ServiceOverflowMenu } from "./service-overflow-menu";
 
 // Re-export common types for convenience
 export type { ServiceStatus } from "@/types/services";
-export type { ServiceStatus as ApacheServiceStatus } from "@/types/services";
-export type { ServiceStatus as MySQLServiceStatus } from "@/types/services";
-export type { ServiceStatus as PHPServiceStatus } from "@/types/services";

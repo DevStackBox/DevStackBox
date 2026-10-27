@@ -296,29 +296,6 @@ fn is_diagnostic_process(image: &str, command_line: &str) -> bool {
     })
 }
 
-#[cfg(test)]
-mod service_probe_tests {
-    use super::is_diagnostic_process;
-
-    #[test]
-    fn probes_are_not_servers() {
-        for flag in ["-v", "-V", "-t", "-S", "-M"] {
-            assert!(is_diagnostic_process("httpd.exe", &format!("\"C:\\Program Files\\Apache\\httpd.exe\" {flag}")));
-        }
-        for flag in ["--version", "--help", "--initialize-insecure", "--validate-config"] {
-            assert!(is_diagnostic_process("mysqld.exe", &format!("mysqld.exe {flag}")));
-        }
-    }
-
-    #[test]
-    fn real_servers_and_quoted_paths_remain_visible() {
-        assert!(!is_diagnostic_process("httpd.exe", "httpd.exe -d C:/apache -f \"C:/config -v/httpd.conf\""));
-        assert!(!is_diagnostic_process("httpd.exe", "httpd.exe -k runservice"));
-        assert!(!is_diagnostic_process("mysqld.exe", "mysqld.exe --defaults-file=C:/config/my.ini --console"));
-        assert!(!is_diagnostic_process("httpd.exe", ""));
-    }
-}
-
 fn normalize_path(p: &std::path::Path) -> String {
     // Canonicalize when possible so junctions / different casings collapse;
     // fall back to the raw path lowercased.
@@ -390,5 +367,28 @@ pub fn ensure_port_available(port: u16, service: &str) -> Result<(), String> {
              web server, or a previous DevStackBox instance) and try again. \
              Underlying error: {e}"
         )),
+    }
+}
+
+#[cfg(test)]
+mod service_probe_tests {
+    use super::is_diagnostic_process;
+
+    #[test]
+    fn probes_are_not_servers() {
+        for flag in ["-v", "-V", "-t", "-S", "-M"] {
+            assert!(is_diagnostic_process("httpd.exe", &format!("\"C:\\Program Files\\Apache\\httpd.exe\" {flag}")));
+        }
+        for flag in ["--version", "--help", "--initialize-insecure", "--validate-config"] {
+            assert!(is_diagnostic_process("mysqld.exe", &format!("mysqld.exe {flag}")));
+        }
+    }
+
+    #[test]
+    fn real_servers_and_quoted_paths_remain_visible() {
+        assert!(!is_diagnostic_process("httpd.exe", "httpd.exe -d C:/apache -f \"C:/config -v/httpd.conf\""));
+        assert!(!is_diagnostic_process("httpd.exe", "httpd.exe -k runservice"));
+        assert!(!is_diagnostic_process("mysqld.exe", "mysqld.exe --defaults-file=C:/config/my.ini --console"));
+        assert!(!is_diagnostic_process("httpd.exe", ""));
     }
 }

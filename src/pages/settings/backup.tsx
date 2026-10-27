@@ -1,2 +1,386 @@
-export { BackupPage } from "@/pages/backup";
-export { BackupPage as default } from "@/pages/backup";
+import { useState, useEffect, useCallback } from "react";
+import { safeInvoke } from "@/lib/tauri";
+import { useTranslation } from "react-i18next";
+import { motion } from "framer-motion";
+import {
+  Archive,
+  Trash2,
+  RotateCcw,
+  FolderOpen,
+  Plus,
+  RefreshCw,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { TAURI_COMMANDS } from "@/lib/commands";
+import { isTauri } from "@/lib/tauri";
+import { formatBytes } from "@/lib/utils";
+
+interface BackupInfo {
+  path: string;
+  filename: string;
+  size_bytes: number;
+  created_at_secs: number;
+}
+
+interface BackupProgress {
+  stage: string;
+  percent: number;
+  message: string;
+}
+
+interface FullBackupResult {
+  path: string;
+  mysql_included: boolean;
+}
+
+export function BackupPage() {
+  const { t, i18n } = useTranslation();
+  const [backups, setBackups] = useState<BackupInfo[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [progress, setProgress] = useState<BackupProgress | null>(null);
+  const [feedback, setFeedback] = useState<{
+    ok: boolean;
+    message: string;
+  } | null>(null);
+  const [confirmRestore, setConfirmRestore] = useState<BackupInfo | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<BackupInfo | null>(null);
+  const [restoring, setRestoring] = useState(false);
+
+  const loadBackups = useCallback(async () => {
+    setLoading(true);
+    try {
+      const list = await safeInvoke<BackupInfo[]>(TAURI_COMMANDS.backup.listFull);
+      setBackups(list ?? []);
+    } catch (err) {
+      console.error("list_full_backups failed", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadBackups();
+  }, [loadBackups]);
+
+  // Auto-dismiss feedback after 6s
+  useEffect(() => {
+    if (!feedback) return;
+    const t = setTimeout(() => setFeedback(null), 6000);
+    return () => clearTimeout(t);
+  }, [feedback]);
+
+  const handleCreate = async () => {
+    setCreating(true);
+    setProgress({ stage: "preparing", percent: 0, message: "Preparing..." });
+
+    let unlisten: (() => void) | undefined;
+    if (isTauri()) {
+      try {
+        const { listen } = await import("@tauri-apps/api/event");
+        unlisten = await listen<BackupProgress>(
+          "full-backup-progress",
+          (event) => setProgress(event.payload),
+        );
+      } catch {
+        // non-fatal
+      }
+    }
+
+    try {
+      const ts = new Date().toISOString();
+      const result = await safeInvoke<FullBackupResult>(
+        TAURI_COMMANDS.backup.createFull,
+        { timestamp: ts },
+      );
+      if (!result) {
+        setFeedback({ ok: false, message: t("backup.createFailed", "Backup failed") });
+        return;
+      }
+      const msg = result.mysql_included
+        ? `${t("backup.createBackup", "Backup saved")}: ${result.path}`
+        : t("backup.binariesNote", "Backup created but MySQL databases were NOT included - MySQL was not running. Start MySQL and create another backup to include database data.");
+      setFeedback({ ok: result.mysql_included, message: msg });
+      await loadBackups();
+    } catch (err) {
+      setFeedback({ ok: false, message: String(err) });
+    } finally {
+      unlisten?.();
+      setCreating(false);
+      setProgress(null);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!confirmRestore) return;
+    setRestoring(true);
+    setProgress({
+      stage: "preparing",
+      percent: 0,
+      message: "Starting restore...",
+    });
+
+    let unlisten: (() => void) | undefined;
+    if (isTauri()) {
+      try {
+        const { listen } = await import("@tauri-apps/api/event");
+        unlisten = await listen<BackupProgress>(
+          "full-backup-progress",
+          (event) => setProgress(event.payload),
+        );
+      } catch {
+        // non-fatal
+      }
+    }
+
+    try {
+      await safeInvoke(TAURI_COMMANDS.backup.restoreFull, {
+        path: confirmRestore.path,
+      });
+      setFeedback({
+        ok: true,
+        message: t("backup.restoreComplete", "Restore complete. Please restart services for changes to take effect."),
+      });
+    } catch (err) {
+      setFeedback({ ok: false, message: String(err) });
+    } finally {
+      unlisten?.();
+      setRestoring(false);
+      setProgress(null);
+      setConfirmRestore(null);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    try {
+      await safeInvoke(TAURI_COMMANDS.backup.deleteFull, {
+        path: confirmDelete.path,
+      });
+      await loadBackups();
+      setFeedback({ ok: true, message: t("backup.backupDeleted", "Backup deleted.") });
+    } catch (err) {
+      setFeedback({ ok: false, message: String(err) });
+    } finally {
+      setConfirmDelete(null);
+    }
+  };
+
+  const handleOpenFolder = async () => {
+    try {
+      await safeInvoke(TAURI_COMMANDS.backup.openFolder);
+    } catch (err) {
+      setFeedback({ ok: false, message: String(err) });
+    }
+  };
+
+  const busy = creating || restoring;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-4"
+    >
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleOpenFolder}
+          disabled={busy}
+        >
+          <FolderOpen className="mr-2 h-4 w-4" />
+          {t("backup.openFolder", "Open Folder")}
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={loadBackups}
+          disabled={busy || loading}
+        >
+          <RefreshCw
+            className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
+          />
+          {t("backup.refresh", "Refresh")}
+        </Button>
+        <Button size="sm" onClick={handleCreate} disabled={busy}>
+          <Plus className="mr-2 h-4 w-4" />
+          {creating ? t("backup.creating", "Creating...") : t("backup.createBackup", "Create Backup")}
+        </Button>
+      </div>
+
+      {/* Progress card */}
+      {progress && (
+        <Card>
+          <CardContent className="pt-4 pb-4 space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">{progress.message}</span>
+              <span className="font-mono text-xs">{progress.percent}%</span>
+            </div>
+            <Progress value={progress.percent} className="h-2" />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Feedback banner */}
+      {feedback && (
+        <div
+          className={`rounded-md px-4 py-3 text-sm ${
+            feedback.ok
+              ? "bg-primary/10 text-primary dark:text-primary border border-primary/30"
+              : "bg-destructive/10 text-destructive border border-destructive/30"
+          }`}
+        >
+          {feedback.message}
+        </div>
+      )}
+
+      {/* What is included card */}
+      <Card>
+        <CardHeader className="py-3 px-4">
+          <CardTitle className="text-sm font-medium">
+            {t("backup.whatIncluded", "What is included")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="px-4 pb-4">
+          <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
+            <li>
+              {t("backup.includedItem1", "User configuration files, excluding HTTPS/SSL private material and transient locks")}
+            </li>
+            <li>{t("backup.includedItem2", "Files in the default www folder. Files in connected folders outside www are not included.")}</li>
+            <li>
+              {t("backup.includedItem3", "MySQL databases via mysqldump (all-databases.sql) - requires MySQL to be running")}
+            </li>
+          </ul>
+          <p className="text-xs text-muted-foreground mt-2">
+            {t("backup.binariesNote", "Binaries (Apache, PHP, MySQL) are not included - they can be reinstalled.")}
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Backup list */}
+      <Card>
+        <CardHeader className="py-3 px-4">
+          <CardTitle className="text-sm font-medium flex items-center gap-2">
+            <Archive className="w-4 h-4" />
+            {t("backup.savedBackups", "Saved Backups")}
+            <Badge variant="secondary" className="ml-1">
+              {backups.length}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="px-4 pb-4">
+          {backups.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {t("backup.noBackups", "No backups yet. Click \"Create Backup\" to get started.")}
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {backups.map((b) => (
+                <div
+                  key={b.path}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-md border border-border px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-mono truncate">{b.filename}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(b.created_at_secs * 1000).toLocaleString(
+                        i18n.language,
+                      )}{" "}
+                      &middot;{" "}
+                      {formatBytes(b.size_bytes)}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy}
+                      onClick={() => setConfirmRestore(b)}
+                    >
+                      <RotateCcw className="mr-1 h-3 w-3" />
+                      {t("backup.restore", "Restore")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive"
+                      disabled={busy}
+                      onClick={() => setConfirmDelete(b)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Restore confirmation */}
+      <AlertDialog
+        open={!!confirmRestore}
+        onOpenChange={(open) => !open && setConfirmRestore(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("backup.confirmRestoreTitle", "Restore this backup?")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("backup.confirmRestoreDesc", "Restores configuration and www files from {{filename}}, overwriting matching files. If included, the SQL dump is executed and can change existing databases. Files in external project folders are not restored. A failure may leave partial changes. Back up your current state first.", { filename: confirmRestore?.filename })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("actions.cancel", "Cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleRestore}
+            >
+              {t("backup.restore", "Restore")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog
+        open={!!confirmDelete}
+        onOpenChange={(open) => !open && setConfirmDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("backup.confirmDeleteTitle", "Delete backup?")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("backup.confirmDeleteDesc", "{{filename}} will be permanently deleted.", { filename: confirmDelete?.filename })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("actions.cancel", "Cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={handleDelete}
+            >
+              {t("backup.delete", "Delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </motion.div>
+  );
+}
+
+export default BackupPage;

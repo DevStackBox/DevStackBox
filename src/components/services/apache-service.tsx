@@ -55,7 +55,7 @@ export function ApacheService({
   // Primary actions stay in the card body: Start/Stop + one Open.
   const primaryActions = [
     {
-      icon: status.running ? StopIcon : StartIcon,
+      icon: status.running ? <StopIcon /> : <StartIcon />,
       label: loading
         ? t("common.loading", "Loading...")
         : status.running
@@ -70,7 +70,7 @@ export function ApacheService({
     ...(status.running
       ? [
           {
-            icon: OpenIcon,
+            icon: <OpenIcon />,
             label: t("apache.openSite", "Open localhost"),
             onClick: openApache,
             variant: "outline" as const,

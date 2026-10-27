@@ -9,9 +9,6 @@
  *  cmd.exe's stdin immediately after spawn - equivalent to the user typing it
  *  and pressing Enter. null means a plain cmd.exe prompt.
  *
- *  Git Bash is a special case: the Rust side must resolve git-bash.exe at
- *  runtime and spawn it directly instead of cmd.exe. The frontend passes
- *  shellTypeId="git-bash" and the backend handles binary resolution.
  */
 
 import {
@@ -22,7 +19,7 @@ import {
 } from "lucide-react";
 
 export interface ShellType {
-  id: "shell" | "powershell" | "cmd" | "php-cli" | "mysql-cli" | "git-bash";
+  id: "shell" | "powershell" | "cmd" | "php-cli" | "mysql-cli";
   label: string;
   icon: LucideIcon;
   /**

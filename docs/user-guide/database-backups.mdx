@@ -19,7 +19,7 @@ Schema exports include views, triggers, routines and events. Data-only exports n
 
 ### Import risk review
 
-Choose SQL, SQL.GZ or a supported DevStackBox ZIP package, then review files and initial targets. An existing initial target may be changed; a missing one is created. A blank target follows names in the SQL. Packages use their recorded database names and are imported individually. Original-name arbitrary SQL files are also imported individually because their targets may overlap. Multiple explicitly selected initial databases must be distinct.
+Choose SQL, SQL.GZ, a ZIP containing exactly one SQL file at its root, or a supported DevStackBox ZIP package, then review files and initial targets. Ordinary SQL ZIPs allow an initial database just like uncompressed SQL; their filenames do not determine a database name. ZIPs containing folders, multiple SQL files or unrelated files are rejected; extract and review those SQL files separately. An existing initial target may be changed; a missing one is created. A blank target follows names in the SQL. Packages use their recorded database names and are imported individually. Original-name arbitrary SQL files are also imported individually because their targets may overlap. Multiple explicitly selected initial databases must be distinct.
 
 An initial target is **not a confinement boundary**. SQL can contain USE, schema-qualified statements, destructive SQL or account changes. A preview cannot prove the full effects of arbitrary SQL. Only import trusted files; check engine/version, character set and collation compatibility and back up affected data first. No database-name search-and-replace is performed.
 

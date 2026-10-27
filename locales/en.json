@@ -529,7 +529,7 @@
     "exportSelected": "Export selected",
     "backupSelected": "Back up selected to managed folder",
     "offlineTransfers": "MySQL is not running. Start it from Services to perform database operations. Saved backups and activity remain available.",
-    "importDescription": "Choose SQL, SQL.GZ or a DevStackBox ZIP package. Jobs run sequentially and stop after the first failure. Review existing targets and take a backup before importing.",
+    "importDescription": "Choose SQL, SQL.GZ, a ZIP containing one SQL file at its root, or a DevStackBox ZIP package. Jobs run sequentially and stop after the first failure. Review existing targets and take a backup before importing.",
     "chooseFiles": "Choose files",
     "initialDatabase": "Initial database (blank: names in SQL)",
     "existingTarget": "Existing target: SQL may modify or delete its objects and data.",
@@ -629,5 +629,19 @@
     "activated": "PHP {{version}} is now the default",
     "activateFailed": "Failed to set PHP {{version}} as default",
     "defaultScope": "The default version is used by the PHP command and projects set to inherit it. Projects pinned to another installed version keep their selection."
+  },
+  "audit": {
+    "logsCopied": "Logs copied to clipboard",
+    "copyFailed": "Could not copy logs to clipboard",
+    "errorTitle": "Something went wrong",
+    "errorFallback": "An unexpected error occurred.",
+    "dashboard": "Go to Dashboard",
+    "reload": "Reload app",
+    "notFound": "Page not found",
+    "notFoundHelp": "This page does not exist. Return to the dashboard to continue.",
+    "closeNavigation": "Close navigation",
+    "vhostsFailed": "Could not refresh virtual hosts. Previously loaded entries may be out of date.",
+    "configLoading": "Loading configuration…",
+    "configFailed": "Could not load configuration. Reload to try again."
   }
 }

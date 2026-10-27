@@ -39,14 +39,14 @@ afterEach(() => {
   vi.clearAllMocks();
   mock.state = "running";
 });
-async function render() {
+async function render(database?: string) {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   const host = document.createElement("div");
   document.body.append(host);
   const root = createRoot(host);
   await act(async () =>
     root.render(
-      <MemoryRouter>
+      <MemoryRouter initialEntries={database ? [{ pathname: "/", state: { tab: "import", database } }] : undefined}>
         <DatabaseTransferPage />
       </MemoryRouter>,
     ),
@@ -65,6 +65,36 @@ async function render() {
   };
 }
 describe("database import risk review", () => {
+  it.each(["sql-zip", "package"])("uses detected %s kind for target selection", async (kind) => {
+    mock.invoke.mockImplementation(async (command: string) => command === "pick_database_files"
+      ? ["C:/backup.zip"]
+      : [{ file: "C:/backup.zip", kind, size: 32, databases: kind === "package" ? ["original"] : [], engine: [], warning: "Review SQL" }]);
+    const view = await render("example");
+    await act(async () => view.button("Choose files").click());
+    const target = view.host.querySelector('input:not([type="checkbox"])') as HTMLInputElement;
+    expect(target.disabled).toBe(kind === "package");
+    expect(target.value).toBe(kind === "package" ? "" : "example");
+    await view.dispose();
+  });
+  it("clears a failed review on retry and restores controls", async () => {
+    let fail = true;
+    mock.invoke.mockImplementation(async (command: string) => {
+      if (command === "pick_database_files") return ["C:/backup.zip"];
+      if (fail) throw new Error("Invalid archive");
+      return [{ file: "C:/backup.zip", kind: "sql-zip", size: 32, databases: [], engine: [], warning: "Review SQL" }];
+    });
+    const view = await render();
+    await act(async () => view.button("Import").click());
+    await act(async () => view.button("Choose files").click());
+    expect(view.host.textContent).toContain("Invalid archive");
+    expect(view.button("Review files").disabled).toBe(false);
+    fail = false;
+    await act(async () => view.button("Review files").click());
+    expect(view.host.textContent).not.toContain("Invalid archive");
+    expect(view.host.textContent).not.toContain("Checking files");
+    expect(view.button("Choose files").disabled).toBe(false);
+    await view.dispose();
+  });
   it("requires a successful file review and explicit acknowledgement before native import", async () => {
     mock.invoke.mockImplementation(async (command: string) =>
       command === "pick_database_files"

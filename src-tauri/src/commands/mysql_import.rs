@@ -180,9 +180,9 @@ fn run_mysql_import_blocking(
             .map(|v| String::from_utf8_lossy(&v).trim().to_string())
             .filter(|s| !s.is_empty())
             .unwrap_or_else(|| "mysql client exited with an error".into());
-        return Err(format!(
-            "Import failed; some changes may already have been applied. Check input compatibility and permissions; sensitive SQL diagnostics are omitted."
-        ));
+        return Err(
+            "Import failed; some changes may already have been applied. Check input compatibility and permissions; sensitive SQL diagnostics are omitted.".into(),
+        );
     }
 
     Ok(size)
