@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Highlight existing import targets and explain why a full dump may require a new, empty database.
 - Fix About page “Update Available” button label contrast when an update is listed.
 
+**Installer SHA-256:** `669FCFB4FDCE621AE5E8085A35FE7479B5FB9763A9A0E20F399C9BC936958E70`
+
 ## [0.1.20] - 2026-10-27
 
 ### Fixed

@@ -1,11 +1,11 @@
 {
-  "version": "0.1.20",
-  "notes": "### Fixed\n\n- Distinguish log errors and warnings, report clipboard results, and include service names and timestamps in downloaded log filenames.\n- Show virtual-host load errors and configuration loading/failure states; translate error recovery and add a page-not-found screen.\n- Share bulk-service controls across Dashboard and Services, distinguish partially running status, and remove obsolete frontend types, assets and page forwarding files.\n- Keep browser Print available on Ctrl+P (browser command palette: Ctrl+Shift+P); retain Ctrl+P in the desktop app.\n- Import ordinary ZIP backups containing one root-level SQL file without requiring a DevStackBox manifest. Preserve package checksum validation and archive safety limits.\n- Determine import target controls from the inspected archive type, clear inherited targets for DevStackBox packages, and reset stale review errors.",
-  "pub_date": "2026-10-27T07:48:51.780Z",
+  "version": "0.1.21",
+  "notes": "### Fixed\n\n- Recognize numeric Windows PHP package revisions such as `8.4.27-1` when resolving releases, comparing updates and validating downloaded runtimes. Track verified package revisions to avoid repeatedly offering the same rebuild.\n- Show safe MySQL error codes, SQL line numbers and actionable import failure messages instead of discarding all diagnostics. Existing-table and duplicate-key conflicts now explain how to proceed without automatically deleting data.\n- Highlight existing import targets and explain why a full dump may require a new, empty database.\n- Fix About page “Update Available” button label contrast when an update is listed.",
+  "pub_date": "2026-10-28T13:10:04.063Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRMTM4U1RGRFJNV2swSVFRWjNKVjhIamE4d2FVanlaWWwrRjdWeUlQSnJVdnNFNTY1b1Z3cGRUT280QTNPMmttckYwSitLRWdDZXpVcXA3SnRNb3hZSUtEbEhnaytXL3c0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMDg3Mjg0CWZpbGU6RGV2U3RhY2tCb3hfMC4xLjIwX3g2NC1zZXR1cC5leGUKU3VYZHZnUkp4NHBFMUs3WHVFTGI0QkJENFYyT0RhWS9rTHpGWWhkQzJCTXhheG5Ec3lFL3RBSmI4VFdHTU5tYWtQUHpkRkFaVk9mQkVoeHRpcXU5Q3c9PQo=",
-      "url": "https://github.com/DevStackBox/DevStackBox/releases/download/v0.1.20/DevStackBox_0.1.20_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRMTM4U1RGRFJNV24xY05sM0pwQ1R5RE1tTEtlS0ZxSmNOaFBoOFZCcGw4T2d3WTZ5TkZwU2N0UWtoS1B2a01nbUc3MUNGS2NyZklmRE1oRndRcVRCZGpPZWdKQ2VQeXc4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMTkyOTM3CWZpbGU6RGV2U3RhY2tCb3hfMC4xLjIxX3g2NC1zZXR1cC5leGUKOWNsM09Ca1BvcGxENzVicGxSSGNSekpvRG03RlB4Y05MVzgraHBpbm56Zmh5SVlPRXhPdmlJbmRINFNCRTEvQlEyb0xZVnlqQTNzbGp6bUkvSU1DQlE9PQo=",
+      "url": "https://github.com/DevStackBox/DevStackBox/releases/download/v0.1.21/DevStackBox_0.1.21_x64-setup.exe"
     }
   }
 }
