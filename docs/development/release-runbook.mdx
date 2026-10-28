@@ -1,9 +1,9 @@
 ---
 title: "Release Runbook"
-description: "Build, validate and publish the v0.1.20 Windows installer."
+description: "Build, validate and publish the v0.1.21 Windows installer."
 icon: "Terminal"
 ---
-# v0.1.20 release runbook
+# v0.1.21 release runbook
 
 Run from the app repository root on Windows. Source preparation is not proof of a published or installer-qualified release. Follow [Release process](./release-process) for acceptance gates.
 
@@ -19,7 +19,7 @@ node scripts/test-apache-overrides.mjs
 .\scripts\test-database-workspace.ps1
 ```
 
-App version 0.1.20 must match package.json, Cargo.toml and tauri.conf.json. Keep the root package version in package-lock.json and the devstackbox package in Cargo.lock synchronized. Historical dependency versions are not app versions.
+App version 0.1.21 must match package.json, Cargo.toml and tauri.conf.json. Keep the root package version in package-lock.json and the devstackbox package in Cargo.lock synchronized. Historical dependency versions are not app versions.
 
 ## Build and finalize
 
@@ -36,7 +36,7 @@ node scripts/verify-updater-artifact.mjs
 
 Supply the signing-key password through your private environment if required. Never commit or print key material. The build wrapper runs input verification, Tauri build and updater-artifact verification. It does not need MSI cleanup or termination of unrelated processes.
 
-Finalization requires the exact installer bytes and signature. It generates release/notes-v0.1.20.md, both latest.json files, the changelog checksum and packaging metadata. Do not relabel previous hashes or signatures. Tauri updater signatures are separate from Windows Authenticode publisher signing.
+Finalization requires the exact installer bytes and signature. It generates release/notes-v0.1.21.md, both latest.json files, the changelog checksum and packaging metadata. Do not relabel previous hashes or signatures. Tauri updater signatures are separate from Windows Authenticode publisher signing.
 
 ## Installer acceptance
 
@@ -45,8 +45,8 @@ Test the actual generated installer using the repository checklist `docs/getting
 ## Publish after acceptance
 
 ```powershell
-gh release create v0.1.20 --verify-tag --title "DevStackBox v0.1.20" --notes-file "release/notes-v0.1.20.md" "src-tauri/target/release/bundle/nsis/DevStackBox_0.1.20_x64-setup.exe" "src-tauri/target/release/bundle/nsis/DevStackBox_0.1.20_x64-setup.exe.sig" "latest.json"
-node scripts/finalize-release.mjs --verify-github v0.1.20
+gh release create v0.1.21 --verify-tag --title "DevStackBox v0.1.21" --notes-file "release/notes-v0.1.21.md" "src-tauri/target/release/bundle/nsis/DevStackBox_0.1.21_x64-setup.exe" "src-tauri/target/release/bundle/nsis/DevStackBox_0.1.21_x64-setup.exe.sig" "latest.json"
+node scripts/finalize-release.mjs --verify-github v0.1.21
 ```
 
-Create and push the reviewed v0.1.20 tag before the publish command. Stable releases must not be marked prerelease. Verify updates from v0.1.19, then publish the website with its app-doc source pinned to the same release. Keep download URLs, hashes and sizes sourced from the published GitHub assets.
+Create and push the reviewed v0.1.21 tag before the publish command. Stable releases must not be marked prerelease. Verify updates from v0.1.20, then publish the website with its app-doc source pinned to the same release. Keep download URLs, hashes and sizes sourced from the published GitHub assets.

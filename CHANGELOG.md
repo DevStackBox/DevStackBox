@@ -6,10 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.21] - 2026-10-28
+
 ### Fixed
 
+- Recognize numeric Windows PHP package revisions such as `8.4.27-1` when resolving releases, comparing updates and validating downloaded runtimes. Track verified package revisions to avoid repeatedly offering the same rebuild.
 - Show safe MySQL error codes, SQL line numbers and actionable import failure messages instead of discarding all diagnostics. Existing-table and duplicate-key conflicts now explain how to proceed without automatically deleting data.
 - Highlight existing import targets and explain why a full dump may require a new, empty database.
+- Fix About page “Update Available” button label contrast when an update is listed.
 
 ## [0.1.20] - 2026-10-27
 

@@ -423,7 +423,7 @@ export function PhpVersionsPage() {
                     )}
                     {v.installed && !v.installed_version && <p className="text-xs text-destructive mt-1">{t("php.versionUnknown", "Installed patch version could not be read.")}</p>}
                     {v.end_of_life && <p className="text-xs text-destructive mt-1">{t("php.endOfLifeHint", "PHP 8.1 no longer receives upstream security releases. Move projects to a supported branch; downloads and activation are disabled.")}</p>}
-                    {v.release_error && <p className="text-xs text-muted-foreground mt-1">{t("php.releaseCheckFailed", "Could not check for a patched release. Refresh to retry.")}</p>}
+                    {v.release_error && <div className="text-xs text-muted-foreground mt-1"><p>{t("php.releaseCheckFailed", "Could not check for a patched release. Refresh to retry.")}</p><p className="mt-1 break-words select-text">{v.release_error}</p></div>}
                     {isDownloading && (
                       <div className="mt-1.5 space-y-0.5">
                         <Progress value={p?.percent ?? 0} className="h-1.5" />

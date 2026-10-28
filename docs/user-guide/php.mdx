@@ -60,3 +60,9 @@ For a failed download, check connectivity, available disk space and the error st
 ![PHP overview and default runtime](../images/v0.1.19/php-overview.jpg)
 
 *Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.*
+
+## Windows package revisions
+
+The PHP Versions screen can show package versions such as `8.4.27-1`. The numeric suffix identifies a Windows package rebuild; `PHP_VERSION` may still report `8.4.27`. DevStackBox compares package revisions when offering updates and records the verified release after installation. Older installations without a package receipt may be offered the rebuild once so its revision can be verified. Checksums and runtime version checks remain required.
+
+If release lookup fails, the Versions screen shows the backend reason beneath the retry message. Installed runtimes remain listed.

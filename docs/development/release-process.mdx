@@ -1,16 +1,16 @@
 ---
 title: "Release Process"
-description: "Acceptance gates for the v0.1.20 release."
+description: "Acceptance gates for the v0.1.21 release."
 icon: "Rocket"
 ---
-# v0.1.20 release process
+# v0.1.21 release process
 
-The source version is 0.1.20. Installer generation, installed qualification and publication are separate steps. [Release runbook](./release-runbook) contains the exact commands.
+The source version is 0.1.21. Installer generation, installed qualification and publication are separate steps. [Release runbook](./release-runbook) contains the exact commands.
 
 ## 1. Review source and versions
 
 - Review the app and website changes and the changelog.
-- Match package.json, src-tauri/Cargo.toml and src-tauri/tauri.conf.json at 0.1.20; synchronize app entries in both lockfiles.
+- Match package.json, src-tauri/Cargo.toml and src-tauri/tauri.conf.json at 0.1.21; synchronize app entries in both lockfiles.
 - Run npm run check, Rust unit tests and both Apache regression modes.
 - Preserve historical release notes and hashes. Generated download manifests stay associated with their original assets until finalization.
 
@@ -24,7 +24,7 @@ Run npm run finalize-release and verify-updater-artifact.mjs. Confirm the new in
 
 ## 4. Qualify on Windows
 
-- Test a fresh install and an upgrade from v0.1.19, with project/database backups.
+- Test a fresh install and an upgrade from v0.1.20, with project/database backups.
 - Verify custom ports, user PHP settings, site records and database contents survive.
 - Verify the Apache migration creates its backup and does not duplicate the baseline after restart.
 - Verify Laravel public-directory routes, static assets, HTTP and HTTPS, and a project with parent .htaccess. Check that private parent files remain inaccessible.
@@ -36,8 +36,8 @@ Record actual results and remaining limitations in docs/RELEASE-VALIDATION.md. D
 
 ## 5. Publish and verify
 
-Commit reviewed source and finalized release metadata, create the v0.1.20 tag, and upload the installer, its .sig and latest.json. Verify remote assets with finalize-release --verify-github v0.1.20 and test the in-app update from v0.1.19.
+Commit reviewed source and finalized release metadata, create the v0.1.21 tag, and upload the installer, its .sig and latest.json. Verify remote assets with finalize-release --verify-github v0.1.21 and test the in-app update from v0.1.20.
 
 ## 6. Website
 
-Commit the source docs before hosted website builds. Pin DEVSTACKBOX_REF to v0.1.20 or the exact reviewed commit. Run content preparation, website tests, lint, build and HTTP smoke checks. Publish only after download assets are available; release availability is read from GitHub, not inferred from source version. Use approved native-resolution screenshots matching the documentation baseline. Keep capture provenance distinct from release availability.
+Commit the source docs before hosted website builds. Pin DEVSTACKBOX_REF to v0.1.21 or the exact reviewed commit. Run content preparation, website tests, lint, build and HTTP smoke checks. Publish only after download assets are available; release availability is read from GitHub, not inferred from source version. Use approved native-resolution screenshots matching the documentation baseline. Keep capture provenance distinct from release availability.

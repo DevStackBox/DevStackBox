@@ -32,10 +32,48 @@ fn security_minimum(branch: &str) -> Option<&'static str> {
     }
 }
 
-fn version_tuple(version: &str) -> Option<(u32, u32, u32)> {
-    let parts: Vec<_> = version.split('.').collect();
+// The Windows feed adds a numeric packaging revision, e.g. 8.4.27-1.
+// PHP_VERSION may still report 8.4.27 for that archive.
+fn release_tuple(version: &str) -> Option<(u32, u32, u32, u32)> {
+    let (base, revision) = match version.split_once('-') {
+        Some((base, revision)) => (base, revision),
+        None => (version, "0"),
+    };
+    let number = |value: &str| -> Option<u32> {
+        if value.is_empty() || !value.bytes().all(|b| b.is_ascii_digit()) { return None; }
+        value.parse().ok()
+    };
+    let parts: Vec<_> = base.split('.').collect();
     if parts.len() != 3 { return None; }
-    Some((parts[0].parse().ok()?, parts[1].parse().ok()?, parts[2].parse().ok()?))
+    Some((number(parts[0])?, number(parts[1])?, number(parts[2])?, number(revision)?))
+}
+
+fn version_tuple(version: &str) -> Option<(u32, u32, u32)> {
+    release_tuple(version).map(|(major, minor, patch, _)| (major, minor, patch))
+}
+
+fn runtime_matches_release(runtime: &str, release: &str) -> bool {
+    match (release_tuple(runtime), release_tuple(release)) {
+        (Some(actual), Some(expected)) => actual.0 == expected.0 && actual.1 == expected.1
+            && actual.2 == expected.2 && (actual.3 == 0 || actual.3 == expected.3),
+        _ => false,
+    }
+}
+
+// Remember the verified archive revision; do not infer it from PHP_VERSION.
+// Bind the receipt to php.exe so a replaced runtime cannot inherit a stale label.
+fn installed_release(directory: &Path, runtime: &str) -> String {
+    let receipt = fs::read(directory.join(".devstackbox-release.json")).ok()
+        .and_then(|bytes| serde_json::from_slice::<serde_json::Value>(&bytes).ok());
+    if let Some(receipt) = receipt {
+        if let (Some(release), Some(hash)) = (receipt["release"].as_str(), receipt["exeSha256"].as_str()) {
+            if runtime_matches_release(runtime, release)
+                && fs::read(directory.join("php.exe")).ok().is_some_and(|bytes| format!("{:x}", Sha256::digest(bytes)) == hash) {
+                return release.to_string();
+            }
+        }
+    }
+    runtime.to_string()
 }
 
 fn meets_security_minimum(branch: &str, version: &str) -> bool {
@@ -412,12 +450,12 @@ pub async fn get_php_versions() -> Result<Vec<PHPVersionInfo>, String> {
     for version in PHP_BRANCHES {
         let exe = php_branch_exe(version);
         let installed = exe.exists();
-        let installed_version = if installed { read_runtime_version(&exe) } else { None };
+        let installed_version = if installed { read_runtime_version(&exe).map(|runtime| installed_release(&php_branch_dir(version), &runtime)) } else { None };
         let release = releases.as_ref().ok().and_then(|json| pick_zip_url(version, json));
         let latest_version = release.as_ref().map(|r| r.0.clone());
         let update_available = installed && latest_version.as_deref().is_some_and(|latest| {
-            match installed_version.as_deref().and_then(version_tuple) {
-                Some(current) => version_tuple(latest).is_some_and(|next| next > current),
+            match installed_version.as_deref().and_then(release_tuple) {
+                Some(current) => release_tuple(latest).is_some_and(|next| next > current),
                 None => true,
             }
         });
@@ -705,8 +743,8 @@ pub async fn download_php_version(app: AppHandle, version: String) -> Result<boo
         }
     };
 
-    if read_runtime_version(&target_dir.join("php.exe")).and_then(|v| version_tuple(&v))
-        .is_some_and(|current| version_tuple(&full_version).is_some_and(|latest| current >= latest)) {
+    if read_runtime_version(&target_dir.join("php.exe")).and_then(|v| release_tuple(&installed_release(&target_dir, &v)))
+        .is_some_and(|current| release_tuple(&full_version).is_some_and(|latest| current >= latest)) {
         emit_progress(&app, PhpDownloadProgress { version, stage: "complete".into(), percent: 100,
             downloaded: 0, total: 0, message: Some("Already up to date".into()) });
         return Ok(true);
@@ -810,10 +848,13 @@ pub async fn download_php_version(app: AppHandle, version: String) -> Result<boo
         return Err(msg);
     }
 
-    if read_runtime_version(&exe).as_deref() != Some(full_version.as_str())
+    if !read_runtime_version(&exe).is_some_and(|runtime| runtime_matches_release(&runtime, &full_version))
         || !staging_dir.join("php-cgi.exe").is_file() {
         return Err("Downloaded PHP failed its version/completeness check".into());
     }
+    let exe_hash = format!("{:x}", Sha256::digest(fs::read(&exe).map_err(|e| e.to_string())?));
+    let receipt = serde_json::json!({ "release": full_version, "archiveSha256": expected_digest, "exeSha256": exe_hash });
+    fs::write(staging_dir.join(".devstackbox-release.json"), serde_json::to_vec(&receipt).map_err(|e| e.to_string())?).map_err(|e| e.to_string())?;
     ensure_runtime_idle(&target_dir).await?;
     let previous = php_root().join(format!(".previous-{}-{}", version, std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_nanos()));
     publish_runtime(staging_dir, &target_dir, &previous)?;
@@ -1123,7 +1164,41 @@ pub async fn toggle_php_extension(
 
 #[cfg(test)]
 mod download_tests {
+    use std::fs;
+    use sha2::Digest;
     use super::{parse_ext_line, pick_zip_url, meets_security_minimum, version_tuple};
+    #[test]
+    fn windows_build_revisions_are_supported_without_accepting_prereleases() {
+        for (branch, version) in [("8.2", "8.2.35-1"), ("8.3", "8.3.36-1"), ("8.4", "8.4.27-1"), ("8.5", "8.5.12-1")] {
+            assert!(meets_security_minimum(branch, version));
+            let release = serde_json::json!({branch: {"version": version, "ts-vs17-x64": {"zip": {"path": "php-test.zip", "sha256": "a".repeat(64)}}}});
+            assert_eq!(pick_zip_url(branch, &release).unwrap().0, version);
+        }
+        assert!(super::release_tuple("8.4.27-2") > super::release_tuple("8.4.27-1"));
+        assert!(super::release_tuple("8.4.27-1") > super::release_tuple("8.4.27"));
+        for invalid in ["8.4.27RC1", "8.4.27-RC1", "8.4.27-", "8.4.27-1-2", "8.4.27-+1"] {
+            assert!(super::release_tuple(invalid).is_none());
+        }
+        assert!(super::runtime_matches_release("8.4.27", "8.4.27-1"));
+        assert!(!super::runtime_matches_release("8.4.26", "8.4.27-1"));
+        assert!(!super::runtime_matches_release("8.4.27-2", "8.4.27-1"));
+    }
+
+    #[test]
+    fn receipt_tracks_revision_only_for_matching_executable() {
+        let dir = std::env::temp_dir().join(format!("dsb-receipt-{}", crate::utils::database_io::unique_suffix()));
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("php.exe"), b"test-runtime").unwrap();
+        let hash = format!("{:x}", super::Sha256::digest(b"test-runtime"));
+        let receipt = serde_json::json!({"release": "8.4.27-1", "exeSha256": hash});
+        fs::write(dir.join(".devstackbox-release.json"), receipt.to_string()).unwrap();
+        assert_eq!(super::installed_release(&dir, "8.4.27"), "8.4.27-1");
+        assert_eq!(super::installed_release(&dir, "8.4.28"), "8.4.28");
+        fs::write(dir.join("php.exe"), b"replacement").unwrap();
+        assert_eq!(super::installed_release(&dir, "8.4.27"), "8.4.27");
+        fs::remove_dir_all(dir).unwrap();
+    }
+
     #[test]
     fn failed_runtime_publish_restores_previous_files() {
         let root = std::env::temp_dir().join(format!("dsb-php-publish-{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
