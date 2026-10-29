@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.1.22] - 2026-10-29
+
+### Changed
+
+- Bundle PHP **8.3.36-1** with verified `.devstackbox-release.json` so fresh installs match the Windows package revision feed and avoid spurious bundled update prompts.
+
+### Fixed
+
+- Improve stopped-status, secondary-text, disabled-control and switch contrast in light and dark themes.
+- Share stable PHP/configuration reads across tabs, deduplicate concurrent calls and invalidate affected data after changes. Explicit Refresh/Reload bypass cached reads; live service, database and log checks remain active.
+
 ## [0.1.21] - 2026-10-28
 
 ### Fixed

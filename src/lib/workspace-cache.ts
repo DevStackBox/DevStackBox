@@ -139,6 +139,6 @@ if (typeof window !== "undefined") {
 export function invalidateAfterCommand(command: string) {
   if (/^(create_mysql_database|drop_mysql_database|restore_mysql_from_file|import_from_xampp|restore_full_backup)$/.test(command)) workspaceCache.invalidate("db:");
   if (/^(create_mysql_user|drop_mysql_user|set_mysql_user_password|set_database_grants)$/.test(command)) { workspaceCache.invalidate("db:users"); workspaceCache.invalidate("db:details:"); }
-  if (/^(set_mysql_user_password|update_config|restore_config_backup|set_app_settings)$/.test(command)) workspaceCache.invalidate("db:", true);
+  if (/^(set_mysql_user_password|update_config|restore_config_backup)$/.test(command)) workspaceCache.invalidate("db:", true);
   if (/^(add_vhost|remove_vhost|toggle_vhost|set_project_php_version|update_hosts_entry|create_project|create_www_project|enable_ssl|disable_ssl|trust_ssl_ca|generate_ssl_cert|update_config|restore_config_backup|switch_php_version|download_php_version|restore_full_backup|import_from_xampp)/.test(command)) workspaceCache.invalidate("project:");
 }

@@ -66,3 +66,9 @@ For a failed download, check connectivity, available disk space and the error st
 The PHP Versions screen can show package versions such as `8.4.27-1`. The numeric suffix identifies a Windows package rebuild; `PHP_VERSION` may still report `8.4.27`. DevStackBox compares package revisions when offering updates and records the verified release after installation. Older installations without a package receipt may be offered the rebuild once so its revision can be verified. Checksums and runtime version checks remain required.
 
 If release lookup fails, the Versions screen shows the backend reason beneath the retry message. Installed runtimes remain listed.
+
+## Refreshing PHP information
+
+Overview, Extensions and Versions share session-cached PHP version information for up to five minutes. Navigating between tabs does not repeat the release request while that result is fresh. Extension lists are cached per branch. Installing or switching PHP invalidates related information; changing extensions invalidates the extension list and configuration reads. Use **Refresh** to check immediately after changing PHP outside DevStackBox. Failed release checks have a short retry window rather than a long-lived cache.
+
+Configuration reads are reused for up to one minute across visits; **Reload** reads from disk immediately. Unsaved drafts remain separate from the read cache. Save and Restore invalidate the affected configuration and backup list.

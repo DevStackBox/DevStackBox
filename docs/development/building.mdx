@@ -45,7 +45,7 @@ The service binaries (MySQL, Apache, PHP) must be present in their directories:
 - `apache/bin/httpd.exe`
 - `php/8.3/php.exe`
 
-Verify the checkout with `node scripts/verify-release.mjs`. The repository tracks bundled service resources; do not substitute XAMPP binaries. Missing or outdated resources must be restored from the project or refreshed through the maintained PHP/MySQL/phpMyAdmin refresh scripts and verified before building.
+Verify the checkout with `node scripts/verify-release.mjs`. The repository tracks bundled service resources; do not substitute XAMPP binaries. Missing or outdated resources must be restored from the project or refreshed through the maintained PHP/MySQL/phpMyAdmin refresh scripts and verified before building. Bundled PHP 8.3 is refreshed with `.\scripts\refresh-php-bundle.ps1 -Branch 8.3` when windows.php.net publishes a new patched build.
 
 ---
 
@@ -84,7 +84,7 @@ npm run tauri:build
 
 Produces:
 
-- `src-tauri/target/release/bundle/nsis/DevStackBox_0.1.21_x64-setup.exe`
+- `src-tauri/target/release/bundle/nsis/DevStackBox_0.1.22_x64-setup.exe`
 
 **Pre-build check:**
 
@@ -335,9 +335,9 @@ const { t } = useTranslation();
 
 Version must be identical in all three files. Change all three at once:
 
-1. `package.json` - `"version": "0.1.21"`
-2. `src-tauri/Cargo.toml` - `version = "0.1.21"`
-3. `src-tauri/tauri.conf.json` - `"version": "0.1.21"`
+1. `package.json` - `"version": "0.1.22"`
+2. `src-tauri/Cargo.toml` - `version = "0.1.22"`
+3. `src-tauri/tauri.conf.json` - `"version": "0.1.22"`
 
 Rule: Version must be clean semver only: `X.Y.Z` - no hyphens, no letters (MSI requirement).
 

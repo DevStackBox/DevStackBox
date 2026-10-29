@@ -17,7 +17,7 @@ export function StatusBadge({ running, state, customLabel }: StatusBadgeProps) {
   return (
     <Badge
       variant={running ? "default" : "secondary"}
-      className={`${running ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-gray-500 hover:bg-gray-600"} transition-colors`}
+      className={`${running ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-slate-700 text-white hover:bg-slate-700 dark:bg-slate-200 dark:text-slate-950 dark:hover:bg-slate-200"} transition-colors`}
     >
       <div className="flex items-center gap-1.5">
         {running && (

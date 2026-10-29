@@ -26,9 +26,45 @@ for (const rel of ["phpmyadmin/index.php", "phpmyadmin/config.inc.php", "docs/im
 const pmaConfig = fs.readFileSync(path.join(root, "phpmyadmin/config.inc.php"), "utf8");
 if (!/AllowNoPassword'\]\s*=\s*true/.test(pmaConfig)) throw new Error("phpmyadmin/config.inc.php must set AllowNoPassword = true for local empty root login");
 const mysqld = path.join(root, "mysql/bin/mysqld.exe");
-const phpVersion = execFileSync(path.join(root, "php/8.3/php.exe"), ["-n", "-r", "echo PHP_VERSION;"], { encoding: "utf8", windowsHide: true }).trim();
+const phpExe = path.join(root, "php/8.3/php.exe");
+const phpVersion = execFileSync(phpExe, ["-n", "-r", "echo PHP_VERSION;"], { encoding: "utf8", windowsHide: true }).trim();
 if (!/^8\.3\.\d+$/.test(phpVersion) || Number(phpVersion.split(".")[2]) < 36) throw new Error(`Bundled PHP must be 8.3.36 or newer on the 8.3 branch; got ${phpVersion}`);
-console.log(`Bundled PHP security baseline verified: ${phpVersion}`);
+
+function parseRelease(version) {
+  const m = /^(\d+)\.(\d+)\.(\d+)(?:-(\d+))?$/.exec(version);
+  if (!m) return null;
+  return [Number(m[1]), Number(m[2]), Number(m[3]), Number(m[4] ?? 0)];
+}
+function runtimeMatchesRelease(runtime, release) {
+  const a = parseRelease(runtime);
+  const b = parseRelease(release);
+  if (!a || !b || a[0] !== b[0] || a[1] !== b[1] || a[2] !== b[2]) return false;
+  return a[3] === 0 || a[3] === b[3];
+}
+function releaseAtLeast(release, minimum) {
+  const a = parseRelease(release);
+  const b = parseRelease(minimum);
+  if (!a || !b) return false;
+  for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return a[i] > b[i];
+  return a[3] >= b[3];
+}
+
+const receiptPath = path.join(root, "php/8.3/.devstackbox-release.json");
+if (!fs.existsSync(receiptPath)) throw new Error("Bundled PHP 8.3 must include .devstackbox-release.json (run scripts/refresh-php-bundle.ps1)");
+const receipt = JSON.parse(fs.readFileSync(receiptPath, "utf8"));
+const packageRelease = receipt.release;
+const exeHash = createHash("sha256").update(fs.readFileSync(phpExe)).digest("hex");
+if (typeof packageRelease !== "string" || !releaseAtLeast(packageRelease, "8.3.36")) {
+  throw new Error(`Bundled PHP package release must be at least 8.3.36; got ${packageRelease}`);
+}
+if (receipt.exeSha256 !== exeHash) throw new Error("Bundled PHP exeSha256 does not match php/8.3/php.exe");
+if (typeof receipt.archiveSha256 !== "string" || receipt.archiveSha256.length !== 64) {
+  throw new Error("Bundled PHP receipt must include archiveSha256");
+}
+if (!runtimeMatchesRelease(phpVersion, packageRelease)) {
+  throw new Error(`PHP_VERSION ${phpVersion} does not match package release ${packageRelease}`);
+}
+console.log(`Bundled PHP package release: ${packageRelease} (PHP_VERSION ${phpVersion})`);
 const mysqlVersion = execFileSync(mysqld, ["--version"], { encoding: "utf8" });
 if (!/Ver 8\.4\./.test(mysqlVersion)) throw new Error(`Expected bundled MySQL 8.4.x, got: ${mysqlVersion.trim()}`);
 console.log(`Release inputs verified: ${pkg.version}`);

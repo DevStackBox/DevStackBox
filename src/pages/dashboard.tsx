@@ -54,7 +54,7 @@ export function DashboardPage({
       ? "bg-primary text-primary-foreground hover:bg-primary/90"
       : runningCount > 0
         ? "bg-amber-500 text-black hover:bg-amber-500"
-        : "bg-gray-500 hover:bg-gray-600";
+        : "bg-slate-700 text-white hover:bg-slate-700 dark:bg-slate-200 dark:text-slate-950 dark:hover:bg-slate-200";
 
 
   return (

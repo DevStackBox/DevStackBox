@@ -770,7 +770,7 @@ dependencies = [
 
 [[package]]
 name = "devstackbox"
-version = "0.1.21"
+version = "0.1.22"
 dependencies = [
  "flate2",
  "futures-util",

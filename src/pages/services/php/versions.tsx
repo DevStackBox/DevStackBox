@@ -85,7 +85,7 @@ export function PhpVersionsPage() {
     Record<string, DownloadProgressPayload>
   >({});
 
-  const loadVersions = useCallback(async () => {
+  const loadVersions = useCallback(async (fresh = false) => {
     setLoading(true);
     try {
       if (!isTauri()) {
@@ -103,7 +103,7 @@ export function PhpVersionsPage() {
         return;
       }
       const result = await safeInvoke<PHPVersionInfo[]>(
-        TAURI_COMMANDS.php.getVersions,
+        TAURI_COMMANDS.php.getVersions, undefined, { fresh },
       );
       if (result) {
         // Show newest first.
@@ -143,10 +143,7 @@ export function PhpVersionsPage() {
               ...prev,
               [event.payload.version]: event.payload,
             }));
-            if (event.payload.stage === "complete") {
-              // Refresh list so the new version shows as installed.
-              loadVersions();
-            }
+            // The command completion handler refreshes once after cache invalidation.
           },
         );
         if (cancelled) {
@@ -363,7 +360,7 @@ export function PhpVersionsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={loadVersions}
+              onClick={() => void loadVersions(true)}
               disabled={loading}
             >
               <RefreshCw

@@ -2,7 +2,7 @@
 
 > Practical environment context for working on PHP applications served by DevStackBox on Windows. Read this file before choosing PHP, running Composer or Artisan, connecting to MySQL, or changing server configuration.
 
-Maintained: 28 October 2026. Baseline: v0.1.21. Installed builds can differ; verify their behavior. This guide describes the environment, not permission to change it. Follow the user's task and the application's own instructions.
+Maintained: 29 October 2026. Baseline: v0.1.22. Installed builds can differ; verify their behavior. This guide describes the environment, not permission to change it. Follow the user's task and the application's own instructions.
 
 ## Give this file to your AI tool
 

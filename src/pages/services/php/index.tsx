@@ -34,7 +34,7 @@ export function PhpOverviewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (fresh = false) => {
     setLoading(true);
     setError("");
     if (!isTauri()) {
@@ -44,7 +44,7 @@ export function PhpOverviewPage() {
     }
     try {
       const list = await safeInvoke<PhpVersion[]>(
-        TAURI_COMMANDS.php.getVersions,
+        TAURI_COMMANDS.php.getVersions, undefined, { fresh },
       );
       if (!list)
         throw new Error("PHP status was not returned. Refresh to retry.");
@@ -111,7 +111,7 @@ export function PhpOverviewPage() {
                 size="sm"
                 variant="outline"
                 disabled={loading}
-                onClick={refresh}
+                onClick={() => void refresh(true)}
               >
                 <RefreshCw className="mr-2 h-4 w-4" />
                 {t("actions.refresh", "Refresh")}

@@ -48,16 +48,16 @@ export function WorkspaceConfigEditor({
 
   const monacoTheme = resolvedTheme === "dark" ? "vs-dark" : "vs";
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (fresh = false) => {
     setLoading(true);
     setLoadError(false);
     try {
       const data = await safeInvoke<string>(TAURI_COMMANDS.config.read, {
         service,
-      });
+      }, { fresh });
       if (data == null) throw new Error("Configuration was not returned");
       setLoaded(true);
-      const history = await safeInvoke<string[]>(TAURI_COMMANDS.config.listBackups, { service });
+      const history = await safeInvoke<string[]>(TAURI_COMMANDS.config.listBackups, { service }, { fresh });
       setBackups(history ?? []);
       if (data != null) {
         setContent(localStorage.getItem(draftKey) ?? data);
@@ -121,7 +121,7 @@ export function WorkspaceConfigEditor({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => { if (content !== original && !window.confirm("Discard unsaved changes and reload?")) return; localStorage.removeItem(draftKey); void load(); }}
+                onClick={() => { if (content !== original && !window.confirm("Discard unsaved changes and reload?")) return; localStorage.removeItem(draftKey); void load(true); }}
                 disabled={loading}
               >
                 <RefreshCw

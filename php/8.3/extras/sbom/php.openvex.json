@@ -1,15 +1,47 @@
 {
     "@context": "https://openvex.dev/ns/v0.2.0",
-    "@id": "https://php.net/sbom/windows/php/8.3.36/vex/09d722c5-a294-47fa-90e4-89f1dd84eafe",
+    "@id": "https://php.net/sbom/windows/php/8.3.36/vex/d4fea01f-afb2-492e-8f73-755b507ada5d",
     "author": "PHP Group",
-    "timestamp": "2026-10-20T04:21:56Z",
+    "timestamp": "2026-10-26T10:09:06Z",
     "version": 1,
     "statements": [
         {
             "vulnerability": {
+                "name": "CVE-2026-85091"
+            },
+            "timestamp": "2026-10-24T04:10:58Z",
+            "products": [
+                {
+                    "@id": "pkg:vcpkg/zlib@1.3.2-winlibs.1?triplet=x64-windows",
+                    "identifiers": {
+                        "purl": "pkg:vcpkg/zlib@1.3.2-winlibs.1?triplet=x64-windows"
+                    }
+                }
+            ],
+            "status": "fixed",
+            "action_statement": "Fixed in the Apache vcpkg zlib overlay 1.3.2-winlibs.1 using Winlibs zlib commit 838fe0e338adb28f5662e5ac332b0f0eb96ba93a (zlib-1.3.2-1), which backports upstream df84af25dc1942490e1d1c899a07619152a46148."
+        },
+        {
+            "vulnerability": {
+                "name": "CVE-2026-85091"
+            },
+            "timestamp": "2026-10-24T04:10:58Z",
+            "products": [
+                {
+                    "@id": "pkg:vcpkg/zlib@1.3.2-winlibs.1?triplet=x64-windows-static-md",
+                    "identifiers": {
+                        "purl": "pkg:vcpkg/zlib@1.3.2-winlibs.1?triplet=x64-windows-static-md"
+                    }
+                }
+            ],
+            "status": "fixed",
+            "action_statement": "Fixed in the Apache vcpkg zlib overlay 1.3.2-winlibs.1 using Winlibs zlib commit 838fe0e338adb28f5662e5ac332b0f0eb96ba93a (zlib-1.3.2-1), which backports upstream df84af25dc1942490e1d1c899a07619152a46148."
+        },
+        {
+            "vulnerability": {
                 "name": "CVE-1999-0289"
             },
-            "timestamp": "2026-10-02T16:04:22Z",
+            "timestamp": "2026-10-24T04:10:58Z",
             "products": [
                 {
                     "@id": "pkg:php-windows-deps/apache@2.4.69",
@@ -26,7 +58,7 @@
             "vulnerability": {
                 "name": "CVE-1999-0678"
             },
-            "timestamp": "2026-10-02T16:04:22Z",
+            "timestamp": "2026-10-24T04:10:58Z",
             "products": [
                 {
                     "@id": "pkg:php-windows-deps/apache@2.4.69",
@@ -43,7 +75,7 @@
             "vulnerability": {
                 "name": "CVE-2025-3891"
             },
-            "timestamp": "2026-10-02T16:04:22Z",
+            "timestamp": "2026-10-24T04:10:58Z",
             "products": [
                 {
                     "@id": "pkg:php-windows-deps/apache@2.4.69",
@@ -77,7 +109,7 @@
             "vulnerability": {
                 "name": "CVE-2026-7598"
             },
-            "timestamp": "2026-10-02T13:42:24Z",
+            "timestamp": "2026-10-24T02:58:05Z",
             "products": [
                 {
                     "@id": "pkg:php-windows-deps/libssh2@1.11.1-9",
@@ -93,7 +125,7 @@
             "vulnerability": {
                 "name": "CVE-2025-15661"
             },
-            "timestamp": "2026-10-02T13:42:24Z",
+            "timestamp": "2026-10-24T02:58:05Z",
             "products": [
                 {
                     "@id": "pkg:php-windows-deps/libssh2@1.11.1-9",
@@ -109,7 +141,7 @@
             "vulnerability": {
                 "name": "CVE-2026-55199"
             },
-            "timestamp": "2026-10-02T13:42:24Z",
+            "timestamp": "2026-10-24T02:58:05Z",
             "products": [
                 {
                     "@id": "pkg:php-windows-deps/libssh2@1.11.1-9",
@@ -125,7 +157,7 @@
             "vulnerability": {
                 "name": "CVE-2026-55200"
             },
-            "timestamp": "2026-10-02T13:42:24Z",
+            "timestamp": "2026-10-24T02:58:05Z",
             "products": [
                 {
                     "@id": "pkg:php-windows-deps/libssh2@1.11.1-9",
@@ -141,7 +173,7 @@
             "vulnerability": {
                 "name": "CVE-2026-58050"
             },
-            "timestamp": "2026-10-02T13:42:24Z",
+            "timestamp": "2026-10-24T02:58:05Z",
             "products": [
                 {
                     "@id": "pkg:php-windows-deps/libssh2@1.11.1-9",
@@ -157,7 +189,7 @@
             "vulnerability": {
                 "name": "CVE-2026-58051"
             },
-            "timestamp": "2026-10-02T13:42:24Z",
+            "timestamp": "2026-10-24T02:58:05Z",
             "products": [
                 {
                     "@id": "pkg:php-windows-deps/libssh2@1.11.1-9",
@@ -173,7 +205,7 @@
             "vulnerability": {
                 "name": "CVE-2026-66032"
             },
-            "timestamp": "2026-10-02T13:42:24Z",
+            "timestamp": "2026-10-24T02:58:05Z",
             "products": [
                 {
                     "@id": "pkg:php-windows-deps/libssh2@1.11.1-9",
@@ -189,7 +221,7 @@
             "vulnerability": {
                 "name": "CVE-2026-66033"
             },
-            "timestamp": "2026-10-02T13:42:24Z",
+            "timestamp": "2026-10-24T02:58:05Z",
             "products": [
                 {
                     "@id": "pkg:php-windows-deps/libssh2@1.11.1-9",
@@ -205,7 +237,7 @@
             "vulnerability": {
                 "name": "CVE-2026-66034"
             },
-            "timestamp": "2026-10-02T13:42:24Z",
+            "timestamp": "2026-10-24T02:58:05Z",
             "products": [
                 {
                     "@id": "pkg:php-windows-deps/libssh2@1.11.1-9",
@@ -221,7 +253,7 @@
             "vulnerability": {
                 "name": "CVE-2026-66035"
             },
-            "timestamp": "2026-10-02T13:42:24Z",
+            "timestamp": "2026-10-24T02:58:05Z",
             "products": [
                 {
                     "@id": "pkg:php-windows-deps/libssh2@1.11.1-9",
@@ -1119,6 +1151,22 @@
             ],
             "status": "fixed",
             "action_statement": "Fixed in openssl-3.0.22.pl2: reset DTLS retransmit offsets and preserve suspended writes."
+        },
+        {
+            "vulnerability": {
+                "name": "CVE-2026-85091"
+            },
+            "timestamp": "2026-10-24T02:49:50Z",
+            "products": [
+                {
+                    "@id": "pkg:php-windows-deps/zlib@1.3.2-1",
+                    "identifiers": {
+                        "purl": "pkg:generic/zlib@1.3.2"
+                    }
+                }
+            ],
+            "status": "fixed",
+            "action_statement": "Fixed in zlib-1.3.2-1 by backporting the upstream input-state reset after a failed non-blocking gzwrite, preventing stale external buffer pointers from reaching gzprintf or gzvprintf."
         }
     ]
 }

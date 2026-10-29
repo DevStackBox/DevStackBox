@@ -28,11 +28,12 @@ export function PhpExtensionsPage() {
   const { toast } = useToast();
   const [extensions, setExtensions] = useState<PhpExtension[]>([]);
   const [loading, setLoading] = useState(false);
+  const [toggling, setToggling] = useState(false);
   const [filter, setFilter] = useState("");
   // Resolved active PHP version - needed for both list and toggle commands.
   const [activeVersion, setActiveVersion] = useState("8.3");
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (fresh = false) => {
     if (!isTauri()) {
       setExtensions([]);
       return;
@@ -43,13 +44,13 @@ export function PhpExtensionsPage() {
       // backend command requires a version string.
       const versions = await safeInvoke<
         { version: string; is_active: boolean }[]
-      >(TAURI_COMMANDS.php.getVersions);
+      >(TAURI_COMMANDS.php.getVersions, undefined, { fresh });
       const ver = versions?.find((v) => v.is_active)?.version ?? "8.3";
       setActiveVersion(ver);
 
       const list = await safeInvoke<PhpExtension[]>(
         TAURI_COMMANDS.php.listExtensions,
-        { version: ver },
+        { version: ver }, { fresh },
       );
       setExtensions(list ?? []);
     } catch (err) {
@@ -68,7 +69,8 @@ export function PhpExtensionsPage() {
   }, [refresh]);
 
   const toggle = async (ext: PhpExtension) => {
-    if (!isTauri()) return;
+    if (!isTauri() || loading || toggling) return;
+    setToggling(true);
     try {
       await safeInvoke(TAURI_COMMANDS.php.toggleExtension, {
         version: activeVersion,
@@ -88,7 +90,7 @@ export function PhpExtensionsPage() {
         description: String(err),
         variant: "destructive",
       });
-    }
+    } finally { setToggling(false); }
   };
 
   const filtered = extensions.filter((e) =>
@@ -112,15 +114,15 @@ export function PhpExtensionsPage() {
               <CardDescription>
                 {t(
                   "php.extensions.description",
-                  "Toggle extensions for the active PHP version. Restart Apache to apply.",
+                  "Toggle extensions for the default PHP version. Restart Apache to apply.",
                 )}
               </CardDescription>
             </div>
             <Button
               size="sm"
               variant="outline"
-              onClick={refresh}
-              disabled={loading}
+              onClick={() => void refresh(true)}
+              disabled={loading || toggling}
             >
               <RefreshCw
                 className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`}
@@ -161,7 +163,8 @@ export function PhpExtensionsPage() {
                   <Switch
                     checked={ext.enabled}
                     onCheckedChange={() => toggle(ext)}
-                    disabled={ext.builtin}
+                    disabled={ext.builtin || loading || toggling}
+                    aria-label={ext.name}
                   />
                 </div>
               ))}

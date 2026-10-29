@@ -1,6 +1,7 @@
 /**
  * Tauri environment detection and safe invoke wrapper
  */
+import { commandCache } from "./command-cache";
 import { invalidateAfterCommand, revalidateAfterExternalDatabaseTool } from "./workspace-cache";
 
 // Check if we're running in a Tauri environment
@@ -23,6 +24,7 @@ export const openExternalUrl = async (url: string): Promise<void> => {
 export const safeInvoke = async <T>(
   command: string,
   args?: Record<string, unknown>,
+  options?: { fresh?: boolean },
 ): Promise<T | null> => {
   if (!isTauri()) {
     console.warn(
@@ -33,8 +35,9 @@ export const safeInvoke = async <T>(
 
   try {
     const { invoke } = await import("@tauri-apps/api/core");
-    try { return await invoke<T>(command, args); }
-    finally { invalidateAfterCommand(command); }
+    commandCache.afterMutation(command, args);
+    try { return await commandCache.read(command, args, () => invoke<T>(command, args), options?.fresh); }
+    finally { commandCache.afterMutation(command, args); invalidateAfterCommand(command); }
   } catch (error) {
     console.error(`[Tauri] Failed to invoke '${command}':`, error);
     throw error;
