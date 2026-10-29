@@ -1,11 +1,11 @@
 {
-  "version": "0.1.21",
-  "notes": "### Fixed\n\n- Recognize numeric Windows PHP package revisions such as `8.4.27-1` when resolving releases, comparing updates and validating downloaded runtimes. Track verified package revisions to avoid repeatedly offering the same rebuild.\n- Show safe MySQL error codes, SQL line numbers and actionable import failure messages instead of discarding all diagnostics. Existing-table and duplicate-key conflicts now explain how to proceed without automatically deleting data.\n- Highlight existing import targets and explain why a full dump may require a new, empty database.\n- Fix About page “Update Available” button label contrast when an update is listed.",
-  "pub_date": "2026-10-28T13:10:04.063Z",
+  "version": "0.1.22",
+  "notes": "### Changed\r\n\r\n- Bundle PHP **8.3.36-1** with verified `.devstackbox-release.json` so fresh installs match the Windows package revision feed and avoid spurious bundled update prompts.\r\n\r\n### Fixed\r\n\r\n- Improve stopped-status, secondary-text, disabled-control and switch contrast in light and dark themes.\r\n- Share stable PHP/configuration reads across tabs, deduplicate concurrent calls and invalidate affected data after changes. Explicit Refresh/Reload bypass cached reads; live service, database and log checks remain active.",
+  "pub_date": "2026-10-29T07:14:01.667Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRMTM4U1RGRFJNV24xY05sM0pwQ1R5RE1tTEtlS0ZxSmNOaFBoOFZCcGw4T2d3WTZ5TkZwU2N0UWtoS1B2a01nbUc3MUNGS2NyZklmRE1oRndRcVRCZGpPZWdKQ2VQeXc4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMTkyOTM3CWZpbGU6RGV2U3RhY2tCb3hfMC4xLjIxX3g2NC1zZXR1cC5leGUKOWNsM09Ca1BvcGxENzVicGxSSGNSekpvRG03RlB4Y05MVzgraHBpbm56Zmh5SVlPRXhPdmlJbmRINFNCRTEvQlEyb0xZVnlqQTNzbGp6bUkvSU1DQlE9PQo=",
-      "url": "https://github.com/DevStackBox/DevStackBox/releases/download/v0.1.21/DevStackBox_0.1.21_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRMTM4U1RGRFJNV3F0cjMxdUloQUdBaFlaTHJwRW9DQVB1dnc2d2d2WHhUYmNab0kzUi82OS9BN1p5OThLUGhzckNqRTFha0U0Wnk3amdKY2VVYzN3M0IrcnZ5QzcyMWd3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkzMjU3OTY4CWZpbGU6RGV2U3RhY2tCb3hfMC4xLjIyX3g2NC1zZXR1cC5leGUKd0tCcUJzVlhCK2Fzck5mRVVvdlRNbSt3YmNhOEZiZFlSLytnMkVZZytYSnNXRHJtUVpEVFlUQUhOMlVqTjZ4QUVPT1hHRFZ0a3diYlo3dFNsYy9ZQWc9PQo=",
+      "url": "https://github.com/DevStackBox/DevStackBox/releases/download/v0.1.22/DevStackBox_0.1.22_x64-setup.exe"
     }
   }
 }

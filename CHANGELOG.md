@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Improve stopped-status, secondary-text, disabled-control and switch contrast in light and dark themes.
 - Share stable PHP/configuration reads across tabs, deduplicate concurrent calls and invalidate affected data after changes. Explicit Refresh/Reload bypass cached reads; live service, database and log checks remain active.
 
+**Installer SHA-256:** `D9F54708F067AA7CA73C6C4348E49A09EAB2B2E70544C4C5ACA0E9DFFCFADB3B`
+
 ## [0.1.21] - 2026-10-28
 
 ### Fixed
