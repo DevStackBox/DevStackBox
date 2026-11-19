@@ -380,7 +380,7 @@ export function SettingsPage({}: SettingsPageProps) {
               <div className="text-xs text-muted-foreground">
                 {t(
                   "settings.minimizeToTrayDesc",
-                  "Keep services running in the background when the window closes.",
+                  "Closing the window hides it in the system tray. Click the tray icon to reopen it.",
                 )}
               </div>
             </div>

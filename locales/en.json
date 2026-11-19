@@ -1,4 +1,5 @@
 {
+  "tray": {"stillRunning": "DevStackBox is still running", "reopen": "Click or double-click the tray icon to open the window. Right-click for service controls."},
   "common": {
     "welcome": "Welcome",
     "loading": "Loading...",
@@ -265,7 +266,7 @@
     "autoStartMysql": "Auto-start MySQL",
     "autoStartMysqlDesc": "Start the database server when DevStackBox launches.",
     "minimizeToTray": "Minimize to tray on close",
-    "minimizeToTrayDesc": "Keep services running in the background when the window closes."
+    "minimizeToTrayDesc": "Closing the window hides it in the system tray. Click the tray icon to reopen it."
   },
   "about": {
     "version": "Version",

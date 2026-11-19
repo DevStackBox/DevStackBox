@@ -1,6 +1,6 @@
 // Shared serializable types returned to the frontend.
 
-#[derive(serde::Serialize, Clone)]
+#[derive(serde::Serialize, Clone, PartialEq)]
 pub struct ServiceInfo {
     pub running: bool,
     pub pid: Option<u32>,

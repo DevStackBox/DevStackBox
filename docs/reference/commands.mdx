@@ -59,7 +59,8 @@ const result = await safeInvoke<ReturnType>(
 | ------------------ | ------------------- | ----------------- | ------- | --------------------------- |
 | `show_main_window` | `commands/tray.rs`  | none              | `()`    |                             |
 | `hide_to_tray`     | `commands/tray.rs`  | none              | `()`    |                             |
-| `set_tray_tooltip` | `commands/tray.rs`  | `tooltip: String` | `()`    | Called on every status poll |
+| `set_tray_tooltip` | `commands/tray.rs` | `text: String` | `()` | Sets a custom tray tooltip. |
+| `refresh_tray_menu` | `commands/tray.rs` | none | Service status snapshot | Includes the observation revision and Apache, MySQL and PHP status. An unavailable observation is null. |
 | `quit_app`         | `commands/tray.rs`  | none              | `()`    |                             |
 
 ### MySQL Commands

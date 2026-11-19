@@ -211,6 +211,9 @@ pub fn run() {
             Ok(())
         })
         .on_window_event(|window, event| {
+            if window.label() == "main" && matches!(event, tauri::WindowEvent::Resized(_) | tauri::WindowEvent::Focused(_)) {
+                crate::tray::sync_window(window.app_handle());
+            }
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 if crate::commands::database_workspace::has_active_database_operation() {
                     api.prevent_close();
@@ -220,7 +223,7 @@ pub fn run() {
                 let settings = read_app_settings();
                 if settings.minimize_to_tray {
                     let _ = window.emit("window-hidden-to-tray", ());
-                    window.hide().unwrap_or_default();
+                    let _ = crate::tray::hide(window.app_handle());
                     api.prevent_close();
                 } else {
                     window.app_handle().exit(0);

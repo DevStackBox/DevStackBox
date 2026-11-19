@@ -54,14 +54,15 @@ async fn wait_for_mysql_port(max_wait: Duration) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn get_mysql_status() -> Result<ServiceInfo, String> {
-    let exe = mysqld_exe_path();
-    let our_pids = find_our_processes("mysqld.exe", &exe);
-    let running = !our_pids.is_empty();
-    let pid = our_pids.first().copied();
+    let batch = crate::utils::process::batch_find_processes_by_image(&["mysqld.exe"])?;
+    status_from_processes(&batch).await.ok_or_else(|| "Windows could not identify the mysql process.".into())
+}
 
-    Ok(ServiceInfo {
-        running,
-        pid,
+pub(crate) async fn status_from_processes(batch: &crate::utils::process::ServiceProcesses) -> Option<ServiceInfo> {
+    let pids = crate::utils::process::owned_service_pids(batch, "mysqld.exe", &mysqld_exe_path())?;
+    Some(ServiceInfo {
+        running: !pids.is_empty(),
+        pid: pids.first().copied(),
         port: Some(mysql_port()),
         version: get_mysql_version().await,
     })
@@ -96,6 +97,7 @@ async fn initialize_mysql_data() -> Result<(), String> {
 #[tauri::command]
 pub async fn start_mysql() -> Result<bool, String> {
     let _operation = super::mysql_import::MYSQL_DATA_LOCK.try_lock()?;
+    let _tray_activity = crate::tray::ServiceActivity::starting("MySQL");
     let base_path = get_installation_path();
 
     let mysql_path = get_mysqld_exe(&base_path);
@@ -135,6 +137,7 @@ pub async fn start_mysql() -> Result<bool, String> {
 pub async fn stop_mysql() -> Result<bool, String> {
     let _maintenance = super::log_management::MaintenanceAfterStop;
     let _lock = super::mysql_import::MYSQL_DATA_LOCK.try_lock().map_err(|_| "A database operation is running. Cancel it or wait before stopping MySQL.")?;
+    let _tray_activity = crate::tray::ServiceActivity::stopping("MySQL");
     let mysql_path = mysqld_exe_path();
 
     if !is_our_process_running("mysqld.exe", &mysql_path) {

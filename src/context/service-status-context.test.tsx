@@ -23,6 +23,8 @@ vi.mock("@tauri-apps/api/event", () => ({ listen: async (name: string, cb: (e: {
 
 let api: ReturnType<typeof useServiceStatus>;
 let running = false;
+let revision = 0;
+const snapshot = (running: boolean) => ({revision: ++revision, apache: {running}, mysql: {running}, php: {running}});
 let host: HTMLDivElement;
 let root: Root;
 const query = vi.fn();
@@ -34,7 +36,7 @@ beforeEach(() => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   localStorage.clear(); sessionStorage.clear(); mocks.toast.mockClear(); query.mockClear(); mocks.handlers.clear(); running = false;
   mocks.invoke.mockReset().mockImplementation(async (command: string) => {
-    if ([C.services.getMysqlStatus, C.services.getApacheStatus, C.services.getPhpStatus].includes(command as never)) return { running };
+    if (command === C.tray.refreshMenu) return snapshot(running);
     if (command === C.system.startAllServices || command === C.services.toggleMysql) running = !running;
     if (command === C.system.stopAllServices) running = false;
     return running;
@@ -63,7 +65,7 @@ describe("service availability and crash regression cases", () => {
     mocks.invoke.mockRejectedValue(new Error("Status check unavailable"));
     await mount();
     expect(api.services.apache.running).toBe(false);
-    mocks.invoke.mockResolvedValue({ running: false });
+    mocks.invoke.mockResolvedValue(snapshot(false));
     await act(async () => api.refresh());
     await act(async () => api.refresh());
     expect(mocks.toast).not.toHaveBeenCalled();
@@ -87,7 +89,7 @@ describe("service availability and crash regression cases", () => {
     await mount();
     mocks.invoke.mockImplementation(async (command: string) => {
       if (command === C.system.stopAllServices) return true;
-      if ([C.services.getMysqlStatus, C.services.getApacheStatus, C.services.getPhpStatus].includes(command as never)) return { running };
+      if (command === C.tray.refreshMenu) return snapshot(running);
       return true;
     });
 
@@ -118,7 +120,7 @@ describe("service availability and crash regression cases", () => {
   it("does not treat a tray stop as a crash", async () => {
     running = true; await mount();
     await act(async () => { mocks.handlers.get("tray-service-action")!({ payload: "mysql" }); running = false; });
-    await act(async () => mocks.handlers.get("tray-service-action")!({ payload: "complete" }));
+    await act(async () => mocks.handlers.get("tray-service-complete")!({ payload: snapshot(false) }));
     expect(api.services.mysql.running).toBe(false); expect(mocks.toast).not.toHaveBeenCalled();
   });
   it("keeps database pages closed while startup is pending and ignores tray snapshots", async () => {
@@ -137,6 +139,23 @@ describe("service availability and crash regression cases", () => {
     expect(mocks.invoke.mock.calls.length).toBe(calls);
     await act(async () => { finish(); await operation; });
     expect(host.textContent).toContain("Live databases"); expect(query).toHaveBeenCalledTimes(1);
+  });
+  it("uses a native snapshot without another status request", async () => {
+    await mount();
+    const calls = mocks.invoke.mock.calls.length;
+    await act(async () => mocks.handlers.get("service-status-snapshot")!({payload: snapshot(true)}));
+    expect(api.services.apache.running).toBe(true);
+    expect(mocks.invoke.mock.calls.length).toBe(calls);
+  });
+  it("ignores an older response that arrives after a newer tray observation", async () => {
+    await mount();
+    const old = snapshot(false);
+    const current = snapshot(true);
+    await act(async () => mocks.handlers.get("service-status-snapshot")!({payload: current}));
+    mocks.invoke.mockResolvedValueOnce(old);
+    await act(async () => api.refresh());
+    expect(api.services.apache.running).toBe(true);
+    expect(mocks.toast).not.toHaveBeenCalled();
   });
   it("does not permit duplicate bulk actions while one is pending", async () => {
     await mount();
@@ -157,7 +176,7 @@ describe("service availability and crash regression cases", () => {
     await mount();
     mocks.invoke.mockImplementation(async (command: string) => {
       if (command === C.system.startAllServices) throw new Error("Port 3306 is already in use");
-      return { running: false };
+      return snapshot(false);
     });
     await act(async () => api.runBulk("start"));
     expect(api.loading).toBe(null); expect(host.textContent).toContain("MySQL is stopped");
@@ -177,7 +196,7 @@ describe("database screen regression cases", () => {
   });
   it("distinguishes a successfully loaded empty database list from a failed search", async () => {
     running = true;
-    mocks.invoke.mockImplementation(async (command: string) => [C.services.listMysqlDatabasesDetailed, C.services.listMysqlDatabases].includes(command as never) ? [] : { running: true });
+    mocks.invoke.mockImplementation(async (command: string) => [C.services.listMysqlDatabasesDetailed, C.services.listMysqlDatabases].includes(command as never) ? [] : snapshot(true));
     await act(async () => root.render(<MemoryRouter><ServiceStatusProvider><DatabaseCacheProvider><DatabasesPage /></DatabaseCacheProvider></ServiceStatusProvider></MemoryRouter>));
     expect(host.textContent).toContain("No user databases yet. Select Create");
     expect(host.textContent).not.toContain("No databases match your search");
@@ -185,7 +204,7 @@ describe("database screen regression cases", () => {
   it("shows connection failures inline with retry rather than claiming there are zero databases", async () => {
     mocks.invoke.mockImplementation(async (command: string) => {
       if ([C.services.listMysqlDatabasesDetailed, C.services.listMysqlDatabases].includes(command as never)) throw new Error("Access denied");
-      return { running: true };
+      return snapshot(true);
     });
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
     await act(async () => root.render(<MemoryRouter><ServiceStatusProvider><DatabaseCacheProvider><DatabasesPage /></DatabaseCacheProvider></ServiceStatusProvider></MemoryRouter>));

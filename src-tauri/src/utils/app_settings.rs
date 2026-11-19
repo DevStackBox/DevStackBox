@@ -17,6 +17,8 @@ pub struct AppSettings {
     pub auto_start_mysql: bool,
     #[serde(default = "default_stable_channel")]
     pub update_channel: String,
+    #[serde(default)]
+    pub language: String,
 }
 
 fn default_true() -> bool {
@@ -33,6 +35,7 @@ impl Default for AppSettings {
             minimize_to_tray: true,
             auto_start_apache: false,
             auto_start_mysql: false,
+            language: "en".into(),
             update_channel: default_stable_channel(),
         }
     }

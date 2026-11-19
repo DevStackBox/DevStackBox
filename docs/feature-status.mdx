@@ -206,10 +206,10 @@ Project details can read Apache and runtime-specific PHP errors. Configuration c
 | --------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------- |
 | Tray icon appears           | DONE   | Tauri tray-icon plugin                                                                                                  |
 | Minimize to tray            | DONE   | X close button hides to tray (CloseRequested intercepted in `lib.rs`); first-time OS notification shown via `notify.ts` |
-| Tray context menu           | DONE   | Show / Hide / Toggle MySQL / Toggle Apache / Quit; wired to same start-stop pipeline as the UI                          |
-| Tray click opens app        | DONE   | Left-click on tray icon shows the main window (`lib.rs`)                                                                |
-| Tray service status display | DONE   | `set_tray_tooltip` updated every 5s by `ServiceManager` with Apache/MySQL/PHP state                                     |
-| Tray service start/stop     | DONE   | Tray menu toggles services in Rust and emits `tray-services-updated`; `ServiceStatusProvider` refreshes UI badges      |
+| Tray context menu | DONE | Window, service, phpMyAdmin, default web folder and quit actions. |
+| Tray activation | Updated in source | Single-click and double-click reveal and focus the same window, including when minimized. |
+| Tray service status | Updated in source | The native monitor supplies Apache and MySQL state to the tray and service dashboard. |
+| Tray service start/stop | Updated in source | Explicit Start and Stop commands use the same backend operation guards as the main window. |
 | Notifications from tray     | DONE   | Service start/stop and crash notifications via `src/lib/notify.ts`                                                      |
 
 ---

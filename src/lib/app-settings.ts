@@ -15,11 +15,13 @@ export interface AppSettingsPayload {
   minimizeToTray: boolean;
   autoStartApache: boolean;
   autoStartMysql: boolean;
+  language: string;
   updateChannel: string;
 }
 
 export function readAppSettingsFromStorage(): AppSettingsPayload {
   return {
+    language: localStorage.getItem("devstackbox-language") ?? "en",
     minimizeToTray: localStorage.getItem(MINIMIZE_TO_TRAY_KEY) !== "false",
     autoStartApache: localStorage.getItem(AUTOSTART_APACHE_KEY) === "true",
     autoStartMysql: localStorage.getItem(AUTOSTART_MYSQL_KEY) === "true",

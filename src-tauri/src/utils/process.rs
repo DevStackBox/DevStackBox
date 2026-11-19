@@ -137,14 +137,16 @@ pub fn get_process_pid(process_name: &str) -> Option<u32> {
 // =====================================================================
 
 // Returns PIDs grouped by process image name (lowercase), one PowerShell invocation.
+pub type ServiceProcesses = HashMap<String, Vec<(u32, PathBuf)>>;
+
 #[cfg(windows)]
-pub fn batch_find_processes_by_image(process_names: &[&str]) -> HashMap<String, Vec<(u32, PathBuf)>> {
+pub fn batch_find_processes_by_image(process_names: &[&str]) -> Result<ServiceProcesses, String> {
     let mut map: HashMap<String, Vec<(u32, PathBuf)>> = HashMap::new();
     for name in process_names {
         map.insert(name.to_lowercase(), Vec::new());
     }
     if process_names.is_empty() {
-        return map;
+        return Ok(map);
     }
 
     for name in process_names {
@@ -153,18 +155,18 @@ pub fn batch_find_processes_by_image(process_names: &[&str]) -> HashMap<String, 
                 .chars()
                 .any(|c| !c.is_ascii_alphanumeric() && c != '.' && c != '_' && c != '-')
         {
-            return map;
+            return Err("Invalid process name".into());
         }
     }
 
     let in_list = process_names
         .iter()
-        .map(|n| format!("'{}'", n))
+        .map(|n| format!("Name='{}'", n))
         .collect::<Vec<_>>()
-        .join(",");
+        .join(" OR ");
 
     let script = format!(
-        "Get-CimInstance Win32_Process | Where-Object {{ $_.Name -in @({in_list}) }} | \
+        "Get-CimInstance Win32_Process -Filter \"{in_list}\" -ErrorAction Stop | \
          ForEach-Object {{ \"$($_.Name)|$($_.ProcessId)|$($_.ExecutablePath)|$($_.CommandLine)\" }}"
     );
 
@@ -173,9 +175,10 @@ pub fn batch_find_processes_by_image(process_names: &[&str]) -> HashMap<String, 
         .output()
     {
         Ok(o) => o,
-        Err(_) => return map,
+        Err(error) => return Err(error.to_string()),
     };
 
+    if !output.status.success() { return Err("Windows could not query service processes.".into()); }
     let stdout = String::from_utf8_lossy(&output.stdout);
     for line in stdout.lines() {
         let line = line.trim();
@@ -194,12 +197,12 @@ pub fn batch_find_processes_by_image(process_names: &[&str]) -> HashMap<String, 
                 .push((pid, PathBuf::from(path_str)));
         }
     }
-    map
+    Ok(map)
 }
 
 #[cfg(not(windows))]
-pub fn batch_find_processes_by_image(_process_names: &[&str]) -> HashMap<String, Vec<(u32, PathBuf)>> {
-    HashMap::new()
+pub fn batch_find_processes_by_image(_process_names: &[&str]) -> Result<ServiceProcesses, String> {
+    Err("Windows process status is unavailable.".into())
 }
 
 #[cfg(windows)]
@@ -259,21 +262,19 @@ pub fn is_our_process_running(process_name: &str, expected_path: &std::path::Pat
 
 // Returns the PIDs of processes whose ExecutablePath matches `expected_path`.
 pub fn find_our_processes(process_name: &str, expected_path: &std::path::Path) -> Vec<u32> {
+    batch_find_processes_by_image(&[process_name]).ok()
+        .and_then(|batch| owned_service_pids(&batch, process_name, expected_path))
+        .unwrap_or_default()
+}
+
+// An unreadable executable path is inconclusive unless we already found our own server.
+pub fn owned_service_pids(batch: &ServiceProcesses, name: &str, expected_path: &std::path::Path) -> Option<Vec<u32>> {
+    let entries = batch.get(&name.to_lowercase())?;
     let expected = normalize_path(expected_path);
-    let batch = batch_find_processes_by_image(&["httpd.exe", "mysqld.exe"]);
-    let key = process_name.to_lowercase();
-    batch
-        .get(&key)
-        .into_iter()
-        .flat_map(|entries| entries.iter())
-        .filter_map(|(pid, p)| {
-            if normalize_path(p) == expected {
-                Some(*pid)
-            } else {
-                None
-            }
-        })
-        .collect()
+    let owned: Vec<_> = entries.iter().filter_map(|(pid,path)| {
+        if !path.as_os_str().is_empty() && normalize_path(path) == expected { Some(*pid) } else { None }
+    }).collect();
+    if owned.is_empty() && entries.iter().any(|(_,path)| path.as_os_str().is_empty()) { None } else { Some(owned) }
 }
 
 // Version/configuration probes use the same executable as the server, but
@@ -373,6 +374,21 @@ pub fn ensure_port_available(port: u16, service: &str) -> Result<(), String> {
 #[cfg(test)]
 mod service_probe_tests {
     use super::is_diagnostic_process;
+
+    #[test]
+    fn unreadable_process_paths_do_not_establish_a_stopped_baseline() {
+        use super::{owned_service_pids, ServiceProcesses};
+        use std::path::PathBuf;
+        let path = PathBuf::from("C:/demo/mysql/bin/mysqld.exe");
+        let name = "mysqld.exe";
+        let mut processes = ServiceProcesses::new();
+        processes.insert(name.into(), vec![]);
+        assert_eq!(owned_service_pids(&processes, name, &path), Some(vec![]));
+        processes.get_mut(name).unwrap().push((7, PathBuf::new()));
+        assert_eq!(owned_service_pids(&processes, name, &path), None);
+        processes.get_mut(name).unwrap().push((8, path.clone()));
+        assert_eq!(owned_service_pids(&processes, name, &path), Some(vec![8]));
+    }
 
     #[test]
     fn probes_are_not_servers() {

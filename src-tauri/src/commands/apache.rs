@@ -139,18 +139,17 @@ fn apache_exe_path() -> std::path::PathBuf {
 
 #[tauri::command]
 pub async fn get_apache_status() -> Result<ServiceInfo, String> {
-    let exe = apache_exe_path();
-    let our_pids = find_our_processes("httpd.exe", &exe);
-    let running = !our_pids.is_empty();
-    let pid = our_pids.first().copied();
+    let batch = crate::utils::process::batch_find_processes_by_image(&["httpd.exe"])?;
+    status_from_processes(&batch).await.ok_or_else(|| "Windows could not identify the apache process.".into())
+}
 
-    let version = get_apache_version().await;
-
-    Ok(ServiceInfo {
-        running,
-        pid,
+pub(crate) async fn status_from_processes(batch: &crate::utils::process::ServiceProcesses) -> Option<ServiceInfo> {
+    let pids = crate::utils::process::owned_service_pids(batch, "httpd.exe", &apache_exe_path())?;
+    Some(ServiceInfo {
+        running: !pids.is_empty(),
+        pid: pids.first().copied(),
         port: Some(apache_listen_port()),
-        version,
+        version: get_apache_version().await,
     })
 }
 
@@ -159,6 +158,7 @@ pub async fn start_apache() -> Result<bool, String> {
     let _operation = super::mysql_import::MYSQL_DATA_LOCK.try_lock()?;
     let _runtime_guard = super::php::PHP_RUNTIME_LOCK.try_lock()
         .map_err(|_| "Wait for the PHP update or version switch to finish before starting Apache.")?;
+    let _tray_activity = crate::tray::ServiceActivity::starting("Apache");
     let base_path = get_installation_path();
 
     let apache_path = get_apache_exe(&base_path);
@@ -285,6 +285,7 @@ pub async fn stop_apache() -> Result<bool, String> {
 }
 
 pub(crate) async fn stop_apache_owned(_operation: &crate::utils::database_lock::Guard<'_>) -> Result<bool, String> {
+    let _tray_activity = crate::tray::ServiceActivity::stopping("Apache");
     let _maintenance = super::log_management::MaintenanceAfterStop;
     let apache_path = apache_exe_path();
 

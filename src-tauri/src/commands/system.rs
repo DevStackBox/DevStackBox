@@ -428,8 +428,10 @@ pub async fn get_app_settings() -> Result<AppSettings, String> {
 }
 
 #[tauri::command]
-pub async fn set_app_settings(settings: AppSettings) -> Result<(), String> {
-    write_app_settings(&settings)
+pub async fn set_app_settings(app: tauri::AppHandle, settings: AppSettings) -> Result<(), String> {
+    write_app_settings(&settings)?;
+    crate::tray::set_language(&app, &settings.language);
+    Ok(())
 }
 
 /// Run an executable with a single argument and return its trimmed stdout

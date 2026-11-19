@@ -44,6 +44,8 @@ import {
 // Cache constants
 // ---------------------------------------------------------------------------
 
+type Snapshot = Record<"apache" | "mysql" | "php", RawServiceStatus | null> & { revision: number };
+
 const SERVICE_CACHE_VERSION = 1;
 const SERVICE_CACHE_KEY = "dsb:service-status";
 const MAX_CACHE_AGE_MS = 1000 * 60 * 60 * 24; // 24 hours
@@ -148,7 +150,7 @@ const ServiceStatusContext = createContext<ServiceStatusContextValue | null>(
 
 export function ServiceStatusProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [services, setServices] = useState(() => {
     const cached = readServiceCache();
@@ -177,7 +179,7 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
   // process exit cannot be misreported as a crash after the loading UI ends.
   const expectedStopsRef = useRef(new Set<string>());
 
-  // Ref to keep the latest toggleService for the tray listener
+  // Keep the Restart action on a crash notification bound to the latest handler.
   const toggleServiceRef = useRef<(service: string) => void>(() => {});
 
   // Shared refresh promise - every `await refresh()` caller waits for the
@@ -188,6 +190,67 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
   // without stale closure issues inside setServices functional update.
   const servicesRef = useRef(services);
   servicesRef.current = services;
+
+  const lastObservation = useRef({ revision: -1, generation: -1 });
+  const applySnapshot = useCallback((snapshot: Snapshot) => {
+    const last = lastObservation.current;
+    if (snapshot.revision < last.revision ||
+        (snapshot.revision === last.revision && generationRef.current === last.generation)) return;
+    lastObservation.current = { revision: snapshot.revision, generation: generationRef.current };
+    const prev = servicesRef.current;
+    const next = { ...prev };
+    (["apache", "mysql", "php"] as const).forEach((name) => {
+      const raw = snapshot[name];
+      if (!raw) {
+        if (prevRunningRef.current[name] === undefined || next[name].state === "starting" || next[name].state === "stopping") {
+          next[name] = { ...next[name], state: "error" };
+        }
+        return;
+      }
+      next[name] = mapRawStatus(raw);
+      const wasRunning = prevRunningRef.current[name];
+      const isRunning = next[name].running;
+      const expectedStop = expectedStopsRef.current.has(name);
+      if (wasRunning && !isRunning && !expectedStop && loadingRef.current === null && name !== "php") {
+        const label = name === "mysql" ? "MySQL" : "Apache";
+        toast({
+          variant: "destructive",
+          title: `${label} stopped unexpectedly`,
+          description: `${label} was running but is no longer responding. Check logs and restart it.`,
+          action: (
+            <ToastAction
+              altText="Restart"
+              onClick={() => toggleServiceRef.current(name)}
+            >
+              Restart
+            </ToastAction>
+          ),
+        });
+        void notify(
+          `${label} stopped unexpectedly`,
+          "Open DevStackBox to view logs and restart the service.",
+        );
+        void safeInvoke(TAURI_COMMANDS.services.logCrashEvent, {
+          service: name,
+          timestamp: new Date().toISOString(),
+        });
+      }
+      if (expectedStop && (!isRunning || loadingRef.current === null)) {
+        expectedStopsRef.current.delete(name);
+      }
+      prevRunningRef.current[name] = isRunning;
+    });
+
+    const now = Date.now();
+    servicesRef.current = next;
+    setServices(next);
+    if (snapshot.apache || snapshot.mysql || snapshot.php) {
+      setLastSuccessfulRefresh(now);
+      writeServiceCache(next, now);
+    }
+
+    setInitialLoading(false);
+  }, [toast]);
 
   const refresh = useCallback((): Promise<void> => {
     if (refreshPromiseRef.current) {
@@ -219,77 +282,9 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        const [apacheR, mysqlR, phpR] = await Promise.allSettled([
-          safeInvoke<RawServiceStatus>(TAURI_COMMANDS.services.getApacheStatus),
-          safeInvoke<RawServiceStatus>(TAURI_COMMANDS.services.getMysqlStatus),
-          safeInvoke<RawServiceStatus>(TAURI_COMMANDS.services.getPhpStatus),
-        ]);
-
-        if (generation !== generationRef.current) return;
-        const prev = servicesRef.current;
-        const next = {
-          apache:
-            apacheR.status === "fulfilled" && apacheR.value !== null
-              ? mapRawStatus(apacheR.value)
-              : prev.apache,
-          mysql:
-            mysqlR.status === "fulfilled" && mysqlR.value !== null
-              ? mapRawStatus(mysqlR.value)
-              : prev.mysql,
-          php:
-            phpR.status === "fulfilled" && phpR.value !== null ? mapRawStatus(phpR.value) : prev.php,
-        };
-
-        const results = { apache: apacheR, mysql: mysqlR, php: phpR };
-        (["apache", "mysql", "php"] as const).forEach((name) => {
-          if (results[name].status !== "fulfilled" || results[name].value == null) {
-            if (prevRunningRef.current[name] === undefined || next[name].state === "starting" || next[name].state === "stopping") {
-              next[name] = { ...next[name], state: "error" };
-            }
-            return;
-          }
-          const wasRunning = prevRunningRef.current[name];
-          const isRunning = next[name].running;
-          const expectedStop = expectedStopsRef.current.has(name);
-          if (wasRunning && !isRunning && !expectedStop && loadingRef.current === null && name !== "php") {
-            const label = name === "mysql" ? "MySQL" : "Apache";
-            toast({
-              variant: "destructive",
-              title: `${label} stopped unexpectedly`,
-              description: `${label} was running but is no longer responding. Check logs and restart it.`,
-              action: (
-                <ToastAction
-                  altText="Restart"
-                  onClick={() => toggleServiceRef.current(name)}
-                >
-                  Restart
-                </ToastAction>
-              ),
-            });
-            void notify(
-              `${label} stopped unexpectedly`,
-              "Open DevStackBox to view logs and restart the service.",
-            );
-            void safeInvoke(TAURI_COMMANDS.services.logCrashEvent, {
-              service: name,
-              timestamp: new Date().toISOString(),
-            });
-          }
-          if (expectedStop && (!isRunning || loadingRef.current === null)) {
-            expectedStopsRef.current.delete(name);
-          }
-          prevRunningRef.current[name] = isRunning;
-        });
-
-        const now = Date.now();
-        servicesRef.current = next;
-        setServices(next);
-        if ([apacheR, mysqlR, phpR].some(result => result.status === "fulfilled" && result.value != null)) {
-          setLastSuccessfulRefresh(now);
-          writeServiceCache(next, now);
-        }
-
-        setInitialLoading(false);
+        const snapshot = await safeInvoke<Snapshot>(TAURI_COMMANDS.tray.refreshMenu);
+        if (snapshot && generation === generationRef.current) applySnapshot(snapshot);
+        else if (!snapshot) setInitialLoading(false);
       } catch (err) {
         // RULE: never clear existing state on a complete refresh failure.
         console.error("[ServiceStatusProvider] refresh failed:", err);
@@ -300,7 +295,7 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
     })();
 
     return refreshPromiseRef.current;
-  }, [toast]);
+  }, [applySnapshot]);
 
   const refreshAfterAction = useCallback(async () => {
     generationRef.current += 1;
@@ -365,7 +360,6 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
         }
 
         await refreshAfterAction();
-        void safeInvoke(TAURI_COMMANDS.tray.refreshMenu);
 
         toast({
           variant: "success",
@@ -418,11 +412,14 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
 
   toggleServiceRef.current = toggleService;
 
+  useEffect(() => {
+    void syncAppSettingsToBackend().catch(error => console.warn("Failed to sync app settings:", error));
+  }, [i18n?.language]);
+
   // Auto-start services when enabled in settings (once per app launch).
   useEffect(() => {
     if (!isTauri()) return;
     let cancelled = false;
-    void syncAppSettingsToBackend().catch(error => console.warn("Failed to sync app settings:", error));
     void (async () => {
       const startMysql =
         localStorage.getItem(AUTOSTART_MYSQL_KEY) === "true";
@@ -451,65 +448,35 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
     };
   }, [refreshAfterAction, setLoading]);
 
-  // Poll when visible; tray emits service-status-snapshot every 5s.
+  // The native tray is the periodic monitor for both visible and hidden windows.
   useEffect(() => {
     primeNotificationPermission();
     void refresh();
-
-    const onVisibility = () => {
-      if (document.visibilityState === "visible" && loadingRef.current === null) void refresh();
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-
-    const id = setInterval(() => {
-      if (document.visibilityState === "visible" && loadingRef.current === null) void refresh();
-    }, 15000);
-
-    return () => {
-      document.removeEventListener("visibilitychange", onVisibility);
-      clearInterval(id);
-    };
   }, [refresh]);
 
   useEffect(() => {
     if (!isTauri()) return;
-    let unlisten: (() => void) | undefined;
     let disposed = false;
-    (async () => {
-      unlisten = await listen("service-status-snapshot", () => {
-        // Treat the tray event as invalidation, not a second independent source of state.
-        if (loadingRef.current === null) void refresh();
-      });
-      if (disposed) unlisten?.();
-    })();
+    const subscriptions = [
+      listen<Snapshot>("service-status-snapshot", ({ payload }) => {
+        if (!disposed && loadingRef.current === null) applySnapshot(payload);
+      }),
+      listen<string>("tray-service-action", ({ payload }) => {
+        if (disposed || (payload !== "mysql" && payload !== "apache")) return;
+        if (servicesRef.current[payload].running) expectedStopsRef.current.add(payload);
+        setLoading(payload);
+      }),
+      listen<Snapshot>("tray-service-complete", ({ payload }) => {
+        if (disposed) return;
+        applySnapshot(payload);
+        setLoading(null);
+      }),
+    ];
     return () => {
       disposed = true;
-      if (unlisten) unlisten();
+      for (const subscription of subscriptions) void subscription.then(unlisten => unlisten());
     };
-  }, [refresh]);
-
-  // Tray menu actions still emit tray-services-updated after toggles.
-  useEffect(() => {
-    if (!isTauri()) return;
-    let unlisten: (() => void) | undefined;
-    let disposed = false;
-    (async () => {
-      unlisten = await listen<string>("tray-service-action", (event) => {
-        if (event.payload === "complete") {
-          void refreshAfterAction().finally(() => setLoading(null));
-        } else {
-          const service = event.payload as "apache" | "mysql";
-          if (servicesRef.current[service]?.running) expectedStopsRef.current.add(service);
-          setLoading(event.payload);
-        }
-      });
-      if (disposed) unlisten?.();
-    })();
-    return () => {
-      disposed = true;
-      if (unlisten) unlisten();
-    };
-  }, [refreshAfterAction, setLoading]);
+  }, [applySnapshot, setLoading]);
 
   // Window hidden to tray notification
   useEffect(() => {
@@ -522,8 +489,8 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
         if (!localStorage.getItem(SHOWN_KEY)) {
           localStorage.setItem(SHOWN_KEY, "1");
           void notify(
-            "DevStackBox is still running",
-            "The app is minimized to the system tray. Click the tray icon to restore it.",
+            t("tray.stillRunning"),
+            t("tray.reopen"),
           );
         }
       });
@@ -533,7 +500,7 @@ export function ServiceStatusProvider({ children }: { children: ReactNode }) {
       disposed = true;
       if (unlisten) unlisten();
     };
-  }, []);
+  }, [t]);
 
   return (
     <ServiceStatusContext.Provider
