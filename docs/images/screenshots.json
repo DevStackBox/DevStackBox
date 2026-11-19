@@ -10,8 +10,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "PHP manager showing default selection and full patch versions",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "PHP Versions with the default branch and installed patch numbers",
+      "caption": "Choose the default PHP version here. Each project can also use its own installed version.",
       "publicPaths": [
         "/docs-images/php-default-v0.1.19-hd.jpg",
         "/screenshots/php-default-v0.1.19-hd.jpg"
@@ -25,8 +25,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "Shared rotation and retention policy for all managed logs",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "Archive and rotation settings for Apache, MySQL and PHP logs",
+      "caption": "Set one rotation and retention policy for all three logs.",
       "publicPaths": [
         "/docs-images/log-rotation-v0.1.19-hd.jpg",
         "/screenshots/log-rotation-v0.1.19-hd.jpg"
@@ -40,8 +40,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox about workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "About page with app and system information",
+      "caption": "Check the installed DevStackBox version before reporting an issue.",
       "publicPaths": [
         "/docs-images/v0.1.19/about.jpg",
         "/screenshots/v0.1.19/about.jpg"
@@ -55,8 +55,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox apache workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "Apache status, HTTP port and links to local sites",
+      "caption": "Use Open Local Site to visit the default web root.",
       "publicPaths": [
         "/docs-images/v0.1.19/apache.jpg",
         "/screenshots/v0.1.19/apache.jpg"
@@ -70,8 +70,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox configuration workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "PHP configuration editor showing php.ini",
+      "caption": "Edit PHP settings here, then restart Apache to apply them to web requests.",
       "publicPaths": [
         "/docs-images/v0.1.19/configuration.jpg",
         "/screenshots/v0.1.19/configuration.jpg"
@@ -85,8 +85,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox dashboard workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "Dashboard showing stopped services, virtual hosts and recent logs",
+      "caption": "Check which services are running before opening a local site.",
       "publicPaths": [
         "/docs-images/v0.1.19/dashboard.jpg",
         "/screenshots/v0.1.19/dashboard.jpg"
@@ -100,8 +100,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox database activity workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "Import and export activity list before the first job",
+      "caption": "Open Activity after an import or export to check the result for each item.",
       "publicPaths": [
         "/docs-images/v0.1.19/database-activity.jpg",
         "/screenshots/v0.1.19/database-activity.jpg"
@@ -115,8 +115,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox database backups workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "Saved backups list and full-server restore options",
+      "caption": "Check which databases a backup contains before restoring it.",
       "publicPaths": [
         "/docs-images/v0.1.19/database-backups.jpg",
         "/screenshots/v0.1.19/database-backups.jpg"
@@ -130,8 +130,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox database details workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "Database overview with controls for managing the selected database",
+      "caption": "Open a database to inspect its contents or export a copy.",
       "publicPaths": [
         "/docs-images/v0.1.19/database-details.jpg",
         "/screenshots/v0.1.19/database-details.jpg"
@@ -145,8 +145,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox database export workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "Export options for the selected MySQL databases",
+      "caption": "Select the databases and output format for your export.",
       "publicPaths": [
         "/docs-images/v0.1.19/database-export.jpg",
         "/screenshots/v0.1.19/database-export.jpg"
@@ -160,8 +160,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox database import workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "Import file picker and review confirmation",
+      "caption": "Choose a dump file and review its target database before starting the import.",
       "publicPaths": [
         "/docs-images/v0.1.19/database-import.jpg",
         "/screenshots/v0.1.19/database-import.jpg"
@@ -175,8 +175,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox database tables workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "List of tables and views in a MySQL database",
+      "caption": "Use Tables & views to see what the selected database contains.",
       "publicPaths": [
         "/docs-images/v0.1.19/database-tables.jpg",
         "/screenshots/v0.1.19/database-tables.jpg"
@@ -190,8 +190,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox database users workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "MySQL accounts listed by username and host",
+      "caption": "Check both the username and host before changing an account.",
       "publicPaths": [
         "/docs-images/v0.1.19/database-users.jpg",
         "/screenshots/v0.1.19/database-users.jpg"
@@ -205,8 +205,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox databases workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "Local database list with search and management controls",
+      "caption": "Select a database to view its tables or manage its backups.",
       "publicPaths": [
         "/docs-images/v0.1.19/databases.jpg",
         "/screenshots/v0.1.19/databases.jpg"
@@ -220,8 +220,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox full backup workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "Backup & Restore settings with the full backup scope and archive list",
+      "caption": "Review which files and databases a full backup includes before creating one.",
       "publicPaths": [
         "/docs-images/v0.1.19/full-backup.jpg",
         "/screenshots/v0.1.19/full-backup.jpg"
@@ -235,8 +235,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox https workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "Local HTTPS status and certificate trust controls",
+      "caption": "Check local certificate trust if your browser warns about a project URL.",
       "publicPaths": [
         "/docs-images/v0.1.19/https.jpg",
         "/screenshots/v0.1.19/https.jpg"
@@ -250,8 +250,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox logs workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "Apache log viewer with search and refresh controls",
+      "caption": "Choose a service to read its log, then search for the message you need.",
       "publicPaths": [
         "/docs-images/v0.1.19/logs.jpg",
         "/screenshots/v0.1.19/logs.jpg"
@@ -265,8 +265,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox migration workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "Import from XAMPP settings with installation detection",
+      "caption": "The importer copies project files from htdocs. Export and import databases separately.",
       "publicPaths": [
         "/docs-images/v0.1.19/migration.jpg",
         "/screenshots/v0.1.19/migration.jpg"
@@ -280,8 +280,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox php extensions workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "PHP extension list with individual on and off switches",
+      "caption": "Toggle extensions for the default PHP version, then restart Apache.",
       "publicPaths": [
         "/docs-images/v0.1.19/php-extensions.jpg",
         "/screenshots/v0.1.19/php-extensions.jpg"
@@ -295,8 +295,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox php overview workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "PHP overview with the default branch and installed branch count",
+      "caption": "Open Versions to install a branch or change the default.",
       "publicPaths": [
         "/docs-images/v0.1.19/php-overview.jpg",
         "/screenshots/v0.1.19/php-overview.jpg"
@@ -310,8 +310,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox project details workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "Project details showing website response and HTTPS status",
+      "caption": "Check whether the site responds and whether its local certificate is trusted.",
       "publicPaths": [
         "/docs-images/v0.1.19/project-details.jpg",
         "/screenshots/v0.1.19/project-details.jpg"
@@ -325,8 +325,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox project settings workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "Project settings with folder, document root and PHP version fields",
+      "caption": "Set the folder Apache serves and the PHP version this site uses.",
       "publicPaths": [
         "/docs-images/v0.1.19/project-settings.jpg",
         "/screenshots/v0.1.19/project-settings.jpg"
@@ -340,8 +340,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox projects workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "Projects list with a connected local site and its folder",
+      "caption": "Open a project to manage its hostname, document root and PHP version.",
       "publicPaths": [
         "/docs-images/v0.1.19/projects.jpg",
         "/screenshots/v0.1.19/projects.jpg"
@@ -355,8 +355,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox security workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "Security Analyzer with check results and suggested actions",
+      "caption": "Review the findings before changing your local configuration.",
       "publicPaths": [
         "/docs-images/v0.1.19/security.jpg",
         "/screenshots/v0.1.19/security.jpg"
@@ -370,8 +370,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox services workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "Services screen with Apache and MySQL controls and the default PHP version",
+      "caption": "Start or stop Apache and MySQL here, and check which PHP version is the default.",
       "publicPaths": [
         "/docs-images/v0.1.19/services.jpg",
         "/screenshots/v0.1.19/services.jpg"
@@ -385,8 +385,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox settings workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "General settings for appearance, startup and update checks",
+      "caption": "Choose how DevStackBox starts and when it checks for updates.",
       "publicPaths": [
         "/docs-images/v0.1.19/settings.jpg",
         "/screenshots/v0.1.19/settings.jpg"
@@ -400,8 +400,8 @@
       "height": 1032,
       "version": "v0.1.19",
       "capturedAt": "2026-10-26",
-      "alt": "DevStackBox terminal workspace",
-      "caption": "Native 1920 × 1032 capture of the v0.1.19 production build, 26 October 2026. Isolated demonstration profile; release availability is shown separately.",
+      "alt": "Terminal tab with a Windows command prompt",
+      "caption": "Run php -v in a new terminal tab to check the PHP version used by the shell.",
       "publicPaths": [
         "/docs-images/v0.1.19/terminal.jpg",
         "/screenshots/v0.1.19/terminal.jpg"

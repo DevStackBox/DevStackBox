@@ -21,7 +21,7 @@ echo PHP_VERSION;
 3. In **Projects → Add project / site**, connect the catalog folder using `catalog.test`. Use the folder itself as the document root. Repeat for the studio folder using `studio.test`. Both names must be unused. Allow the Windows hosts update if prompted.
 4. Open **Manage project → PHP & tools** for catalog, choose **8.3**, and apply. Choose **8.5** for studio and apply. Start Apache and follow any restart prompt after saving.
 
-![Project settings showing the document root and PHP selector](../images/v0.1.19/project-settings.jpg)
+![Project settings with folder, document root and PHP version fields](../images/v0.1.19/project-settings.jpg)
 
 ## Check the runtime serving each request
 
@@ -38,7 +38,7 @@ php -v
 | studio.test/version.php | 8.5.12 |
 | php -v | 8.4.27 (cli) |
 
-These results were measured on 19 November 2026 using the installed v0.1.22 Apache and PHP binaries in an isolated local host configuration. Your patch numbers and CLI default may differ. The screenshot illustrates the project controls in v0.1.19.
+These results were measured on 19 November 2026 using the installed v0.1.22 Apache and PHP binaries in an isolated local host configuration. Your patch numbers and CLI default may differ.
 
 If both sites show the same version, check the hostname, each site's saved selection, and whether Apache loaded the change. For an unexpected CLI version, the first result from `where.exe php` shows which launcher Windows found. See [PHP runtimes and extensions](../user-guide/php).
 

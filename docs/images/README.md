@@ -8,6 +8,7 @@ The website publishes only approved manifest entries. Older files in this source
 
 - Capture the running app after loading and transitions settle. Use a clean demo profile without private data or credentials.
 - Never upscale, edit labels/status into an image, or describe JPEG converted to PNG as lossless.
+- Write alt text for the visible screen and one caption that helps the reader use it. The website renders the manifest caption automatically. Keep capture details here and in the manifest metadata.
 - Record actual version, date, dimensions and scene. Check text at full size and on desktop/mobile website layouts.
 - Keep the original available via the website enlarge/open-original controls.
 - When updating the docs baseline, retake affected screens and update the manifest and references together. The website rejects captures below the declared width or from another documentation version.

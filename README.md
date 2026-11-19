@@ -6,7 +6,7 @@
 
 **Free XAMPP alternative for Windows** - Apache, MySQL 8.4 LTS, phpMyAdmin, and PHP 8.3 in one MIT-licensed desktop app.
 
-![DevStackBox Services workspace in v0.1.19](docs/images/v0.1.19/services.jpg)
+![Services screen with Apache and MySQL controls and the default PHP version](docs/images/v0.1.19/services.jpg)
 
 [Run two PHP versions side by side on Windows](docs/getting-started/multiple-php-versions-windows.mdx). Verify each website in the browser and compare it with the global PHP command. [Watch the 21-second demo](https://www.devstackbox.com/community#two-php-versions).
 
