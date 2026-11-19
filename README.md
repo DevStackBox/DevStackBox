@@ -6,9 +6,9 @@
 
 **Free XAMPP alternative for Windows** - Apache, MySQL 8.4 LTS, phpMyAdmin, and PHP 8.3 in one MIT-licensed desktop app.
 
-![DevStackBox v0.1.17 Services](docs/images/services-v0.1.17-hd.jpg)
+![DevStackBox Services workspace in v0.1.19](docs/images/v0.1.19/services.jpg)
 
-Project details from an earlier development build. See [CHANGELOG.md](CHANGELOG.md) for the latest release notes.
+[Run two PHP versions side by side on Windows](docs/getting-started/multiple-php-versions-windows.mdx). Verify each website in the browser and compare it with the global PHP command. [Watch the 21-second demo](https://www.devstackbox.com/community#two-php-versions).
 
 ## Stack
 
@@ -19,7 +19,7 @@ Project details from an earlier development build. See [CHANGELOG.md](CHANGELOG.
 | MySQL **8.4 LTS**  | -                                            |
 | phpMyAdmin **5.2** | -                                            |
 
-XAMPP for Windows ships PHP 8.2. DevStackBox gives you 8.3 immediately and 8.5 when you need it.
+DevStackBox bundles PHP 8.3. You can install additional branches in the app and choose the PHP version each local website uses.
 
 ## Download
 
@@ -46,10 +46,6 @@ Using an AI coding tool? Give it [DEVSTACKBOX.md](DEVSTACKBOX.md) for runtime di
 Connect existing folders, manage `.test` hosts and trusted HTTPS, and select an installed PHP version per website. Download extra runtimes in PHP Versions first. The terminal currently uses global PHP.
 
 See the [project guide](docs/getting-started/projects.mdx), [project roadmap](PROJECT-ROADMAP.md), and [release validation](docs/RELEASE-VALIDATION.md). Framework installers, database linking and Git/SSH are future work. Frameworks will download on demand; AI integration is deferred.
-
-## v0.1.17
-
-Released on 23 October 2026, v0.1.17 fixes Apache ancestor `.htaccess` handling and adds configuration/log diagnostics. Published artifact verification and remaining installed-site checks are tracked in [release validation](docs/RELEASE-VALIDATION.md). See the [documentation and cleanup audit](docs/development/v0.1.17-docs-audit.md) for readiness gates and proposed cleanup; no development files were deleted.
 
 ## Releasing
 

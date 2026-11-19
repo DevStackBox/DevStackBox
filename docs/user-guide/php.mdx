@@ -17,6 +17,12 @@ Open **Services → PHP**. The Overview, Extensions, php.ini and Versions tabs c
 
 Update every installed branch used by projects, not only the global default. Unsupported PHP 8.1 is no longer offered for installation or activation. A release-unavailable state is not evidence that the installed runtime is current.
 
+## When Windows says PHP is not recognized
+
+Open a new Windows terminal and run `where.exe php`. The installer adds its `bin` folder to PATH. If the command cannot find PHP, check that folder for the launcher and review the [Windows PHP launcher instructions](terminal). If Windows lists multiple executables, the first one handles `php -v`. Close and reopen the terminal after a PATH change and check again.
+
+Try [two PHP versions side by side](../getting-started/multiple-php-versions-windows) to compare the CLI with two live sites.
+
 ## Change global PHP
 
 Choose **Set as default** for an installed, eligible branch and verify the **Default** badge. The short label such as 8.3 identifies the branch; the full label such as 8.3.36 identifies its patch. Reopen terminal sessions to pick up the global runtime.

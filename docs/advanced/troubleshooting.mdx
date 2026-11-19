@@ -21,6 +21,10 @@ An error such as `project/.htaccess: <IfModule not allowed here` occurs before L
 
 Installed configurations and data normally live under `%LOCALAPPDATA%\devstackbox`; they are not necessarily in the install folder. Use the log path reported by the app and check custom destinations. A manually run Apache syntax check must use the same configuration file as the managed instance.
 
+### Apache port 80 already in use
+
+In PowerShell run `Get-NetTCPConnection -State Listen -LocalPort 80`. Look up the reported owning PID with `Get-Process -Id <PID>`, replacing the placeholder with the number. If another service needs that port, change the DevStackBox Apache listen port, restart Apache and open localhost with the new port. Verify a new request in the Apache log.
+
 ## MySQL stops or cannot read its data
 
 Keep the error log and data directory. Check the actual configuration, port, permissions, disk space and any server-version change. Configuration backups are not database backups. Do not delete data or lock files merely because an old guide suggests it, and do not point MySQL 8.4 at another product's data directory.

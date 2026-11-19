@@ -72,6 +72,7 @@ import { Toaster } from "@/components/ui/toaster";
 import type { ServiceName } from "@/types/services";
 import { ROUTES } from "@/lib/routes";
 import "./lib/i18n";
+import { RestoreRecoveryNotice } from "./components/restore-recovery-notice";
 
 function AppShell() {
   const { t } = useTranslation();
@@ -210,6 +211,7 @@ function AppShell() {
         </header>
 
         <main className="container mx-auto px-4 py-4">
+          <RestoreRecoveryNotice />
           <ErrorBoundary resetKey={location.pathname}>
           <Routes>
             <Route

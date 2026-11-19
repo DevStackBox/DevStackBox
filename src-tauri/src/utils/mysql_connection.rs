@@ -4,14 +4,14 @@
 // Always pin to 127.0.0.1 / TCP and the user my.cnf defaults file.
 
 use std::path::PathBuf;
-use std::process::Command;
+use crate::utils::mysql_process::{Command, Stdio};
 
 use crate::utils::mysql_credentials::read_stored_root_password;
 use crate::utils::paths::{
     get_installation_path, get_mysql_client_exe, get_mysqld_exe, get_mysqldump_exe,
     user_config_dir, user_mysql_data_dir,
 };
-use crate::utils::process::{create_hidden_command, is_our_process_running};
+use crate::utils::process::is_our_process_running;
 
 pub struct MysqlConnection {
     pub defaults_file: PathBuf,
@@ -51,7 +51,7 @@ pub fn mysql_command() -> Result<Command, String> {
         return Err(format!("mysql not found at {}", mysql_path.display()));
     }
     let conn = build_mysql_connection()?;
-    let mut cmd = create_hidden_command(&mysql_path.to_string_lossy());
+    let mut cmd = Command::new(&mysql_path);
     apply_connection(&mut cmd, &conn);
     Ok(cmd)
 }
@@ -63,7 +63,7 @@ pub fn mysqldump_command() -> Result<Command, String> {
         return Err(format!("mysqldump not found at {}", dump_path.display()));
     }
     let conn = build_mysql_connection()?;
-    let mut cmd = create_hidden_command(&dump_path.to_string_lossy());
+    let mut cmd = Command::new(&dump_path);
     apply_connection(&mut cmd, &conn);
     Ok(cmd)
 }
@@ -80,7 +80,7 @@ pub fn mysqladmin_command() -> Result<Command, String> {
         return Err(format!("mysqladmin not found at {}", admin_path.display()));
     }
     let conn = build_mysql_connection()?;
-    let mut cmd = create_hidden_command(&admin_path.to_string_lossy());
+    let mut cmd = Command::new(&admin_path);
     apply_connection(&mut cmd, &conn);
     Ok(cmd)
 }
@@ -120,10 +120,10 @@ fn normalize_mysql_path(path: &str) -> String {
 
 /// Mandatory check that the pinned client reached DevStackBox's datadir.
 pub fn verify_mysql_datadir() -> Result<(), String> {
-    let output = mysql_command()?
-        .args(["--raw", "-N", "-B", "-e", "SELECT @@datadir"])
-        .output()
-        .map_err(|e| format!("Failed to verify MySQL datadir: {}", e))?;
+    let mut command = mysql_command()?;
+    command.args(["--raw", "-N", "-B", "-e", "SELECT @@datadir"])
+        .stdout(Stdio::piped()).stderr(Stdio::piped());
+    let output = crate::utils::database_io::wait_bounded(command.spawn().map_err(|e| e.to_string())?, std::time::Duration::from_secs(30), 65536, None)?;
 
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
@@ -153,6 +153,18 @@ pub fn verify_mysql_datadir() -> Result<(), String> {
 pub fn prepare_mysql_client() -> Result<(), String> {
     ensure_mysql_running()?;
     verify_mysql_datadir()?;
+    Ok(())
+}
+
+/// A killed client can leave server-side execution/rollback running. A full
+/// restore must not overlap such work. This is a conservative observation,
+/// not a transaction or protection against new external clients after the check.
+pub fn ensure_restore_server_idle() -> Result<(), String> {
+    let count = crate::utils::database_io::query(mysql_command()?,
+        "SELECT (SELECT COUNT(*) FROM information_schema.PROCESSLIST WHERE ID <> CONNECTION_ID() AND COMMAND <> 'Sleep' AND USER <> 'event_scheduler') + (SELECT COUNT(*) FROM information_schema.INNODB_TRX WHERE trx_mysql_thread_id <> CONNECTION_ID());")?;
+    if count.trim().parse::<u64>().map_err(|_| "Cannot verify MySQL recovery state")? != 0 {
+        return Err("MySQL still has another statement or transaction in progress. Wait for it to finish or roll back, inspect the partial state, then explicitly restore the recovery ZIP. No restore was started.".into());
+    }
     Ok(())
 }
 

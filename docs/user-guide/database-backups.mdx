@@ -98,3 +98,7 @@ Activity now reports the MySQL error number and SQL line when available, with gu
 Keep the error and the source file. Check MySQL availability, credentials, destination permissions and disk space. If the dump contains unsupported syntax or references unavailable databases, fix a copy or obtain a compatible export. Retrying an import blindly may duplicate data or repeat partial changes.
 
 Full-stack archives, external-folder exclusions and restoration of configuration are covered in [Full backup and restore](full-backup).
+
+## phpMyAdmin import file too large
+
+For a browser upload, check both upload_max_filesize and post_max_size for the PHP runtime serving phpMyAdmin. POST size must allow room for the whole request. Restart Apache after changing these settings. For a large trusted SQL dump, use the desktop Import workflow above, review the destination, then verify a known row in the target database.

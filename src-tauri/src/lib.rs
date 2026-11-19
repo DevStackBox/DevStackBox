@@ -148,6 +148,7 @@ pub fn run() {
             export_diagnostics_bundle,
             get_updater_endpoint,
             check_app_update,
+            crate::commands::app_update::install_app_update,
             show_main_window,
             hide_to_tray,
             set_tray_tooltip,
@@ -170,7 +171,9 @@ pub fn run() {
             get_hosts_entries,
             update_hosts_entry,
             create_full_backup,
+            crate::commands::fullbackup::cancel_full_backup,
             list_full_backups,
+            crate::commands::fullbackup::list_restore_recovery_records,
             restore_full_backup,
             delete_full_backup,
             open_backups_folder,
@@ -224,6 +227,14 @@ pub fn run() {
                 }
             }
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| {
+            if let tauri::RunEvent::ExitRequested { api, code, .. } = event {
+                if code != Some(tauri::RESTART_EXIT_CODE) && crate::commands::database_workspace::has_active_database_operation() {
+                    api.prevent_exit();
+                    let _ = app.emit("database-close-blocked", ());
+                }
+            }
+        });
 }

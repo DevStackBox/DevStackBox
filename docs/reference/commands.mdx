@@ -180,11 +180,15 @@ See [Projects, PHP & HTTPS](../getting-started/projects) for the user workflow a
 
 | Command Name          | Source File                | Parameters            | Returns         | Notes                                  |
 | --------------------- | -------------------------- | --------------------- | --------------- | -------------------------------------- |
-| `create_full_backup`  | `commands/fullbackup.rs`   | none                  | `BackupResult`  | Includes config/, www/, MySQL dump     |
+| `create_full_backup`  | `commands/fullbackup.rs`   | `timestamp: String` | `FullBackupResult` | Includes config/, www/, MySQL dump when running |
 | `list_full_backups`   | `commands/fullbackup.rs`   | none                  | `BackupEntry[]` | Sorted newest-first                    |
-| `restore_full_backup` | `commands/fullbackup.rs`   | `backup_name: String` | `String`        | Path-traversal protected               |
-| `delete_full_backup`  | `commands/fullbackup.rs`   | `backup_name: String` | `String`        | Validates path is inside backups/full/ |
+| `restore_full_backup` | `commands/fullbackup.rs`   | `path: String` | `String` | Bounded archive preflight, recovery ZIP, server-idle check; partial SQL is possible |
+| `delete_full_backup`  | `commands/fullbackup.rs`   | `path: String` | `()` | Validates path is inside backups/full/ |
+| `cancel_full_backup` | `commands/fullbackup.rs` | none | `()` | Best-effort cancellation; committed SQL is not rolled back |
+| `list_restore_recovery_records` | `commands/fullbackup.rs` | none | `String[]` | Read-only retained journal names; never replays SQL or deletes a record |
 | `open_backups_folder` | `commands/fullbackup.rs`   | none                  | `String`        | Opens Explorer at backups dir          |
+
+`install_app_update` (`commands/app_update.rs`) accepts the update resource `rid` and progress `onEvent` channel. It owns the existing database operation lock through installer handoff/restart and requires services to be stopped. Direct frontend updater installation/process-relaunch permissions are disabled; update checks remain available. Windows clients require Windows 10 or newer for atomic Job Object assignment, and fail closed if containment cannot be established.
 
 ---
 

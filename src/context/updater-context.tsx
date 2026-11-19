@@ -182,7 +182,7 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
             downloadAndInstall: async (onEvent) => {
               const channel = new Channel();
               channel.onmessage = (msg) => onEvent(msg);
-              await invoke("plugin:updater|download_and_install", {
+              await invoke(TAURI_COMMANDS.system.installAppUpdate, {
                 rid: meta.rid,
                 onEvent: channel,
               });
@@ -276,8 +276,6 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
     lastProgressAtRef.current = Date.now();
 
     try {
-      const { relaunch } = await import("@tauri-apps/plugin-process");
-
       await safeInvoke(TAURI_COMMANDS.backup.createFull, {
         timestamp: new Date().toISOString(),
       });
@@ -310,7 +308,6 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
 
         try {
           await runPluginDownload(updateInfo);
-          await relaunch();
           return;
         } catch (err) {
           lastError = err;

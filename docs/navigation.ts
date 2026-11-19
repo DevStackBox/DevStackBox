@@ -20,6 +20,7 @@ export const docsNav: NavSection[] = [
     items: [
       { title: "Overview", slug: "" },
       { title: "Installation", slug: "getting-started/installation" },
+      { title: "Two PHP versions on Windows", slug: "getting-started/multiple-php-versions-windows" },
       { title: "Upgrading", slug: "getting-started/upgrading" },
       { title: "Projects, PHP & HTTPS", slug: "getting-started/projects" },
     ],

@@ -23,6 +23,7 @@ export const TAURI_COMMANDS = {
     exportDiagnosticsBundle: "export_diagnostics_bundle",
     getUpdaterEndpoint: "get_updater_endpoint",
     checkAppUpdate: "check_app_update",
+    installAppUpdate: "install_app_update",
   },
   services: {
     getApacheStatus: "get_apache_status",
@@ -105,6 +106,7 @@ export const TAURI_COMMANDS = {
   backup: {
     createFull: "create_full_backup",
     listFull: "list_full_backups",
+    listRecovery: "list_restore_recovery_records",
     restoreFull: "restore_full_backup",
     deleteFull: "delete_full_backup",
     openFolder: "open_backups_folder",

@@ -7,13 +7,13 @@ use crate::utils::{
     paths::user_backups_dir,
 };
 use serde::{Deserialize, Serialize};
+use crate::utils::mysql_process::{Command, Stdio};
 use sha2::{Digest, Sha256};
 use std::{
     collections::HashSet,
     fs::{self, File},
     io::{Read, Write},
     path::{Path, PathBuf},
-    process::{Command, Stdio},
     sync::{
         atomic::{AtomicBool, AtomicU64, Ordering},
         Arc, Mutex, OnceLock,
@@ -384,7 +384,7 @@ fn execute(id: &str, r: &Request, cancel: &Arc<AtomicBool>) -> Result<(), String
 }
 
 // Only numeric metadata and our own text may reach history, never SQL values.
-fn mysql_failure_summary(diagnostic: &[u8]) -> String {
+pub(crate) fn mysql_failure_summary(diagnostic: &[u8]) -> String {
     let text = String::from_utf8_lossy(diagnostic);
     for line in text.lines() {
         let Some(rest) = line.trim().strip_prefix("ERROR ") else { continue; };

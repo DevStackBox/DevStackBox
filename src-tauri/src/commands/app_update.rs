@@ -36,6 +36,32 @@ pub fn get_updater_endpoint() -> Result<String, String> {
     Ok(updater_endpoint_string())
 }
 
+/// Keep the same database ownership through download, installer handoff and
+/// restart. The Windows updater exits directly; a preflight-only check races.
+#[tauri::command]
+pub async fn install_app_update<R: Runtime>(
+    webview: Webview<R>,
+    rid: tauri::ResourceId,
+    on_event: tauri::ipc::Channel<serde_json::Value>,
+) -> Result<(), String> {
+    let _owner = super::mysql_import::MYSQL_DATA_LOCK.try_lock()?;
+    if super::apache::get_apache_status().await?.running || super::mysql::get_mysql_status().await?.running {
+        return Err("Stop Apache and MySQL before installing the update.".into());
+    }
+    let update = webview.resources_table().get::<tauri_plugin_updater::Update>(rid).map_err(|e| e.to_string())?;
+    let mut started = false;
+    update.download_and_install(
+        |chunk_length, content_length| {
+            if !started { started = true; let _ = on_event.send(serde_json::json!({"event":"Started","data":{"contentLength":content_length}})); }
+            let _ = on_event.send(serde_json::json!({"event":"Progress","data":{"chunkLength":chunk_length}}));
+        },
+        || { let _ = on_event.send(serde_json::json!({"event":"Finished"})); },
+    ).await.map_err(|e| e.to_string())?;
+    // Windows normally exits inside the updater. On platforms returning here,
+    // restart while ownership is still held; do not open a new-operation gap.
+    webview.app_handle().restart();
+}
+
 #[tauri::command]
 pub async fn check_app_update<R: Runtime>(
     webview: Webview<R>,

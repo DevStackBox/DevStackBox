@@ -151,6 +151,7 @@ State the installed app version, chosen PHP executable/full version/ini, project
 
 ## Further documentation
 
+- [Verify two website runtimes and the CLI](https://www.devstackbox.com/docs/getting-started/multiple-php-versions-windows)
 - [Projects, PHP and HTTPS](https://www.devstackbox.com/docs/getting-started/projects)
 - [PHP and extensions](https://www.devstackbox.com/docs/user-guide/php)
 - [Configuration](https://www.devstackbox.com/docs/reference/configuration)

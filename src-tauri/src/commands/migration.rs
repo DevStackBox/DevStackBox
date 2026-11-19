@@ -78,9 +78,11 @@ mod detection_tests {
 }
 
 fn copy_tree(src: &Path, dest: &Path) -> Result<u32, String> {
+    reject_link(src)?;
     if !src.is_dir() {
         return Err(format!("Source folder not found: {}", src.display()));
     }
+    if dest.exists() { reject_link(dest)?; }
     fs::create_dir_all(dest).map_err(|e| e.to_string())?;
     let mut copied = 0u32;
     for entry in fs::read_dir(src).map_err(|e| e.to_string())? {
@@ -88,6 +90,8 @@ fn copy_tree(src: &Path, dest: &Path) -> Result<u32, String> {
         let name = entry.file_name();
         let from = entry.path();
         let to = dest.join(&name);
+        reject_link(&from)?;
+        if to.exists() { reject_link(&to)?; }
         if from.is_dir() {
             copied = copied.saturating_add(copy_tree(&from, &to)?);
         } else {
@@ -121,4 +125,30 @@ pub fn import_from_xampp(xampp_root: String, copy_htdocs: bool) -> Result<XamppI
         destination: www.to_string_lossy().into_owned(),
         source: htdocs.to_string_lossy().into_owned(),
     })
+}
+
+fn reject_link(path: &Path) -> Result<(), String> {
+    let metadata = fs::symlink_metadata(path).map_err(|e| e.to_string())?;
+    #[cfg(windows)]
+    { use std::os::windows::fs::MetadataExt;
+      if metadata.file_attributes() & 0x400 != 0 { return Err("Linked migration paths are unsupported".into()); }
+    }
+    if metadata.file_type().is_symlink() { return Err("Linked migration paths are unsupported".into()); }
+    Ok(())
+}
+
+#[cfg(all(test, windows))]
+mod link_tests {
+    use super::*;
+    #[test]
+    fn rejects_junction_cycle_without_copying() {
+        let root = std::env::temp_dir().join(crate::utils::database_io::unique_suffix());
+        fs::create_dir(&root).unwrap();
+        let link = root.join("cycle");
+        let status = crate::utils::process::create_hidden_command("cmd.exe").args(["/c", "mklink", "/J"]).arg(&link).arg(&root).output().unwrap();
+        assert!(status.status.success());
+        assert!(reject_link(&link).is_err());
+        fs::remove_dir(&link).unwrap();
+        fs::remove_dir(root).unwrap();
+    }
 }

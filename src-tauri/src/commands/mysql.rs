@@ -95,6 +95,7 @@ async fn initialize_mysql_data() -> Result<(), String> {
 
 #[tauri::command]
 pub async fn start_mysql() -> Result<bool, String> {
+    let _operation = super::mysql_import::MYSQL_DATA_LOCK.try_lock()?;
     let base_path = get_installation_path();
 
     let mysql_path = get_mysqld_exe(&base_path);

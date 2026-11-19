@@ -4,7 +4,7 @@ use serde::Serialize;
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::process::{Child, Stdio};
+use crate::utils::mysql_process::{Child, Stdio};
 use std::sync::{Arc, Mutex};
 use std::thread;
 

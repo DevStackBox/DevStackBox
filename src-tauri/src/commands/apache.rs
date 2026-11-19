@@ -156,6 +156,7 @@ pub async fn get_apache_status() -> Result<ServiceInfo, String> {
 
 #[tauri::command]
 pub async fn start_apache() -> Result<bool, String> {
+    let _operation = super::mysql_import::MYSQL_DATA_LOCK.try_lock()?;
     let _runtime_guard = super::php::PHP_RUNTIME_LOCK.try_lock()
         .map_err(|_| "Wait for the PHP update or version switch to finish before starting Apache.")?;
     let base_path = get_installation_path();
@@ -279,6 +280,11 @@ pub async fn start_apache() -> Result<bool, String> {
 
 #[tauri::command]
 pub async fn stop_apache() -> Result<bool, String> {
+    let operation = super::mysql_import::MYSQL_DATA_LOCK.try_lock()?;
+    stop_apache_owned(&operation).await
+}
+
+pub(crate) async fn stop_apache_owned(_operation: &crate::utils::database_lock::Guard<'_>) -> Result<bool, String> {
     let _maintenance = super::log_management::MaintenanceAfterStop;
     let apache_path = apache_exe_path();
 
