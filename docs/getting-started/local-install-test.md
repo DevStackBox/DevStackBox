@@ -18,4 +18,4 @@ Run the installed checker against the test installation:
 .\scripts\test-installed.ps1 -InstallRoot C:\devstackbox -State Running -ReportPath v0.1.17-installed-report.json
 ```
 
-Record evidence in docs/RELEASE-VALIDATION.md. Cleanup candidates are listed separately in docs/development/v0.1.17-docs-audit.md; no runtime data or release evidence should be removed automatically.
+Record evidence in [the release validation history](../RELEASE-VALIDATION.md).

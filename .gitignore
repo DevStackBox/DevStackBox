@@ -131,3 +131,12 @@ src-tauri/tauri.local-test.conf.json
 /packaging/.phpmyadmin-previous-*/
 
 /packaging/php-cli/
+
+# Local campaign planning, historical audit snapshots and implementation notes
+/docs/marketing/
+/docs/archive/
+/PROJECT-ROADMAP.md
+/docs/development/*-plan.md
+/docs/development/*-audit.md
+/docs/development/*-????-??-??.md
+/docs/development/release-v*.md

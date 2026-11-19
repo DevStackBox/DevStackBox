@@ -45,7 +45,7 @@ Using an AI coding tool? Give it [DEVSTACKBOX.md](DEVSTACKBOX.md) for runtime di
 
 Connect existing folders, manage `.test` hosts and trusted HTTPS, and select an installed PHP version per website. Download extra runtimes in PHP Versions first. The terminal currently uses global PHP.
 
-See the [project guide](docs/getting-started/projects.mdx), [project roadmap](PROJECT-ROADMAP.md), and [release validation](docs/RELEASE-VALIDATION.md). Framework installers, database linking and Git/SSH are future work. Frameworks will download on demand; AI integration is deferred.
+See the [project guide](docs/getting-started/projects.mdx), [project roadmap](docs/roadmap.mdx), and [release validation](docs/RELEASE-VALIDATION.md). Framework installers, database linking and Git/SSH are future work. Frameworks will download on demand; AI integration is deferred.
 
 ## Releasing
 
